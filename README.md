@@ -1,2 +1,3 @@
 # NEFESI
-Neuron activity visualization test
+Neuron activity visualization
+
