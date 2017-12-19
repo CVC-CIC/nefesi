@@ -6,3 +6,4 @@ Neuron activity visualization
 ## Selectivity indexes
 ## Image decomposition
 ## Hierarchical decomposition
+Editant
