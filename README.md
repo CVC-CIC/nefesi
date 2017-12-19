@@ -1,2 +1,2 @@
-# NEFESI
+# nefesi
 Neuron activity visualization
