@@ -1,7 +1,7 @@
 # nefesi
 Neuron activity visualization
 ## Introduction
-## Packaage structure
+## Package structure
 ## Neuron feature
 ## Selectivity indexes
 ## Image decomposition
