@@ -64,22 +64,6 @@ def image2max_gray(img):
 
     return res
 
-def get_activation_from_pos(images, model, layer, idx_neuron, pos):
-
-    activations = read_activations.get_activations(model, images, print_shape_only=True, layer_name=layer)
-
-    for layer_activation in activations:
-        num_images, filter_size, _, num_filters = layer_activation.shape
-
-        new_activations = np.zeros(num_images)
-
-        for j in xrange(num_images):
-            x, y = pos[j]
-            f = layer_activation[j, x, y, idx_neuron]
-
-            new_activations[j] = f
-
-    return new_activations
 
 def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset_path):
 
@@ -90,11 +74,13 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset_path):
     locations = filter.get_locations()
     max_rgb_activation = activations[0]
 
-    images_gray = []
 
-    images = load_images(dataset_path, image_names)
 
     if max_rgb_activation != 0.0:
+
+        images = load_images(dataset_path, image_names)
+        images_gray = []
+
         for i in xrange(len(images)):
             x, y = locations[i]
             row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
@@ -111,7 +97,7 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset_path):
             init_image -= avg_img
             images_gray.append(init_image)
 
-        new_activations = get_activation_from_pos(images_gray, model, layer, idx_neuron, locations)
+        new_activations = read_activations.get_activation_from_pos(images_gray, model, layer, idx_neuron, locations)
         # new_activations.print_params()
         norm_gray_activations = new_activations/max_rgb_activation
 

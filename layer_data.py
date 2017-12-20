@@ -26,18 +26,21 @@ class LayerData(object):
     def get_filters(self):
         return self.filters
 
-    def get_selectivity_idx(self, model, index_name, dataset_path):
+    def get_selectivity_idx(self, model, index_name, dataset_path, **kwargs):
         sel_idx = []
         for f in self.filters:
             if index_name == 'color':
-                print 11
-                v = f.color_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset_path)
-                print v
-                sel_idx.append(v)
+                res = f.color_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset_path)
+                sel_idx.append(res)
             elif index_name == 'orientation':
-                pass
+                degrees = kwargs.get('degrees')
+                n_rotations = kwargs.get('n_rotations')
+                res = f.orientation_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset_path,
+                                                    degrees, n_rotations)
+                sel_idx.append(res)
             elif index_name == 'symmetry':
-                pass
+                res = f.symmetry_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset_path)
+                sel_idx.append(res)
             elif index_name == 'class':
                 pass
         return sel_idx

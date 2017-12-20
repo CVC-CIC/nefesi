@@ -2,6 +2,8 @@
 import numpy as np
 
 from color_index import get_color_selectivity_index
+from orientation_index import get_orientation_index
+from symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
@@ -128,14 +130,27 @@ class NeuronData(object):
             return color_idx
 
         color_idx = get_color_selectivity_index(self, model, layer, filter_idx, dataset_path)
+        self.selectivity_idx['color'] = color_idx
         return color_idx
 
 
-    def orientation_selectivity_idx(self):
-        pass
+    def orientation_selectivity_idx(self, model, layer, filter_idx, dataset_path, degrees=None, n_rotations=None):
+        orientation_idx = self.selectivity_idx.get('orientation')
+        if orientation_idx is not None:
+            return orientation_idx
 
-    def symmetry_selectivity_idx(self):
-        pass
+        orientation_idx = get_orientation_index(self, model, layer, filter_idx, dataset_path, degrees, n_rotations)
+        self.selectivity_idx['orientation'] = orientation_idx
+        return orientation_idx
+
+    def symmetry_selectivity_idx(self, model, layer, filter_idx, dataset_path):
+        symmetry_idx = self.selectivity_idx.get('symmetry')
+        if symmetry_idx is not None:
+            return symmetry_idx
+
+        symmetry_idx = get_symmetry_index(self, model, layer, filter_idx, dataset_path)
+        self.selectivity_idx['symmetry'] = symmetry_idx
+        return symmetry_idx
 
     def class_selectivity_idx(self):
         pass

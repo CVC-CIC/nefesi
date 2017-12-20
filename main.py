@@ -34,9 +34,18 @@ def main():
     my_net = pickle.load(open('sequential_1.obj', 'rb'))
     my_net.model = model
     my_net.dataset_path = dataset
-    sel_idx = my_net.selectivity_idx_summary(['color'], layer_names)
-    print sel_idx['color'][0]
-    print sel_idx['color'][1]
+
+    # sel_idx = my_net.selectivity_idx_summary(['color'], layer_names)
+    # print sel_idx['color'][0]
+    # print sel_idx['color'][1]
+
+    # sel_idx = my_net.selectivity_idx_summary(['orientation'], layer_names)
+    # print sel_idx['orientation'][0]
+    # print sel_idx['orientation'][1]
+
+    sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
+    print sel_idx['symmetry'][0]
+    print sel_idx['symmetry'][1]
 
 
 

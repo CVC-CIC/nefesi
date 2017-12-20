@@ -90,13 +90,13 @@ class NetworkData(object):
     #
     #     return pickle.load(open(file_name + '.obj', 'rb'))
 
-    def selectivity_idx_summary(self, sel_index, layers, bin=None):
+    def selectivity_idx_summary(self, sel_index, layers, bin=None, **kwargs):
         sel_idx_dict = dict()
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
             for l in self.layers:
                 if l.get_layer_id() in layers:
-                    sel_idx_dict[index_name].append(l.get_selectivity_idx(self.model, index_name, self.dataset_path))
+                    sel_idx_dict[index_name].append(l.get_selectivity_idx(self.model, index_name, self.dataset_path, **kwargs))
 
         return sel_idx_dict
 
