@@ -1,13 +1,12 @@
-import pickle
 import os
-import numpy as np
+import pickle
 
+import numpy as np
 from keras.preprocessing import image
 
 import read_activations
 from neuron_feature import get_image_receptive_field
 
-avg_img = np.load('averageImage.npy')
 
 
 def load_images(dataset_path, image_names):
@@ -111,7 +110,7 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset_path):
 
 
 if __name__ == '__main__':
-    from vgg_matconvnet import VGG
+    from external.vgg_matconvnet import VGG
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 

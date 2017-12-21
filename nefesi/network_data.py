@@ -1,7 +1,9 @@
-from keras.preprocessing.image import ImageDataGenerator
 import pickle
 import time
-from layer_data import LayerData
+
+from keras.preprocessing.image import ImageDataGenerator
+
+from nefesi.layer_data import LayerData
 
 
 class NetworkData(object):

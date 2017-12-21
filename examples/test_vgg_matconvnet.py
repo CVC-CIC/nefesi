@@ -1,14 +1,9 @@
 
-import numpy as np
-
-from vgg_matconvnet import VGG
-from network_data import NetworkData
-
-
-import time
 import pickle
 
+import numpy as np
 
+from external.vgg_matconvnet import VGG
 
 
 def main():
@@ -16,7 +11,7 @@ def main():
     dataset = '/home/oprades/ImageNet/train/'
     save_path = '/data/users/oscar/'
     layer_names = ['activation_1', 'activation_2']
-    avg_img = np.load('averageImage.npy')
+    avg_img = np.load('external/averageImage.npy')
     num_max_activations = 100
 
     def norm_input(x):
@@ -31,7 +26,7 @@ def main():
 
 
 
-    my_net = pickle.load(open('sequential_1.obj', 'rb'))
+    my_net = pickle.load(open('external/sequential_1.obj', 'rb'))
     my_net.model = model
     my_net.dataset_path = dataset
 
@@ -47,13 +42,22 @@ def main():
     # print sel_idx['symmetry'][0]
     # print sel_idx['symmetry'][1]
 
-    labels = pickle.load(open('labels_imagenet.obj', 'rb'))
+    labels = pickle.load(open('external/labels_imagenet.obj', 'rb'))
     sel_idx = my_net.selectivity_idx_summary(['class'], layer_names, labels=labels)
     print sel_idx['class'][0]
     print sel_idx['class'][1]
 
 
 if __name__=='__main__':
-    import os
+    import osgit
+    import sys
+    from nefesi import network_data, layer_data, neuron_data
+
+    # workaround. In this way, pickle can find the modules as if they were installed in the system
+    sys.modules['network_data'] = network_data
+    sys.modules['layer_data'] = layer_data
+    sys.modules['neuron_data'] = neuron_data
+
+
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     main()

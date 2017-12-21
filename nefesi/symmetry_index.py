@@ -1,12 +1,12 @@
 import os
 import pickle
+
 import numpy as np
-
 from keras.preprocessing import image
-from neuron_feature import get_image_receptive_field
-import read_activations
 
-avg_img = np.load('averageImage.npy')
+import read_activations
+from nefesi.neuron_feature import get_image_receptive_field
+
 
 def rotate_images(images, rot_axis, model, layer, pos):
 
@@ -110,7 +110,7 @@ def get_symmetry_index(filter, model, layer, idx_neuron, dataset_path):
 
 
 if __name__=='__main__':
-    from vgg_matconvnet import VGG
+    from external.vgg_matconvnet import VGG
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 

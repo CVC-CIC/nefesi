@@ -1,7 +1,8 @@
 import keras.backend as K
 import numpy as np
 
-from neuron_data import NeuronData
+from nefesi.neuron_data import NeuronData
+
 
 def get_activations(model, model_inputs, print_shape_only=False, layer_name=None):
     print('----- activations -----')

@@ -6,19 +6,15 @@ Gets to 99.25% test accuracy after 12 epochs
 '''
 
 from __future__ import print_function
-import keras
-from keras.utils import plot_model
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Activation, Cropping2D
-from keras.layers import Conv2D, MaxPooling2D, Lambda
-from keras.preprocessing.image import ImageDataGenerator
-from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, ModelCheckpoint
-import LRN
-import numpy as np
-#from rotate_img import rotate_color_space
 
-import os
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Dense, Flatten, Activation, Cropping2D
+from keras.models import Sequential
+
+import LRN
+
+
+#from rotate_img import rotate_color_space
 
 
 
@@ -30,7 +26,7 @@ def VGG():
     num_classes = 1000
 
     import scipy.io
-    mat = scipy.io.loadmat('imagenet-vgg-m.mat')
+    mat = scipy.io.loadmat('external/imagenet-vgg-m.mat')
 
 
     def weights_meus(shape, dtype=None):

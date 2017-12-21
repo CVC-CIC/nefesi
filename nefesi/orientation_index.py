@@ -1,17 +1,13 @@
 import os
 import pickle
-from PIL import ImageOps
+
 import numpy as np
-from scipy.ndimage.interpolation import rotate
-from collections import OrderedDict
-
 from keras.preprocessing import image
+from scipy.ndimage.interpolation import rotate
 
-from neuron_feature import get_image_receptive_field
 import read_activations
+from nefesi.neuron_feature import get_image_receptive_field
 
-PATH_FILE = '/home/datasets/ImageNet/train/'
-avg_img = np.load('averageImage.npy')
 
 
 def crop_image(img, cropx, cropy):
@@ -117,7 +113,7 @@ def get_orientation_index(filter, model, layer, idx_neuron, dataset_path, degree
 
 
 if __name__=='__main__':
-    from vgg_matconvnet import VGG
+    from external.vgg_matconvnet import VGG
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
