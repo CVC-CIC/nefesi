@@ -26,7 +26,7 @@ class LayerData(object):
     def get_filters(self):
         return self.filters
 
-    def get_selectivity_idx(self, model, index_name, dataset_path, **kwargs):
+    def get_selectivity_idx(self, model, index_name, dataset_path, labels=None, **kwargs):
         sel_idx = []
         for f in self.filters:
             if index_name == 'color':
@@ -42,5 +42,9 @@ class LayerData(object):
                 res = f.symmetry_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset_path)
                 sel_idx.append(res)
             elif index_name == 'class':
-                pass
+                if labels is None:
+                    print 'Error message, in layer:', self.layer_id, ', No labels.'
+                    break
+                res = f.class_selectivity_idx(labels)
+                sel_idx.append(res)
         return sel_idx

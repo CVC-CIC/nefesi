@@ -43,11 +43,14 @@ def main():
     # print sel_idx['orientation'][0]
     # print sel_idx['orientation'][1]
 
-    sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
-    print sel_idx['symmetry'][0]
-    print sel_idx['symmetry'][1]
+    # sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
+    # print sel_idx['symmetry'][0]
+    # print sel_idx['symmetry'][1]
 
-
+    labels = pickle.load(open('labels_imagenet.obj', 'rb'))
+    sel_idx = my_net.selectivity_idx_summary(['class'], layer_names, labels=labels)
+    print sel_idx['class'][0]
+    print sel_idx['class'][1]
 
 
 if __name__=='__main__':

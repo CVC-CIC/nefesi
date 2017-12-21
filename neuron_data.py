@@ -4,6 +4,7 @@ import numpy as np
 from color_index import get_color_selectivity_index
 from orientation_index import get_orientation_index
 from symmetry_index import get_symmetry_index
+from class_index import get_class_selectivity_idx
 
 
 class NeuronData(object):
@@ -152,7 +153,13 @@ class NeuronData(object):
         self.selectivity_idx['symmetry'] = symmetry_idx
         return symmetry_idx
 
-    def class_selectivity_idx(self):
-        pass
+    def class_selectivity_idx(self, labels):
+        class_idx = self.selectivity_idx.get('class')
+        if class_idx is not None:
+            return class_idx
+        class_idx = get_class_selectivity_idx(self, labels)
+        self.selectivity_idx['class'] = class_idx
+        return class_idx
+
 
 
