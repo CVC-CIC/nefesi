@@ -49,7 +49,7 @@ def main():
 
 
 if __name__=='__main__':
-    import osgit
+    import os
     import sys
     from nefesi import network_data, layer_data, neuron_data
 
