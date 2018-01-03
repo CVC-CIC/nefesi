@@ -8,13 +8,20 @@ Neuron activity visualization
 
 
 ## Neuron feature (NF)
-_**Definition:**_ visualizes the features provoking a high activation of a specific neuron
+This package provides the Neuron Feature to understand the internal representations that capture the intrinsic image features, which are a natural consequence of an automatic feature learning to achieve the goal task. Each of the stacked layers of the architecture operates on their inputs to produce a representation change. Taking into account that convolutional layers are the main responsible elements in detecting visual features encoded through their set of neurons, these representation changes are carried out in terms of the features encoded in each layer, likewise each neuron codifies certain features based on the previous layer feature space. Whilst the effects of the first convolutional layer can be easily understood, the understanding of the learned features becomes more difficult in deeper layers when several layers are stacked. This unawareness boosted the interest in understanding and analyzing learned features and several works have proposed different methodologies to address this understanding problem, going beyond proposing different CNN architectures or learning techniques.
+
+_**Definition:**_ visualizes the features provoking a high activation of a specific neuron.
+
 
 
 ## Selectivity indexes
+Selectivity indexes allow us to describe neurons according to their inherent response to a specific property and to rank the whole neuron population proportionally to their related indexes.
+
 _**Definition:**_ a property related to a neuron that measures how much the neuronal response (*i.e.*, the neuron activity) is affected by changes in the stimulus. In this sense, a high selectivity index characterizes a neuron to be highly dependent to a specific property, therefore, when this property is slightly changed, the neuron activity is considerably decreased.
 
 ### Selectivity indexes included
+In this package we include four different selectivity indexes that allow us to describe each neuron according to color, symmetry, orienation and class properties.
+
 * **Color selectivity index**: measures the activity of a neuron to an input stimulus presenting certain color bias. 
   * _High value_: the neuron is sensitive to a color
   * _Low value_: the neuron is not sensitive to a color
