@@ -7,7 +7,8 @@ Neuron activity visualization
 ## Package structure
 
 
-## Neuron feature
+## Neuron feature (NF)
+_**Definition:**_ visualizes the features provoking a high activation of a specific neuron
 
 
 ## Selectivity indexes
