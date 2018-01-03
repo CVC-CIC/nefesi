@@ -16,7 +16,7 @@ _Properties_:
    * Visualization of each neuron independently
    * Realistic appearance
 
-_ **Construction:**_ Weighted mean of the set of N-top-scoring images. Each of the set of N-top-scoring images is weighted by the activation obtained 
+_**Construction:**_ Weighted mean of the set of N-top-scoring images. Each of the set of N-top-scoring images is weighted by the activation provided by the specific neuron on this receptive field.
 
   * _Top-scoring images_: Set of receptive fields of the training set that gives the highest activations for each neuron with respect to the overall receptive fields analyzed on the training set.
 
