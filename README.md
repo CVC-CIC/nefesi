@@ -11,7 +11,13 @@ Neuron activity visualization
 This package provides the Neuron Feature to understand the internal representations that capture the intrinsic image features, which are a natural consequence of an automatic feature learning to achieve the goal task. Each of the stacked layers of the architecture operates on their inputs to produce a representation change. Taking into account that convolutional layers are the main responsible elements in detecting visual features encoded through their set of neurons, these representation changes are carried out in terms of the features encoded in each layer, likewise each neuron codifies certain features based on the previous layer feature space. Whilst the effects of the first convolutional layer can be easily understood, the understanding of the learned features becomes more difficult in deeper layers when several layers are stacked. This unawareness boosted the interest in understanding and analyzing learned features and several works have proposed different methodologies to address this understanding problem, going beyond proposing different CNN architectures or learning techniques.
 
 _**Definition:**_ visualizes the features provoking a high activation of a specific neuron.
+ * _Properties_: 
+   * Image independent
+   * Visualization of each neuron independently
+   * Realistic appearance: 
 
+
+_**Top-scoring images**_: 
 
 
 ## Selectivity indexes
