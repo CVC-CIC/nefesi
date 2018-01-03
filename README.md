@@ -34,10 +34,14 @@ _**Definition:**_ a property related to a neuron that measures how much the neur
 
 
 
-
-
 ## Image decomposition
+_**Goal**_: Describe a given image through the set of features that are relevant in the CNN representation.
 
+* _relevant neurons_: set of neurons that are highly activated in each specific position.
+
+* _Application_: Visualize image representation through the set of NFs of the corresponding relevant neurons. It provides an illustration emphasizing the most relevant selected features for describing a specific image through the network. 
+
+ 
 
 ## Hierarchical decomposition
 Editant
