@@ -14,10 +14,11 @@ _**Definition:**_ visualizes the features provoking a high activation of a speci
 _Properties_: 
    * Image independent
    * Visualization of each neuron independently
-   * Realistic appearance: 
+   * Realistic appearance
 
+_ **Construction:**_ Weighted mean of the set of N-top-scoring images. Each of the set of N-top-scoring images is weighted by the activation obtained 
 
-_**Top-scoring images**_: Set of receptive fields of the training set that gives the highest activations for each neuron with respect to the overall receptive fields analyzed on the training set.
+  * _Top-scoring images_: Set of receptive fields of the training set that gives the highest activations for each neuron with respect to the overall receptive fields analyzed on the training set.
 
 
 ## Selectivity indexes
