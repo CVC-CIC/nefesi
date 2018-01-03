@@ -26,7 +26,7 @@ _**Definition:**_ a property related to a neuron that measures how much the neur
   * _High value_:  the neuron is sensitive to orientation
   * _Low value_: the neuron is not sensitive to orientation
   
- * **Class selectivity index**: measures the activity of a neuron to an input stimulus related to a specific class.
+* **Class selectivity index**: measures the activity of a neuron to an input stimulus related to a specific class.
   * _High value_: the neuron is sensitive to a feature that belongs to a class
   * _Low value_:  the neuron is sensitive to features found in several classes
 
