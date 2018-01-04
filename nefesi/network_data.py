@@ -103,6 +103,15 @@ class NetworkData(object):
 
         return sel_idx_dict
 
+    def similarity_index(self, layers):
+        sim_idx = []
+        for l in self.layers:
+            if l.get_layer_id() in layers:
+                sim_idx.append(l.get_similarity_idx(self.model, self.dataset_path))
+        return sim_idx
+
+
+
 
     '''
     keras models cant be pickled. This is a workaround for deleting the model property within the NetworkData class

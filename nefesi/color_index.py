@@ -93,7 +93,7 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset_path):
             init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = im_gray
 
             # image.array_to_img(init_image, scale=False).show()
-            init_image -= avg_img
+            # init_image -= avg_img
             images_gray.append(init_image)
 
         new_activations = read_activations.get_activation_from_pos(images_gray, model, layer, idx_neuron, locations)

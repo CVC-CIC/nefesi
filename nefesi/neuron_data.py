@@ -3,8 +3,8 @@ import numpy as np
 
 from nefesi.class_index import get_class_selectivity_idx
 from nefesi.color_index import get_color_selectivity_index
-from orientation_index import get_orientation_index
-from symmetry_index import get_symmetry_index
+from nefesi.orientation_index import get_orientation_index
+from nefesi.symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
@@ -157,6 +157,7 @@ class NeuronData(object):
         class_idx = self.selectivity_idx.get('class')
         if class_idx is not None:
             return class_idx
+
         class_idx = get_class_selectivity_idx(self, labels)
         self.selectivity_idx['class'] = class_idx
         return class_idx

@@ -1,11 +1,14 @@
 
+import numpy as np
 from read_activations import get_sorted_activations
 from neuron_feature import compute_nf
+from nefesi.similarity_index import get_similarity_index
 
 class LayerData(object):
 
     def __init__(self, layer_id):
         self.layer_id = layer_id
+        self.similarity_index = None
         self.filters = None
 
 
@@ -44,7 +47,27 @@ class LayerData(object):
             elif index_name == 'class':
                 if labels is None:
                     print 'Error message, in layer:', self.layer_id, ', No labels.'
-                    break
+                    return None
                 res = f.class_selectivity_idx(labels)
                 sel_idx.append(res)
         return sel_idx
+
+    def get_similarity_idx(self, model, dataset_path):
+        if self.similarity_index is not None:
+            return self.similarity_index
+        else:
+            if self.filters is None:
+                print 'Error message, in layer:', self.layer_id, ', No filters.'
+                return None
+            else:
+                size = len(self.filters)
+                self.similarity_index = np.zeros((size, size))
+
+                for i in xrange(size-1):
+                    for j in xrange(1, size):
+                        sim_idx = get_similarity_index(self.filters[i], self.filters[j], i, j,
+                                                       model, self.layer_id, dataset_path)
+                        self.similarity_index[i][j] = sim_idx
+
+                return self.similarity_index
+
