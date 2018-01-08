@@ -1,8 +1,8 @@
 
 import numpy as np
-from read_activations import get_sorted_activations
-from neuron_feature import compute_nf
-from nefesi.similarity_index import get_similarity_index
+from nefesi.read_activations import get_sorted_activations, get_activations
+from nefesi.neuron_feature import compute_nf
+from nefesi.similarity_index import get_similarity_index, load_images
 
 class LayerData(object):
 
@@ -64,10 +64,39 @@ class LayerData(object):
                 self.similarity_index = np.zeros((size, size))
 
                 for i in xrange(size-1):
-                    for j in xrange(1, size):
+                    for j in xrange(i+1, size):
                         sim_idx = get_similarity_index(self.filters[i], self.filters[j], i, j,
                                                        model, self.layer_id, dataset_path)
                         self.similarity_index[i][j] = sim_idx
 
                 return self.similarity_index
+
+    # decomposition
+    def _decomposition_image(self, model, image):
+
+        name_img = self.filters[0].get_images_id()[0]
+        image = load_images('/home/oprades/ImageNet/train/', [name_img])
+
+        activations = get_activations(model, image, print_shape_only=True, layer_name=self.layer_id)
+
+        activations = activations[0]
+        _, w, h, c = activations.shape
+
+        hc_activations = np.zeros((w, h, c))
+        hc_idx = np.zeros((w, h, c))
+
+        for i in xrange(w):
+            for j in xrange(h):
+                tmp = activations[0, i, j, :]
+                idx = np.argsort(tmp)
+                idx = idx[::-1]
+                hc_activations[i, j, :] = tmp[idx]
+                hc_idx[i, j, :] = idx
+
+        print activations[0, 0, 0, :]
+        print hc_activations[0, 0, :]
+        print hc_idx[0, 0, :]
+        return hc_activations, hc_idx
+
+
 

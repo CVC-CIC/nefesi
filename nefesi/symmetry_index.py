@@ -56,7 +56,7 @@ def load_images(image_names, dataset_path):
     images = []
     for n in image_names:
         i = image.load_img(dataset_path + n, target_size=(224, 224))
-        i = i - avg_img
+        # i = i - avg_img
         i = image.img_to_array(i)
         images.append(i)
 
