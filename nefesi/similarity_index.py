@@ -19,9 +19,6 @@ def get_similarity_index(filter_a, filter_b, idx_a, idx_b, model, layer, dataset
     act_a = filter_a.get_activations()
     act_b = filter_b.get_activations()
 
-
-    # Falta normalizacion!!!!
-
     if act_a[0] != 0.0 and act_b[0] != 0.0:
         images_a = filter_a.get_images_id()
         images_b = filter_b.get_images_id()
