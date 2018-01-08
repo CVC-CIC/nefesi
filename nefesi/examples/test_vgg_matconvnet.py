@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 
-from external.vgg_matconvnet import VGG
+from nefesi.external import VGG
 
 
 def main():
@@ -24,11 +24,9 @@ def main():
     # my_net.save()
 
 
-
-
     my_net = pickle.load(open('external/sequential_1.obj', 'rb'))
     my_net.model = model
-    my_net.dataset_path = dataset
+    my_net.dataset_path = dataset  # delete when model will be evaluated again!!!
 
     # sel_idx = my_net.selectivity_idx_summary(['color'], layer_names)
     # print sel_idx['color'][0]
@@ -42,10 +40,21 @@ def main():
     # print sel_idx['symmetry'][0]
     # print sel_idx['symmetry'][1]
 
-    labels = pickle.load(open('external/labels_imagenet.obj', 'rb'))
-    sel_idx = my_net.selectivity_idx_summary(['class'], layer_names, labels=labels)
-    print sel_idx['class'][0]
-    print sel_idx['class'][1]
+    # labels = pickle.load(open('external/labels_imagenet.obj', 'rb'))
+    # sel_idx = my_net.selectivity_idx_summary(['class'], layer_names, labels=labels)
+    # print sel_idx['class'][0]
+    # print sel_idx['class'][1]
+
+    for l in my_net.get_layers():
+        l.similarity_index = None  # delete when model will be evaluated again!!!!
+
+    sim_idx = my_net.similarity_index(layer_names)
+    print sim_idx[0]
+    print sim_idx[1]
+
+
+    # l = my_net.get_layers()[0]
+    # l._decomposition_image(model, 0)
 
 
 if __name__=='__main__':
