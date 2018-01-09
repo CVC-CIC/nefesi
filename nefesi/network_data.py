@@ -4,6 +4,7 @@ import time
 from keras.preprocessing.image import ImageDataGenerator
 
 from nefesi.layer_data import LayerData
+from util.image import ImageDataset
 
 
 class NetworkData(object):
@@ -17,6 +18,7 @@ class NetworkData(object):
         self.save_path = save_path
         self.num_max_activations = num_max_activations
         self.input_image_size = None
+        self.dataset = None
 
     def build_layers(self, layers):
         if layers is not None:
@@ -27,6 +29,9 @@ class NetworkData(object):
 
         times_ex = []
         self.input_image_size = target_size
+
+        prep_function = kwargs.get('preprocessing_function')
+        self.dataset = ImageDataset(self.dataset_path, target_size, prep_function)
 
         for layer in self.layers:
 
@@ -63,7 +68,7 @@ class NetworkData(object):
 
             # pickle.dump(filters, open(self.save_path + layer.get_layer_id() + '.obj', 'wb'))
 
-            layer.build_neuron_feature(self.dataset_path, self.model)
+            layer.build_neuron_feature(self.dataset, self.model)
 
             end_comp_nf_time = time.time() - end_act_time - start
 
@@ -99,7 +104,7 @@ class NetworkData(object):
             for l in self.layers:
                 if l.get_layer_id() in layers:
                     sel_idx_dict[index_name].append(l.get_selectivity_idx(
-                        self.model, index_name, self.dataset_path, labels, **kwargs))
+                        self.model, index_name, self.dataset, labels, **kwargs))
 
         return sel_idx_dict
 
@@ -107,7 +112,7 @@ class NetworkData(object):
         sim_idx = []
         for l in self.layers:
             if l.get_layer_id() in layers:
-                sim_idx.append(l.get_similarity_idx(self.model, self.dataset_path))
+                sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
 

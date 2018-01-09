@@ -9,7 +9,7 @@ from numpy import unravel_index
 
 
 
-def compute_nf(dataset_path, model, layer, filters):
+def compute_nf(dataset, model, layer, filters):
 
     # we have to normalize the activations for each neuron before
     # calculate the NF
@@ -32,7 +32,7 @@ def compute_nf(dataset_path, model, layer, filters):
                 norm_act = norm_activations[i]
                 xy = locations[i]
 
-                im_crop = get_crop_image(dataset_path, xy, img_name, model, layer)
+                im_crop = get_crop_image(dataset, xy, img_name, model, layer)
 
                 w, h = im_crop.size
 
@@ -77,12 +77,12 @@ def compute_nf(dataset_path, model, layer, filters):
     return filters
 
 
-def get_crop_image(dataset_path, xy, img_name, model, layer):
+def get_crop_image(dataset, xy, img_name, model, layer):
     x = xy[0]
     y = xy[1]
     row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
 
-    img = image.load_img(dataset_path + img_name, target_size=(224, 224))
+    img = image.load_img(dataset.src_dataset + img_name, target_size=dataset.target_size)
 
     im_crop = img.crop((col_ini, row_ini, col_fin+1, row_fin+1))
     return im_crop

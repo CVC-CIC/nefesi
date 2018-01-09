@@ -1,76 +1,17 @@
 import os
 import pickle
 
-import numpy as np
-from keras.preprocessing import image
-from scipy.ndimage.interpolation import rotate
-
 import read_activations
-from nefesi.neuron_feature import get_image_receptive_field
+from util.image import rotate_images
 
 
+def get_orientation_index(filter, model, layer, idx_neuron, dataset, degrees=None, n_rotations=None):
 
-def crop_image(img, cropx, cropy):
-    y, x, _ = img.shape
-    startx = x//2-(cropx//2)
-    starty = y//2-(cropy//2)
-    return img[starty:starty+cropy, startx:startx+cropx]
-
-
-def rotate_images(model, images, degrees, pos, layer):
-    images_rotated = []
-    for i in xrange(len(images)):
-        init_image = np.copy(images[i])
-        x, y = pos[i]
-        print x, y
-        row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
-        receptive_field = init_image[row_ini:row_fin+1, col_ini:col_fin+1]
-        w, h, d = receptive_field.shape
-        print w, h, d
-        padding_w = int(round(w/2.))
-        padding_h = int(round(h/2.))
-
-        new_shape = np.zeros((w + padding_w, h + padding_h, d), dtype=receptive_field.dtype)
-        print new_shape.shape
-
-        for dim in xrange(d):
-            new_shape[:,:,dim] = np.pad(receptive_field[:,:,dim], ((padding_w/2, padding_w/2),(padding_h/2, padding_h/2)), mode='edge')
-
-        img = rotate(new_shape, degrees, reshape=False)
-        img = crop_image(img, h, w)
-        init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = img
-
-        images_rotated.append(init_image)
-
-
-    return images_rotated
-
-
-
-def load_images(image_names, dataset_path):
-    images = []
-    for n in image_names:
-        i = image.load_img(dataset_path + n, target_size=(224, 224))
-        i = image.img_to_array(i)
-        # i = i - avg_img
-        images.append(i)
-
-    # i = image.array_to_img(images[0], scale=False)
-    # i.save('origin.png')
-    return images
-
-def get_orientation_index(filter, model, layer, idx_neuron, dataset_path, degrees=None, n_rotations=None):
-
-    # degrees = 15
-    # n_rotations = 25
     if degrees is None:
         degrees = 15
     if n_rotations is None:
         n_rotations = 25
     l_degrees = [x*degrees for x in xrange(1, n_rotations)]  # avoid 0 degrees
-
-    print l_degrees
-
 
     results = []
 
@@ -84,7 +25,7 @@ def get_orientation_index(filter, model, layer, idx_neuron, dataset_path, degree
     max_act = activations[0]
 
     if max_act != 0.0:
-        images = load_images(image_names, dataset_path)
+        images = dataset.load_images(image_names)
 
         for degrees in l_degrees:
             images_r = rotate_images(model, images, degrees, locations, layer)

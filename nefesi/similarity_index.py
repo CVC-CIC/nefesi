@@ -1,21 +1,7 @@
-from keras.preprocessing import image
+
 import read_activations
 
-
-def load_images(dataset_path, image_names):
-    images = []
-    for n in image_names:
-        i = image.load_img(dataset_path + n, target_size=(224, 224))
-        i = image.img_to_array(i)
-        # i -= avg_img
-        images.append(i)
-
-    # i = image.array_to_img(images[0], scale=False)
-    # i.save('origin.png')
-    return images
-
-
-def get_similarity_index(filter_a, filter_b, idx_a, idx_b, model, layer, dataset_path):
+def get_similarity_index(filter_a, filter_b, idx_a, idx_b, model, layer, dataset):
     act_a = filter_a.get_activations()
     act_b = filter_b.get_activations()
 
@@ -23,8 +9,8 @@ def get_similarity_index(filter_a, filter_b, idx_a, idx_b, model, layer, dataset
         images_a = filter_a.get_images_id()
         images_b = filter_b.get_images_id()
 
-        images_a = load_images(dataset_path, images_a)
-        images_b = load_images(dataset_path, images_b)
+        images_a = dataset.load_images(images_a)
+        images_b = dataset.load_images(images_b)
 
         locations_a = filter_a.get_locations()
         locations_b = filter_b.get_locations()

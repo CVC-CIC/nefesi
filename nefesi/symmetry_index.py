@@ -1,71 +1,11 @@
 import os
 import pickle
 
-import numpy as np
-from keras.preprocessing import image
-
 import read_activations
-from nefesi.neuron_feature import get_image_receptive_field
+from util.image import rotate_images_axis
 
 
-def rotate_images(images, rot_axis, model, layer, pos):
-
-    rot_images = []
-    for i in xrange(len(images)):
-        init_image = np.copy(images[i])
-        x, y = pos[i]
-        row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
-        receptive_field = init_image[row_ini:row_fin+1, col_ini:col_fin+1]
-
-        rf_shape = receptive_field.shape
-
-        rotated_receptive_field = rotate_rf(receptive_field, rot_axis)
-
-        rot_rf_shape = rotated_receptive_field.shape
-
-        if rf_shape != rot_rf_shape:
-            row_fin = row_fin + (-(rf_shape[0]-rot_rf_shape[0]))
-            col_fin = col_fin + (-(rf_shape[1]-rot_rf_shape[1]))
-
-        init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = rotated_receptive_field
-        rot_images.append(init_image)
-
-    return rot_images
-
-
-def rotate_rf(img, rot_axis):
-    if rot_axis == 0:
-        return np.flipud(img)
-
-    if rot_axis == 45:
-        n_image = img.transpose(1, 0, 2)
-        n_image = np.flipud(n_image)
-        return np.fliplr(n_image)
-
-    if rot_axis == 90:
-        return np.fliplr(img)
-
-    if rot_axis == 135:
-        return img.transpose(1, 0, 2)
-
-    return None
-
-
-
-def load_images(image_names, dataset_path):
-    images = []
-    for n in image_names:
-        i = image.load_img(dataset_path + n, target_size=(224, 224))
-        # i = i - avg_img
-        i = image.img_to_array(i)
-        images.append(i)
-
-    # i = image.array_to_img(images[0], scale=False)
-    # i.save('origin.png')
-    return images
-
-
-def get_symmetry_index(filter, model, layer, idx_neuron, dataset_path):
+def get_symmetry_index(filter, model, layer, idx_neuron, dataset):
 
     results = []
     symm_axes = [0, 45, 90, 135]
@@ -80,10 +20,10 @@ def get_symmetry_index(filter, model, layer, idx_neuron, dataset_path):
 
     if max_act != 0.0:
 
-        images = load_images(image_names, dataset_path)
+        images = dataset.load_images(image_names)
 
         for axes in symm_axes:
-            images_r = rotate_images(images, axes, model, layer, locations)
+            images_r = rotate_images_axis(images, axes, model, layer, locations)
 
             rot_activations = read_activations.get_activation_from_pos(images_r, model, layer, idx_neuron, locations)
 
