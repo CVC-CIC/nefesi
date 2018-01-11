@@ -12,14 +12,18 @@ class ImageDataset(object):
         self.target_size = target_size
         self.preprocessing_function = preprocessing_function
 
-    def load_images(self, image_names):
+    def load_images(self, image_names, prep_function=True):
         images = []
-        if not isinstance(image_names, list):
-            image_names = [image_names]
+        # if not isinstance(image_names, list):
+        #     image_names = [image_names]
 
         for n in image_names:
+
+            # print self.src_dataset, n
             i = image.load_img(self.src_dataset + n, target_size=self.target_size)
             i = image.img_to_array(i)
+            if self.preprocessing_function is not None and prep_function is True:
+                i = self.preprocessing_function(i)
             # i -= avg_img
             images.append(i)
 

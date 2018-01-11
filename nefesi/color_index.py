@@ -18,7 +18,7 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset):
 
     if max_rgb_activation != 0.0:
 
-        images = dataset.load_images(image_names)
+        images = dataset.load_images(image_names, prep_function=False)
         images_gray = []
 
         for i in xrange(len(images)):
@@ -34,6 +34,8 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset):
 
             # image.array_to_img(init_image, scale=False).show()
             # init_image -= avg_img
+
+            init_image = dataset.preprocessing_function(init_image)
             images_gray.append(init_image)
 
         new_activations = read_activations.get_activation_from_pos(images_gray, model, layer, idx_neuron, locations)

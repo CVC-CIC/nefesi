@@ -25,7 +25,7 @@ class NetworkData(object):
             for l in layers:
                 self.layers.append(LayerData(l))
 
-    def eval_network(self, size_dataset, target_size, batch_size=32, **kwargs):
+    def eval_network(self, size_dataset, target_size=None, batch_size=32, **kwargs):
 
         times_ex = []
         self.input_image_size = target_size
