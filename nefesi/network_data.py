@@ -3,7 +3,7 @@ import time
 
 from keras.preprocessing.image import ImageDataGenerator
 
-from nefesi.layer_data import LayerData
+from layer_data import LayerData
 from util.image import ImageDataset
 
 

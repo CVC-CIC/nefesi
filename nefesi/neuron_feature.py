@@ -1,12 +1,6 @@
 from keras.preprocessing import image
-from keras.applications.vgg16 import preprocess_input, decode_predictions
 
 import numpy as np
-from numpy import unravel_index
-
-
-
-
 
 
 def compute_nf(dataset, model, layer, filters):

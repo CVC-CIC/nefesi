@@ -1,8 +1,9 @@
 
 import numpy as np
-from nefesi.read_activations import get_sorted_activations, get_activations
-from nefesi.neuron_feature import compute_nf
-from nefesi.similarity_index import get_similarity_index
+from itertools import permutations
+from read_activations import get_sorted_activations, get_activations
+from neuron_feature import compute_nf
+from similarity_index import get_similarity_index
 
 class LayerData(object):
 
@@ -63,13 +64,23 @@ class LayerData(object):
                 size = len(self.filters)
                 self.similarity_index = np.zeros((size, size))
 
-                for i in xrange(size-1):
-                    for j in xrange(i+1, size):
-                        sim_idx = get_similarity_index(self.filters[i], self.filters[j], i, j,
-                                                       model, self.layer_id, dataset)
-                        self.similarity_index[i][j] = sim_idx
+                idx_a = np.arange(size)
+                print idx_a
+
+                for a, b in permutations(idx_a, 2):
+                    sim_idx = get_similarity_index(self.filters[a], self.filters[b], a, b,
+                                                   model, self.layer_id, dataset)
+                    self.similarity_index[a][b] = sim_idx
 
                 return self.similarity_index
+
+                # for i in xrange(size-1):
+                #     for j in xrange(i+1, size):
+                #         sim_idx = get_similarity_index(self.filters[i], self.filters[j], i, j,
+                #                                        model, self.layer_id, dataset)
+                #         self.similarity_index[i][j] = sim_idx
+                #
+                # return self.similarity_index
 
     # decomposition
     def _decomposition_image(self, model, image):

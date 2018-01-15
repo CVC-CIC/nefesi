@@ -1,10 +1,10 @@
 
 import numpy as np
 
-from nefesi.class_index import get_class_selectivity_idx
-from nefesi.color_index import get_color_selectivity_index
-from nefesi.orientation_index import get_orientation_index
-from nefesi.symmetry_index import get_symmetry_index
+from class_index import get_class_selectivity_idx
+from color_index import get_color_selectivity_index
+from orientation_index import get_orientation_index
+from symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
@@ -17,39 +17,12 @@ class NeuronData(object):
         self.images_id = np.ndarray(shape=self.max_activations + self.batch_size, dtype='a150')
         self.xy_locations = np.ndarray(shape=self.max_activations + self.batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
 
-        # self.activations = []
-        # self.images_id = []
-        # self.xy_locations = []
         self.selectivity_idx = dict()
 
         self.neuron_feature = None
-
         self._index = 0
 
-
     def add_activation(self, activation, image_id, xy_location):
-
-        # self.activations.append(activation)
-        # self.images_id.append(image_id)
-        # self.xy_locations.append(xy_location)
-        #
-        # if len(self.activations) >= self.max_activations + self.batch_size:
-        #     self.sort()
-
-        # if len(self.activations) < self.max_activations + self.batch_size:
-        #     tmp_act = np.ndarray(shape=self.max_activations + self.batch_size)
-        #     tmp_img = np.ndarray(shape=self.max_activations+self.batch_size, dtype='a150')
-        #     tmp_xy = np.ndarray(shape=self.max_activations+self.batch_size, dtype=[('x', 'i4'),('y', 'i4')])
-        #
-        #     tmp_act[:self.max_activations] = self.activations
-        #     tmp_img[:self.max_activations] = self.images_id
-        #     tmp_xy[:self.max_activations] = self.xy_locations
-        #
-        #     self.activations = tmp_act
-        #     self.images_id = tmp_img
-        #     self.xy_locations = tmp_xy
-
-
 
         self.activations[self._index] = activation
         self.images_id[self._index] = image_id
@@ -59,29 +32,7 @@ class NeuronData(object):
             self.sort()
             self._index = self.max_activations
 
-
-
-
-
     def sort(self):
-        # quickSort(self.activations)
-        # # print self.activations
-        # self.activations.reverse()
-
-        # tmp_act = np.asarray(self.activations)
-        # tmp_images = np.asarray(self.images_id)
-        # tmp_xy = np.asarray(self.xy_locations)
-        #
-        # idx = np.argsort(tmp_act)
-        # idx = idx[::-1]
-        #
-        # tmp_act = tmp_act[idx]
-        # tmp_images = tmp_images[idx]
-        # tmp_xy = tmp_xy[idx]
-        #
-        # self.activations = tmp_act[:self.max_activations].tolist()
-        # self.images_id = tmp_images[:self.max_activations].tolist()
-        # self.xy_locations = tmp_xy[:self.max_activations].tolist()
 
         idx = np.argsort(self.activations)
         idx = idx[::-1]
@@ -89,10 +40,6 @@ class NeuronData(object):
         self.activations = self.activations[idx]
         self.images_id = self.images_id[idx]
         self.xy_locations = self.xy_locations[idx]
-
-        # self.activations = self.activations[:self.max_activations]
-        # self.images_id = self.images_id[:self.max_activations]
-        # self.xy_locations = self.xy_locations[:self.max_activations]
 
     def normalize_activations(self):
         max_activation = max(self.activations)
