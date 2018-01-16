@@ -2,7 +2,7 @@
 import numpy as np
 from itertools import permutations
 from read_activations import get_sorted_activations, get_activations
-from neuron_feature import compute_nf
+from neuron_feature import compute_nf, get_image_receptive_field
 from similarity_index import get_similarity_index
 
 class LayerData(object):
@@ -82,11 +82,17 @@ class LayerData(object):
                 #
                 # return self.similarity_index
 
-    # decomposition
-    def _decomposition_image(self, model, image):
+    # image decomposition
+    def _decomposition_image(self, model, image, img):
 
         name_img = self.filters[0].get_images_id()[0]
-        # image = load_images('/home/oprades/ImageNet/train/', [name_img])
+
+
+        image = img.load_images([name_img])
+
+        max_act = []
+        for f in self.filters:
+            max_act.append(f.get_activations()[0])
 
         activations = get_activations(model, image, print_shape_only=True, layer_name=self.layer_id)
 
@@ -95,6 +101,9 @@ class LayerData(object):
 
         hc_activations = np.zeros((w, h, c))
         hc_idx = np.zeros((w, h, c))
+
+        for i in xrange(c):
+            activations[0, :, :, i] = activations[0, :, :, i] / max_act[i]
 
         for i in xrange(w):
             for j in xrange(h):
@@ -108,6 +117,72 @@ class LayerData(object):
         print hc_activations[0, 0, :]
         print hc_idx[0, 0, :]
         return hc_activations, hc_idx
+
+
+    def _decomposition_nf(self, neuron_id, target_layer, model, dataset):
+
+        neuron_images = self.filters[neuron_id].get_images_id()
+        neuron_locations = self.filters[neuron_id].get_locations()
+        norm_activations = self.filters[neuron_id].get_norm_activations()
+
+        neuron_images = dataset.load_images(neuron_images)
+
+        for i in xrange(len(neuron_images)):
+            loc = neuron_locations[i]
+            row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(loc[0], loc[1], model, self.layer_id)
+            patch = neuron_images[i]
+            patch = patch[row_ini:row_fin+1, col_ini:col_fin+1]
+
+            r, c, k = patch.shape
+            img_size = dataset.target_size
+            new_image = np.zeros((img_size[0], img_size[1], k))
+            new_image[0:r, 0:c, :] = patch
+
+            neuron_images[i] = new_image
+
+
+
+        max_act = []
+        for f in target_layer.get_filters():
+            max_act.append(f.get_activations()[0])
+
+        activations = get_activations(model, neuron_images,
+                                      print_shape_only=True, layer_name=target_layer.get_layer_id())
+
+        activations = activations[0]
+        n_patches, w, h, k = activations.shape
+
+
+        print max_act
+
+        for i in xrange(n_patches):
+            tmp = activations[i]
+            for j in xrange(k):
+                n_act = tmp[:, :, j] / max_act[j]
+                np.place(n_act, n_act > 1, 1)
+                tmp[:, :, j] = n_act
+                tmp = tmp*norm_activations[j]
+            activations[i] = tmp
+
+        mean_activations = np.zeros((w, h, k))
+        for i in xrange(n_patches):
+            a = activations[i]
+            mean_activations += a
+        mean_activations = mean_activations / n_patches
+
+        hc_activations = np.zeros((w, h, k))
+        hc_idx = np.zeros((w, h, k))
+
+        for i in xrange(w):
+            for j in xrange(h):
+                tmp = mean_activations[i, j, :]
+                idx = np.argsort(tmp)
+                idx = idx[::-1]
+                hc_activations[i, j, :] = tmp[idx]
+                hc_idx[i, j, :] = idx
+
+        return hc_activations, hc_idx
+
 
 
 

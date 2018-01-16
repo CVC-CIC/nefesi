@@ -70,7 +70,7 @@ def compute_nf(dataset, model, layer, filters):
 
     return filters
 
-
+#TODO:This function has to be in ImageDataset class?.
 def get_crop_image(dataset, xy, img_name, model, layer):
     x = xy[0]
     y = xy[1]
