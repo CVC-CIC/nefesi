@@ -119,11 +119,14 @@ class NetworkData(object):
 
 
     '''
-    keras models cant be pickled. This is a workaround for deleting the model property within the NetworkData class
+    keras models cant be pickled. This is a workaround for deleting 
+    the model property within the NetworkData class.
+    Also the dataset property (ImageDataset class is deleted)
     '''
     def __getstate__(self):
         odict = self.__dict__
         odict['model'] = None
+        odict['dataset'] = None
         return odict
 
     # def __setstate__(self, state):
