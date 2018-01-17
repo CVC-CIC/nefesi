@@ -142,9 +142,9 @@ class LayerData(object):
                 hc_activations[i, j, :] = tmp[idx]
                 hc_idx[i, j, :] = idx
 
-        print activations[0, 0, 0, :]
-        print hc_activations[0, 0, :]
-        print hc_idx[0, 0, :]
+        # print activations[0, 0, 0, :]
+        # print hc_activations[0, 0, :]
+        # print hc_idx[0, 0, :]
         return hc_activations, hc_idx
 
 
@@ -183,8 +183,13 @@ class LayerData(object):
         activations = get_activations(model, neuron_images,
                                       print_shape_only=True, layer_name=target_layer.get_layer_id())
 
+
+
         activations = activations[0]
         n_patches, w, h, k = activations.shape
+
+        if target_layer.receptive_field_map is None:
+            target_layer.mapping_rf(model, w, h)
 
 
         # print max_act

@@ -1,5 +1,6 @@
 import pickle
 import time
+import numpy as np
 
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -80,7 +81,7 @@ class NetworkData(object):
             # pickle.dump(layer.get_filters(), open(self.save_path + layer.get_layer_id() + '.obj', 'wb'))
 
         for i in xrange(len(times_ex)):
-            print 'totat time execution for layer ', i, ' : ', times_ex[i]
+            print 'total time execution for layer ', i, ' : ', times_ex[i]
 
     def get_layers(self):
         return self.layers
@@ -137,6 +138,38 @@ class NetworkData(object):
             neurons.append(f[int(idx)])
 
         return list(activations), neurons
+
+    def decomposition(self, src_layer, target_layer, neuron_idx, overlapping=0.0):
+
+        for l in self.layers:
+            if src_layer == l.get_layer_id():
+                src_layer = l
+            elif target_layer == l.get_layer_id():
+                target_layer = l
+
+        hc_activations, hc_idx = src_layer.decomposition_nf(
+            neuron_idx, target_layer, self.model, self.dataset)
+
+        hc_activations = hc_activations[:, :, 0]
+        hc_idx = hc_idx[:, :, 0]
+
+        c_overlapping = 0.0
+        while c_overlapping <= overlapping: #TODO: implement overlapping
+            max_act = np.amax(hc_activations)
+            pos = np.unravel_index(hc_activations.argmax(), hc_activations.shape)
+            print pos
+            neuron_idx = hc_idx[pos]
+
+            print target_layer.receptive_field_map[pos]
+
+
+            c_overlapping = 1
+
+        print hc_activations
+        print hc_idx.shape
+
+        return None
+
 
 
 
