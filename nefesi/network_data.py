@@ -115,6 +115,29 @@ class NetworkData(object):
                 sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
+    def get_max_activations(self, layer_id, img_name, location, num_max):
+        layer = None
+        if type(layer_id) is int:
+            layer = self.layers[layer_id]
+        if type(layer_id) is str:
+            for l in self.layers:
+                if layer_id == l.get_layer_id():
+                    layer = l
+
+        img = self.dataset.load_images([img_name])
+        hc_activations, hc_idx = layer.decomposition_image(self.model, img)
+        loc = layer.get_location_from_rf(location)
+
+        activations = hc_activations[loc[0], loc[1], :num_max]
+        neuron_idx = hc_idx[loc[0], loc[1], :num_max]
+
+        f = layer.get_filters()
+        neurons = []
+        for idx in neuron_idx:
+            neurons.append(f[int(idx)])
+
+        return list(activations), neurons
+
 
 
 

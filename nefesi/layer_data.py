@@ -11,6 +11,7 @@ class LayerData(object):
         self.layer_id = layer_id
         self.similarity_index = None
         self.filters = None
+        self.receptive_field_map = None
 
 
     def get_layer_id(self):
@@ -82,22 +83,50 @@ class LayerData(object):
                 #
                 # return self.similarity_index
 
-    # image decomposition
-    def _decomposition_image(self, model, image, img):
+    def mapping_rf(self, model, w, h):
 
-        name_img = self.filters[0].get_images_id()[0]
+        self.receptive_field_map = np.zeros(shape=(w, h),
+                                            dtype=[('x1', 'i4'), ('x2', 'i4'), ('y1', 'i4'), ('y2', 'i4')])
+
+        for i in xrange(w):
+            for j in xrange(h):
+                ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
+                self.receptive_field_map[i, j] = (ri, rf+1, ci, cf+1)
+
+    def get_location_from_rf(self, location):
+        row, col = location
+
+        h, w = self.receptive_field_map.shape
+
+        for i in xrange(h):
+            for j in xrange(w):
+                ri, rf, ci, cf = self.receptive_field_map[i, j]
+                if rf > row >= ri and cf > col >= ci:
+                    return i, j
+
+        return None
 
 
-        image = img.load_images([name_img])
+
+    # decomposition
+    def decomposition_image(self, model, img):
+
+        # name_img = self.filters[0].get_images_id()[0]
+        #
+        #
+        # image = img.load_images([name_img])
 
         max_act = []
         for f in self.filters:
             max_act.append(f.get_activations()[0])
 
-        activations = get_activations(model, image, print_shape_only=True, layer_name=self.layer_id)
+        activations = get_activations(model, img, print_shape_only=True, layer_name=self.layer_id)
 
         activations = activations[0]
         _, w, h, c = activations.shape
+
+        if self.receptive_field_map is None:
+            self.mapping_rf(model, w, h)
 
         hc_activations = np.zeros((w, h, c))
         hc_idx = np.zeros((w, h, c))
@@ -119,7 +148,12 @@ class LayerData(object):
         return hc_activations, hc_idx
 
 
-    def _decomposition_nf(self, neuron_id, target_layer, model, dataset):
+    def decomposition_nf(self, neuron_id, target_layer, model, dataset):
+
+        if self.filters[neuron_id].get_activations()[0] == 0.0:
+            # A neuron feature within a neuron with no activations
+            # can't be decomposed
+            return None
 
         neuron_images = self.filters[neuron_id].get_images_id()
         neuron_locations = self.filters[neuron_id].get_locations()
@@ -153,15 +187,16 @@ class LayerData(object):
         n_patches, w, h, k = activations.shape
 
 
-        print max_act
+        # print max_act
 
         for i in xrange(n_patches):
             tmp = activations[i]
             for j in xrange(k):
-                n_act = tmp[:, :, j] / max_act[j]
-                np.place(n_act, n_act > 1, 1)
-                tmp[:, :, j] = n_act
-                tmp = tmp*norm_activations[j]
+                if max_act[j] != 0.0:
+                    n_act = tmp[:, :, j] / max_act[j]
+                    np.place(n_act, n_act > 1, 1)
+                    tmp[:, :, j] = n_act
+            tmp = tmp*norm_activations[i]
             activations[i] = tmp
 
         mean_activations = np.zeros((w, h, k))
