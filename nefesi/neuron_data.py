@@ -67,6 +67,9 @@ class NeuronData(object):
     def get_norm_activations(self):
         return self.norm_activations
 
+    def get_neuron_feature(self):
+        return self.neuron_feature
+
     def print_params(self):
         for i in xrange(len(self.activations)):
             print(i, self.images_id[i], self.activations[i], self.xy_locations[i])
