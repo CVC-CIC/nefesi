@@ -153,22 +153,59 @@ class NetworkData(object):
         hc_activations = hc_activations[:, :, 0]
         hc_idx = hc_idx[:, :, 0]
 
+        # for a neuron feature
+        neuron_data = src_layer.get_filters()[neuron_idx]
+        src_image = neuron_data.get_neuron_feature()
+        # src_image.show()
+        print src_image.size
+        orp_image = np.zeros(src_image.size)
+        # end neuron feature
+
         c_overlapping = 0.0
-        while c_overlapping <= overlapping: #TODO: implement overlapping
+        res_neurons = []
+        res_loc = []
+        res_act = []
+
+        i = 0
+        end_cond = src_image.size[0]*src_image.size[1]
+
+        while i < end_cond:
+            i += 1
             max_act = np.amax(hc_activations)
             pos = np.unravel_index(hc_activations.argmax(), hc_activations.shape)
             print pos
+            hc_activations[pos] = 0.0
             neuron_idx = hc_idx[pos]
 
-            print target_layer.receptive_field_map[pos]
+            loc = target_layer.receptive_field_map[pos]
+            print target_layer.receptive_field_map
+            print loc
 
 
-            c_overlapping = 1
 
-        print hc_activations
-        print hc_idx.shape
+            # check overlapping
+            ri, rf, ci, cf = loc
+            if rf <= src_image.size[0] and cf <= src_image.size[1]:
 
-        return None
+                clp = orp_image[ri:rf, ci:cf]
+                clp_size = clp.shape
+                clp_size = clp_size[0]*clp_size[1]
+                non_zero = np.count_nonzero(clp)
+                c_overlapping = float(non_zero)/float(clp_size)
+                print c_overlapping
+
+                if c_overlapping <= overlapping:
+                    orp_image[ri:rf, ci:cf] = 1
+                    res_neurons.append(target_layer.get_filters()[int(neuron_idx)])
+                    res_loc.append(loc)
+                    res_act.append(max_act)
+
+            # c_overlapping = 1
+
+        # print hc_activations
+        # print hc_idx.shape
+
+        return res_neurons, res_act, res_loc
 
 
 
