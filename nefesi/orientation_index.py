@@ -15,7 +15,6 @@ def get_orientation_index(filter, model, layer, idx_neuron, dataset, degrees=Non
 
     results = []
 
-    print results
     avg_orientation_index = 0
 
     activations = filter.get_activations()

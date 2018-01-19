@@ -120,18 +120,18 @@ def get_image_receptive_field(x, y, model, layer):
             strides = config_params['strides'][0]
             kernel_size = config_params.get('kernel_size', config_params.get('pool_size'))[0]
 
-            # if padding == 'same':  # padding = same, means input shape = output shape
-            #     padding = (kernel_size - 1) / 2
-            #     total_padding += padding
-            # else:
-            #     padding = 0
+            if padding == 'same':  # padding = same, means input shape = output shape
+                padding = (kernel_size - 1) / 2
+                total_padding += padding
+            else:
+                padding = 0
 
             # This is a workaround for VGG model translated from Matlab. For any sequential keras model, comment these
             # lines and uncomment the above.
-            if i < 5:
-                padding = 0
-            else:
-                padding = 1
+            # if i < 5:
+            #     padding = 0
+            # else:
+            #     padding = 1
 
 
             row_ini = row_ini*strides
