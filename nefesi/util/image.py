@@ -2,7 +2,11 @@ import numpy as np
 
 from keras.preprocessing import image
 from scipy.ndimage.interpolation import rotate
-from ..neuron_feature import get_image_receptive_field
+# from ..neuron_feature import get_image_receptive_field
+from nefesi.neuron_feature import get_image_receptive_field
+
+
+
 
 
 class ImageDataset(object):
@@ -88,8 +92,12 @@ def rotate_images(model, images, degrees, pos, layer):
         receptive_field = init_image[row_ini:row_fin+1, col_ini:col_fin+1]
         w, h, d = receptive_field.shape
         print w, h, d
-        padding_w = int(round(w/2.))
-        padding_h = int(round(h/2.))
+        padding_w = int(round(w/2))
+        padding_h = int(round(h/2))
+        if padding_w % 2 != 0:
+            padding_w += 1
+        if padding_h % 2 != 0:
+            padding_h += 1
 
         new_shape = np.zeros((w + padding_w, h + padding_h, d), dtype=receptive_field.dtype)
         print new_shape.shape
