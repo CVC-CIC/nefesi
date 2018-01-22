@@ -131,9 +131,9 @@ def rotate_images_axis(images, rot_axis, model, layer, pos):
 
         rot_rf_shape = rotated_receptive_field.shape
 
+
         if rf_shape != rot_rf_shape:
-            row_fin = row_fin + (-(rf_shape[0]-rot_rf_shape[0]))
-            col_fin = col_fin + (-(rf_shape[1]-rot_rf_shape[1]))
+            rotated_receptive_field = np.reshape(rotated_receptive_field, rf_shape)
 
         init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = rotated_receptive_field
         rot_images.append(init_image)
