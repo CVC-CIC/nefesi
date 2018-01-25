@@ -5,6 +5,7 @@ from class_index import get_class_selectivity_idx
 from color_index import get_color_selectivity_index
 from orientation_index import get_orientation_index
 from symmetry_index import get_symmetry_index
+from neuron_feature import get_crop_image
 
 
 class NeuronData(object):
@@ -69,6 +70,19 @@ class NeuronData(object):
 
     def get_neuron_feature(self):
         return self.neuron_feature
+
+    def get_patches(self, network_data, layer):
+        patches = []
+        for i in xrange(self.max_activations):
+            img = self.images_id[i]
+            loc = self.xy_locations[i]
+
+            p = get_crop_image(network_data.dataset, loc, img, network_data.model, layer)
+            patches.append(p)
+
+        return patches
+
+
 
     def print_params(self):
         for i in xrange(len(self.activations)):
