@@ -116,6 +116,23 @@ class NetworkData(object):
                 sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
+    def get_selective_neurons(self, sel_idx, layers, inf_thr=0.0, sup_thr=1.0):
+        selective_neurons = dict()
+        for l in self.layers:
+            if l.get_layer_id() in layers:
+                index_values = l.get_selectivity_idx(self.model, sel_idx, self.dataset)
+                selective_neurons[l.get_layer_id()] = []
+
+                neurons = l.get_filters()
+                for i in xrange(len(index_values)):
+                    if inf_thr <= index_values[i] <= sup_thr:
+                        selective_neurons[l.get_layer_id()].append(neurons[i])
+
+                print len(selective_neurons[l.get_layer_id()])
+
+        return selective_neurons
+
+
     def get_max_activations(self, layer_id, img_name, location, num_max):
         layer = None
         if type(layer_id) is int:
