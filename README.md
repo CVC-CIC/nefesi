@@ -1,4 +1,4 @@
-# nefesi
+# nefesi (Neuron Feature and Selectivity Indexes)
 Neuron activity visualization
 
 
