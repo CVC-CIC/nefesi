@@ -222,7 +222,7 @@ class NetworkData(object):
         # print hc_activations
         # print hc_idx.shape
 
-        return res_neurons, res_act, res_loc
+        return res_act, res_neurons, res_loc
 
 
 
