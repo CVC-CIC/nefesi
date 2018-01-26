@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from PIL import ImageOps
 
 
 def plot_sel_idx_summary(selectivity_idx, bins=10):
@@ -109,11 +110,53 @@ def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=2):
 
     plt.show()
 
+def plot_pixel_decomposition(activations, neurons, img):
+    nf = []
+    for n in neurons:
+        nf.append(n.get_neuron_feature())
+
+    print nf
+
+    idx_images = np.arange(0, len(nf))
+    cols = len(idx_images)
+
+    fig = plt.figure()
+    fig.add_subplot(2,1,1)
+    plt.imshow(img)
+    plt.axis('off')
+
+    for n, img_idx in enumerate(idx_images):
+        img = nf[img_idx]
+        t = round(activations[img_idx], 2)
+        a = fig.add_subplot(2, cols, n + cols+1)
+        plt.imshow(img, interpolation='bicubic')
+        plt.axis('off')
+        a.set_title(t)
+
+    # plt.yticks(np.arange(0, 1.1, 0.1))
+
+    plt.show()
+
+def plot_decomposition(activations, neurons, locations, img):
+    nf = []
+    offset = 1
+    for n in neurons:
+        nf.append(n.get_neuron_feature())
+
+    for i in xrange(len(activations)-1, -1, -1):
+        ri, rf, ci, cf = locations[i]
+        nf[i] = ImageOps.expand(nf[0], offset, fill='white')
+        img.paste(nf[i], (ri-offset, ci-offset, rf+offset, cf+offset))
+
+    plt.imshow(img)
+    plt.axis('off')
+    plt.show()
 
 
 
 def main():
     from keras.applications.vgg16 import VGG16
+    from keras.preprocessing.image import load_img
     import pickle
     from image import ImageDataset
 
@@ -138,7 +181,7 @@ def main():
 
     dataset = '/home/oprades/ImageNet/train/'  # dataset path
     save_path = '/home/oprades/oscar/oscar/'
-    layer_names = ['block1_conv2', 'block2_conv2', 'block5_conv3']
+    layer_names = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
     num_max_activations = 100
 
     model = VGG16()
@@ -151,8 +194,42 @@ def main():
 
     # plot_top_scoring_images(my_net, layer_names[2], 5, n_max=100)
 
-    plot_activation_curve(my_net, layer_names[2], 5)
+    # plot_activation_curve(my_net, layer_names[2], 5)
 
+    activations = np.random.random(2)
+    idx = np.argsort(activations)
+    idx = idx[::-1]
+    activations = activations[idx]
+
+    neurons = my_net.get_layers()[0].get_filters()[0:2]
+
+    img = load_img(dataset + 'n01440764/n01440764_97.JPEG', target_size=(224, 224))
+
+    # plot_pixel_decomposition(activations, neurons, img)
+
+    locations = [(0, 5, 0, 5), (15, 20, 124, 129)]
+    plot_decomposition(activations, neurons, locations, img)
+
+
+
+
+    # my_net.get_layers()[3].mapping_rf(model, 28, 28)
+    # print my_net.get_layers()[3].receptive_field_map
+    #
+    # from keras.models import Model
+    # int_layer = Model(inputs=model.input,
+    #                   outputs=model.get_layer(layer_names[3]).output)
+    #
+    # i = np.random.rand(1,224,224,3)
+    # print int_layer.predict(i).shape
+    #
+    # print my_net.get_layers()[3].get_filters()[504].get_neuron_feature().size
+    # print my_net.get_layers()[3].get_filters()[504].print_params()
+    #
+    # my_net.get_layers()[3].get_filters()[504].get_neuron_feature().show()
+    #
+    # from nefesi.neuron_feature import get_image_receptive_field
+    # print get_image_receptive_field(27,27,model, layer_names[3])
 
 if __name__ == '__main__':
     main()
