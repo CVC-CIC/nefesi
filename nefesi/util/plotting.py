@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
 from PIL import ImageOps
+from sklearn.manifold import TSNE
 
 
 def plot_sel_idx_summary(selectivity_idx, bins=10):
@@ -152,6 +154,70 @@ def plot_decomposition(activations, neurons, locations, img):
     plt.axis('off')
     plt.show()
 
+def plot_similarity_tsne(layer_data):
+
+    # obtain similarity matrix from layer
+    # x = similarity_matrix
+
+    neurons = layer_data.get_filters()
+    num_neurons = len(neurons)
+
+    x = np.random.rand(num_neurons, num_neurons)
+
+    x_result = TSNE(n_components=2, metric='precomputed', random_state=0).fit_transform(x)
+
+    nf = [n.get_neuron_feature() for n in neurons]
+    fig, ax = plt.subplots()
+
+    for i, x, y in zip(range(num_neurons), x_result[:, 0], x_result[:, 1]):
+        print x, y
+        # plt.scatter(x, y)
+        # plt.imshow(nf[i], interpolation='bicubic')
+        imscatter(x, y, nf[i], zoom=3, ax=ax, label=str(i))
+        ax.plot(x, y)
+    plt.axis('off')
+    plt.show()
+
+
+def imscatter(x, y, image, ax=None, zoom=1, label=None):
+    if ax is None:
+        ax = plt.gca()
+
+    im = OffsetImage(image, zoom=zoom, interpolation='bicubic')
+    x, y = np.atleast_1d(x, y)
+
+    ab = AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
+
+    # ax.text(x, y, label) #TODO: put labels (number of the neuron)
+    ax.add_artist(ab)
+    ax.update_datalim(np.column_stack([x, y]))
+    ax.autoscale()
+
+
+def plot_nf_search(selective_neurons):
+    index_name = selective_neurons.keys()
+    layers_v = selective_neurons.values()[0]
+
+    for k, v in layers_v.items():
+        layer_name = k
+        neurons = v
+
+        neurons = sorted(neurons, key=lambda x: x.selectivity_idx.get(index_name[0]))
+
+        cols = int(math.sqrt(len(neurons)))
+        n_images = len(neurons)
+        titles = [round(n.selectivity_idx.get(index_name[0]), 2) for n in neurons]
+
+        fig = plt.figure()
+        fig.suptitle('Layer: ' + layer_name)
+
+        for i, (n, title) in enumerate(zip(neurons, titles)):
+            a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), i + 1,)
+            plt.imshow(n.get_neuron_feature(), interpolation='bicubic')
+            plt.axis('off')
+            a.set_title(title)
+        plt.show()
+        fig.clear()
 
 
 def main():
@@ -159,6 +225,7 @@ def main():
     from keras.preprocessing.image import load_img
     import pickle
     from image import ImageDataset
+    from image import rotate_images
 
 
     # sel_idx = dict()
@@ -208,9 +275,13 @@ def main():
     # plot_pixel_decomposition(activations, neurons, img)
 
     locations = [(0, 5, 0, 5), (15, 20, 124, 129)]
-    plot_decomposition(activations, neurons, locations, img)
+    # plot_decomposition(activations, neurons, locations, img)
 
+    # l = my_net.get_layers()[0]
+    # plot_similarity_tsne(l)
 
+    selective_neurons = my_net.get_selective_neurons('color', layer_names[0:2], inf_thr=0.5)
+    plot_nf_search(selective_neurons)
 
 
     # my_net.get_layers()[3].mapping_rf(model, 28, 28)
@@ -230,6 +301,35 @@ def main():
     #
     # from nefesi.neuron_feature import get_image_receptive_field
     # print get_image_receptive_field(27,27,model, layer_names[3])
+
+    # n = my_net.get_layers()[0].get_filters()[15]
+    # n.test()
+    # patches = n.get_patches(my_net, layer_names[0])
+    # patches[0].show()
+
+    # o_idx = my_net.selectivity_idx_summary(['orientation'], layer_names[0])
+    # o_idx = o_idx['orientation']
+    # o_idx_layer0 = o_idx[0]  # list of 64 neurons indexes
+    # l = np.array(o_idx_layer0)
+    # print l.shape
+    #
+    # max = np.amax(l[:,3])
+    # idx = np.unravel_index(l[:,3].argmax(), l[:,3].shape)
+    #
+    # print max, idx
+    #
+    # print l[:, 3]
+    #
+    # f = my_net.get_layers()[0].get_filters[57]
+    # f.get_neuron_feature.show()
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     main()

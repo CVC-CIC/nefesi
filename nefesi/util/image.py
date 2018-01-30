@@ -6,9 +6,6 @@ from scipy.ndimage.interpolation import rotate
 from nefesi.neuron_feature import get_image_receptive_field
 
 
-
-
-
 class ImageDataset(object):
 
     def __init__(self, src_dataset, target_size=None, preprocessing_function=None):
