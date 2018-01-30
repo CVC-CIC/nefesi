@@ -147,8 +147,8 @@ def get_image_receptive_field(x, y, model, layer):
             col_fin -= padding
 
 
-    #     print 'Layer:', current_layer.name, ' ri:', row_ini, ' rf:', row_fin, ' ci:', col_ini, ' cf:', col_fin
-    #     print 'RF size: ', row_fin - row_ini, col_fin - col_ini
+        # print 'Layer:', current_layer.name, ' ri:', row_ini, ' rf:', row_fin, ' ci:', col_ini, ' cf:', col_fin
+        # print 'RF size: ', row_fin - row_ini, col_fin - col_ini
     # print 'Final values: ', row_ini, row_fin, col_ini, col_fin
 
     return row_ini, row_fin, col_ini, col_fin

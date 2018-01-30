@@ -82,8 +82,6 @@ class NeuronData(object):
 
         return patches
 
-
-
     def print_params(self):
         for i in xrange(len(self.activations)):
             print(i, self.images_id[i], self.activations[i], self.xy_locations[i])

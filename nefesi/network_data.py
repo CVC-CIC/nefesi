@@ -130,7 +130,9 @@ class NetworkData(object):
 
                 print len(selective_neurons[l.get_layer_id()])
 
-        return selective_neurons
+        if selective_neurons is not None:
+            res = {sel_idx: selective_neurons}
+        return res
 
 
     def get_max_activations(self, layer_id, img_name, location, num_max):
@@ -156,29 +158,41 @@ class NetworkData(object):
 
         return list(activations), neurons
 
-    def decomposition(self, src_layer, target_layer, neuron_idx, overlapping=0.0):
+    def decomposition(self, input_image, target_layer, overlapping=0.0):
 
-        for l in self.layers:
-            if src_layer == l.get_layer_id():
-                src_layer = l
-            elif target_layer == l.get_layer_id():
-                target_layer = l
+        if input_image is type(list):  # decomposition of neuron feature
+            src_layer = input_image[0]
+            neuron_idx = input_image[0]
 
-        hc_activations, hc_idx = src_layer.decomposition_nf(
-            neuron_idx, target_layer, self.model, self.dataset)
+            for l in self.layers:
+                if src_layer == l.get_layer_id():
+                    src_layer = l
+                elif target_layer == l.get_layer_id():
+                    target_layer = l
+
+            hc_activations, hc_idx = src_layer.decomposition_nf(
+                neuron_idx, target_layer, self.model, self.dataset)
+
+            neuron_data = src_layer.get_filters()[neuron_idx]
+            src_image = neuron_data.get_neuron_feature()
+            # src_image.show()
+            print src_image.size
+            orp_image = np.zeros(src_image.size)
+
+        else:  # decomposition of an image
+            for l in self.layers:
+                if target_layer == l.get_layer_id():
+                    target_layer = l
+
+            img = self.dataset.load_images([input_image])
+            hc_activations, hc_idx = target_layer.decomposition_image(self.model, img)
+            src_image = img
+            orp_image = np.zeros((src_image.shape[0], src_image.shape[1]))
 
         hc_activations = hc_activations[:, :, 0]
         hc_idx = hc_idx[:, :, 0]
 
-        # for a neuron feature
-        neuron_data = src_layer.get_filters()[neuron_idx]
-        src_image = neuron_data.get_neuron_feature()
-        # src_image.show()
-        print src_image.size
-        orp_image = np.zeros(src_image.size)
-        # end neuron feature
-
-        c_overlapping = 0.0
+        # c_overlapping = 0.0
         res_neurons = []
         res_loc = []
         res_act = []
@@ -197,8 +211,6 @@ class NetworkData(object):
             loc = target_layer.receptive_field_map[pos]
             print target_layer.receptive_field_map
             print loc
-
-
 
             # check overlapping
             ri, rf, ci, cf = loc
