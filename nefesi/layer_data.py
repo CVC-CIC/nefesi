@@ -223,6 +223,19 @@ class LayerData(object):
 
         return hc_activations, hc_idx
 
+    def similar_neurons(self, neuron_idx, inf_thr=0.0, sup_thr=1.0):
 
+        # TODO: implement with self.similarity_idx
+        n = len(self.filters)
+        sim_idx = np.random.rand(n, n)
+
+        res_neurons = []
+        n_sim = sim_idx[neuron_idx, :]
+
+        for i in xrange(len(n_sim)):
+            if inf_thr < n_sim[i] <= sup_thr:
+                res_neurons.append(self.filters[i])
+
+        return res_neurons
 
 
