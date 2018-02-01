@@ -116,22 +116,46 @@ class NetworkData(object):
                 sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
-    def get_selective_neurons(self, sel_idx, layers, inf_thr=0.0, sup_thr=1.0):
+    def get_selective_neurons(self, layers, idx1, idx2=None, inf_thr=0.0, sup_thr=1.0):
         selective_neurons = dict()
+        res_idx2 = None
         for l in self.layers:
             if l.get_layer_id() in layers:
-                index_values = l.get_selectivity_idx(self.model, sel_idx, self.dataset)
+                res_idx1 = []
+                index_values = l.get_selectivity_idx(self.model, idx1, self.dataset)
+
+                if type(index_values[0]) is list:
+                    n_idx = len(index_values[0])
+                    for i in index_values:
+                        res_idx1.append(i[n_idx - 1])
+                else:
+                    res_idx1 = index_values
+
+                if idx2 is not None:
+                    res_idx2 = []
+                    index_values2 = l.get_selectivity_idx(self.model, idx2, self.dataset)
+
+                    if type(index_values2[0]) is list:
+                        n_idx = len(index_values2[0])
+                        for i in index_values2:
+                            res_idx2.append(i[n_idx - 1])
+                    else:
+                        res_idx2 = index_values2
+
                 selective_neurons[l.get_layer_id()] = []
-
                 neurons = l.get_filters()
-                for i in xrange(len(index_values)):
-                    if inf_thr <= index_values[i] <= sup_thr:
-                        selective_neurons[l.get_layer_id()].append(neurons[i])
+                for i in xrange(len(neurons)):
+                    if inf_thr <= res_idx1[i] <= sup_thr:
+                        if res_idx2 is not None and inf_thr <= res_idx2[i] <= sup_thr:
+                            selective_neurons[l.get_layer_id()].append(neurons[i])
+                        else:
+                            selective_neurons[l.get_layer_id()].append(neurons[i])
 
-                print len(selective_neurons[l.get_layer_id()])
+                # print len(selective_neurons[l.get_layer_id()])
 
-        if selective_neurons is not None:
-            res = {sel_idx: selective_neurons}
+        if idx2 is not None:
+            idx1 = (idx1, idx2)
+        res = {idx1: selective_neurons}
         return res
 
 
