@@ -230,12 +230,23 @@ class LayerData(object):
         sim_idx = np.random.rand(n, n)
 
         res_neurons = []
+        idx_values = []
         n_sim = sim_idx[neuron_idx, :]
 
         for i in xrange(len(n_sim)):
-            if inf_thr < n_sim[i] <= sup_thr:
+            idx = n_sim[i]
+            if inf_thr < idx <= sup_thr:
                 res_neurons.append(self.filters[i])
+                idx_values.append(idx)
 
-        return res_neurons
+        # convert lists to numpy arrays and sort
+        res_neurons = np.array(res_neurons)
+        idx_values = np.array(idx_values)
+        sorted_idx = np.argsort(idx_values)
+        sorted_idx = sorted_idx[::-1]
+        res_neurons = res_neurons[sorted_idx]
+        idx_values = idx_values[sorted_idx]
+
+        return res_neurons, idx_values
 
 

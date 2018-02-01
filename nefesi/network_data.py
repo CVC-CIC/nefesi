@@ -98,7 +98,7 @@ class NetworkData(object):
     #
     #     return pickle.load(open(file_name + '.obj', 'rb'))
 
-    def selectivity_idx_summary(self, sel_index, layers, bin=None, labels=None, **kwargs):
+    def selectivity_idx_summary(self, sel_index, layers, labels=None, **kwargs):
         sel_idx_dict = dict()
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
