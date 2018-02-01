@@ -119,17 +119,16 @@ def plot_pixel_decomposition(activations, neurons, img):
 
     print nf
 
-    idx_images = np.arange(0, len(nf))
-    cols = len(idx_images)
+    cols = len(nf)
 
     fig = plt.figure()
     fig.add_subplot(2,1,1)
     plt.imshow(img)
     plt.axis('off')
 
-    for n, img_idx in enumerate(idx_images):
-        img = nf[img_idx]
-        t = round(activations[img_idx], 2)
+    for n in xrange(len(nf)):
+        img = nf[n]
+        t = round(activations[n], 2)
         a = fig.add_subplot(2, cols, n + cols+1)
         plt.imshow(img, interpolation='bicubic')
         plt.axis('off')
@@ -220,6 +219,33 @@ def plot_nf_search(selective_neurons):
         fig.clear()
 
 
+def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
+
+    n_images = len(sim_neuron)
+
+    # cols = int(math.sqrt(n_max))
+    titles = [round(v,2) for v in idx_values]
+
+    fig = plt.figure()
+    fig.suptitle('Similarity index')
+
+    fig.add_subplot(rows+1, 1, 1)
+    plt.imshow(neuron_data.get_neuron_feature(), interpolation='bicubic')
+    plt.axis('off')
+
+    for i, (n, title) in enumerate(zip(sim_neuron, titles)):
+        c = np.ceil(n_images/float(rows))
+        a = fig.add_subplot(rows+1, c, i + c+1)
+        plt.imshow(n.get_neuron_feature(), interpolation='bicubic')
+        plt.axis('off')
+        a.set_title(title)
+    # fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
+    plt.show()
+    fig.clear()
+
+
+
+
 def main():
     from keras.applications.vgg16 import VGG16
     from keras.preprocessing.image import load_img
@@ -263,12 +289,12 @@ def main():
 
     # plot_activation_curve(my_net, layer_names[2], 5)
 
-    activations = np.random.random(2)
+    activations = np.random.random(25)
     idx = np.argsort(activations)
     idx = idx[::-1]
     activations = activations[idx]
 
-    neurons = my_net.get_layers()[0].get_filters()[0:2]
+    neurons = my_net.get_layers()[0].get_filters()[0:25]
 
     img = load_img(dataset + 'n01440764/n01440764_97.JPEG', target_size=(224, 224))
 
@@ -280,8 +306,8 @@ def main():
     # l = my_net.get_layers()[0]
     # plot_similarity_tsne(l)
 
-    selective_neurons = my_net.get_selective_neurons('color', layer_names[0:2], inf_thr=0.5)
-    plot_nf_search(selective_neurons)
+    # selective_neurons = my_net.get_selective_neurons('color', layer_names[0:2], inf_thr=0.5)
+    # plot_nf_search(selective_neurons)
 
 
     # my_net.get_layers()[3].mapping_rf(model, 28, 28)
@@ -323,7 +349,11 @@ def main():
     # f = my_net.get_layers()[0].get_filters[57]
     # f.get_neuron_feature.show()
 
-
+    #
+    # layer1 = my_net.get_layers()[0]
+    # f = layer1.get_filters()[15]
+    # neuron_data, idx_values = layer1.similar_neurons(15)
+    # plot_similarity_idx(f, neuron_data, idx_values, rows=3)
 
 
 
