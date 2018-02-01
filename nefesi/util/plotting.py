@@ -75,7 +75,7 @@ def plot_top_scoring_images(network_data, layer_id, neuron_idx, n_max=50):
     plt.show()
     fig.clear()
 
-def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=2):
+def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=5):
 
     layers = network_data.get_layers()
     neuron = None
@@ -89,13 +89,11 @@ def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=2):
 
     images = neuron.get_patches(network_data, layer_id)
     activations = neuron.get_norm_activations()
-    print activations
 
     idx_images = np.arange(0, len(images), num_images)
     cols = len(idx_images)
 
     fig = plt.figure()
-
     for n, img_idx in enumerate(idx_images):
         img = images[img_idx]
         t = round(activations[img_idx], 2)
@@ -106,32 +104,46 @@ def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=2):
 
     fig.add_subplot(2,1,2)
     plt.plot(activations)
+    plt.ylabel('Neuron activations')
+    plt.xlabel('Ranking of image patches')
+    plt.subplots_adjust(hspace=-0.1)
 
+    # another approach with the images on the curve ploted
 
-    # plt.yticks(np.arange(0, 1.1, 0.1))
+    # fig, ax = plt.subplots()
+    # ax.plot(activations)
+    # for n, img_idx in enumerate(idx_images):
+    #     img = images[img_idx]
+    #     im = OffsetImage(img, zoom=1, interpolation='bicubic')
+    #
+    #     ab = AnnotationBbox(im, (img_idx, activations[img_idx]),
+    #                         xycoords='data', frameon=False)
+    #     ax.add_artist(ab)
 
     plt.show()
 
-def plot_pixel_decomposition(activations, neurons, img):
+
+def plot_pixel_decomposition(activations, neurons, img, rows=2):
+
     nf = []
     for n in neurons:
         nf.append(n.get_neuron_feature())
 
-    print nf
-
-    cols = len(nf)
+    # TODO: add to the image the frame of the region selected (pixel)
+    n_images = len(nf)
 
     fig = plt.figure()
-    fig.add_subplot(2,1,1)
+    fig.add_subplot(rows+1,1,1)
     plt.imshow(img)
     plt.axis('off')
 
-    for n in xrange(len(nf)):
+    for n in xrange(n_images):
         img = nf[n]
-        t = round(activations[n], 2)
-        a = fig.add_subplot(2, cols, n + cols+1)
+        c = np.ceil(n_images/float(rows))
+        a = fig.add_subplot(rows+1, c, n + c +1)
         plt.imshow(img, interpolation='bicubic')
         plt.axis('off')
+        t = round(activations[n], 2)
         a.set_title(t)
 
     # plt.yticks(np.arange(0, 1.1, 0.1))
@@ -152,6 +164,7 @@ def plot_decomposition(activations, neurons, locations, img):
     plt.imshow(img)
     plt.axis('off')
     plt.show()
+
 
 def plot_similarity_tsne(layer_data):
 
@@ -208,7 +221,7 @@ def plot_nf_search(selective_neurons):
         titles = [round(n.selectivity_idx.get(index_name[0]), 2) for n in neurons]
 
         fig = plt.figure()
-        fig.suptitle('Layer: ' + layer_name)
+        fig.suptitle('Layer: ' + layer_name + ', Index: ' + index_name[0])
 
         for i, (n, title) in enumerate(zip(neurons, titles)):
             a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), i + 1,)
@@ -224,7 +237,7 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
     n_images = len(sim_neuron)
 
     # cols = int(math.sqrt(n_max))
-    titles = [round(v,2) for v in idx_values]
+    titles = [round(v, 2) for v in idx_values]
 
     fig = plt.figure()
     fig.suptitle('Similarity index')
@@ -289,19 +302,20 @@ def main():
 
     # plot_activation_curve(my_net, layer_names[2], 5)
 
-    activations = np.random.random(25)
-    idx = np.argsort(activations)
-    idx = idx[::-1]
-    activations = activations[idx]
-
-    neurons = my_net.get_layers()[0].get_filters()[0:25]
-
-    img = load_img(dataset + 'n01440764/n01440764_97.JPEG', target_size=(224, 224))
-
+    # activations = np.random.random(100)
+    # idx = np.argsort(activations)
+    # idx = idx[::-1]
+    # activations = activations[idx]
+    #
+    # neurons = my_net.get_layers()[0].get_filters()[0:100]
+    # print len(neurons)
+    #
+    # img = load_img(dataset + 'n01440764/n01440764_97.JPEG', target_size=(224, 224))
+    #
     # plot_pixel_decomposition(activations, neurons, img)
-
-    locations = [(0, 5, 0, 5), (15, 20, 124, 129)]
-    # plot_decomposition(activations, neurons, locations, img)
+    #
+    # locations = [(0, 5, 0, 5), (15, 20, 124, 129)]
+    # # plot_decomposition(activations, neurons, locations, img)
 
     # l = my_net.get_layers()[0]
     # plot_similarity_tsne(l)
