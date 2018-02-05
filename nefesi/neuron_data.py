@@ -1,5 +1,6 @@
 
 import numpy as np
+from PIL import ImageOps
 
 from class_index import get_class_selectivity_idx
 from color_index import get_color_selectivity_index
@@ -71,13 +72,40 @@ class NeuronData(object):
     def get_neuron_feature(self):
         return self.neuron_feature
 
-    def get_patches(self, network_data, layer):
+    def get_patches(self, network_data, layer_data):
         patches = []
+        image_dataset = network_data.dataset
+        receptive_field = layer_data.receptive_field_map
+        rf_size = layer_data.receptive_field_size
+
         for i in xrange(self.max_activations):
             img = self.images_id[i]
             loc = self.xy_locations[i]
+            crop_pos = receptive_field[loc[0], loc[1]]
+            p = image_dataset.get_patch(img, crop_pos)
+            if rf_size != p.size:
+                w, h = p.size
 
-            p = get_crop_image(network_data.dataset, loc, img, network_data.model, layer)
+                print w, h, i
+                print crop_pos
+                ri, rf, ci, cf = crop_pos
+
+                bl, bu, br, bd = (0, 0, 0, 0)
+
+                if rf_size[0] != w:
+                    if ci == 0:
+                        bl = rf_size[0] - w
+                    else:
+                        bl = rf_size[0] - w
+                if rf_size[1] != h:
+                    if ri == 0:
+                        bu = rf_size[1] - h
+                    else:
+                        bd = rf_size[1] - h
+
+                p = ImageOps.expand(p, (bl, bu, br, bd))
+
+                # p.show()
             patches.append(p)
 
         return patches

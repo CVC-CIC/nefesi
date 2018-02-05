@@ -30,6 +30,12 @@ class ImageDataset(object):
 
         return images
 
+    def get_patch(self, img_name, crop_pos):
+        img = image.load_img(self.src_dataset + img_name, target_size=self.target_size)
+        ri, rf, ci, cf = crop_pos
+        im_crop = img.crop((ci, ri, cf, rf))
+        return im_crop
+
 
 def rgb2opp(img):
     """Converts an image from RGB space to OPP (Opponent color space).

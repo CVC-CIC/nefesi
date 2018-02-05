@@ -45,19 +45,19 @@ def plot_sel_idx_summary(selectivity_idx, bins=10):
         plt.subplots_adjust(right=0.75)
         plt.show()
 
-def plot_top_scoring_images(network_data, layer_id, neuron_idx, n_max=50):
+def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
 
     layers = network_data.get_layers()
     neuron = None
     for l in layers:
-        if l.get_layer_id() in layer_id:
+        if l.get_layer_id() in layer_data.layer_id:
             neuron = l.get_filters()[neuron_idx]
 
     if neuron is None:
         print 'Some msg error'
         return
 
-    images = neuron.get_patches(network_data, layer_id)
+    images = neuron.get_patches(network_data, layer_data)
     activations = neuron.get_norm_activations()
     images = images[:n_max]
     activations = activations[:n_max]
@@ -218,6 +218,8 @@ def plot_nf_search(selective_neurons):
 
         cols = int(math.sqrt(len(neurons)))
         n_images = len(neurons)
+
+        # this plot only works for 1 selectivity_index
         titles = [round(n.selectivity_idx.get(index_name[0]), 2) for n in neurons]
 
         fig = plt.figure()
@@ -257,6 +259,22 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
     fig.clear()
 
 
+def plot_neuron_features(layer_data):
+    nf = []
+    for f in layer_data.get_filters():
+        nf.append(f.get_neuron_feature())
+    n_images = len(nf)
+
+    cols = int(math.sqrt(n_images))
+    fig = plt.figure()
+    for n, img in enumerate(zip(nf)):
+        a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
+        plt.imshow(nf[n], interpolation='bicubic')
+        plt.axis('off')
+        # a.set_title(title)
+    # fig.set_size_inches(n_max*3,n_max*3)
+    plt.show()
+    fig.clear()
 
 
 def main():
@@ -298,7 +316,20 @@ def main():
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
-    # plot_top_scoring_images(my_net, layer_names[2], 5, n_max=100)
+    l1 = my_net.get_layers()[1]
+    l1.receptive_field_map = None
+    l1.receptive_field_size = None
+    # for n in l1.get_filters():
+    #     print n.get_neuron_feature().size
+
+
+    plot_neuron_features(my_net.get_layers()[1])
+
+
+    l1.build_neuron_feature(my_net)
+    plot_neuron_features(my_net.get_layers()[1])
+
+    # plot_top_scoring_images(my_net, l1, 25, n_max=100)
 
     # plot_activation_curve(my_net, layer_names[2], 5)
 
@@ -320,7 +351,9 @@ def main():
     # l = my_net.get_layers()[0]
     # plot_similarity_tsne(l)
 
-    # selective_neurons = my_net.get_selective_neurons('color', layer_names[0:2], inf_thr=0.5)
+    # selective_neurons = my_net.get_selective_neurons(
+    #     layer_names[0:2], 'color', inf_thr=0.5)
+    # print selective_neurons
     # plot_nf_search(selective_neurons)
 
 

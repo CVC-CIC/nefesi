@@ -12,6 +12,7 @@ class LayerData(object):
         self.similarity_index = None
         self.filters = None
         self.receptive_field_map = None
+        self.receptive_field_size = None
 
 
     def get_layer_id(self):
@@ -25,8 +26,8 @@ class LayerData(object):
         self.filters = get_sorted_activations(file_names, images, model,
                                               self.layer_id, self.filters, num_max_activations, batch_size)
 
-    def build_neuron_feature(self, dataset, model):
-        self.filters = compute_nf(dataset, model, self.layer_id, self.filters)
+    def build_neuron_feature(self, network_data):
+        compute_nf(network_data, self, self.filters)
 
     def get_filters(self):
         return self.filters
@@ -93,6 +94,16 @@ class LayerData(object):
                 ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
                 self.receptive_field_map[i, j] = (ri, rf+1, ci, cf+1)
 
+        # calculate the size of receptive field
+        if self.receptive_field_size is None:
+            r = int(w/2)
+            c = int(h/2)
+            ri, rf, ci, cf = self.receptive_field_map[r, c]
+            height = rf - ri
+            width = cf - ci
+            self.receptive_field_size = (width, height)
+
+
     def get_location_from_rf(self, location):
         row, col = location
 
@@ -124,9 +135,6 @@ class LayerData(object):
 
         activations = activations[0]
         _, w, h, c = activations.shape
-
-        if self.receptive_field_map is None:
-            self.mapping_rf(model, w, h)
 
         hc_activations = np.zeros((w, h, c))
         hc_idx = np.zeros((w, h, c))
@@ -187,9 +195,6 @@ class LayerData(object):
 
         activations = activations[0]
         n_patches, w, h, k = activations.shape
-
-        if target_layer.receptive_field_map is None:
-            target_layer.mapping_rf(model, w, h)
 
 
         # print max_act

@@ -69,7 +69,7 @@ class NetworkData(object):
 
             # pickle.dump(filters, open(self.save_path + layer.get_layer_id() + '.obj', 'wb'))
 
-            layer.build_neuron_feature(self.dataset, self.model)
+            layer.build_neuron_feature(self)
 
             end_comp_nf_time = time.time() - end_act_time - start
 

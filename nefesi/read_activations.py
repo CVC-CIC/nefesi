@@ -38,6 +38,7 @@ def get_activations(model, model_inputs, print_shape_only=False, layer_name=None
             print(layer_activations)
     return activations
 
+
 def get_sorted_activations(file_names, images, model, layer, filters, num_max_activations, batch_size):
 
     import time
@@ -45,7 +46,7 @@ def get_sorted_activations(file_names, images, model, layer, filters, num_max_ac
     # from each neuron for each input
     start = time.time()
     activations = get_activations(model, images, print_shape_only=True, layer_name=layer)
-    print('Time for get activations: '+ str(time.time()-start))
+    print('Time for get activations: ' + str(time.time()-start))
 
     start = time.time()
 

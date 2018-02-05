@@ -3,46 +3,47 @@ from keras.preprocessing import image
 import numpy as np
 
 
-def compute_nf(dataset, model, layer, filters):
+def compute_nf(network_data, layer_data, filters):
 
     # we have to normalize the activations for each neuron before
     # calculate the NF
+    # TODO: move normalization outside from this function
     for f in filters:
-        f.normalize_activations()
+        if f.norm_activations is not None:
+            f.normalize_activations()
+
+    model = network_data.model
+    layer_idx = find_layer_idx(model, layer_data.layer_id)
+    _, w, h, _ = model.layers[layer_idx].output_shape
+
+    if layer_data.receptive_field_map is None:
+        layer_data.mapping_rf(model, w, h)
 
 
     # now, we can calculate the NF for each neuron
     for f in filters:
         if f.norm_activations is not None:
-            activations = f.get_activations()
-            num_a = len(activations)
 
-            img_id = f.get_images_id()
+
+            # img_id = f.get_images_id()
             norm_activations = f.get_norm_activations()
-            locations = f.get_locations()
-            total_act = 0
+            # locations = f.get_locations()
+            patches = f.get_patches(network_data, layer_data)
+            num_a = len(patches)
+
+            total_act = np.zeros(np.array(patches[0]).shape)
             for i in xrange(num_a):
-                img_name = img_id[i]
+                # img_name = img_id[i]
+                img = image.img_to_array(patches[i])
                 norm_act = norm_activations[i]
-                xy = locations[i]
+                # xy = locations[i]
 
-                im_crop = get_crop_image(dataset, xy, img_name, model, layer)
+                # im_crop = get_crop_image(image_dataset, xy, img_name, model, layer_data.layer_id)
 
-                w, h = im_crop.size
+                # w, h = im_crop.size
+                # w, h = img.shape
 
-                if type(total_act) is not np.ndarray:
-                    im_crop = image.img_to_array(im_crop)
-                    total_act = im_crop
-                else:
-                    if total_act.shape[0] > h or total_act.shape[1] > w:
-                        im_crop = im_crop.resize((total_act.shape[1], total_act.shape[0]))
-                    elif total_act.shape[0] < h or total_act.shape[1] < w:
-                        tmp = image.array_to_img(total_act, scale=False)
-                        total_act = tmp.resize((w, h))
-                        total_act = image.img_to_array(total_act)
-
-                    im_crop = image.img_to_array(im_crop)
-                    total_act = total_act + (im_crop * norm_act)
+                total_act = total_act + (img * norm_act)
 
             f.set_nf(image.array_to_img(total_act/num_a))
 
