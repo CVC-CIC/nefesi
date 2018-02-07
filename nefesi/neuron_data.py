@@ -86,8 +86,6 @@ class NeuronData(object):
             if rf_size != p.size:
                 w, h = p.size
 
-                print w, h, i
-                print crop_pos
                 ri, rf, ci, cf = crop_pos
 
                 bl, bu, br, bd = (0, 0, 0, 0)
