@@ -30,6 +30,10 @@ class ImageDataset(object):
 
         return images
 
+    def load_image(self, img_name):
+        return image.load_img(self.src_dataset + img_name,
+                              target_size=self.target_size)
+
     def get_patch(self, img_name, crop_pos):
         img = image.load_img(self.src_dataset + img_name, target_size=self.target_size)
         ri, rf, ci, cf = crop_pos
