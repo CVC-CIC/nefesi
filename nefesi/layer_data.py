@@ -109,15 +109,12 @@ class LayerData(object):
 
         h, w = self.receptive_field_map.shape
 
-        for i in xrange(h):
-            for j in xrange(w):
-                ri, rf, ci, cf = self.receptive_field_map[i, j]
-                if rf > row >= ri and cf > col >= ci:
-                    return i, j
+        ri, rf, ci, cf = self.receptive_field_map[0, 0]
+        ri2, rf2, ci2, cf2 = self.receptive_field_map[1, 1]
+        stride_r = rf2 - rf
+        stride_c = cf2 - cf
 
-        return None
-
-
+        return row/stride_r, col/stride_c
 
     # decomposition
     def decomposition_image(self, model, img):
