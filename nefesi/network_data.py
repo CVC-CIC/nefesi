@@ -180,13 +180,18 @@ class NetworkData(object):
         for idx in neuron_idx:
             neurons.append(f[int(idx)])
 
-        return list(activations), neurons
+        return list(activations), neurons, layer.receptive_field_map[loc[0], loc[1]]
 
     def decomposition(self, input_image, target_layer, overlapping=0.0):
 
-        if input_image is type(list):  # decomposition of neuron feature
+        print input_image
+        print type(input_image)
+        res_nf = None
+        if isinstance(input_image, list):  # decomposition of neuron feature
+
+            print 22222
             src_layer = input_image[0]
-            neuron_idx = input_image[0]
+            neuron_idx = input_image[1]
 
             for l in self.layers:
                 if src_layer == l.get_layer_id():
@@ -199,10 +204,11 @@ class NetworkData(object):
 
             neuron_data = src_layer.get_filters()[neuron_idx]
             src_image = neuron_data.get_neuron_feature()
+            res_nf = src_image
+
             # src_image.show()
             print src_image.size
-            orp_image = np.zeros(src_image.size)
-
+            # orp_image = np.zeros(src_image.size)
         else:  # decomposition of an image
             for l in self.layers:
                 if target_layer == l.get_layer_id():
@@ -210,8 +216,9 @@ class NetworkData(object):
 
             img = self.dataset.load_images([input_image])
             hc_activations, hc_idx = target_layer.decomposition_image(self.model, img)
-            src_image = img
-            orp_image = np.zeros((src_image.shape[0], src_image.shape[1]))
+            src_image = self.dataset.load_image(input_image)
+
+            # orp_image = np.zeros((src_image.shape[0], src_image.shape[1]))
 
         hc_activations = hc_activations[:, :, 0]
         hc_idx = hc_idx[:, :, 0]
@@ -222,19 +229,17 @@ class NetworkData(object):
         res_act = []
 
         i = 0
-        end_cond = src_image.size[0]*src_image.size[1]
+        orp_image = np.zeros(src_image.size)
+        end_cond = src_image.size[0] * src_image.size[1]
 
         while i < end_cond:
             i += 1
             max_act = np.amax(hc_activations)
             pos = np.unravel_index(hc_activations.argmax(), hc_activations.shape)
-            print pos
             hc_activations[pos] = 0.0
             neuron_idx = hc_idx[pos]
 
             loc = target_layer.receptive_field_map[pos]
-            print target_layer.receptive_field_map
-            print loc
 
             # check overlapping
             ri, rf, ci, cf = loc
@@ -245,7 +250,6 @@ class NetworkData(object):
                 clp_size = clp_size[0]*clp_size[1]
                 non_zero = np.count_nonzero(clp)
                 c_overlapping = float(non_zero)/float(clp_size)
-                print c_overlapping
 
                 if c_overlapping <= overlapping:
                     orp_image[ri:rf, ci:cf] = 1
@@ -258,7 +262,7 @@ class NetworkData(object):
         # print hc_activations
         # print hc_idx.shape
 
-        return res_act, res_neurons, res_loc
+        return res_act, res_neurons, res_loc, res_nf
 
 
 

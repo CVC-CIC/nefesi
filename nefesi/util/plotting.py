@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
-from PIL import ImageOps
+from PIL import ImageDraw
 from sklearn.manifold import TSNE
 
 
@@ -122,18 +122,23 @@ def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=5):
 
     plt.show()
 
-
-def plot_pixel_decomposition(activations, neurons, img, rows=2):
+def plot_pixel_decomposition(activations, neurons, img, loc, rows=2):
 
     nf = []
     for n in neurons:
         nf.append(n.get_neuron_feature())
 
-    # TODO: add to the image the frame of the region selected (pixel)
     n_images = len(nf)
 
+    ri, rf, ci, cf = loc
+
+
+    dr = ImageDraw.Draw(img)
+    dr.rectangle([(ci,ri),(cf-1,rf-1)], outline='red')
+    del dr
+
     fig = plt.figure()
-    fig.add_subplot(rows+1,1,1)
+    fig.add_subplot(rows+1, 1, 1)
     plt.imshow(img)
     plt.axis('off')
 
@@ -156,11 +161,32 @@ def plot_decomposition(activations, neurons, locations, img):
     for n in neurons:
         nf.append(n.get_neuron_feature())
 
+    w, h = nf[0].size
+    print w, h
+
+    fig = plt.figure()
+    fig.add_subplot(1,2,1)
+    plt.imshow(img)
+    plt.axis('off')
+
     for i in xrange(len(activations)-1, -1, -1):
         ri, rf, ci, cf = locations[i]
-        nf[i] = ImageOps.expand(nf[0], offset, fill='white')
-        img.paste(nf[i], (ri-offset, ci-offset, rf+offset, cf+offset))
+        print locations[i]
+        if rf < h:
+            ri = ri - (h - rf)
+        if cf < w:
+            ci = ci - (w - cf)
+        if rf-ri < h:
+            rf = ri + h
+        if cf - ci < w:
+            cf = ci + w
 
+        print ri, rf, ci, cf
+        # nf[i] = ImageOps.expand(nf[i], offset, fill='white')
+        # img.paste(nf[i], (ri-offset, ci-offset, rf+offset, cf+offset))
+        img.paste(nf[i], (ri, ci, rf, cf))
+
+    fig.add_subplot(1,2,2)
     plt.imshow(img)
     plt.axis('off')
     plt.show()
@@ -271,7 +297,7 @@ def plot_neuron_features(layer_data):
         a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
         plt.imshow(nf[n], interpolation='bicubic')
         plt.axis('off')
-        # a.set_title(title)
+        a.set_title(str(n))
     # fig.set_size_inches(n_max*3,n_max*3)
     plt.show()
     fig.clear()
@@ -304,55 +330,63 @@ def main():
     # plot_sel_idx_summary(sel_idx)
 
     dataset = '/home/oprades/ImageNet/train/'  # dataset path
-    save_path = '/home/oprades/oscar/oscar/'
+    save_path = '/home/oprades/oscar/'
     layer_names = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
     num_max_activations = 100
 
     model = VGG16()
 
-    my_net = pickle.load(open(save_path + 'vgg16.obj', 'rb'))
+    my_net = pickle.load(open(save_path + 'vgg16_2.obj', 'rb'))
     my_net.model = model
     img_dataset = ImageDataset(dataset, (224, 224))
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
-    l1 = my_net.get_layers()[1]
-    l1.receptive_field_map = None
-    l1.receptive_field_size = None
+    # for l in my_net.get_layers():
+    #     plot_neuron_features(l)
+    # l1.receptive_field_map = None
+    # l1.receptive_field_size = None
     # for n in l1.get_filters():
     #     print n.get_neuron_feature().size
 
 
-    plot_neuron_features(my_net.get_layers()[1])
+    # plot_neuron_features(l1)
+    #
+    #
+    # l1.build_neuron_feature(my_net)
+    # my_net.save('vgg16_new_NF')
+    # plot_neuron_features(my_net.get_layers()[1])
 
-
-    l1.build_neuron_feature(my_net)
-    plot_neuron_features(my_net.get_layers()[1])
-
-    # plot_top_scoring_images(my_net, l1, 25, n_max=100)
+    # plot_top_scoring_images(my_net, l1, 85, n_max=100)
 
     # plot_activation_curve(my_net, layer_names[2], 5)
+    l1 = my_net.get_layers()[1]
+    # plot_neuron_features(l1)
+    print l1.get_location_from_rf((0,124))
 
-    # activations = np.random.random(100)
-    # idx = np.argsort(activations)
-    # idx = idx[::-1]
-    # activations = activations[idx]
+    # decomposition
+    # img_name = 'n01440764/n01440764_97.JPEG'
+    # # act, neurons, loc = my_net.get_max_activations(3, img_name, (112, 112), 10)
+    # img = load_img(dataset + img_name, target_size=(224, 224))
     #
-    # neurons = my_net.get_layers()[0].get_filters()[0:100]
-    # print len(neurons)
+    # # plot_pixel_decomposition(act, neurons, img, loc)
     #
-    # img = load_img(dataset + 'n01440764/n01440764_97.JPEG', target_size=(224, 224))
+    # # face example!
+    # # act, n, loc, _ = my_net.decomposition(img_name, layer_names[3])
     #
-    # plot_pixel_decomposition(activations, neurons, img)
     #
-    # locations = [(0, 5, 0, 5), (15, 20, 124, 129)]
-    # # plot_decomposition(activations, neurons, locations, img)
+    # act, n, loc, nf = my_net.decomposition([layer_names[4], 67], layer_names[3])
+    # print loc
+    # plot_decomposition(act, n, loc, nf)
+
+
+
 
     # l = my_net.get_layers()[0]
     # plot_similarity_tsne(l)
 
     # selective_neurons = my_net.get_selective_neurons(
-    #     layer_names[0:2], 'color', inf_thr=0.5)
+    #     layer_names[0:2], 'orientation', inf_thr=0.5)
     # print selective_neurons
     # plot_nf_search(selective_neurons)
 
@@ -386,15 +420,15 @@ def main():
     # l = np.array(o_idx_layer0)
     # print l.shape
     #
-    # max = np.amax(l[:,3])
-    # idx = np.unravel_index(l[:,3].argmax(), l[:,3].shape)
+    # max = np.amax(l[:,24])
+    # idx = np.unravel_index(l[:,24].argmax(), l[:,24].shape)
     #
     # print max, idx
     #
-    # print l[:, 3]
+    # print l[:, 24]
     #
-    # f = my_net.get_layers()[0].get_filters[57]
-    # f.get_neuron_feature.show()
+    # f = my_net.get_layers()[0].get_filters()[57]
+    # f.get_neuron_feature().show()
 
     #
     # layer1 = my_net.get_layers()[0]
