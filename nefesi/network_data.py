@@ -146,10 +146,13 @@ class NetworkData(object):
                 neurons = l.get_filters()
                 for i in xrange(len(neurons)):
                     if inf_thr <= res_idx1[i] <= sup_thr:
-                        if res_idx2 is not None and inf_thr <= res_idx2[i] <= sup_thr:
-                            selective_neurons[l.get_layer_id()].append(neurons[i])
+                        if res_idx2 is not None:
+                            if inf_thr <= res_idx2[i] <= sup_thr:
+                                tmp = (neurons[i], res_idx1[i], res_idx2[i])
+                                selective_neurons[l.get_layer_id()].append(tmp)
                         else:
-                            selective_neurons[l.get_layer_id()].append(neurons[i])
+                            tmp = (neurons[i], res_idx1[i])
+                            selective_neurons[l.get_layer_id()].append(tmp)
 
                 # print len(selective_neurons[l.get_layer_id()])
 
