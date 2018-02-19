@@ -6,27 +6,36 @@ from PIL import ImageDraw
 from sklearn.manifold import TSNE
 
 
-def plot_sel_idx_summary(selectivity_idx, bins=10):
-    # TODO: change the map color of bars
+def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
     # TODO: check what kind of index it is. For example, for symmetry plot only the avg
+
+    # avoid indexes lower than 0.0
+
+    cmap = plt.cm.get_cmap(color_map)
+    colors = []
+    for i in xrange(bins):
+        colors.append(cmap(1.*i/bins))
 
     for k, v in selectivity_idx.items():
         N = len(v)
         pos = 0
 
         for l in v:
-            num_f = len(l)
+            # num_f = len(l)
+            print l
             counts, bins = np.histogram(l, bins=bins, range=(0, 1))
+            print counts, bins
+            num_f = sum(counts)
             prc = np.zeros(len(counts))
 
             for i in xrange(len(counts)):
                 prc[i] = float(counts[i])/num_f*100.
-
+            print sum(prc)
             y_offset = 0
 
             bars = []
             for i in xrange(len(prc)):
-                p = plt.bar(pos, prc[i], bottom=y_offset, width=0.35)
+                p = plt.bar(pos, prc[i], bottom=y_offset, width=0.35, color=colors[i])
                 bars.append(p)
                 y_offset = y_offset+prc[i]
             pos += 1
@@ -237,20 +246,20 @@ def plot_nf_search(selective_neurons):
         layer_name = k
         neurons = v
 
-        neurons = sorted(neurons, key=lambda x: x.selectivity_idx.get(index_name[0]))
+        neurons = sorted(neurons, key=lambda x: x[1])
 
         cols = int(math.sqrt(len(neurons)))
         n_images = len(neurons)
 
         # this plot only works for 1 selectivity_index
-        titles = [round(n.selectivity_idx.get(index_name[0]), 2) for n in neurons]
+        titles = [round(n[1], 2) for n in neurons]
 
         fig = plt.figure()
         fig.suptitle('Layer: ' + layer_name + ', Index: ' + index_name[0])
 
         for i, (n, title) in enumerate(zip(neurons, titles)):
             a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), i + 1,)
-            plt.imshow(n.get_neuron_feature(), interpolation='bicubic')
+            plt.imshow(n[0].get_neuron_feature(), interpolation='bicubic')
             plt.axis('off')
             a.set_title(title)
         plt.show()
@@ -330,6 +339,8 @@ def main():
 
     plot_activation_curve(my_net, layer3, 5)
 
+    sel_idx = my_net.selectivity_idx_summary(['color'], layer_names)
+    plot_sel_idx_summary(sel_idx)
 
     # decomposition
     # img_name = 'n01440764/n01440764_97.JPEG'
@@ -349,9 +360,9 @@ def main():
 
 
 
-    selective_neurons = my_net.get_selective_neurons(layer_names[0:2], 'symmetry', idx2='color')
-
-    print selective_neurons
+    # selective_neurons = my_net.get_selective_neurons(layer_names[0], 'color')
+    # #
+    # print selective_neurons
     # plot_nf_search(selective_neurons)
 
     # l = my_net.get_layers()[0]
@@ -363,46 +374,7 @@ def main():
     # plot_nf_search(selective_neurons)
 
 
-    # my_net.get_layers()[3].mapping_rf(model, 28, 28)
-    # print my_net.get_layers()[3].receptive_field_map
-    #
-    # from keras.models import Model
-    # int_layer = Model(inputs=model.input,
-    #                   outputs=model.get_layer(layer_names[3]).output)
-    #
-    # i = np.random.rand(1,224,224,3)
-    # print int_layer.predict(i).shape
-    #
-    # print my_net.get_layers()[3].get_filters()[504].get_neuron_feature().size
-    # print my_net.get_layers()[3].get_filters()[504].print_params()
-    #
-    # my_net.get_layers()[3].get_filters()[504].get_neuron_feature().show()
-    #
-    # from nefesi.neuron_feature import get_image_receptive_field
-    # print get_image_receptive_field(27,27,model, layer_names[3])
 
-    # n = my_net.get_layers()[0].get_filters()[15]
-    # n.test()
-    # patches = n.get_patches(my_net, layer_names[0])
-    # patches[0].show()
-
-    # o_idx = my_net.selectivity_idx_summary(['orientation'], layer_names[0])
-    # o_idx = o_idx['orientation']
-    # o_idx_layer0 = o_idx[0]  # list of 64 neurons indexes
-    # l = np.array(o_idx_layer0)
-    # print l.shape
-    #
-    # max = np.amax(l[:,24])
-    # idx = np.unravel_index(l[:,24].argmax(), l[:,24].shape)
-    #
-    # print max, idx
-    #
-    # print l[:, 24]
-    #
-    # f = my_net.get_layers()[0].get_filters()[57]
-    # f.get_neuron_feature().show()
-
-    #
     # layer1 = my_net.get_layers()[0]
     # f = layer1.get_filters()[15]
     # neuron_data, idx_values = layer1.similar_neurons(15)
