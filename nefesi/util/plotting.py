@@ -75,19 +75,16 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
     plt.show()
     fig.clear()
 
-def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=5):
+def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 
-    layers = network_data.get_layers()
-    neuron = None
-    for l in layers:
-        if l.get_layer_id() in layer_id:
-            neuron = l.get_filters()[neuron_idx]
+
+    neuron = layer_data.get_filters()[neuron_idx]
 
     if neuron is None:
         print 'Some msg error'
         return
 
-    images = neuron.get_patches(network_data, layer_id)
+    images = neuron.get_patches(network_data, layer_data)
     activations = neuron.get_norm_activations()
 
     idx_images = np.arange(0, len(images), num_images)
@@ -98,7 +95,7 @@ def plot_activation_curve(network_data, layer_id, neuron_idx, num_images=5):
         img = images[img_idx]
         t = round(activations[img_idx], 2)
         a = fig.add_subplot(2, cols, n + 1)
-        plt.imshow(img, interpolation='bicubic')
+        plt.imshow(img)
         plt.axis('off')
         a.set_title(t)
 
@@ -311,28 +308,9 @@ def main():
     from image import rotate_images
 
 
-    # sel_idx = dict()
-    # sel_idx['color'] = []
-    # sel_idx['color'].append(np.random.rand(96))
-    # sel_idx['color'].append(np.random.rand(128))
-    #
-    # sel_idx['symmetry'] = []
-    # a = []
-    # for i in xrange(96):
-    #     a.append(np.random.rand(5))
-    # sel_idx['symmetry'].append(a)
-    # a = []
-    # for i in xrange(128):
-    #     a.append(np.random.rand(5))
-    # sel_idx['symmetry'].append(a)
-
-
-    # plot_sel_idx_summary(sel_idx)
-
     dataset = '/home/oprades/ImageNet/train/'  # dataset path
     save_path = '/home/oprades/oscar/'
     layer_names = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
-    num_max_activations = 100
 
     model = VGG16()
 
@@ -342,27 +320,16 @@ def main():
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
-    # for l in my_net.get_layers():
-    #     plot_neuron_features(l)
-    # l1.receptive_field_map = None
-    # l1.receptive_field_size = None
-    # for n in l1.get_filters():
-    #     print n.get_neuron_feature().size
 
+    layer3 = my_net.get_layers()[2]
 
     # plot_neuron_features(l1)
-    #
-    #
-    # l1.build_neuron_feature(my_net)
-    # my_net.save('vgg16_new_NF')
-    # plot_neuron_features(my_net.get_layers()[1])
+
 
     # plot_top_scoring_images(my_net, l1, 85, n_max=100)
 
-    # plot_activation_curve(my_net, layer_names[2], 5)
-    l1 = my_net.get_layers()[1]
-    # plot_neuron_features(l1)
-    print l1.get_location_from_rf((0,124))
+    plot_activation_curve(my_net, layer3, 5)
+
 
     # decomposition
     # img_name = 'n01440764/n01440764_97.JPEG'
@@ -381,6 +348,11 @@ def main():
 
 
 
+
+    selective_neurons = my_net.get_selective_neurons(layer_names[0:2], 'symmetry', idx2='color')
+
+    print selective_neurons
+    # plot_nf_search(selective_neurons)
 
     # l = my_net.get_layers()[0]
     # plot_similarity_tsne(l)
