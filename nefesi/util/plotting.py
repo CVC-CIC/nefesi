@@ -22,15 +22,12 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
 
         for l in v:
             # num_f = len(l)
-            print l
             counts, bins = np.histogram(l, bins=bins, range=(0, 1))
-            print counts, bins
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
             for i in xrange(len(counts)):
                 prc[i] = float(counts[i])/num_f*100.
-            print sum(prc)
             y_offset = 0
 
             bars = []
@@ -53,6 +50,55 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
         plt.legend(bars, labels, bbox_to_anchor=(1.02, 1.02), loc=2)
         plt.subplots_adjust(right=0.75)
         plt.show()
+
+
+def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
+
+    bins = 4
+    cmap = plt.cm.get_cmap(color_map)
+    colors = []
+    for i in xrange(bins):
+        colors.append(cmap(1. * i / bins))
+
+    for k, v in selectivity_idx.items():
+        N = len(v)
+        pos = 0
+
+        for l in v:
+            counts = [0, 0, 0, 0]
+
+            for f in l:
+                max_idx = max(f)
+                counts[f.index(max_idx)] += 1
+            print counts
+            num_f = sum(counts)
+            prc = np.zeros(len(counts))
+
+            for i in xrange(len(counts)):
+                prc[i] = float(counts[i]) / num_f * 100.
+            y_offset = 0
+
+            bars = []
+            for i in xrange(len(prc)):
+                p = plt.bar(pos, prc[i], bottom=y_offset, width=0.35, color=colors[i])
+                bars.append(p)
+                y_offset = y_offset + prc[i]
+            pos += 1
+
+        xticks = []
+        for i in xrange(N):
+            xticks.append('Layer ' + str(i + 1))
+        plt.xticks(np.arange(N), xticks)
+        plt.yticks(np.arange(0, 101, 10))
+
+        labels = ['0', '45', '90', '135']
+
+        plt.ylabel('% of Neurons')
+        plt.title(k + ' selectivity')
+        plt.legend(bars, labels, bbox_to_anchor=(1.02, 1.02), loc=2)
+        plt.subplots_adjust(right=0.75)
+        plt.show()
+
 
 def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
 
@@ -337,10 +383,13 @@ def main():
 
     # plot_top_scoring_images(my_net, l1, 85, n_max=100)
 
-    plot_activation_curve(my_net, layer3, 5)
+    # plot_activation_curve(my_net, layer3, 5)
 
-    sel_idx = my_net.selectivity_idx_summary(['color'], layer_names)
-    plot_sel_idx_summary(sel_idx)
+    sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
+
+    # plot_sel_idx_summary(sel_idx)
+
+    plot_symmetry_distribution_summary(sel_idx)
 
     # decomposition
     # img_name = 'n01440764/n01440764_97.JPEG'
