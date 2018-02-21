@@ -17,11 +17,27 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
         colors.append(cmap(1.*i/bins))
 
     for k, v in selectivity_idx.items():
+
+        # if k == 'symmetry':
+        #     k = 'global symmetry'
+        #     idx = 4
+        #     new_l = []
+        #     for l in v:
+        #         for f in l:
+        #             new_l.append(f[idx])
+        #         l = new_l
+        #
+        #
+        # if k == 'orientation':
+        #     k = 'global orientation'
+        #     idx = 25
+
+
+
         N = len(v)
         pos = 0
 
         for l in v:
-            # num_f = len(l)
             counts, bins = np.histogram(l, bins=bins, range=(0, 1))
             num_f = sum(counts)
             prc = np.zeros(len(counts))
@@ -246,21 +262,22 @@ def plot_decomposition(activations, neurons, locations, img):
 
 def plot_similarity_tsne(layer_data):
 
-    # obtain similarity matrix from layer
-    # x = similarity_matrix
 
     neurons = layer_data.get_filters()
     num_neurons = len(neurons)
 
-    x = np.random.rand(num_neurons, num_neurons)
-
-    x_result = TSNE(n_components=2, metric='precomputed', random_state=0).fit_transform(x)
-
+    # x = np.random.rand(num_neurons, num_neurons)
+    x = layer_data.similarity_index
+    # np.savetxt('sim_l1.txt', x)
+    # x = np.array([[0,0.2,1],[0.2,0,0.8],[0.6,0.1,0]])
+    print x
+    x_result = TSNE(n_components=2, metric='euclidean',
+                    random_state=0).fit_transform(x)
+    print x_result
     nf = [n.get_neuron_feature() for n in neurons]
     fig, ax = plt.subplots()
 
     for i, x, y in zip(range(num_neurons), x_result[:, 0], x_result[:, 1]):
-        print x, y
         # plt.scatter(x, y)
         # plt.imshow(nf[i], interpolation='bicubic')
         imscatter(x, y, nf[i], zoom=3, ax=ax, label=str(i))
@@ -278,7 +295,7 @@ def imscatter(x, y, image, ax=None, zoom=1, label=None):
 
     ab = AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
 
-    # ax.text(x, y, label) #TODO: put labels (number of the neuron)
+    #ax.text(x+2, y+2, label) #TODO: put labels (number of the neuron)
     ax.add_artist(ab)
     ax.update_datalim(np.column_stack([x, y]))
     ax.autoscale()
@@ -369,14 +386,15 @@ def main():
 
     model = VGG16()
 
-    my_net = pickle.load(open(save_path + 'vgg16_2.obj', 'rb'))
+    my_net = pickle.load(open(save_path + 'vgg2_simIdx.obj', 'rb'))
     my_net.model = model
     img_dataset = ImageDataset(dataset, (224, 224))
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
-
+    layer1 = my_net.get_layers()[0]
     layer3 = my_net.get_layers()[2]
+    plot_similarity_tsne(layer1)
 
     # plot_neuron_features(l1)
 
@@ -389,7 +407,7 @@ def main():
 
     # plot_sel_idx_summary(sel_idx)
 
-    plot_symmetry_distribution_summary(sel_idx)
+    # plot_symmetry_distribution_summary(sel_idx)
 
     # decomposition
     # img_name = 'n01440764/n01440764_97.JPEG'
