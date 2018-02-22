@@ -301,11 +301,27 @@ def imscatter(x, y, image, ax=None, zoom=1, label=None):
     ax.autoscale()
 
 
+def plot_2d_index(selectivity_neurons):
+    index_name = selectivity_neurons.keys()[0]
+    layers_v = selectivity_neurons.values()[0]
+    print index_name, layers_v
+
+    for k, v in layers_v.items():
+        layer_name = k
+        neurons = v
+
+
 def plot_nf_search(selective_neurons):
     index_name = selective_neurons.keys()
+    if type(index_name[0]) is tuple:
+        # this plot only works for 1 selectivity_index
+        print 'Msg error: too many indexes to unpack'
+        return
+
     layers_v = selective_neurons.values()[0]
 
     for k, v in layers_v.items():
+
         layer_name = k
         neurons = v
 
@@ -314,7 +330,6 @@ def plot_nf_search(selective_neurons):
         cols = int(math.sqrt(len(neurons)))
         n_images = len(neurons)
 
-        # this plot only works for 1 selectivity_index
         titles = [round(n[1], 2) for n in neurons]
 
         fig = plt.figure()
@@ -394,7 +409,7 @@ def main():
 
     layer1 = my_net.get_layers()[0]
     layer3 = my_net.get_layers()[2]
-    plot_similarity_tsne(layer1)
+    # plot_similarity_tsne(layer1)
 
     # plot_neuron_features(l1)
 
@@ -427,14 +442,15 @@ def main():
 
 
 
-    # selective_neurons = my_net.get_selective_neurons(layer_names[0], 'color')
-    # #
-    # print selective_neurons
+    selective_neurons = my_net.get_selective_neurons(
+        layer_names[0:2], 'color', idx2='orientation')
+    #
+    print selective_neurons
+    plot_2d_index(selective_neurons)
+
     # plot_nf_search(selective_neurons)
-
-    # l = my_net.get_layers()[0]
-    # plot_similarity_tsne(l)
-
+    #
+    #
     # selective_neurons = my_net.get_selective_neurons(
     #     layer_names[0:2], 'orientation', inf_thr=0.5)
     # print selective_neurons
@@ -443,9 +459,10 @@ def main():
 
 
     # layer1 = my_net.get_layers()[0]
-    # f = layer1.get_filters()[15]
-    # neuron_data, idx_values = layer1.similar_neurons(15)
-    # plot_similarity_idx(f, neuron_data, idx_values, rows=3)
+    # f = layer1.get_filters()[45]
+    # neuron_data, idx_values = layer1.similar_neurons(45)
+    # print len(neuron_data), len(idx_values)
+    # plot_similarity_idx(f, neuron_data, idx_values)
 
 
 

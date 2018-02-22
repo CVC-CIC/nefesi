@@ -227,9 +227,7 @@ class LayerData(object):
 
     def similar_neurons(self, neuron_idx, inf_thr=0.0, sup_thr=1.0):
 
-        # TODO: implement with self.similarity_idx
-        n = len(self.filters)
-        sim_idx = np.random.rand(n, n)
+        sim_idx = self.similarity_index
 
         res_neurons = []
         idx_values = []
@@ -237,7 +235,7 @@ class LayerData(object):
 
         for i in xrange(len(n_sim)):
             idx = n_sim[i]
-            if inf_thr < idx <= sup_thr:
+            if inf_thr <= idx <= sup_thr:
                 res_neurons.append(self.filters[i])
                 idx_values.append(idx)
 
