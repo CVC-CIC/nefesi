@@ -190,7 +190,7 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 
     plt.show()
 
-def plot_pixel_decomposition(activations, neurons, img, loc, rows=2):
+def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
 
     nf = []
     for n in neurons:
@@ -202,7 +202,7 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=2):
 
 
     dr = ImageDraw.Draw(img)
-    dr.rectangle([(ci,ri),(cf-1,rf-1)], outline='red')
+    dr.rectangle([(ci,ri),(cf,rf)], outline='red')
     del dr
 
     fig = plt.figure()
@@ -410,12 +410,12 @@ def main():
     # plot_symmetry_distribution_summary(sel_idx)
 
     # decomposition
-    # img_name = 'n01440764/n01440764_97.JPEG'
-    # # act, neurons, loc = my_net.get_max_activations(3, img_name, (112, 112), 10)
+    # img_name = 'n03100240/n03100240_2539.JPEG'
+    # act, neurons, loc = my_net.get_max_activations(3, img_name, (130, 190), 10)
     # img = load_img(dataset + img_name, target_size=(224, 224))
     #
-    # # plot_pixel_decomposition(act, neurons, img, loc)
-    #
+    # plot_pixel_decomposition(act, neurons, img, loc)
+
     # # face example!
     # # act, n, loc, _ = my_net.decomposition(img_name, layer_names[3])
     #
