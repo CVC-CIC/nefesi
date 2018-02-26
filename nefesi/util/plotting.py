@@ -280,13 +280,13 @@ def plot_similarity_tsne(layer_data):
     for i, x, y in zip(range(num_neurons), x_result[:, 0], x_result[:, 1]):
         # plt.scatter(x, y)
         # plt.imshow(nf[i], interpolation='bicubic')
-        imscatter(x, y, nf[i], zoom=3, ax=ax, label=str(i))
+        imscatter(x, y, nf[i], zoom=3, ax=ax, labels=str(i))
         ax.plot(x, y)
     plt.axis('off')
     plt.show()
 
 
-def imscatter(x, y, image, ax=None, zoom=1, label=None):
+def imscatter(x, y, image, ax=None, zoom=1, labels=None):
     if ax is None:
         ax = plt.gca()
 
@@ -303,11 +303,30 @@ def imscatter(x, y, image, ax=None, zoom=1, label=None):
 
 def plot_2d_index(selectivity_neurons):
     index_name = selectivity_neurons.keys()[0]
-    layers_v = selectivity_neurons.values()[0]
+    if type(index_name) is tuple and len(index_name) == 2:
 
-    for k, v in layers_v.items():
-        layer_name = k
-        neurons = v
+        layers_v = selectivity_neurons.values()[0]
+
+        for k, v in layers_v.items():
+            layer_name = k
+            neurons = v
+
+            x_values = [n[1] for n in neurons]
+            y_values = [n[2] for n in neurons]
+            nf = [n[0].get_neuron_feature() for n in neurons]
+
+            fig, ax = plt.subplots()
+            size_fig = fig.get_size_inches()
+            nf_size = nf[0].size
+            zoom = (size_fig[0]+size_fig[1])/nf_size[0]
+            print nf_size
+            for i, x, y in zip(range(len(nf)), x_values, y_values):
+                imscatter(x, y, nf[i], zoom=zoom, ax=ax)
+                ax.plot(x, y)
+            plt.title('Layer: ' + layer_name)
+            plt.xlabel(index_name[0])
+            plt.ylabel(index_name[1])
+            plt.show()
 
 
 def plot_nf_search(selective_neurons, n_max=150):
@@ -445,18 +464,18 @@ def main():
 
 
     selective_neurons = my_net.get_selective_neurons(
-        layer_names[0], 'color')
+        layer_names, 'color', idx2='symmetry')
     plot_nf_search(selective_neurons)
 
 
 
-    print selective_neurons
-    # plot_2d_index(selective_neurons)
-    plot_neuron_features(layer1)
+    # print selective_neurons.values()[0].keys()
+    plot_2d_index(selective_neurons)
+    # plot_neuron_features(layer1)
 
-    plot_nf_search(selective_neurons)
-    #
-    #
+    # plot_nf_search(selective_neurons)
+
+
     # selective_neurons = my_net.get_selective_neurons(
     #     layer_names[0:2], 'orientation', inf_thr=0.5)
     # print selective_neurons

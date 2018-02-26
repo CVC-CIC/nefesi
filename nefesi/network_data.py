@@ -161,7 +161,6 @@ class NetworkData(object):
             values = layers_or_neurons.values()[0]
 
             for k, v in values.items():
-                print k, v
 
                 selective_neurons[k] = []
                 for item in v:
@@ -185,7 +184,6 @@ class NetworkData(object):
                 idx1 = (sel_idx, idx1)
         else:
             raise TypeError('Parameter 1 should be a list of layers,layer name or dict')
-
         if idx2 is not None:
             idx1 = (idx1, idx2)
         res = {idx1: selective_neurons}
