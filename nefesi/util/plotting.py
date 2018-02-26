@@ -304,42 +304,45 @@ def imscatter(x, y, image, ax=None, zoom=1, label=None):
 def plot_2d_index(selectivity_neurons):
     index_name = selectivity_neurons.keys()[0]
     layers_v = selectivity_neurons.values()[0]
-    print index_name, layers_v
 
     for k, v in layers_v.items():
         layer_name = k
         neurons = v
 
 
-def plot_nf_search(selective_neurons):
-    index_name = selective_neurons.keys()
-    if type(index_name[0]) is tuple:
-        # this plot only works for 1 selectivity_index
-        print 'Msg error: too many indexes to unpack'
-        return
-
+def plot_nf_search(selective_neurons, n_max=150):
+    index_name = selective_neurons.keys()[0]
     layers_v = selective_neurons.values()[0]
 
     for k, v in layers_v.items():
 
         layer_name = k
         neurons = v
+        # if len(neurons) > n_max:
+        #     neurons = neurons[:n_max]
 
-        neurons = sorted(neurons, key=lambda x: x[1])
+        neurons = sorted(neurons, key=lambda x: sum(x[1:]))
+        num_neurons = len(neurons)
+        if num_neurons > n_max:
+            neurons = neurons[num_neurons - n_max:]
 
         cols = int(math.sqrt(len(neurons)))
         n_images = len(neurons)
 
-        titles = [round(n[1], 2) for n in neurons]
+        titles = [n[1:] for n in neurons]
 
         fig = plt.figure()
-        fig.suptitle('Layer: ' + layer_name + ', Index: ' + index_name[0])
+        fig.suptitle('Layer: ' + layer_name + ', Index: ' + str(index_name))
 
         for i, (n, title) in enumerate(zip(neurons, titles)):
             a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), i + 1,)
             plt.imshow(n[0].get_neuron_feature(), interpolation='bicubic')
             plt.axis('off')
-            a.set_title(title)
+            tmp_t = ''
+            for t in title:
+                tmp_t += str(round(t, 2)) + ','
+            a.set_title(tmp_t[:-1])
+        # plt.tight_layout()
         plt.show()
         fig.clear()
 
@@ -441,14 +444,17 @@ def main():
 
 
 
-
     selective_neurons = my_net.get_selective_neurons(
-        layer_names[0:2], 'color', idx2='orientation')
-    #
-    print selective_neurons
-    plot_2d_index(selective_neurons)
+        layer_names[0], 'color')
+    plot_nf_search(selective_neurons)
 
-    # plot_nf_search(selective_neurons)
+
+
+    print selective_neurons
+    # plot_2d_index(selective_neurons)
+    plot_neuron_features(layer1)
+
+    plot_nf_search(selective_neurons)
     #
     #
     # selective_neurons = my_net.get_selective_neurons(

@@ -116,45 +116,75 @@ class NetworkData(object):
                 sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
-    def get_selective_neurons(self, layers, idx1, idx2=None, inf_thr=0.0, sup_thr=1.0):
+    def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None, inf_thr=0.0, sup_thr=1.0):
         selective_neurons = dict()
         res_idx2 = None
-        for l in self.layers:
-            if l.get_layer_id() in layers:
-                res_idx1 = []
-                index_values = l.get_selectivity_idx(self.model, idx1, self.dataset)
 
-                if type(index_values[0]) is list:
-                    n_idx = len(index_values[0])
-                    for i in index_values:
-                        res_idx1.append(i[n_idx - 1])
-                else:
-                    res_idx1 = index_values
+        if type(layers_or_neurons) is list or type(layers_or_neurons) is str:
+            layers = layers_or_neurons
+            for l in self.layers:
+                if l.get_layer_id() in layers:
+                    res_idx1 = []
+                    index_values = l.get_selectivity_idx(self.model, idx1, self.dataset)
 
-                if idx2 is not None:
-                    res_idx2 = []
-                    index_values2 = l.get_selectivity_idx(self.model, idx2, self.dataset)
-
-                    if type(index_values2[0]) is list:
-                        n_idx = len(index_values2[0])
-                        for i in index_values2:
-                            res_idx2.append(i[n_idx - 1])
+                    if type(index_values[0]) is list:
+                        n_idx = len(index_values[0])
+                        for i in index_values:
+                            res_idx1.append(i[n_idx - 1])
                     else:
-                        res_idx2 = index_values2
+                        res_idx1 = index_values
 
-                selective_neurons[l.get_layer_id()] = []
-                neurons = l.get_filters()
-                for i in xrange(len(neurons)):
-                    if inf_thr <= res_idx1[i] <= sup_thr:
-                        if res_idx2 is not None:
-                            if inf_thr <= res_idx2[i] <= sup_thr:
-                                tmp = (neurons[i], res_idx1[i], res_idx2[i])
-                                selective_neurons[l.get_layer_id()].append(tmp)
+                    if idx2 is not None:
+                        res_idx2 = []
+                        index_values2 = l.get_selectivity_idx(self.model, idx2, self.dataset)
+
+                        if type(index_values2[0]) is list:
+                            n_idx = len(index_values2[0])
+                            for i in index_values2:
+                                res_idx2.append(i[n_idx - 1])
                         else:
-                            tmp = (neurons[i], res_idx1[i])
-                            selective_neurons[l.get_layer_id()].append(tmp)
+                            res_idx2 = index_values2
 
-                # print len(selective_neurons[l.get_layer_id()])
+                    selective_neurons[l.get_layer_id()] = []
+                    neurons = l.get_filters()
+                    for i in xrange(len(neurons)):
+                        if inf_thr <= res_idx1[i] <= sup_thr:
+                            if res_idx2 is not None:
+                                if inf_thr <= res_idx2[i] <= sup_thr:
+                                    tmp = (neurons[i], res_idx1[i], res_idx2[i])
+                                    selective_neurons[l.get_layer_id()].append(tmp)
+                            else:
+                                tmp = (neurons[i], res_idx1[i])
+                                selective_neurons[l.get_layer_id()].append(tmp)
+        elif type(layers_or_neurons) is dict:
+            sel_idx = layers_or_neurons.keys()[0]
+            values = layers_or_neurons.values()[0]
+
+            for k, v in values.items():
+                print k, v
+
+                selective_neurons[k] = []
+                for item in v:
+                    neuron = item[0]
+                    idx_value = neuron.selectivity_idx.get(idx1)
+
+                    if type(idx_value) is list:
+                        n_idx = len(idx_value)
+                        idx_value = idx_value[n_idx - 1]
+
+                    if inf_thr <= idx_value <= sup_thr:
+                        tmp = list(item)
+                        tmp.append(idx_value)
+                        selective_neurons[k].append(tuple(tmp))
+
+            if type(sel_idx) is tuple:
+                tmp_idx = list(sel_idx)
+                tmp_idx.append(idx1)
+                idx1 = tuple(tmp_idx)
+            else:
+                idx1 = (sel_idx, idx1)
+        else:
+            raise TypeError('Parameter 1 should be a list of layers,layer name or dict')
 
         if idx2 is not None:
             idx1 = (idx1, idx2)
