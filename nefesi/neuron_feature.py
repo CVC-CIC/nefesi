@@ -9,7 +9,7 @@ def compute_nf(network_data, layer_data, filters):
     # calculate the NF
     # TODO: move normalization outside from this function
     for f in filters:
-        if f.norm_activations is not None:
+        if f.norm_activations is None:
             f.normalize_activations()
 
     model = network_data.model

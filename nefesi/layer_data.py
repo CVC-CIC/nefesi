@@ -55,9 +55,22 @@ class LayerData(object):
                 sel_idx.append(res)
         return sel_idx
 
-    def get_similarity_idx(self, model, dataset):
+    def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
         if self.similarity_index is not None:
-            return self.similarity_index
+            if neurons_idx is None:
+                return self.similarity_index
+            else:
+                print 1111
+                # print self.similarity_index[0:4, 0:4]
+                size_new_sim = len(neurons_idx)
+                new_sim = np.zeros((size_new_sim, size_new_sim))
+                for i in xrange(size_new_sim):
+                    idx1 = neurons_idx[i]
+                    for j in xrange(size_new_sim):
+                        new_sim[i, j] = self.similarity_index[idx1, neurons_idx[j]]
+
+
+                return new_sim
         else:
             if self.filters is None:
                 print 'Error message, in layer:', self.layer_id, ', No filters.'

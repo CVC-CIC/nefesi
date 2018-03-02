@@ -260,14 +260,21 @@ def plot_decomposition(activations, neurons, locations, img):
     plt.show()
 
 
-def plot_similarity_tsne(layer_data):
+def plot_similarity_tsne(layer_data, n=None):
 
 
     neurons = layer_data.get_filters()
+
+    idx_neurons = None
+    if n is not None:
+        idx_neurons = [neurons.index(i) for i in n]
+        neurons = n
+        print idx_neurons
+
     num_neurons = len(neurons)
 
     # x = np.random.rand(num_neurons, num_neurons)
-    x = layer_data.similarity_index
+    x = layer_data.get_similarity_idx(neurons_idx=idx_neurons)
     # np.savetxt('sim_l1.txt', x)
     # x = np.array([[0,0.2,1],[0.2,0,0.8],[0.6,0.1,0]])
     print x
@@ -277,10 +284,12 @@ def plot_similarity_tsne(layer_data):
     nf = [n.get_neuron_feature() for n in neurons]
     fig, ax = plt.subplots()
 
+    size_fig = fig.get_size_inches()
+    nf_size = nf[0].size
+    zoom = (size_fig[0] + size_fig[1]) / nf_size[0]
+
     for i, x, y in zip(range(num_neurons), x_result[:, 0], x_result[:, 1]):
-        # plt.scatter(x, y)
-        # plt.imshow(nf[i], interpolation='bicubic')
-        imscatter(x, y, nf[i], zoom=3, ax=ax, labels=str(i))
+        imscatter(x, y, nf[i], zoom=zoom, ax=ax, labels=str(i))
         ax.plot(x, y)
     plt.axis('off')
     plt.show()
@@ -414,7 +423,6 @@ def main():
     from keras.preprocessing.image import load_img
     import pickle
     from image import ImageDataset
-    from image import rotate_images
 
 
     dataset = '/home/oprades/ImageNet/train/'  # dataset path
@@ -424,23 +432,30 @@ def main():
     model = VGG16()
 
     my_net = pickle.load(open(save_path + 'vgg2_simIdx.obj', 'rb'))
+
+    # my_net = pickle.load(open(save_path + 'vgg16_1_2_layers.obj', 'rb'))
+
+
     my_net.model = model
     img_dataset = ImageDataset(dataset, (224, 224))
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
     layer1 = my_net.get_layers()[0]
-    layer3 = my_net.get_layers()[2]
-    # plot_similarity_tsne(layer1)
+    layer2 = my_net.get_layers()[1]
 
-    # plot_neuron_features(l1)
+    # neuron_list = layer1.get_filters()[0:10]
+    # plot_similarity_tsne(layer1, neuron_list)
 
+    # first and second conv layer in first block
+    # plot_neuron_features(layer1)
+    # plot_neuron_features(layer2)
 
     # plot_top_scoring_images(my_net, l1, 85, n_max=100)
 
     # plot_activation_curve(my_net, layer3, 5)
 
-    sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
+    # sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
 
     # plot_sel_idx_summary(sel_idx)
 
@@ -461,18 +476,46 @@ def main():
     # print loc
     # plot_decomposition(act, n, loc, nf)
 
+    plot_similarity_tsne(layer1)
 
+    selective_neurons_gray = my_net.get_selective_neurons(
+        layer_names[0], 'color', sup_thr=0.2)
+    plot_nf_search(selective_neurons_gray)
 
-    selective_neurons = my_net.get_selective_neurons(
-        layer_names, 'color', idx2='symmetry')
-    plot_nf_search(selective_neurons)
+    sel_color = my_net.get_selective_neurons(
+        layer_names[0], 'color', inf_thr=0.2
+    )
+    plot_nf_search(sel_color)
 
+    gray_non_sim = my_net.get_selective_neurons(
+        selective_neurons_gray, 'symmetry', sup_thr=0.75)
+
+    gray_sim = my_net.get_selective_neurons(
+        selective_neurons_gray, 'symmetry', inf_thr=0.75
+    )
+
+    plot_nf_search(gray_non_sim)
+    plot_nf_search(gray_sim)
+
+    color_non_sim = my_net.get_selective_neurons(
+        sel_color, 'symmetry', sup_thr=0.75
+    )
+    color_sim = my_net.get_selective_neurons(
+        sel_color, 'symmetry', inf_thr=0.75
+    )
+    plot_nf_search(color_non_sim)
+    plot_nf_search(color_sim)
+
+    res = color_sim[('color','symmetry')][layer_names[0]]
+    neurons = [n[0] for n in res]
+
+    plot_similarity_tsne(layer1, n=neurons)
 
 
     # print selective_neurons.values()[0].keys()
-    plot_2d_index(selective_neurons)
+    # plot_2d_index(selective_neurons)
     # plot_neuron_features(layer1)
-
+    #
     # plot_nf_search(selective_neurons)
 
 
