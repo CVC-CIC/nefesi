@@ -23,10 +23,12 @@ class ImageDataset(object):
             # print self.src_dataset, n
             i = image.load_img(self.src_dataset + n, target_size=self.target_size)
             i = image.img_to_array(i)
-            if self.preprocessing_function is not None and prep_function is True:
-                i = self.preprocessing_function(i)
+
             # i -= avg_img
             images.append(i)
+
+        if self.preprocessing_function is not None and prep_function is True:
+            images = self.preprocessing_function(np.asarray(images))
 
         return images
 

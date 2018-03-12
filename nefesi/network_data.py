@@ -26,17 +26,16 @@ class NetworkData(object):
             for l in layers:
                 self.layers.append(LayerData(l))
 
-    def eval_network(self, size_dataset, target_size=None, batch_size=32, **kwargs):
+    def eval_network(self, size_dataset, target_size=None, batch_size=32, preprocessing_function=None):
 
         times_ex = []
         self.input_image_size = target_size
 
-        prep_function = kwargs.get('preprocessing_function')
-        self.dataset = ImageDataset(self.dataset_path, target_size, prep_function)
+        self.dataset = ImageDataset(self.dataset_path, target_size, preprocessing_function)
 
         for layer in self.layers:
 
-            datagen = ImageDataGenerator(**kwargs)
+            datagen = ImageDataGenerator()
             data_batch = datagen.flow_from_directory(
                 self.dataset_path,
                 target_size=self.input_image_size,
@@ -51,6 +50,10 @@ class NetworkData(object):
 
             for i in data_batch:
                 images = i[0]
+
+                if preprocessing_function is not None:
+                    images = preprocessing_function(images)
+
                 idx = (data_batch.batch_index - 1) * data_batch.batch_size
                 file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
 
