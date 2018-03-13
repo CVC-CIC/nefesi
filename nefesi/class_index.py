@@ -26,18 +26,21 @@ def get_class_selectivity_idx(filter, labels=None, threshold=1.):
             if i != 0:
                 rel_freq.append([k, v, i, a])
 
-        freq_avoid_th = []
-        sum_fr = 0.0
+        # for f in rel_freq:
+        #     print f
+
+
         for rel in rel_freq:
             rel[3] = rel[3]/sum(norm_act)
-            sum_fr += rel[3]
 
         rel_freq = sorted(rel_freq, key=itemgetter(3), reverse=True)
 
+        freq_avoid_th = []
         sum_fr = 0.0
         for rel in rel_freq:
             sum_fr += rel[3]
             freq_avoid_th.append(rel)
+            # print sum_fr
             if sum_fr >= threshold:
                 break
 
@@ -45,14 +48,30 @@ def get_class_selectivity_idx(filter, labels=None, threshold=1.):
 
         c_select_idx = (num_max_activations-m)/(float(num_max_activations-1))
 
-        return c_select_idx
+        return freq_avoid_th[0][1], round(c_select_idx, 2)
 
     else:
         return None
 
 
 
-# if __name__=='__main__':
+if __name__=='__main__':
+    import pickle
+
+    labels = pickle.load(open('external/labels_imagenet.obj', 'rb'))
+    print labels
+
+    my_net = pickle.load(open('/home/oprades/oscar/block1_3.obj', 'rb'))
+    l1 = my_net.get_layers()[6]
+
+
+    neuron = l1.get_filters()[96]
+    # neuron.print_params()
+    # neuron.get_neuron_feature().show()
+
+    t = get_class_selectivity_idx(neuron, labels=labels)
+    print t
+
 #     import os
 #     from vgg_matconvnet import VGG
 #     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
