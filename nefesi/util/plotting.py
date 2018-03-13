@@ -223,17 +223,20 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
 
     plt.show()
 
-def plot_decomposition(activations, neurons, locations, img):
+def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False):
+
     nf = []
-    offset = 1
     for n in neurons:
         nf.append(n.get_neuron_feature())
 
     w, h = nf[0].size
-    print w, h
+
+    rows = 1
+    if plot_nf_list:
+        rows = 2
 
     fig = plt.figure()
-    fig.add_subplot(1,2,1)
+    fig.add_subplot(rows,2,1)
     plt.imshow(img)
     plt.axis('off')
 
@@ -249,14 +252,19 @@ def plot_decomposition(activations, neurons, locations, img):
         if cf - ci < w:
             cf = ci + w
 
-        print ri, rf, ci, cf
-        # nf[i] = ImageOps.expand(nf[i], offset, fill='white')
-        # img.paste(nf[i], (ri-offset, ci-offset, rf+offset, cf+offset))
         img.paste(nf[i], (ri, ci, rf, cf))
 
-    fig.add_subplot(1,2,2)
+    fig.add_subplot(rows,2,2)
     plt.imshow(img)
     plt.axis('off')
+
+    if plot_nf_list:
+        num_images = len(nf)
+        for i in xrange(num_images):
+            fig.add_subplot(rows, num_images, i + num_images + 1)
+            plt.imshow(nf[i])
+            plt.axis('off')
+
     plt.show()
 
 def test_neuron_sim(layer_data, n=None):
@@ -542,32 +550,58 @@ def main():
     from keras.preprocessing.image import load_img
     import pickle
     from image import ImageDataset
+    from nefesi.network_data import NetworkData
 
 
     dataset = '/home/oprades/ImageNet/train/'  # dataset path
     save_path = '/home/oprades/oscar/'
-    layer_names = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
+    layer_names = ['block1_conv1', 'block1_conv2_sim',
+                   'block2_conv1', 'block2_conv2_sim',
+                   'block3_conv1', 'block3_conv2', 'block3_conv3_sim']
 
     model = VGG16()
 
-    my_net = pickle.load(open(save_path + 'vgg2_simIdx.obj', 'rb'))
+    # my_net = pickle.load(open(save_path + 'vgg2_simIdx.obj', 'rb'))
 
     # my_net = pickle.load(open(save_path + 'vgg16_1_2_layers.obj', 'rb'))
 
-
-    my_net.model = model
+    my_net = NetworkData(model)
     img_dataset = ImageDataset(dataset, (224, 224))
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
-    layer1 = my_net.get_layers()[0]
-    layer2 = my_net.get_layers()[1]
 
 
-    f = layer1.get_filters()[61]
-    n, v = layer1.similar_neurons(61)
-    plot_similarity_idx(f, n, v)
-    plot_similarity_circle(layer1, f)
+
+
+    l = pickle.load(open(save_path + layer_names[3] + '.obj', 'rb'))
+    my_net.layers.append(l)
+    plot_similarity_tsne(l)
+    plot_top_scoring_images(my_net, l, 54, n_max=100)
+
+
+    # layer1 = my_net.get_layers()[0]
+    # layer2 = my_net.get_layers()[1]
+    # layer3 = my_net.get_layers()[2]
+
+    # print layer3.get_layer_id()
+    # plot_neuron_features(layer3)
+    #
+    # new_layer1 = pickle.load(open(save_path+ 'block3_conv3.obj', 'rb'))
+    # # print new_layer3.get_layer_id()
+    # # plot_neuron_features(new_layer3)
+    #
+    #
+    #
+    # plot_neuron_features(new_layer1)
+    #
+    #
+    # plot_top_scoring_images(my_net, new_layer1, 7, n_max=100)
+
+    # f = layer1.get_filters()[61]
+    # n, v = layer1.similar_neurons(61)
+    # plot_similarity_idx(f, n, v)
+    # plot_similarity_circle(layer1, f)
 
 
 
