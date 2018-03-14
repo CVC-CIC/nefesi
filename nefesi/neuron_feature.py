@@ -1,5 +1,7 @@
-from keras.preprocessing import image
 
+from keras.preprocessing import image
+from keras.layers.convolutional import Conv2D
+from keras.layers.pooling import _Pooling2D
 import numpy as np
 
 
@@ -12,11 +14,10 @@ def compute_nf(network_data, layer_data, filters):
         if f.norm_activations is None:
             f.normalize_activations()
 
-    model = network_data.model
-    layer_idx = find_layer_idx(model, layer_data.layer_id)
-    _, w, h, _ = model.layers[layer_idx].output_shape
-
     if layer_data.receptive_field_map is None:
+        model = network_data.model
+        layer_idx = find_layer_idx(model, layer_data.layer_id)
+        _, w, h, _ = model.layers[layer_idx].output_shape
         layer_data.mapping_rf(model, w, h)
 
 
@@ -24,74 +25,30 @@ def compute_nf(network_data, layer_data, filters):
     for f in filters:
         if f.norm_activations is not None:
 
-
-            # img_id = f.get_images_id()
             norm_activations = f.get_norm_activations()
-            # locations = f.get_locations()
             patches = f.get_patches(network_data, layer_data)
             num_a = len(patches)
 
             total_act = np.zeros(np.array(patches[0]).shape)
             for i in xrange(num_a):
-                # img_name = img_id[i]
                 img = image.img_to_array(patches[i])
                 norm_act = norm_activations[i]
-                # xy = locations[i]
-
-                # im_crop = get_crop_image(image_dataset, xy, img_name, model, layer_data.layer_id)
-
-                # w, h = im_crop.size
-                # w, h = img.shape
-
                 total_act = total_act + (img * norm_act)
 
-            f.set_nf(image.array_to_img(total_act/num_a))
+            nf = total_act / num_a
+            min_v = np.min(nf.ravel())
+            max_v = np.max(nf.ravel())
+            nf = nf - min_v
+            nf = nf / (max_v - min_v)
 
-
-
-
-    # prints for debugging
-
-    # number of filters (neurons)
-    # print len(filters)
-
-    # print all neurons
-    # for f in filters:
-    #     print f
-
-    # print the first neuron in a layer
-    # ff = filters[0]
-    # x = len(ff.activations)
-    # for i in range(x):
-    #     print ff.images[i], ff.activations[i], ff.xy[i]
-    #
-    # # print all neuron features (NF) values, from the same layer
-    # for f in filters:
-    #     print f.neuron_feature
+            f.set_nf(image.array_to_img(nf))
 
     return filters
 
-#TODO:This function has to be in ImageDataset class?.
-def get_crop_image(dataset, xy, img_name, model, layer):
-    x = xy[0]
-    y = xy[1]
-    row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
-
-    img = image.load_img(dataset.src_dataset + img_name, target_size=dataset.target_size)
-
-    im_crop = img.crop((col_ini, row_ini, col_fin+1, row_fin+1))
-    return im_crop
-
 
 def get_image_receptive_field(x, y, model, layer):
-    from keras.layers.convolutional import Conv2D
-    from keras.layers.pooling import _Pooling2D
-
-    # input_layer = model.layers[0]
-    # _, init_size, _, _ = input_layer.output_shape
 
     current_layer_idx = find_layer_idx(model, layer_name=layer)
-    # _, current_size, _, _ = model.layers[current_layer_idx].output_shape
 
     row_ini = x
     col_ini = y
@@ -126,14 +83,6 @@ def get_image_receptive_field(x, y, model, layer):
                 total_padding += padding
             else:
                 padding = 0
-
-            # This is a workaround for VGG model translated from Matlab. For any sequential keras model, comment these
-            # lines and uncomment the above.
-            # if i < 5:
-            #     padding = 0
-            # else:
-            #     padding = 1
-
 
             row_ini = row_ini*strides
             col_ini = col_ini*strides
