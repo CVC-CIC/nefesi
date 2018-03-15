@@ -154,15 +154,15 @@ def rotate_rf(img, rot_axis):
     if rot_axis == 0:
         return np.flipud(img)
 
-    if rot_axis == 45:
+    elif rot_axis == 45:
         n_image = img.transpose(1, 0, 2)
         n_image = np.flipud(n_image)
         return np.fliplr(n_image)
 
-    if rot_axis == 90:
+    elif rot_axis == 90:
         return np.fliplr(img)
 
-    if rot_axis == 135:
+    elif rot_axis == 135:
         return img.transpose(1, 0, 2)
-
-    return None
+    else:
+        return None

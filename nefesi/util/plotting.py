@@ -193,6 +193,7 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
 
     nf = []
+    img = img.copy()
     for n in neurons:
         nf.append(n.get_neuron_feature())
 
@@ -226,6 +227,7 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
 def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False):
 
     nf = []
+    img = img.copy()
     for n in neurons:
         nf.append(n.get_neuron_feature())
 
@@ -252,7 +254,7 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
         if cf - ci < w:
             cf = ci + w
 
-        img.paste(nf[i], (ri, ci, rf, cf))
+        img.paste(nf[i], (ci, ri, cf, rf))
 
     fig.add_subplot(rows,2,2)
     plt.imshow(img)
@@ -546,38 +548,60 @@ def plot_neuron_features(layer_data, neuron_list=None):
 
 
 def main():
-    from keras.applications.vgg16 import VGG16
-    from keras.preprocessing.image import load_img
+    from keras.applications.vgg16 import VGG16, preprocess_input
+    from keras.preprocessing import image
     import pickle
     from image import ImageDataset
     from nefesi.network_data import NetworkData
+    from nefesi.neuron_feature import compute_nf
 
 
     dataset = '/home/oprades/ImageNet/train/'  # dataset path
     save_path = '/home/oprades/oscar/'
-    layer_names = ['block1_conv1', 'block1_conv2_sim',
-                   'block2_conv1', 'block2_conv2_sim',
-                   'block3_conv1', 'block3_conv2', 'block3_conv3_sim']
+    layer_names = ['block1_conv1', 'block1_conv2',
+                   'block2_conv1', 'block2_conv2',
+                   'block3_conv1', 'block3_conv2', 'block3_conv3']
 
     model = VGG16()
 
-    # my_net = pickle.load(open(save_path + 'vgg2_simIdx.obj', 'rb'))
+    my_net = pickle.load(open(save_path + 'block1_3.obj', 'rb'))
 
-    # my_net = pickle.load(open(save_path + 'vgg16_1_2_layers.obj', 'rb'))
-
-    my_net = NetworkData(model)
-    img_dataset = ImageDataset(dataset, (224, 224))
+    img_dataset = ImageDataset(dataset, (224, 224), preprocess_input)
+    my_net.model = model
     my_net.dataset = img_dataset
     my_net.save_path = save_path
 
+    for l in my_net.get_layers():
+        print l
+
+    l = my_net.get_layers()[6]
+    plot_neuron_features(l)
+    compute_nf(my_net, l, l.get_filters())
+
+
+    plot_neuron_features(l)
+    # nf = l.get_filters()[131].get_neuron_feature()
+    #
+    # nf_cont = np.asarray(nf).astype(float)
+    # minv = np.min(nf_cont.ravel())
+    # maxv = np.max(nf_cont.ravel())
+    # nf_cont = nf_cont - minv
+    # nf_cont = nf_cont / (maxv - minv)
+    #
+    # nf_cont = image.array_to_img(nf_cont, scale=False)
+    #
+    # print type(nf_cont)
+    #
+    # plt.imshow(nf_cont, interpolation='bilinear')
+    # plt.show()
+    #
+    # plt.imshow(nf, interpolation='bilinear')
+    # plt.show()
 
 
 
 
-    l = pickle.load(open(save_path + layer_names[3] + '.obj', 'rb'))
-    my_net.layers.append(l)
-    plot_similarity_tsne(l)
-    plot_top_scoring_images(my_net, l, 54, n_max=100)
+
 
 
     # layer1 = my_net.get_layers()[0]
@@ -646,87 +670,87 @@ def main():
     # plot_similarity_idx(f, neuron_data, idx_values, rows=3)
 
 
-    selective_neurons_gray = my_net.get_selective_neurons(
-        layer_names[0], 'color', inf_thr=-1.0, sup_thr=0.2)
-    plot_nf_search(selective_neurons_gray)
+    # selective_neurons_gray = my_net.get_selective_neurons(
+    #     layer_names[0], 'color', inf_thr=-1.0, sup_thr=0.2)
+    # plot_nf_search(selective_neurons_gray)
+    # # res = selective_neurons_gray[('color')][layer_names[0]]
+    # # neurons = [n[0] for n in res]
+    # # plot_similarity_tsne(layer1, n=neurons)
+    #
+    # sel_color = my_net.get_selective_neurons(
+    #     layer_names[0], 'color', inf_thr=0.2
+    # )
+    # plot_nf_search(sel_color)
     # res = selective_neurons_gray[('color')][layer_names[0]]
     # neurons = [n[0] for n in res]
+    #
+    # print 111,  len(neurons)
     # plot_similarity_tsne(layer1, n=neurons)
-
-    sel_color = my_net.get_selective_neurons(
-        layer_names[0], 'color', inf_thr=0.2
-    )
-    plot_nf_search(sel_color)
-    res = selective_neurons_gray[('color')][layer_names[0]]
-    neurons = [n[0] for n in res]
-
-    print 111,  len(neurons)
-    plot_similarity_tsne(layer1, n=neurons)
-    print 222, len(neurons)
-    res = test_neuron_sim(layer1, n=neurons)
-    print 333, len(neurons)
-    plot_neuron_features(layer1, neuron_list=neurons)
-    print 444, len(neurons)
-    for r in res:
-        neurons.remove(r)
+    # print 222, len(neurons)
+    # res = test_neuron_sim(layer1, n=neurons)
+    # print 333, len(neurons)
+    # plot_neuron_features(layer1, neuron_list=neurons)
+    # print 444, len(neurons)
+    # for r in res:
+    #     neurons.remove(r)
+    # #
+    # # res2 = [[],[],[],[],[]]
+    # # res2_v = [[],[],[],[],[]]
+    # # for n in neurons:
+    # #     sim = 0
+    # #     idx_n = None
+    # #     neu = None
+    # #     for i in xrange(len(res)):
+    # #         idx = layer1.get_filters().index(res[i])
+    # #         idx2 = layer1.get_filters().index(n)
+    # #         tmp_sim = layer1.similarity_index[idx, idx2]
+    # #         if tmp_sim > sim:
+    # #             sim = tmp_sim
+    # #             neu = n
+    # #             idx_n = i
+    # #     res2[idx_n].append(neu)
+    # #     res2_v[idx_n].append(sim)
+    # #
+    # #
+    # # print res2
+    # # print res2_v
+    # #
+    # # for i in xrange(len(res)):
+    # #     res2_v[i] = np.asarray(res2_v[i])
+    # #     order = np.argsort(res2_v[i])
+    # #     order = order[::-1]
+    # #     res2[i] = np.asarray(res2[i])
+    # #     res2[i] = res2[i][order]
+    # #     res2[i] = list(res2[i])
+    # #     res2[i].insert(0, res[i])
+    # #
+    # #     print res2
+    # #     plot_neuron_features(layer1, neuron_list=res2[i])
     #
-    # res2 = [[],[],[],[],[]]
-    # res2_v = [[],[],[],[],[]]
-    # for n in neurons:
-    #     sim = 0
-    #     idx_n = None
-    #     neu = None
-    #     for i in xrange(len(res)):
-    #         idx = layer1.get_filters().index(res[i])
-    #         idx2 = layer1.get_filters().index(n)
-    #         tmp_sim = layer1.similarity_index[idx, idx2]
-    #         if tmp_sim > sim:
-    #             sim = tmp_sim
-    #             neu = n
-    #             idx_n = i
-    #     res2[idx_n].append(neu)
-    #     res2_v[idx_n].append(sim)
     #
+    # # idx = 20
+    # # neuron_data, idx_values = layer1.similar_neurons(idx)
+    # # print len(neuron_data), len(idx_values)
+    # # plot_similarity_idx(layer1.get_filters()[idx], neuron_data, idx_values)
     #
-    # print res2
-    # print res2_v
+    # print 555, len(neurons)
+    # plot_neuron_features(layer1, neuron_list=neurons)
+    # for r in res:
     #
-    # for i in xrange(len(res)):
-    #     res2_v[i] = np.asarray(res2_v[i])
-    #     order = np.argsort(res2_v[i])
-    #     order = order[::-1]
-    #     res2[i] = np.asarray(res2[i])
-    #     res2[i] = res2[i][order]
-    #     res2[i] = list(res2[i])
-    #     res2[i].insert(0, res[i])
+    #     idx = layer1.get_filters().index(r)
     #
-    #     print res2
-    #     plot_neuron_features(layer1, neuron_list=res2[i])
-
-
-    # idx = 20
-    # neuron_data, idx_values = layer1.similar_neurons(idx)
-    # print len(neuron_data), len(idx_values)
-    # plot_similarity_idx(layer1.get_filters()[idx], neuron_data, idx_values)
-
-    print 555, len(neurons)
-    plot_neuron_features(layer1, neuron_list=neurons)
-    for r in res:
-
-        idx = layer1.get_filters().index(r)
-
-        # print idx
-        n, v = layer1.similar_neurons(idx)
-        # print len(n)
-        tmp_n = []
-        tmp_v = []
-        for i in xrange(len(n)):
-            if n[i] in neurons:
-                tmp_n.append(n[i])
-                tmp_v.append(v[i])
-        print 666, len(tmp_n)
-        plot_neuron_features(layer1, neuron_list=n)
-        plot_similarity_idx(layer1.get_filters()[idx], tmp_n, tmp_v)
+    #     # print idx
+    #     n, v = layer1.similar_neurons(idx)
+    #     # print len(n)
+    #     tmp_n = []
+    #     tmp_v = []
+    #     for i in xrange(len(n)):
+    #         if n[i] in neurons:
+    #             tmp_n.append(n[i])
+    #             tmp_v.append(v[i])
+    #     print 666, len(tmp_n)
+    #     plot_neuron_features(layer1, neuron_list=n)
+    #     plot_similarity_idx(layer1.get_filters()[idx], tmp_n, tmp_v)
 
 
     #
