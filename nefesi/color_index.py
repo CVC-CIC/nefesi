@@ -1,5 +1,6 @@
 import os
 import pickle
+import numpy as np
 
 import read_activations
 from neuron_feature import get_image_receptive_field
@@ -35,8 +36,10 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset):
             # image.array_to_img(init_image, scale=False).show()
             # init_image -= avg_img
 
-            init_image = dataset.preprocessing_function(init_image)
+            # init_image = dataset.preprocessing_function(init_image)
             images_gray.append(init_image)
+
+        images_gray = dataset.preprocessing_function(np.asarray(images_gray))
 
         new_activations = read_activations.get_activation_from_pos(images_gray, model, layer, idx_neuron, locations)
         # new_activations.print_params()

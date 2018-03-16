@@ -6,7 +6,6 @@ from class_index import get_class_selectivity_idx
 from color_index import get_color_selectivity_index
 from orientation_index import get_orientation_index
 from symmetry_index import get_symmetry_index
-from neuron_feature import get_crop_image
 
 
 class NeuronData(object):
