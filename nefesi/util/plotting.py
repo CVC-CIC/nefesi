@@ -499,6 +499,30 @@ def plot_nf_search(selective_neurons, n_max=150):
         fig.clear()
 
 
+#plot_neuron_features
+def plot_neuron_features(layer_data, neuron_list=None):
+    nf = []
+    if neuron_list is None:
+        neuron_list = layer_data.get_filters()
+
+    for f in neuron_list:
+        nf.append(f.get_neuron_feature())
+
+
+    n_images = len(nf)
+
+    cols = int(math.sqrt(n_images))
+    fig = plt.figure()
+    for n, img in enumerate(zip(nf)):
+        a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
+        plt.imshow(nf[n], interpolation='bicubic')
+        plt.axis('off')
+        a.set_title(str(n))
+    # fig.set_size_inches(n_max*3,n_max*3)
+    plt.show()
+    fig.clear()
+
+
 def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
 
     n_images = len(sim_neuron)
@@ -520,29 +544,6 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
         plt.axis('off')
         a.set_title(title)
     # fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
-    plt.show()
-    fig.clear()
-
-
-def plot_neuron_features(layer_data, neuron_list=None):
-    nf = []
-    if neuron_list is None:
-        neuron_list = layer_data.get_filters()
-
-    for f in neuron_list:
-        nf.append(f.get_neuron_feature())
-
-
-    n_images = len(nf)
-
-    cols = int(math.sqrt(n_images))
-    fig = plt.figure()
-    for n, img in enumerate(zip(nf)):
-        a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
-        plt.imshow(nf[n], interpolation='bicubic')
-        plt.axis('off')
-        a.set_title(str(n))
-    # fig.set_size_inches(n_max*3,n_max*3)
     plt.show()
     fig.clear()
 
