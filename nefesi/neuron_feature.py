@@ -7,13 +7,6 @@ import numpy as np
 
 def compute_nf(network_data, layer_data, filters):
 
-    # we have to normalize the activations for each neuron before
-    # calculate the NF
-    # TODO: move normalization outside from this function
-    for f in filters:
-        if f.norm_activations is None:
-            f.normalize_activations()
-
     if layer_data.receptive_field_map is None:
         model = network_data.model
         layer_idx = find_layer_idx(model, layer_data.layer_id)

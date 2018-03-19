@@ -53,6 +53,9 @@ class NeuronData(object):
         self.images_id = self.images_id[:self.max_activations]
         self.xy_locations = self.xy_locations[:self.max_activations]
 
+        self.normalize_activations()
+
+
     def set_nf(self, nf):
         self.neuron_feature = nf
 
@@ -141,7 +144,7 @@ class NeuronData(object):
 
     def print_params(self):
         for i in xrange(len(self.activations)):
-            print(i, self.images_id[i], self.activations[i], self.xy_locations[i])
+            print(i, self.images_id[i], self.activations[i], self.xy_locations[i], self.norm_activations[i])
 
     # selectivity indexes
     def color_selectivity_idx(self, model, layer, filter_idx, dataset):
