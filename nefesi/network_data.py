@@ -66,10 +66,9 @@ class NetworkData(object):
                 ' Images processed: ', idx + data_batch.batch_size
 
                 n_batches += 1
-                # if n_batches >= num_images / data_batch.batch_size:
-                #     break
-                if n_batches > 2:
+                if n_batches >= num_images / data_batch.batch_size:
                     break
+
             layer.set_max_activations()
 
             end_act_time = time.time() - start
