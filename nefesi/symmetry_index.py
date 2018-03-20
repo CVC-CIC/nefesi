@@ -5,7 +5,7 @@ import read_activations
 from util.image import rotate_images_axis
 
 
-def get_symmetry_index(filter, model, layer, idx_neuron, dataset):
+def get_symmetry_index(filter, model, layer_data, idx_neuron, dataset):
 
     results = []
     symm_axes = [0, 45, 90, 135]
@@ -23,9 +23,10 @@ def get_symmetry_index(filter, model, layer, idx_neuron, dataset):
         images = dataset.load_images(image_names)
 
         for axes in symm_axes:
-            images_r = rotate_images_axis(images, axes, model, layer, locations)
+            images_r = rotate_images_axis(images, axes, layer_data, locations)
 
-            rot_activations = read_activations.get_activation_from_pos(images_r, model, layer, idx_neuron, locations)
+            rot_activations = read_activations.get_activation_from_pos(images_r, model,
+                                                                       layer_data.get_layer_id(), idx_neuron, locations)
 
 
             # print axes, rot_activations

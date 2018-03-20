@@ -2,8 +2,7 @@ import numpy as np
 
 from keras.preprocessing import image
 from scipy.ndimage.interpolation import rotate
-# from ..neuron_feature import get_image_receptive_field
-from nefesi.neuron_feature import get_image_receptive_field
+
 
 
 class ImageDataset(object):
@@ -91,14 +90,14 @@ def crop_image(img, cropx, cropy):
     return img[starty:starty+cropy, startx:startx+cropx]
 
 
-def rotate_images(model, images, degrees, pos, layer):
+def rotate_images(images, degrees, pos, layer_data):
     images_rotated = []
     for i in xrange(len(images)):
         init_image = np.copy(images[i])
         x, y = pos[i]
         print x, y
-        row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
-        receptive_field = init_image[row_ini:row_fin+1, col_ini:col_fin+1]
+        row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
+        receptive_field = init_image[row_ini:row_fin, col_ini:col_fin]
         w, h, d = receptive_field.shape
         print w, h, d
         padding_w = int(round(w/2))
@@ -116,23 +115,21 @@ def rotate_images(model, images, degrees, pos, layer):
 
         img = rotate(new_shape, degrees, reshape=False)
         img = crop_image(img, h, w)
-        init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = img
+        init_image[row_ini:row_fin, col_ini:col_fin] = img
 
         images_rotated.append(init_image)
-
 
     return images_rotated
 
 
-
-def rotate_images_axis(images, rot_axis, model, layer, pos):
+def rotate_images_axis(images, rot_axis, layer_data, pos):
 
     rot_images = []
     for i in xrange(len(images)):
         init_image = np.copy(images[i])
         x, y = pos[i]
-        row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
-        receptive_field = init_image[row_ini:row_fin+1, col_ini:col_fin+1]
+        row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
+        receptive_field = init_image[row_ini:row_fin, col_ini:col_fin]
 
         rf_shape = receptive_field.shape
 
@@ -144,7 +141,7 @@ def rotate_images_axis(images, rot_axis, model, layer, pos):
         if rf_shape != rot_rf_shape:
             rotated_receptive_field = np.reshape(rotated_receptive_field, rf_shape)
 
-        init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = rotated_receptive_field
+        init_image[row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
         rot_images.append(init_image)
 
     return rot_images

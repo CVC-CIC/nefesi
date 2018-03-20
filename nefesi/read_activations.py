@@ -74,9 +74,9 @@ def get_sorted_activations(file_names, images, model, layer, filters, num_max_ac
     return filters
 
 
-def get_activation_from_pos(images, model, layer, idx_neuron, pos):
+def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
 
-    activations = get_activations(model, images, print_shape_only=True, layer_name=layer)
+    activations = get_activations(model, images, print_shape_only=True, layer_name=layer_name)
 
     for layer_activation in activations:
         num_images, filter_size, _, num_filters = layer_activation.shape

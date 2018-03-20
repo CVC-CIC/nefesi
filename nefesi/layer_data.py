@@ -36,16 +36,16 @@ class LayerData(object):
         sel_idx = []
         for f in self.filters:
             if index_name == 'color':
-                res = f.color_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset)
+                res = f.color_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'orientation':
                 degrees = kwargs.get('degrees')
                 n_rotations = kwargs.get('n_rotations')
-                res = f.orientation_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset,
+                res = f.orientation_selectivity_idx(model, self, self.filters.index(f), dataset,
                                                     degrees, n_rotations)
                 sel_idx.append(res)
             elif index_name == 'symmetry':
-                res = f.symmetry_selectivity_idx(model, self.layer_id, self.filters.index(f), dataset)
+                res = f.symmetry_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'class':
                 if labels is None:
@@ -181,9 +181,9 @@ class LayerData(object):
 
         for i in xrange(len(neuron_images)):
             loc = neuron_locations[i]
-            row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(loc[0], loc[1], model, self.layer_id)
+            row_ini, row_fin, col_ini, col_fin = self.receptive_field_map[loc[0], loc[1]]
             patch = neuron_images[i]
-            patch = patch[row_ini:row_fin+1, col_ini:col_fin+1]
+            patch = patch[row_ini:row_fin, col_ini:col_fin]
 
             r, c, k = patch.shape
             img_size = dataset.target_size
@@ -199,7 +199,8 @@ class LayerData(object):
             max_act.append(f.get_activations()[0])
 
         activations = get_activations(model, neuron_images,
-                                      print_shape_only=True, layer_name=target_layer.get_layer_id())
+                                      print_shape_only=True,
+                                      layer_name=target_layer.get_layer_id())
 
 
 

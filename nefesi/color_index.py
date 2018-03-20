@@ -3,12 +3,11 @@ import pickle
 import numpy as np
 
 import read_activations
-from neuron_feature import get_image_receptive_field
 from util.image import rgb2opp, image2max_gray
 
 
 
-def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset):
+def get_color_selectivity_index(filter, model, layer_data, idx_neuron, dataset):
 
     activations = filter.get_activations()
     # filter.print_params()
@@ -24,14 +23,14 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset):
 
         for i in xrange(len(images)):
             x, y = locations[i]
-            row_ini, row_fin, col_ini, col_fin = get_image_receptive_field(x, y, model, layer)
+            row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
             init_image = images[i]
-            img_crop = init_image[row_ini:row_fin+1, col_ini:col_fin+1]
+            img_crop = init_image[row_ini:row_fin, col_ini:col_fin]
 
             im_opp = rgb2opp(img_crop)
             im_gray = image2max_gray(im_opp)
 
-            init_image[row_ini:row_fin + 1, col_ini:col_fin + 1] = im_gray
+            init_image[row_ini:row_fin, col_ini:col_fin] = im_gray
 
             # image.array_to_img(init_image, scale=False).show()
             # init_image -= avg_img
@@ -41,7 +40,8 @@ def get_color_selectivity_index(filter, model, layer, idx_neuron, dataset):
 
         images_gray = dataset.preprocessing_function(np.asarray(images_gray))
 
-        new_activations = read_activations.get_activation_from_pos(images_gray, model, layer, idx_neuron, locations)
+        new_activations = read_activations.get_activation_from_pos(images_gray, model,
+                                                                   layer_data.get_layer_id(), idx_neuron, locations)
         # new_activations.print_params()
         norm_gray_activations = new_activations/max_rgb_activation
 

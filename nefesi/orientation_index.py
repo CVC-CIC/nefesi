@@ -5,7 +5,7 @@ import read_activations
 from util.image import rotate_images
 
 
-def get_orientation_index(filter, model, layer, idx_neuron, dataset, degrees=None, n_rotations=None):
+def get_orientation_index(filter, model, layer_data, idx_neuron, dataset, degrees=None, n_rotations=None):
 
     if degrees is None:
         degrees = 15
@@ -27,8 +27,8 @@ def get_orientation_index(filter, model, layer, idx_neuron, dataset, degrees=Non
         images = dataset.load_images(image_names)
 
         for degrees in l_degrees:
-            images_r = rotate_images(model, images, degrees, locations, layer)
-            rot_activations = read_activations.get_activation_from_pos(images_r, model, layer, idx_neuron, locations)
+            images_r = rotate_images(images, degrees, locations, layer_data)
+            rot_activations = read_activations.get_activation_from_pos(images_r, model, layer_data.get_layer_id(), idx_neuron, locations)
             # print axes, rot_activations
             norm_rot_act = rot_activations/max_act
 

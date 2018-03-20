@@ -147,31 +147,30 @@ class NeuronData(object):
             print(i, self.images_id[i], self.activations[i], self.xy_locations[i], self.norm_activations[i])
 
     # selectivity indexes
-    def color_selectivity_idx(self, model, layer, filter_idx, dataset):
+    def color_selectivity_idx(self, model, layer_data, filter_idx, dataset):
         color_idx = self.selectivity_idx.get('color')
         if color_idx is not None:
             return color_idx
 
-        color_idx = get_color_selectivity_index(self, model, layer, filter_idx, dataset)
+        color_idx = get_color_selectivity_index(self, model, layer_data, filter_idx, dataset)
         self.selectivity_idx['color'] = color_idx
         return color_idx
 
-
-    def orientation_selectivity_idx(self, model, layer, filter_idx, dataset, degrees=None, n_rotations=None):
+    def orientation_selectivity_idx(self, model, layer_data, filter_idx, dataset, degrees=None, n_rotations=None):
         orientation_idx = self.selectivity_idx.get('orientation')
         if orientation_idx is not None:
             return orientation_idx
 
-        orientation_idx = get_orientation_index(self, model, layer, filter_idx, dataset, degrees, n_rotations)
+        orientation_idx = get_orientation_index(self, model, layer_data, filter_idx, dataset, degrees, n_rotations)
         self.selectivity_idx['orientation'] = orientation_idx
         return orientation_idx
 
-    def symmetry_selectivity_idx(self, model, layer, filter_idx, dataset):
+    def symmetry_selectivity_idx(self, model, layer_data, filter_idx, dataset):
         symmetry_idx = self.selectivity_idx.get('symmetry')
         if symmetry_idx is not None:
             return symmetry_idx
 
-        symmetry_idx = get_symmetry_index(self, model, layer, filter_idx, dataset)
+        symmetry_idx = get_symmetry_index(self, model, layer_data, filter_idx, dataset)
         self.selectivity_idx['symmetry'] = symmetry_idx
         return symmetry_idx
 
