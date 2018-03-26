@@ -32,26 +32,31 @@ class LayerData(object):
     def get_filters(self):
         return self.filters
 
-    def get_selectivity_idx(self, model, index_name, dataset, labels=None, **kwargs):
+    def selectivity_idx(self, model, index_name, dataset,
+                        labels=None, thr_class_idx=1., thr_pc=0.1):
         sel_idx = []
         for f in self.filters:
             if index_name == 'color':
                 res = f.color_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'orientation':
-                degrees = kwargs.get('degrees')
-                n_rotations = kwargs.get('n_rotations')
-                res = f.orientation_selectivity_idx(model, self, self.filters.index(f), dataset,
-                                                    degrees, n_rotations)
+                res = f.orientation_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'symmetry':
                 res = f.symmetry_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'class':
                 if labels is None:
-                    print 'Error message, in layer:', self.layer_id, ', No labels.'
-                    return None
-                res = f.class_selectivity_idx(labels)
+                    raise ValueError('The `labels` argument should be '
+                                     'a dictionary')
+                res = f.class_selectivity_idx(labels, thr_class_idx)
+                sel_idx.append(res)
+
+            elif index_name == 'population code':
+                if labels is None:
+                    raise ValueError('The `labels` argument should be '
+                                     'a dictionary')
+                res = f.population_code_idx(labels, thr_pc)
                 sel_idx.append(res)
         return sel_idx
 

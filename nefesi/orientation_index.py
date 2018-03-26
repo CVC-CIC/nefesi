@@ -5,12 +5,11 @@ import read_activations
 from util.image import rotate_images
 
 
-def get_orientation_index(filter, model, layer_data, idx_neuron, dataset, degrees=None, n_rotations=None):
+def get_orientation_index(filter, model, layer_data, idx_neuron, dataset):
 
-    if degrees is None:
-        degrees = 15
-    if n_rotations is None:
-        n_rotations = 25
+
+    degrees = 15
+    n_rotations = 25
     l_degrees = [x*degrees for x in xrange(1, n_rotations)]  # avoid 0 degrees
 
     results = []

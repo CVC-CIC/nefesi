@@ -103,14 +103,16 @@ class NetworkData(object):
     #
     #     return pickle.load(open(file_name + '.obj', 'rb'))
 
-    def selectivity_idx_summary(self, sel_index, layers, labels=None, **kwargs):
+    def get_selectivity_idx(self, sel_index, layers,
+                            labels=None, thr_class_idx=1., thr_pc=0.1):
         sel_idx_dict = dict()
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
             for l in self.layers:
                 if l.get_layer_id() in layers:
-                    sel_idx_dict[index_name].append(l.get_selectivity_idx(
-                        self.model, index_name, self.dataset, labels, **kwargs))
+                    sel_idx_dict[index_name].append(l.selectivity_idx(
+                        self.model, index_name, self.dataset, labels=labels,
+                        thr_class_idx=thr_class_idx, thr_pc=thr_pc))
 
         return sel_idx_dict
 
@@ -130,7 +132,7 @@ class NetworkData(object):
             for l in self.layers:
                 if l.get_layer_id() in layers:
                     res_idx1 = []
-                    index_values = l.get_selectivity_idx(self.model, idx1, self.dataset)
+                    index_values = l.selectivity_idx(self.model, idx1, self.dataset)
 
                     if type(index_values[0]) is list:
                         n_idx = len(index_values[0])
@@ -141,7 +143,7 @@ class NetworkData(object):
 
                     if idx2 is not None:
                         res_idx2 = []
-                        index_values2 = l.get_selectivity_idx(self.model, idx2, self.dataset)
+                        index_values2 = l.selectivity_idx(self.model, idx2, self.dataset)
 
                         if type(index_values2[0]) is list:
                             n_idx = len(index_values2[0])
@@ -188,7 +190,7 @@ class NetworkData(object):
             else:
                 idx1 = (sel_idx, idx1)
         else:
-            raise TypeError('Parameter 1 should be a list of layers,layer name or dict')
+            raise TypeError('Parameter 1 should be a list of layers, layer name or dict')
         if idx2 is not None:
             idx1 = (idx1, idx2)
         res = {idx1: selective_neurons}

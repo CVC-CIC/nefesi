@@ -2,7 +2,7 @@
 import numpy as np
 from PIL import ImageOps
 
-from class_index import get_class_selectivity_idx
+from class_index import get_class_selectivity_idx, get_population_code_idx
 from color_index import get_color_selectivity_index
 from orientation_index import get_orientation_index
 from symmetry_index import get_symmetry_index
@@ -156,12 +156,12 @@ class NeuronData(object):
         self.selectivity_idx['color'] = color_idx
         return color_idx
 
-    def orientation_selectivity_idx(self, model, layer_data, filter_idx, dataset, degrees=None, n_rotations=None):
+    def orientation_selectivity_idx(self, model, layer_data, filter_idx, dataset):
         orientation_idx = self.selectivity_idx.get('orientation')
         if orientation_idx is not None:
             return orientation_idx
 
-        orientation_idx = get_orientation_index(self, model, layer_data, filter_idx, dataset, degrees, n_rotations)
+        orientation_idx = get_orientation_index(self, model, layer_data, filter_idx, dataset)
         self.selectivity_idx['orientation'] = orientation_idx
         return orientation_idx
 
@@ -174,14 +174,31 @@ class NeuronData(object):
         self.selectivity_idx['symmetry'] = symmetry_idx
         return symmetry_idx
 
-    def class_selectivity_idx(self, labels):
+    def class_selectivity_idx(self, labels=None, threshold=1.):
         class_idx = self.selectivity_idx.get('class')
         if class_idx is not None:
             return class_idx
 
-        class_idx = get_class_selectivity_idx(self, labels)
+        if labels is None:
+            raise ValueError('The `labels` argument should be '
+                             'a dictionary')
+
+        class_idx = get_class_selectivity_idx(self, labels, threshold)
         self.selectivity_idx['class'] = class_idx
         return class_idx
+
+    def population_code_idx(self, labels=None, threshold=0.1):
+        population_code_idx = self.selectivity_idx.get('population code')
+        if population_code_idx is not None:
+            return population_code_idx
+
+        if labels is None:
+            raise ValueError('The `labels` argument should be '
+                             'a dictionary')
+
+        population_code_idx = get_population_code_idx(self, labels, threshold)
+        self.selectivity_idx['population code'] = population_code_idx
+        return population_code_idx
 
 
 

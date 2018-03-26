@@ -1,16 +1,46 @@
 from operator import itemgetter
+import numpy as np
 
 
-def get_class_selectivity_idx(filter, labels=None, threshold=1.):
+def get_class_selectivity_idx(filter, labels, threshold):
 
     if labels is None:
-        print 'Message error'
+        raise TypeError('labels')
+
+
+    num_max_activations = len(filter.get_activations())
+
+    rel_freq = relative_freq_class(filter, labels)
+
+    if rel_freq is None:
+        print 'Msg'
         return None
+
+    else:
+        freq_avoid_th = []
+        sum_fr = 0.0
+        for rel in rel_freq:
+            sum_fr += rel[3]
+            freq_avoid_th.append(rel)
+            # print sum_fr
+            if sum_fr >= threshold:
+                break
+
+        m = len(freq_avoid_th)
+
+        c_select_idx = (num_max_activations-m)/(float(num_max_activations-1))
+
+        print freq_avoid_th
+        return freq_avoid_th[0][1], round(c_select_idx, 2)
+
+
+
+def relative_freq_class(filter, labels):
+
 
     activations = filter.get_activations()
     images = filter.get_images_id()
     norm_act = filter.get_norm_activations()
-    num_max_activations = len(activations)
 
     rel_freq = []
 
@@ -26,33 +56,38 @@ def get_class_selectivity_idx(filter, labels=None, threshold=1.):
             if i != 0:
                 rel_freq.append([k, v, i, a])
 
-        # for f in rel_freq:
-        #     print f
-
-
         for rel in rel_freq:
-            rel[3] = rel[3]/sum(norm_act)
+            rel[3] = rel[3] / sum(norm_act)
 
         rel_freq = sorted(rel_freq, key=itemgetter(3), reverse=True)
 
-        freq_avoid_th = []
-        sum_fr = 0.0
-        for rel in rel_freq:
-            sum_fr += rel[3]
-            freq_avoid_th.append(rel)
-            # print sum_fr
-            if sum_fr >= threshold:
-                break
-
-        m = len(freq_avoid_th)
-
-        c_select_idx = (num_max_activations-m)/(float(num_max_activations-1))
-
-        return freq_avoid_th[0][1], round(c_select_idx, 2)
-
+        print rel_freq
+        print len(rel_freq)
+        return rel_freq
     else:
         return None
 
+
+def get_population_code_idx(filter, labels, threshold_pc):
+    if labels is None:
+        print 'Message error in get_population'
+        return None
+
+    rel_freq = relative_freq_class(filter, labels)
+
+    if rel_freq is None:
+        print 'Msg'
+        return None
+
+    else:
+        pc = 0
+        for r in rel_freq:
+            if r[3] >= threshold_pc:
+                pc += 1
+            else:
+                break
+
+        return pc
 
 
 if __name__=='__main__':
@@ -69,8 +104,13 @@ if __name__=='__main__':
     # neuron.print_params()
     # neuron.get_neuron_feature().show()
 
-    t = get_class_selectivity_idx(neuron, labels=labels)
+    t = get_class_selectivity_idx(neuron, labels, 1.)
     print t
+
+    print get_population_code_idx(neuron, labels, 0.1)
+
+
+    neuron.class_selectivity_idx()
 
 #     import os
 #     from vgg_matconvnet import VGG
