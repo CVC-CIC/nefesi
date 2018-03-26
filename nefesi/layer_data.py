@@ -58,6 +58,10 @@ class LayerData(object):
                                      'a dictionary')
                 res = f.population_code_idx(labels, thr_pc)
                 sel_idx.append(res)
+            else:
+                raise ValueError('The `index_name` argument should be one'
+                                 'of theses: color, orientation, symmetry, '
+                                 'class or population code.')
         return sel_idx
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):

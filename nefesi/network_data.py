@@ -96,21 +96,32 @@ class NetworkData(object):
     def get_layers(self):
         return self.layers
 
+    def get_layers_name(self):
+        names = [l.get_layer_id() for l in self.layers]
+        return names
 
-    # def load(self, file_name=None):
-    #     if file_name is None:
-    #         file_name = self.model.name
-    #
-    #     return pickle.load(open(file_name + '.obj', 'rb'))
-
-    def get_selectivity_idx(self, sel_index, layers,
+    def get_selectivity_idx(self, sel_index, layer_name,
                             labels=None, thr_class_idx=1., thr_pc=0.1):
         sel_idx_dict = dict()
+
+        if type(sel_index) is not list:
+            sel_index = [sel_index]
+        if type(layer_name) is not list:
+            layer_name = [layer_name]
+
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
-            for l in self.layers:
-                if l.get_layer_id() in layers:
-                    sel_idx_dict[index_name].append(l.selectivity_idx(
+            print type(layer_name), layer_name
+
+            for l in layer_name:
+                layer = next((layer_data for layer_data in
+                              self.layers if l in self.get_layers_name()), None)
+
+                if layer is None:
+                    raise ValueError('The name ' + l + ' in `layer_name` '
+                                     'argument, is not valid.')
+                else:
+                    sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, labels=labels,
                         thr_class_idx=thr_class_idx, thr_pc=thr_pc))
 
