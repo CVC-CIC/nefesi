@@ -9,18 +9,19 @@ from symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
-    def __init__(self, max_activations, batch_size):
-        self.max_activations = max_activations
-        self.batch_size = batch_size
-        self.norm_activations = None
 
-        self.activations = np.ndarray(shape=(self.max_activations + self.batch_size))
-        self.images_id = np.ndarray(shape=self.max_activations + self.batch_size, dtype='a150')
-        self.xy_locations = np.ndarray(shape=self.max_activations + self.batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
+    def __init__(self, max_activations, batch_size):
+        self._max_activations = max_activations
+        self._batch_size = batch_size
+
+        self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
+        self.images_id = np.ndarray(shape=self._max_activations + self._batch_size, dtype='a150')
+        self.xy_locations = np.ndarray(shape=self._max_activations + self._batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
+        self.norm_activations = None
 
         self.selectivity_idx = dict()
 
-        self.neuron_feature = None
+        self._neuron_feature = None
         self._index = 0
 
     def add_activation(self, activation, image_id, xy_location):
@@ -29,9 +30,9 @@ class NeuronData(object):
         self.images_id[self._index] = image_id
         self.xy_locations[self._index] = xy_location
         self._index += 1
-        if self._index >= self.max_activations+self.batch_size:
+        if self._index >= self._max_activations+self._batch_size:
             self.sort()
-            self._index = self.max_activations
+            self._index = self._max_activations
 
     def sort(self):
 
@@ -42,69 +43,25 @@ class NeuronData(object):
         self.images_id = self.images_id[idx]
         self.xy_locations = self.xy_locations[idx]
 
-    def normalize_activations(self):
+    def _normalize_activations(self):
         max_activation = max(self.activations)
         if max_activation == 0:
             return -1
         self.norm_activations = self.activations/abs(max_activation)
 
     def set_max_activations(self):
-        self.activations = self.activations[:self.max_activations]
-        self.images_id = self.images_id[:self.max_activations]
-        self.xy_locations = self.xy_locations[:self.max_activations]
+        self.activations = self.activations[:self._max_activations]
+        self.images_id = self.images_id[:self._max_activations]
+        self.xy_locations = self.xy_locations[:self._max_activations]
+        self._normalize_activations()
 
-        self.normalize_activations()
+    @property
+    def neuron_feature(self):
+        return self._neuron_feature
 
-
-    def set_nf(self, nf):
-        self.neuron_feature = nf
-
-    def get_activations(self):
-        return self.activations
-
-    def get_images_id(self):
-        return self.images_id
-
-    def get_locations(self):
-        return self.xy_locations
-
-    def get_norm_activations(self):
-        return self.norm_activations
-
-    def get_neuron_feature(self):
-        return self.neuron_feature
-
-    # def get_size_patches(self, network_data, layer_data):
-    #     image_dataset = network_data.dataset
-    #     receptive_field = layer_data.receptive_field_map
-    #     rf_size = layer_data.receptive_field_size
-    #
-    #     for i in xrange(self.max_activations):
-    #         img = self.images_id[i]
-    #         loc = self.xy_locations[i]
-    #         crop_pos = receptive_field[loc[0], loc[1]]
-    #         p = image_dataset.get_patch(img, crop_pos)
-    #         if rf_size != p.size:
-    #             return 1
-    #             w, h = p.size
-    #
-    #             ri, rf, ci, cf = crop_pos
-    #
-    #             bl, bu, br, bd = (0, 0, 0, 0)
-    #
-    #             if rf_size[0] != w:
-    #                 if ci == 0:
-    #                     bl = rf_size[0] - w
-    #                 else:
-    #                     bl = rf_size[0] - w
-    #             if rf_size[1] != h:
-    #                 if ri == 0:
-    #                     bu = rf_size[1] - h
-    #                 else:
-    #                     bd = rf_size[1] - h
-    #
-    #     return 0
-
+    @neuron_feature.setter
+    def neuron_feature(self, neuron_feature):
+        self._neuron_feature = neuron_feature
 
     def get_patches(self, network_data, layer_data):
         patches = []
@@ -112,7 +69,7 @@ class NeuronData(object):
         receptive_field = layer_data.receptive_field_map
         rf_size = layer_data.receptive_field_size
 
-        for i in xrange(self.max_activations):
+        for i in xrange(self._max_activations):
             img = self.images_id[i]
             loc = self.xy_locations[i]
             crop_pos = receptive_field[loc[0], loc[1]]

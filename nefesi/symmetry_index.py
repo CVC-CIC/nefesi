@@ -11,10 +11,10 @@ def get_symmetry_index(filter, model, layer_data, idx_neuron, dataset):
     symm_axes = [0, 45, 90, 135]
     avg_symmetry_idx = 0
 
-    activations = filter.get_activations()
-    norm_activations = filter.get_norm_activations()
-    image_names = filter.get_images_id()
-    locations = filter.get_locations()
+    activations = filter.activations
+    norm_activations = filter.norm_activations
+    image_names = filter.images_id
+    locations = filter.xy_locations
 
     max_act = activations[0]
 
@@ -26,7 +26,8 @@ def get_symmetry_index(filter, model, layer_data, idx_neuron, dataset):
             images_r = rotate_images_axis(images, axes, layer_data, locations)
 
             rot_activations = read_activations.get_activation_from_pos(images_r, model,
-                                                                       layer_data.get_layer_id(), idx_neuron, locations)
+                                                                       layer_data.layer_id,
+                                                                       idx_neuron, locations)
 
 
             # print axes, rot_activations

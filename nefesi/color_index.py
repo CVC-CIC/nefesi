@@ -9,11 +9,11 @@ from util.image import rgb2opp, image2max_gray
 
 def get_color_selectivity_index(filter, model, layer_data, idx_neuron, dataset):
 
-    activations = filter.get_activations()
+    activations = filter.activations
     # filter.print_params()
-    norm_activations = filter.get_norm_activations()
-    image_names = filter.get_images_id()
-    locations = filter.get_locations()
+    norm_activations = filter.norm_activations
+    image_names = filter.images_id
+    locations = filter.xy_locations
     max_rgb_activation = activations[0]
 
     if max_rgb_activation != 0.0:
@@ -41,7 +41,8 @@ def get_color_selectivity_index(filter, model, layer_data, idx_neuron, dataset):
         images_gray = dataset.preprocessing_function(np.asarray(images_gray))
 
         new_activations = read_activations.get_activation_from_pos(images_gray, model,
-                                                                   layer_data.get_layer_id(), idx_neuron, locations)
+                                                                   layer_data.layer_id,
+                                                                   idx_neuron, locations)
         # new_activations.print_params()
         norm_gray_activations = new_activations/max_rgb_activation
 

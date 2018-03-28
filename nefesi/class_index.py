@@ -8,7 +8,7 @@ def get_class_selectivity_idx(filter, labels, threshold):
         raise TypeError('labels')
 
 
-    num_max_activations = len(filter.get_activations())
+    num_max_activations = len(filter.activations)
 
     rel_freq = relative_freq_class(filter, labels)
 
@@ -38,9 +38,9 @@ def get_class_selectivity_idx(filter, labels, threshold):
 def relative_freq_class(filter, labels):
 
 
-    activations = filter.get_activations()
-    images = filter.get_images_id()
-    norm_act = filter.get_norm_activations()
+    activations = filter.activations
+    images = filter.images_id
+    norm_act = filter.norm_activations
 
     rel_freq = []
 
@@ -100,7 +100,7 @@ if __name__=='__main__':
     l1 = my_net.get_layers()[6]
 
 
-    neuron = l1.get_filters()[96]
+    neuron = l1.filters[96]
     # neuron.print_params()
     # neuron.get_neuron_feature().show()
 
@@ -109,8 +109,10 @@ if __name__=='__main__':
 
     print get_population_code_idx(neuron, labels, 0.1)
 
-
-    neuron.class_selectivity_idx()
+    r = my_net.get_selectivity_idx('population code', 'fff')
+    print r
+    # l1.selectivity_idx(my_net.model, 'population code', my_net.dataset)
+    # neuron.class_selectivity_idx()
 
 #     import os
 #     from vgg_matconvnet import VGG

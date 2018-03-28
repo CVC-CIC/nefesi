@@ -1,6 +1,7 @@
 import pickle
 import time
 import numpy as np
+import warnings
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
@@ -11,37 +12,46 @@ from util.image import ImageDataset
 
 class NetworkData(object):
 
-    def __init__(self, model, dataset_path=None, num_max_activations=100, save_path=None):
+    def __init__(self, model):
         self.model = model
         self.layers = []
-        self.dataset_path = dataset_path
-        self.save_path = save_path
-        self.num_max_activations = num_max_activations
-        self.input_image_size = None
-        self.dataset = None
+        self.save_path = None
+        self.num_max_activations = None
+        self._dataset = None
 
-    def build_layers(self, layers):
+    @property
+    def dataset(self):
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, dataset):
+        self._dataset = dataset
+
+    def _build_layers(self, layers):
             for l in layers:
                 self.layers.append(LayerData(l))
 
-    def eval_network(self, layer_names,
+    def eval_network(self, directory, layer_names, save_path,
+                     num_max_activations=100,
                      target_size=(256, 256), batch_size=100,
                      preprocessing_function=None, color_mode='rgb',
                      save_for_layers=True):
 
-        self.build_layers(layer_names)
+        self._build_layers(layer_names)
+        self.save_path = save_path
+        self.num_max_activations = num_max_activations
 
         times_ex = []
-        self.input_image_size = target_size
 
-        self.dataset = ImageDataset(self.dataset_path, target_size, preprocessing_function)
+        self.dataset = ImageDataset(directory, target_size,
+                                    preprocessing_function, color_mode)
 
         for layer in self.layers:
 
             datagen = ImageDataGenerator()
             data_batch = datagen.flow_from_directory(
-                self.dataset_path,
-                target_size=self.input_image_size,
+                directory,
+                target_size=target_size,
                 batch_size=batch_size,
                 shuffle=False, color_mode=color_mode
             )
@@ -62,7 +72,7 @@ class NetworkData(object):
 
                 layer.evaluate_activations(file_names, images, self.model, self.num_max_activations, batch_size)
 
-                print 'On layer ', layer.get_layer_id(), ', Get and sort activations in batch num: ', n_batches,
+                print 'On layer ', layer.layer_id, ', Get and sort activations in batch num: ', n_batches,
                 ' Images processed: ', idx + data_batch.batch_size
 
                 n_batches += 1
@@ -72,8 +82,6 @@ class NetworkData(object):
             layer.set_max_activations()
 
             end_act_time = time.time() - start
-
-            # pickle.dump(filters, open(self.save_path + layer.get_layer_id() + '.obj', 'wb'))
 
             layer.build_neuron_feature(self)
 
@@ -85,19 +93,15 @@ class NetworkData(object):
             times_ex.append(time.time() - start)
 
             if save_for_layers:
-                self.save_to_disk(layer.get_layer_id())
-            # pickle.dump(layer.get_filters(), open(self.save_path + layer.get_layer_id() + '.obj', 'wb'))
+                self.save_to_disk(layer.layer_id)
 
         for i in xrange(len(times_ex)):
             print 'total time execution for layer ', i, ' : ', times_ex[i]
 
         self.save_to_disk()
 
-    def get_layers(self):
-        return self.layers
-
     def get_layers_name(self):
-        names = [l.get_layer_id() for l in self.layers]
+        names = [l.layer_id for l in self.layers]
         return names
 
     def get_selectivity_idx(self, sel_index, layer_name,
@@ -118,7 +122,7 @@ class NetworkData(object):
                               self.layers if l in self.get_layers_name()), None)
 
                 if layer is None:
-                    raise ValueError('The name ' + l + ' in `layer_name` '
+                    raise ValueError('The layer_id ' + l + ' in `layer_name` '
                                      'argument, is not valid.')
                 else:
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
@@ -130,7 +134,7 @@ class NetworkData(object):
     def similarity_index(self, layers):
         sim_idx = []
         for l in self.layers:
-            if l.get_layer_id() in layers:
+            if l.layer_id in layers:
                 sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
@@ -141,7 +145,7 @@ class NetworkData(object):
         if type(layers_or_neurons) is list or type(layers_or_neurons) is str:
             layers = layers_or_neurons
             for l in self.layers:
-                if l.get_layer_id() in layers:
+                if l.layer_id in layers:
                     res_idx1 = []
                     index_values = l.selectivity_idx(self.model, idx1, self.dataset)
 
@@ -163,17 +167,17 @@ class NetworkData(object):
                         else:
                             res_idx2 = index_values2
 
-                    selective_neurons[l.get_layer_id()] = []
-                    neurons = l.get_filters()
+                    selective_neurons[l.layer_id] = []
+                    neurons = l.filters
                     for i in xrange(len(neurons)):
                         if inf_thr <= res_idx1[i] <= sup_thr:
                             if res_idx2 is not None:
                                 if inf_thr <= res_idx2[i] <= sup_thr:
                                     tmp = (neurons[i], res_idx1[i], res_idx2[i])
-                                    selective_neurons[l.get_layer_id()].append(tmp)
+                                    selective_neurons[l.layer_id].append(tmp)
                             else:
                                 tmp = (neurons[i], res_idx1[i])
-                                selective_neurons[l.get_layer_id()].append(tmp)
+                                selective_neurons[l.layer_id].append(tmp)
         elif type(layers_or_neurons) is dict:
             sel_idx = layers_or_neurons.keys()[0]
             values = layers_or_neurons.values()[0]
@@ -201,7 +205,7 @@ class NetworkData(object):
             else:
                 idx1 = (sel_idx, idx1)
         else:
-            raise TypeError('Parameter 1 should be a list of layers, layer name or dict')
+            raise TypeError('Parameter 1 should be a list of layers, layer layer_id or dict')
         if idx2 is not None:
             idx1 = (idx1, idx2)
         res = {idx1: selective_neurons}
@@ -214,7 +218,7 @@ class NetworkData(object):
             layer = self.layers[layer_id]
         if type(layer_id) is str:
             for l in self.layers:
-                if layer_id == l.get_layer_id():
+                if layer_id == l.layer_id:
                     layer = l
 
         img = self.dataset.load_images([img_name])
@@ -243,16 +247,16 @@ class NetworkData(object):
             neuron_idx = input_image[1]
 
             for l in self.layers:
-                if src_layer == l.get_layer_id():
+                if src_layer == l.layer_id:
                     src_layer = l
-                elif target_layer == l.get_layer_id():
+                elif target_layer == l.layer_id:
                     target_layer = l
 
             hc_activations, hc_idx = src_layer.decomposition_nf(
                 neuron_idx, target_layer, self.model, self.dataset)
 
-            neuron_data = src_layer.get_filters()[neuron_idx]
-            src_image = neuron_data.get_neuron_feature()
+            neuron_data = src_layer.filters[neuron_idx]
+            src_image = neuron_data.neuron_feature
             res_nf = src_image
 
             # src_image.show()
@@ -260,7 +264,7 @@ class NetworkData(object):
             # orp_image = np.zeros(src_image.size)
         else:  # decomposition of an image
             for l in self.layers:
-                if target_layer == l.get_layer_id():
+                if target_layer == l.layer_id:
                     target_layer = l
 
             img = self.dataset.load_images([input_image])
@@ -313,50 +317,34 @@ class NetworkData(object):
 
         return res_act, res_neurons, res_loc, res_nf
 
-    def save_to_disk(self, file_name=None):
+    def save_to_disk(self, file_name=None, save_path=None, save_model=True):
         if file_name is None:
             file_name = self.model.name
+
+        if save_path is not None:
+            self.save_path = save_path
 
         model_name = self.model.name
         if self.save_path is not None:
             file_name = self.save_path + file_name
-            model_name = self.save_path + model_name
+            model_name = self.save_path + self.model.name
 
+        model = self.model
+        if save_model:
+            self.model.save(model_name + '.h5')
+        self.model = None
         pickle.dump(self, open(file_name + '.obj', 'wb'))
-        self.model = load_model(model_name + '.h5')
+        self.model = model
 
     @staticmethod
-    def load_from_disk(path=None, file_name=None):
-
-        if path is not None:
-            file_name = path + file_name
+    def load_from_disk(file_name, model_file=None):
 
         my_net = pickle.load(open(file_name, 'rb'))
 
-        if path is not None:
-            model_file = path + my_net.model
-        else:
-            model_file = my_net.model
+        if model_file is not None:
+            my_net.model = load_model(model_file)
 
-        my_net.model = load_model(model_file)
-        my_net.save_path = path
+        if my_net.model is None:
+            warnings.warn('The model was *not* loaded. Load it manually.')
+
         return my_net
-
-    def __getstate__(self):
-        model_name = self.model.name
-
-        if self.save_path is not None:
-            file_name = self.save_path + model_name
-        else:
-            file_name = model_name
-
-        self.model.save(file_name + '.h5')
-        odict = self.__dict__
-        odict['model'] = model_name + '.h5'
-        return odict
-
-    # def __setstate__(self, state):
-    #     model = state['model']
-    #     model = load_model(model)
-    #     state['model'] = model
-    #     self.__dict__ = state

@@ -7,23 +7,19 @@ from scipy.ndimage.interpolation import rotate
 
 class ImageDataset(object):
 
-    def __init__(self, src_dataset, target_size=None, preprocessing_function=None):
+    def __init__(self, src_dataset, target_size=None,
+                 preprocessing_function=None, color_mode='rgb'):
         self.src_dataset = src_dataset
         self.target_size = target_size
         self.preprocessing_function = preprocessing_function
+        self.color_mode = color_mode
 
     def load_images(self, image_names, prep_function=True):
+
         images = []
-        # if not isinstance(image_names, list):
-        #     image_names = [image_names]
-
         for n in image_names:
-
-            # print self.src_dataset, n
-            i = image.load_img(self.src_dataset + n, target_size=self.target_size)
+            i = self.load_image(n)
             i = image.img_to_array(i)
-
-            # i -= avg_img
             images.append(i)
 
         if self.preprocessing_function is not None and prep_function is True:
@@ -31,15 +27,24 @@ class ImageDataset(object):
 
         return images
 
-    def load_image(self, img_name):
-        return image.load_img(self.src_dataset + img_name,
-                              target_size=self.target_size)
-
     def get_patch(self, img_name, crop_pos):
-        img = image.load_img(self.src_dataset + img_name, target_size=self.target_size)
+        img = self.load_image(img_name)
         ri, rf, ci, cf = crop_pos
         im_crop = img.crop((ci, ri, cf, rf))
         return im_crop
+
+    def load_image(self, img_name):
+        grayscale = self.color_mode == 'grayscale'
+        return image.load_img(self.src_dataset + img_name,
+                              grayscale=grayscale,
+                              target_size=self.target_size)
+
+    def __str__(self):
+        return str.format('Dataset dir: {}, target_size: {}, color_mode: {}, '
+                          'preprocessing_function: {}.', self.src_dataset, self.target_size,
+                          self.color_mode, self.preprocessing_function)
+
+
 
 
 def rgb2opp(img):

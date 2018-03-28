@@ -118,11 +118,11 @@ def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
 
 def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
 
-    layers = network_data.get_layers()
+    layers = network_data.layers
     neuron = None
     for l in layers:
-        if l.get_layer_id() in layer_data.layer_id:
-            neuron = l.get_filters()[neuron_idx]
+        if l.name in layer_data.name:
+            neuron = l.filters[neuron_idx]
 
     if neuron is None:
         print 'Some msg error'
@@ -149,14 +149,14 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
 def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 
 
-    neuron = layer_data.get_filters()[neuron_idx]
+    neuron = layer_data.filters[neuron_idx]
 
     if neuron is None:
         print 'Some msg error'
         return
 
     images = neuron.get_patches(network_data, layer_data)
-    activations = neuron.get_norm_activations()
+    activations = neuron.norm_activations
 
     idx_images = np.arange(0, len(images), num_images)
     cols = len(idx_images)
@@ -195,7 +195,7 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     nf = []
     img = img.copy()
     for n in neurons:
-        nf.append(n.get_neuron_feature())
+        nf.append(n.neuron_feature)
 
     n_images = len(nf)
 
@@ -229,7 +229,7 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
     nf = []
     img = img.copy()
     for n in neurons:
-        nf.append(n.get_neuron_feature())
+        nf.append(n.neuron_feature)
 
     w, h = nf[0].size
 
@@ -275,7 +275,7 @@ def test_neuron_sim(layer_data, n=None):
     # >> > tree = spatial.KDTree(airports)
     # >> > tree.query([(21, 21)])
 
-    neurons = layer_data.get_filters()
+    neurons = layer_data.filters
 
     idx_neurons = None
     if n is not None:
@@ -333,7 +333,7 @@ def test_neuron_sim(layer_data, n=None):
 def plot_similarity_tsne(layer_data, n=None):
 
 
-    neurons = layer_data.get_filters()
+    neurons = layer_data.filters
 
     idx_neurons = None
     if n is not None:
@@ -351,7 +351,7 @@ def plot_similarity_tsne(layer_data, n=None):
     x_result = TSNE(n_components=2, metric='euclidean',
                     random_state=0).fit_transform(x)
     print x_result
-    nf = [n.get_neuron_feature() for n in neurons]
+    nf = [n.neuron_feature for n in neurons]
     fig, ax = plt.subplots()
 
     size_fig = fig.get_size_inches()
@@ -367,18 +367,18 @@ def plot_similarity_tsne(layer_data, n=None):
 
 def plot_similarity_circle(layer_data, target_neuron, bins=None):
 
-    neurons = layer_data.get_filters()
+    neurons = layer_data.filters
 
     target_neuron_idx = neurons.index(target_neuron)
 
     fig, ax = plt.subplots()
     size_fig = fig.get_size_inches()
-    nf_size = target_neuron.get_neuron_feature().size
+    nf_size = target_neuron.neuron_feature.size
     zoom = (size_fig[0] + size_fig[1]) / nf_size[0]
 
     fig_center = (0.5, 0.5)
     r = [0.15, 0.25, 0.5]
-    imscatter(fig_center[0], fig_center[1], target_neuron.get_neuron_feature(), zoom=zoom, ax=ax)
+    imscatter(fig_center[0], fig_center[1], target_neuron.neuron_feature, zoom=zoom, ax=ax)
     ax.plot(fig_center[0], fig_center[1])
 
     if bins is None:
@@ -388,7 +388,7 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
         neuron_data, _ = layer_data.similar_neurons(
             target_neuron_idx, inf_thr=bins[-(i+2)], sup_thr=bins[-(i+1)])
 
-        nf = [n.get_neuron_feature() for n in neuron_data if n is not target_neuron]
+        nf = [n.neuron_feature for n in neuron_data if n is not target_neuron]
         num_neurons = len(nf)
 
         radius = r[i]
@@ -446,7 +446,7 @@ def plot_2d_index(selectivity_neurons):
 
             x_values = [n[1] for n in neurons]
             y_values = [n[2] for n in neurons]
-            nf = [n[0].get_neuron_feature() for n in neurons]
+            nf = [n[0].neuron_feature for n in neurons]
 
             fig, ax = plt.subplots()
             size_fig = fig.get_size_inches()
@@ -488,7 +488,7 @@ def plot_nf_search(selective_neurons, n_max=150):
 
         for i, (n, title) in enumerate(zip(neurons, titles)):
             a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), i + 1,)
-            plt.imshow(n[0].get_neuron_feature(), interpolation='bicubic')
+            plt.imshow(n[0].neuron_feature, interpolation='bicubic')
             plt.axis('off')
             tmp_t = ''
             for t in title:
@@ -510,13 +510,13 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
     fig.suptitle('Similarity index')
 
     fig.add_subplot(rows+1, 1, 1)
-    plt.imshow(neuron_data.get_neuron_feature(), interpolation='bicubic')
+    plt.imshow(neuron_data.neuron_feature, interpolation='bicubic')
     plt.axis('off')
 
     for i, (n, title) in enumerate(zip(sim_neuron, titles)):
         c = np.ceil(n_images/float(rows))
         a = fig.add_subplot(rows+1, c, i + c+1)
-        plt.imshow(n.get_neuron_feature(), interpolation='bicubic')
+        plt.imshow(n.neuron_feature, interpolation='bicubic')
         plt.axis('off')
         a.set_title(title)
     # fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
@@ -527,10 +527,10 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
 def plot_neuron_features(layer_data, neuron_list=None):
     nf = []
     if neuron_list is None:
-        neuron_list = layer_data.get_filters()
+        neuron_list = layer_data.filters
 
     for f in neuron_list:
-        nf.append(f.get_neuron_feature())
+        nf.append(f.neuron_feature)
 
 
     n_images = len(nf)
@@ -574,12 +574,11 @@ def main():
     for l in my_net.get_layers():
         print l
 
-    l = my_net.get_layers()[6]
+    l = my_net.get_layers()[0]
     plot_neuron_features(l)
-    compute_nf(my_net, l, l.get_filters())
+    # compute_nf(my_net, l, l.get_filters())
+    # plot_neuron_features(l)
 
-
-    plot_neuron_features(l)
     # nf = l.get_filters()[131].get_neuron_feature()
     #
     # nf_cont = np.asarray(nf).astype(float)
@@ -640,7 +639,7 @@ def main():
 
     # plot_activation_curve(my_net, layer3, 5)
 
-    # sel_idx = my_net.selectivity_idx_summary(['symmetry'], layer_names)
+    sel_idx = my_net.get_selectivity_idx(['symmetry'], layer_names)
 
     # plot_sel_idx_summary(sel_idx)
 

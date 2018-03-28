@@ -7,16 +7,12 @@ from similarity_index import get_similarity_index
 
 class LayerData(object):
 
-    def __init__(self, layer_id):
-        self.layer_id = layer_id
+    def __init__(self, layer_name):
+        self.layer_id = layer_name
         self.similarity_index = None
         self.filters = None
         self.receptive_field_map = None
         self.receptive_field_size = None
-
-
-    def get_layer_id(self):
-        return self.layer_id
 
     def set_max_activations(self):
         for f in self.filters:
@@ -28,9 +24,6 @@ class LayerData(object):
 
     def build_neuron_feature(self, network_data):
         compute_nf(network_data, self, self.filters)
-
-    def get_filters(self):
-        return self.filters
 
     def selectivity_idx(self, model, index_name, dataset,
                         labels=None, thr_class_idx=1., thr_pc=0.1):
@@ -92,7 +85,7 @@ class LayerData(object):
                 print idx_a
 
                 for a, b in permutations(idx_a, 2):
-                    sim_idx = get_similarity_index(self.filters[a], self.filters[b], a, b,
+                    sim_idx = get_similarity_index(self.filters[a], self.filters[b], a,
                                                    model, self.layer_id, dataset)
                     self.similarity_index[a][b] = sim_idx
 
@@ -127,6 +120,12 @@ class LayerData(object):
 
 
     def get_location_from_rf(self, location):
+        '''
+        Dada una location en una imagen, devuelve la posicion centro del rf
+        en el mapa de activacion
+        :param location:
+        :return:
+        '''
         row, col = location
 
         h, w = self.receptive_field_map.shape
@@ -148,7 +147,7 @@ class LayerData(object):
 
         max_act = []
         for f in self.filters:
-            max_act.append(f.get_activations()[0])
+            max_act.append(f.activations[0])
 
         activations = get_activations(model, img, print_shape_only=True, layer_name=self.layer_id)
 
@@ -177,14 +176,14 @@ class LayerData(object):
 
     def decomposition_nf(self, neuron_id, target_layer, model, dataset):
 
-        if self.filters[neuron_id].get_activations()[0] == 0.0:
+        if self.filters[neuron_id].activations[0] == 0.0:
             # A neuron feature within a neuron with no activations
             # can't be decomposed
             return None
 
-        neuron_images = self.filters[neuron_id].get_images_id()
-        neuron_locations = self.filters[neuron_id].get_locations()
-        norm_activations = self.filters[neuron_id].get_norm_activations()
+        neuron_images = self.filters[neuron_id].images_id
+        neuron_locations = self.filters[neuron_id].xy_locations
+        norm_activations = self.filters[neuron_id].norm_activations
 
         neuron_images = dataset.load_images(neuron_images)
 
@@ -204,12 +203,12 @@ class LayerData(object):
 
 
         max_act = []
-        for f in target_layer.get_filters():
-            max_act.append(f.get_activations()[0])
+        for f in target_layer.filters:
+            max_act.append(f.activations[0])
 
         activations = get_activations(model, neuron_images,
                                       print_shape_only=True,
-                                      layer_name=target_layer.get_layer_id())
+                                      layer_name=target_layer.layer_id)
 
 
 

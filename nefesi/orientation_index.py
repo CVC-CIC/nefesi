@@ -16,10 +16,10 @@ def get_orientation_index(filter, model, layer_data, idx_neuron, dataset):
 
     avg_orientation_index = 0
 
-    activations = filter.get_activations()
-    norm_activations = filter.get_norm_activations()
-    image_names = filter.get_images_id()
-    locations = filter.get_locations()
+    activations = filter.activations
+    norm_activations = filter.norm_activations
+    image_names = filter.images_id
+    locations = filter.xy_locations
     max_act = activations[0]
 
     if max_act != 0.0:
@@ -27,7 +27,10 @@ def get_orientation_index(filter, model, layer_data, idx_neuron, dataset):
 
         for degrees in l_degrees:
             images_r = rotate_images(images, degrees, locations, layer_data)
-            rot_activations = read_activations.get_activation_from_pos(images_r, model, layer_data.get_layer_id(), idx_neuron, locations)
+            rot_activations = read_activations.get_activation_from_pos(images_r, model,
+                                                                       layer_data.layer_id,
+                                                                       idx_neuron,
+                                                                       locations)
             # print axes, rot_activations
             norm_rot_act = rot_activations/max_act
 

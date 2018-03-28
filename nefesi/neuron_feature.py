@@ -18,7 +18,7 @@ def compute_nf(network_data, layer_data, filters):
     for f in filters:
         if f.norm_activations is not None:
 
-            norm_activations = f.get_norm_activations()
+            norm_activations = f.norm_activations
             patches = f.get_patches(network_data, layer_data)
             num_a = len(patches)
 
@@ -29,12 +29,16 @@ def compute_nf(network_data, layer_data, filters):
                 total_act = total_act + (img * norm_act)
 
             nf = total_act / num_a
+
+            # maximize contrast
             min_v = np.min(nf.ravel())
             max_v = np.max(nf.ravel())
             nf = nf - min_v
             nf = nf / (max_v - min_v)
 
-            f.set_nf(image.array_to_img(nf))
+            f.neuron_feature = image.array_to_img(nf)
+        else:
+            f.neuron_feature = None
 
     return filters
 
@@ -90,7 +94,7 @@ def get_image_receptive_field(x, y, model, layer):
             col_fin -= padding
 
 
-        # print 'Layer:', current_layer.name, ' ri:', row_ini, ' rf:', row_fin, ' ci:', col_ini, ' cf:', col_fin
+        # print 'Layer:', current_layer.layer_id, ' ri:', row_ini, ' rf:', row_fin, ' ci:', col_ini, ' cf:', col_fin
         # print 'RF size: ', row_fin - row_ini, col_fin - col_ini
     # print 'Final values: ', row_ini, row_fin, col_ini, col_fin
 
@@ -102,7 +106,7 @@ def find_layer_idx(model, layer_name):
 
     Args:
         model: The `keras.models.Model` instance.
-        layer_name: The name of the layer to lookup.
+        layer_name: The layer_id of the layer to lookup.
 
     Returns:
         The layer index if found. Raises an exception otherwise.
@@ -114,5 +118,5 @@ def find_layer_idx(model, layer_name):
             break
 
     if layer_idx is None:
-        raise ValueError("No layer with name '{}' within the model".format(layer_name))
+        raise ValueError("No layer with layer_id '{}' within the model".format(layer_name))
     return layer_idx
