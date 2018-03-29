@@ -11,12 +11,28 @@ from util.image import ImageDataset
 
 
 class NetworkData(object):
+    """This is the main class of nefesi package.
 
+    Creates an instance of NetworkData, the main object containing
+    all evaluated data related with a Keras model.
+
+    Arguments:
+        model: A Keras sequential model.
+
+    Properties:
+        layers: List of LayerData objects. For more information about
+            LayerData class see: nefesi.layer_data.LayerData.
+
+    Mutable-properties:
+        save_path: Path of directory where the results will be saved.
+        dataset: Instance of ImageDataset. For more information
+            about ImageDataset class see: nefesi.util.image.ImageDataset.
+    """
     def __init__(self, model):
         self.model = model
         self.layers = []
-        self.save_path = None
-        self.num_max_activations = None
+        self._save_path = None
+        # self.num_max_activations = None
         self._dataset = None
 
     @property
@@ -27,27 +43,63 @@ class NetworkData(object):
     def dataset(self, dataset):
         self._dataset = dataset
 
+    @property
+    def save_path(self):
+        return self._save_path
+
+    @save_path.setter
+    def save_path(self, save_path):
+        self._save_path = save_path
+
     def _build_layers(self, layers):
             for l in layers:
                 self.layers.append(LayerData(l))
 
-    def eval_network(self, directory, layer_names, save_path,
+    def eval_network(self, directory,
+                     layer_names,
+                     save_path,
                      num_max_activations=100,
-                     target_size=(256, 256), batch_size=100,
-                     preprocessing_function=None, color_mode='rgb',
-                     save_for_layers=True):
+                     target_size=(256, 256),
+                     batch_size=100,
+                     preprocessing_function=None,
+                     color_mode='rgb',
+                     save_for_layers=True,
+                     build_nf=True):
+        """Evaluates the layers in `layer_names`, searching for the maximum
+        activations for each neuron and build the neuron feature.
 
+        :param directory: Path to the directory to read images from.
+        :param layer_names: List of strings (name fo the layers that will be
+            evaluated).
+        :param save_path: Path of directory to write the results.
+        :param num_max_activations: Integer, number of maximum activations
+            will be saved for each neuron.
+        :param target_size: Tuple of integers, dimensions to resize input images to.
+        :param batch_size: Integer, size of a batch.
+        :param preprocessing_function: Function that will be implied on each input.
+            The function will run after the image is resized and augmented.
+            The function should take one argument: batch of images (Numpy tensor with rank 4),
+             and should output a Numpy tensor with the same shape.
+        :param color_mode: One of `"rgb"`, `"grayscale"`. Color mode to read images.
+        :param save_for_layers: Boolean, if its True, the results will be saved
+            for each layer evaluated. The result file will have the name of the layer
+            evaluated and the previous ones.
+        :param build_nf:  Boolean, if its True, the neuron feature for each neuron
+            will be built.
+        """
+
+        # Creates the list of `layers`
         self._build_layers(layer_names)
-        self.save_path = save_path
-        self.num_max_activations = num_max_activations
+        self._save_path = save_path
+        # self.num_max_activations = num_max_activations
 
         times_ex = []
 
-        self.dataset = ImageDataset(directory, target_size,
-                                    preprocessing_function, color_mode)
+        # Creates an ImageDataset object
+        self._dataset = ImageDataset(directory, target_size,
+                                     preprocessing_function, color_mode)
 
         for layer in self.layers:
-
             datagen = ImageDataGenerator()
             data_batch = datagen.flow_from_directory(
                 directory,
@@ -64,13 +116,15 @@ class NetworkData(object):
             for i in data_batch:
                 images = i[0]
 
+                # Apply the preprocessing function to the inputs
                 if preprocessing_function is not None:
                     images = preprocessing_function(images)
 
                 idx = (data_batch.batch_index - 1) * data_batch.batch_size
                 file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
 
-                layer.evaluate_activations(file_names, images, self.model, self.num_max_activations, batch_size)
+                # Search the maximum activations
+                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
 
                 print 'On layer ', layer.layer_id, ', Get and sort activations in batch num: ', n_batches,
                 ' Images processed: ', idx + data_batch.batch_size
@@ -79,11 +133,14 @@ class NetworkData(object):
                 if n_batches >= num_images / data_batch.batch_size:
                     break
 
+            # Set the number of maximum activations stored in each neuron
             layer.set_max_activations()
 
             end_act_time = time.time() - start
 
-            layer.build_neuron_feature(self)
+            if build_nf:
+                # Build the neuron features
+                layer.build_neuron_feature(self)
 
             end_comp_nf_time = time.time() - end_act_time - start
 
@@ -93,19 +150,47 @@ class NetworkData(object):
             times_ex.append(time.time() - start)
 
             if save_for_layers:
+                # Save the results each time we have a evaluated layer
                 self.save_to_disk(layer.layer_id)
 
         for i in xrange(len(times_ex)):
             print 'total time execution for layer ', i, ' : ', times_ex[i]
 
+        # Save all data
         self.save_to_disk()
 
     def get_layers_name(self):
+        """
+        Constructs a list with name of each layer in `layers`
+        :return: List of strings
+        """
         names = [l.layer_id for l in self.layers]
         return names
 
     def get_selectivity_idx(self, sel_index, layer_name,
-                            labels=None, thr_class_idx=1., thr_pc=0.1):
+                            labels=None, thr_class_idx=1.,
+                            thr_pc=0.1):
+        """Returns the selectivity indexes in `sel_index` for each layer
+        in `layer_name`.
+
+        :param sel_index: List of strings or string, name of the selectivity indexes.
+        :param layer_name: List of strings or string, name of the layers.
+        :param labels: Dictionary, key: name class, value: label.
+            This argument is needed for calculate the class and the population
+            code index.
+        :param thr_class_idx: Float between 0.0 and 1.0, threshold applied in
+            class selectivity index.
+        :param thr_pc: Float between 0.0 and 1.0, threshold applied in
+            population code index.
+
+        :return: Dictionary,
+            keys: name of selectivity index,
+            values: list of lists (list per layer containing the index values).
+
+        :raise:
+            ValueError: If layer name in `layer_name` doesn't match with any layer
+            inside the class property `layers`.
+        """
         sel_idx_dict = dict()
 
         if type(sel_index) is not list:
@@ -119,7 +204,8 @@ class NetworkData(object):
 
             for l in layer_name:
                 layer = next((layer_data for layer_data in
-                              self.layers if l in self.get_layers_name()), None)
+                              self.layers if l in self.get_layers_name()
+                              and l == layer_data.layer_id), None)
 
                 if layer is None:
                     raise ValueError('The layer_id ' + l + ' in `layer_name` '
@@ -131,14 +217,63 @@ class NetworkData(object):
 
         return sel_idx_dict
 
-    def similarity_index(self, layers):
+    def similarity_idx(self, layer_name):
+        """Returns the similarity index for each layer in `layer_name`.
+
+        :param layer_name: List of strings or string, name of the layers.
+
+        :return: List of Numpy arrays, each array belows to one layer.
+
+        :raise:
+            ValueError: If layer name in `layer_name` doesn't match with any layer
+            inside the class property `layers`.
+        """
         sim_idx = []
-        for l in self.layers:
-            if l.layer_id in layers:
-                sim_idx.append(l.get_similarity_idx(self.model, self.dataset))
+
+        if type(layer_name) is not list:
+            layer_name = [layer_name]
+
+        for l in layer_name:
+            layer = next((layer_data for layer_data in
+                          self.layers if l in self.get_layers_name()
+                          and l == layer_data.layer_id), None)
+            if layer is None:
+                raise ValueError('The layer_id ' + l + ' in `layer_name` '
+                                                       'argument, is not valid.')
+            else:
+                sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
         return sim_idx
 
-    def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None, inf_thr=0.0, sup_thr=1.0):
+    def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None,
+                              inf_thr=0.0, sup_thr=1.0):
+        """Returns a list of neuron_data objects with their respective
+        values of selectivity indexes between a threshold (`inf_thr` and `sup_thr`).
+        This function works for one or two indexes (`idx1` and `idx2`).
+
+        :param layers_or_neurons: List of strings, a string or a list of
+            selective neurons.
+            List of strings or string, name of the layer.
+            List of selective neurons, the output of this function itself,
+            (`get_selective_neurons()`)
+        :param idx1: String, index name
+        :param idx2: String, index name
+        :param inf_thr: Float between 0.0 and 1.0, gets the index values
+            above this threshold.
+        :param sup_thr: Float between 0.0 and 1.0, gets the index values
+            below this threshold.
+
+        :return: Dictionary,
+            keys: string or tuple of strings, index name,
+            values: dictionary,
+                keys: string, layer name,
+                values: list of tuples with
+                neuron data object, index value, index value,
+                (the second one only if `idx2` is not None).
+
+        :raise:
+            TypeError: If `layers_or_neurons` is not a list of layer names,
+            a layer name or a dictionary.
+        """
         selective_neurons = dict()
         res_idx2 = None
 
@@ -205,14 +340,28 @@ class NetworkData(object):
             else:
                 idx1 = (sel_idx, idx1)
         else:
-            raise TypeError('Parameter 1 should be a list of layers, layer layer_id or dict')
+            raise TypeError('Parameter 1 should be a list of layers, layer_id or dict')
+
         if idx2 is not None:
             idx1 = (idx1, idx2)
         res = {idx1: selective_neurons}
         return res
 
-
     def get_max_activations(self, layer_id, img_name, location, num_max):
+        """ Given a specific layer, an image and a location of the image,
+        returns a list with the maximum activations for that pixel in that layer.
+
+        :param layer_id: String or integer index, layer name or index of the
+            layer in `layers`. The layer where the image will be decomposed.
+        :param img_name: String, image name. This image has to be in the same
+            directory set in `ImageDataset`.
+        :param location: Tuple of integers, pixel location from the image.
+        :param num_max: Integer, Max number of activations returned.
+
+        :return: List of floats, activation values,
+            List of neuron data objects,
+            Location of receptive field related with the `location` of pixel.
+        """
         layer = None
         if type(layer_id) is int:
             layer = self.layers[layer_id]
@@ -236,13 +385,27 @@ class NetworkData(object):
         return list(activations), neurons, layer.receptive_field_map[loc[0], loc[1]]
 
     def decomposition(self, input_image, target_layer, overlapping=0.0):
+        """ Given an image or a neuron feature, returns a list with
+        the maximum activations for each location in the image or neuron feature,
+        with a certain percent of overlapping.
 
-        print input_image
-        print type(input_image)
+        :param input_image: List or string.
+            List with two elements: layer name, integer index of a neuron (layer
+            and neuron where takes the neuron feature we want decompose).
+            String, image name.
+        :param target_layer: String, layer name (layer where decompose).
+        :param overlapping: Float between 0.0 and 1.0, percent of overlapping
+            of the activations in the input image or input neuron feature.
+
+        :return: List of floats, activation values.
+            List of neuron data objects.
+            List of tuples of integers, activation locations for each
+            receptive field in the input image or input neuron feature.
+            PIL image instance, in case we decompose a neuron feature,
+            in other case, returns None.
+        """
         res_nf = None
-        if isinstance(input_image, list):  # decomposition of neuron feature
-
-            print 22222
+        if isinstance(input_image, list):  # Decomposition of neuron feature
             src_layer = input_image[0]
             neuron_idx = input_image[1]
 
@@ -258,11 +421,7 @@ class NetworkData(object):
             neuron_data = src_layer.filters[neuron_idx]
             src_image = neuron_data.neuron_feature
             res_nf = src_image
-
-            # src_image.show()
-            print src_image.size
-            # orp_image = np.zeros(src_image.size)
-        else:  # decomposition of an image
+        else:  # Decomposition of image
             for l in self.layers:
                 if target_layer == l.layer_id:
                     target_layer = l
@@ -271,12 +430,9 @@ class NetworkData(object):
             hc_activations, hc_idx = target_layer.decomposition_image(self.model, img)
             src_image = self.dataset.load_image(input_image)
 
-            # orp_image = np.zeros((src_image.shape[0], src_image.shape[1]))
-
         hc_activations = hc_activations[:, :, 0]
         hc_idx = hc_idx[:, :, 0]
 
-        # c_overlapping = 0.0
         res_neurons = []
         res_loc = []
         res_act = []
@@ -286,6 +442,8 @@ class NetworkData(object):
         end_cond = src_image.size[0] * src_image.size[1]
 
         while i < end_cond:
+            # Search for the maximum activations along the input image or
+            # neuron feature.
             i += 1
             max_act = np.amax(hc_activations)
             pos = np.unravel_index(hc_activations.argmax(), hc_activations.shape)
@@ -294,10 +452,9 @@ class NetworkData(object):
 
             loc = target_layer.receptive_field_map[pos]
 
-            # check overlapping
+            # Check overlapping
             ri, rf, ci, cf = loc
             if rf <= src_image.size[0] and cf <= src_image.size[1]:
-
                 clp = orp_image[ri:rf, ci:cf]
                 clp_size = clp.shape
                 clp_size = clp_size[0]*clp_size[1]
@@ -310,24 +467,28 @@ class NetworkData(object):
                     res_loc.append(loc)
                     res_act.append(max_act)
 
-            # c_overlapping = 1
-
-        # print hc_activations
-        # print hc_idx.shape
-
         return res_act, res_neurons, res_loc, res_nf
 
     def save_to_disk(self, file_name=None, save_path=None, save_model=True):
+        """Save all results. The file saved will contain a NetworkData
+        object and the rest of containing instances.
+
+        :param file_name: String, name of file.
+            If `file_name` is None, the file will be named with the value
+            of `model.name`.
+        :param save_path: String, path to directory where save the results.
+        :param save_model: If its True, the Keras model will be saved
+            as a HDF5 file.
+        """
         if file_name is None:
             file_name = self.model.name
-
         if save_path is not None:
-            self.save_path = save_path
+            self._save_path = save_path
 
         model_name = self.model.name
-        if self.save_path is not None:
-            file_name = self.save_path + file_name
-            model_name = self.save_path + self.model.name
+        if self._save_path is not None:
+            file_name = self._save_path + file_name
+            model_name = self._save_path + self.model.name
 
         model = self.model
         if save_model:
@@ -338,12 +499,18 @@ class NetworkData(object):
 
     @staticmethod
     def load_from_disk(file_name, model_file=None):
+        """Load a file with all results.
 
+        :param file_name: String, path and file name.
+        :param model_file: String, path and file name.
+            Expects a file with .h5 extension.
+
+        :return: A NetworkData instance.
+        """
         my_net = pickle.load(open(file_name, 'rb'))
 
         if model_file is not None:
             my_net.model = load_model(model_file)
-
         if my_net.model is None:
             warnings.warn('The model was *not* loaded. Load it manually.')
 

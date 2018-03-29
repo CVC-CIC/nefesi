@@ -58,11 +58,11 @@ class LayerData(object):
         return sel_idx
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
+
         if self.similarity_index is not None:
             if neurons_idx is None:
                 return self.similarity_index
             else:
-                print 1111
                 # print self.similarity_index[0:4, 0:4]
                 size_new_sim = len(neurons_idx)
                 new_sim = np.zeros((size_new_sim, size_new_sim))
