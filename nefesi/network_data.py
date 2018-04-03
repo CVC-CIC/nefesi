@@ -19,7 +19,7 @@ class NetworkData(object):
     Arguments:
         model: A Keras sequential model.
 
-    Properties:
+    Attributes:
         layers: List of LayerData objects. For more information about
             LayerData class see: nefesi.layer_data.LayerData.
 
@@ -32,7 +32,6 @@ class NetworkData(object):
         self.model = model
         self.layers = []
         self._save_path = None
-        # self.num_max_activations = None
         self._dataset = None
 
     @property
@@ -69,7 +68,7 @@ class NetworkData(object):
         activations for each neuron and build the neuron feature.
 
         :param directory: Path to the directory to read images from.
-        :param layer_names: List of strings (name fo the layers that will be
+        :param layer_names: List of strings (name of the layers that will be
             evaluated).
         :param save_path: Path of directory to write the results.
         :param num_max_activations: Integer, number of maximum activations
@@ -100,58 +99,59 @@ class NetworkData(object):
                                      preprocessing_function, color_mode)
 
         for layer in self.layers:
-            datagen = ImageDataGenerator()
-            data_batch = datagen.flow_from_directory(
-                directory,
-                target_size=target_size,
-                batch_size=batch_size,
-                shuffle=False, color_mode=color_mode
-            )
+            if layer.layer_id in layer_names:
+                datagen = ImageDataGenerator()
+                data_batch = datagen.flow_from_directory(
+                    directory,
+                    target_size=target_size,
+                    batch_size=batch_size,
+                    shuffle=False, color_mode=color_mode
+                )
 
-            start = time.time()
-            num_images = data_batch.samples
-            n_batches = 0
-            # filters = None
+                start = time.time()
+                num_images = data_batch.samples
+                n_batches = 0
+                # filters = None
 
-            for i in data_batch:
-                images = i[0]
+                for i in data_batch:
+                    images = i[0]
 
-                # Apply the preprocessing function to the inputs
-                if preprocessing_function is not None:
-                    images = preprocessing_function(images)
+                    # Apply the preprocessing function to the inputs
+                    if preprocessing_function is not None:
+                        images = preprocessing_function(images)
 
-                idx = (data_batch.batch_index - 1) * data_batch.batch_size
-                file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
+                    idx = (data_batch.batch_index - 1) * data_batch.batch_size
+                    file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
 
-                # Search the maximum activations
-                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
+                    # Search the maximum activations
+                    layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
 
-                print 'On layer ', layer.layer_id, ', Get and sort activations in batch num: ', n_batches,
-                ' Images processed: ', idx + data_batch.batch_size
+                    print 'On layer ', layer.layer_id, ', Get and sort activations in batch num: ', n_batches,
+                    ' Images processed: ', idx + data_batch.batch_size
 
-                n_batches += 1
-                if n_batches >= num_images / data_batch.batch_size:
-                    break
+                    n_batches += 1
+                    if n_batches >= num_images / data_batch.batch_size:
+                        break
 
-            # Set the number of maximum activations stored in each neuron
-            layer.set_max_activations()
+                # Set the number of maximum activations stored in each neuron
+                layer.set_max_activations()
 
-            end_act_time = time.time() - start
+                end_act_time = time.time() - start
 
-            if build_nf:
-                # Build the neuron features
-                layer.build_neuron_feature(self)
+                if build_nf:
+                    # Build the neuron features
+                    layer.build_neuron_feature(self)
 
-            end_comp_nf_time = time.time() - end_act_time - start
+                end_comp_nf_time = time.time() - end_act_time - start
 
-            print 'Time (s) to get and sort activations from ', num_images, ' images: ', end_act_time
-            print 'Time (s) to compute_nf and receptive fields from each neuron: ', end_comp_nf_time
+                print 'Time (s) to get and sort activations from ', num_images, ' images: ', end_act_time
+                print 'Time (s) to compute_nf and receptive fields from each neuron: ', end_comp_nf_time
 
-            times_ex.append(time.time() - start)
+                times_ex.append(time.time() - start)
 
-            if save_for_layers:
-                # Save the results each time we have a evaluated layer
-                self.save_to_disk(layer.layer_id)
+                if save_for_layers:
+                    # Save the results each time we have a evaluated layer
+                    self.save_to_disk(layer.layer_id)
 
         for i in xrange(len(times_ex)):
             print 'total time execution for layer ', i, ' : ', times_ex[i]

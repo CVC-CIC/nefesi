@@ -5,12 +5,34 @@ from read_activations import get_sorted_activations, get_activations
 from neuron_feature import compute_nf, get_image_receptive_field
 from similarity_index import get_similarity_index
 
-class LayerData(object):
 
+class LayerData(object):
+    """This class contains all the information related with the
+    layers already evaluated.
+
+    Arguments:
+        layer_id: String, name of the layer (This name is the same
+            given for the Keras model)
+
+    Attributes:
+        filters: List of NeuronData objects. For more information about
+            NeuronData class see: nefesi.neuron_data.NeuronData
+        similarity_index: Non-symmetric matrix containing the result of
+            similarity index for each neuron in this layer. When this index is
+            calculated, the size of the matrix is len(filters) x len(filters)
+        receptive_field_map: Matrix of integer tuples with size equal
+            to map activation shape of this layer. Each position i, j from
+            the matrix contains a tuple with four values: row_ini, row_fin,
+            col_ini, col_fin. This values represents the window of receptive
+            field from the input image that provokes the activation there is
+            in the location i, j of the map activation.
+        receptive_field_size: Tuple of two integers. Size of receptive field
+            of the input image in this layer.
+    """
     def __init__(self, layer_name):
         self.layer_id = layer_name
-        self.similarity_index = None
         self.filters = None
+        self.similarity_index = None
         self.receptive_field_map = None
         self.receptive_field_size = None
 
@@ -27,6 +49,26 @@ class LayerData(object):
 
     def selectivity_idx(self, model, index_name, dataset,
                         labels=None, thr_class_idx=1., thr_pc=0.1):
+        """Returns the selectivity index value for the index in `index_name`.
+
+        :param model: A Keras model.
+        :param index_name: String, name of the index.
+        :param dataset: An ImageDataset instance.
+        :param labels: Dictionary, key: name class, value: label.
+            This argument is needed for calculate the class and the population
+            code index.
+        :param thr_class_idx: Float between 0.0 and 1.0, threshold applied in
+            class selectivity index.
+        :param thr_pc: Float between 0.0 and 1.0, threshold applied in
+            population code index.
+
+        :return: List of floats. The index values for each neuron in this layer.
+
+        :raises:
+            TypeError: If `labels` is None or is not a Dictionary.
+            ValueError: If `index_name` is not one of theses: "color",
+            "orientation", "symmetry", "class" or "population code".
+        """
         sel_idx = []
         for f in self.filters:
             if index_name == 'color':
@@ -39,31 +81,43 @@ class LayerData(object):
                 res = f.symmetry_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'class':
-                if labels is None:
-                    raise ValueError('The `labels` argument should be '
+                if labels is None or type(labels) is not dict():
+                    raise TypeError('The `labels` argument should be '
                                      'a dictionary')
                 res = f.class_selectivity_idx(labels, thr_class_idx)
                 sel_idx.append(res)
 
             elif index_name == 'population code':
-                if labels is None:
-                    raise ValueError('The `labels` argument should be '
+                if labels is None or type(labels) is not dict():
+                    raise TypeError('The `labels` argument should be '
                                      'a dictionary')
                 res = f.population_code_idx(labels, thr_pc)
                 sel_idx.append(res)
             else:
-                raise ValueError('The `index_name` argument should be one'
+                raise ValueError('The `index_name` argument should be one '
                                  'of theses: color, orientation, symmetry, '
                                  'class or population code.')
         return sel_idx
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
+        """This function returns the similarity index matrix of this layer.
+        If `neurons_idx` is not None, returns a subset of the similarity
+        matrix where `neurons_idx` is the index number of the neurons returned
+        within the subset.
 
+        :param model: A Keras model.
+        :param dataset: An ImageDataset instance.
+        :param neurons_idx: List of integer. Neuron indexes in the attribute
+            class `filters`.
+
+        :return: Non-symmetric matrix of floats. Each position i, j in the matrix
+            corresponds to the distance between the neuron with index i and neuron
+            with index j, in the attribute class `filters`.
+        """
         if self.similarity_index is not None:
             if neurons_idx is None:
                 return self.similarity_index
             else:
-                # print self.similarity_index[0:4, 0:4]
                 size_new_sim = len(neurons_idx)
                 new_sim = np.zeros((size_new_sim, size_new_sim))
                 for i in xrange(size_new_sim):
@@ -74,40 +128,34 @@ class LayerData(object):
 
                 return new_sim
         else:
-            if self.filters is None:
-                print 'Error message, in layer:', self.layer_id, ', No filters.'
-                return None
-            else:
-                size = len(self.filters)
-                self.similarity_index = np.zeros((size, size))
+            size = len(self.filters)
+            self.similarity_index = np.zeros((size, size))
 
-                idx_a = np.arange(size)
-                print idx_a
+            idx_a = np.arange(size)
+            print idx_a
 
-                for a, b in permutations(idx_a, 2):
-                    sim_idx = get_similarity_index(self.filters[a], self.filters[b], a,
-                                                   model, self.layer_id, dataset)
-                    self.similarity_index[a][b] = sim_idx
+            for a, b in permutations(idx_a, 2):
+                sim_idx = get_similarity_index(self.filters[a], self.filters[b], a,
+                                               model, self.layer_id, dataset)
+                self.similarity_index[a][b] = sim_idx
 
-                return self.similarity_index
-
-                # for i in xrange(size-1):
-                #     for j in xrange(i+1, size):
-                #         sim_idx = get_similarity_index(self.filters[i], self.filters[j], i, j,
-                #                                        model, self.layer_id, dataset)
-                #         self.similarity_index[i][j] = sim_idx
-                #
-                # return self.similarity_index
+            return self.similarity_index
 
     def mapping_rf(self, model, w, h):
-
-        self.receptive_field_map = np.zeros(shape=(w, h),
-                                            dtype=[('x1', 'i4'), ('x2', 'i4'), ('y1', 'i4'), ('y2', 'i4')])
-
-        for i in xrange(w):
-            for j in xrange(h):
-                ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
-                self.receptive_field_map[i, j] = (ri, rf+1, ci, cf+1)
+        """Maps each position in the map activation with the corresponding
+        window from the input image (receptive field window).
+        Also calculates the size of this receptive field.
+        """
+        if self.receptive_field_map is None:
+            self.receptive_field_map = np.zeros(shape=(w, h),
+                                                dtype=[('x1', 'i4'),
+                                                       ('x2', 'i4'),
+                                                       ('y1', 'i4'),
+                                                       ('y2', 'i4')])
+            for i in xrange(w):
+                for j in xrange(h):
+                    ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
+                    self.receptive_field_map[i, j] = (ri, rf+1, ci, cf+1)
 
         # calculate the size of receptive field
         if self.receptive_field_size is None:
@@ -118,18 +166,15 @@ class LayerData(object):
             width = cf - ci
             self.receptive_field_size = (width, height)
 
-
     def get_location_from_rf(self, location):
-        '''
-        Dada una location en una imagen, devuelve la posicion centro del rf
-        en el mapa de activacion
-        :param location:
-        :return:
-        '''
+        """Given a pixel of an image (x, y), returns a location in the map
+        activation that corresponds to receptive field with the center more nearest
+        to the pixel position (x, y).
+
+        :param location: Tuple of integers, pixel location from the image.
+        :return: Integer tuple, a location of the map activation.
+        """
         row, col = location
-
-        h, w = self.receptive_field_map.shape
-
         ri, rf, ci, cf = self.receptive_field_map[0, 0]
         ri2, rf2, ci2, cf2 = self.receptive_field_map[1, 1]
         stride_r = rf2 - rf
@@ -137,29 +182,54 @@ class LayerData(object):
 
         return row/stride_r, col/stride_c
 
-    # decomposition
     def decomposition_image(self, model, img):
+        """This function calculates the decomposition of an image in this layer
+        and returns the maximum activation values and the neurons that provoke
+        them.
 
-        # name_img = self.filters[0].get_images_id()[0]
-        #
-        #
-        # image = img.load_images([name_img])
+        :param model: A Keras model
+        :param img: Numpy array. This image should be an image already preprocessed
+            by ImageDataset.
+
+        :return: Two numpy array of shape(w, h, k). Where w and h is the size of
+            the map activation in this layer, and k is the number of neurons in this
+            layer.
+
+            The first array, contains the activation values, sorted by maximum in
+            the k dimension for each w, h position.
+
+            The second array, contains the neurons index that provoke them.
+            Each position (w, h, k) from this array contains the index neuron that
+            corresponds to the activation value in the first array with the same
+            position (w, h, k).
+
+        """
 
         max_act = []
         for f in self.filters:
             max_act.append(f.activations[0])
 
+        # get the activations of image in this layer.
         activations = get_activations(model, img, print_shape_only=True, layer_name=self.layer_id)
 
         activations = activations[0]
+
+        # get the activations shape, where:
+        #  _ = number of images(1),
+        # w, h = size of map activation,
+        # c = number of neurons
         _, w, h, c = activations.shape
 
         hc_activations = np.zeros((w, h, c))
         hc_idx = np.zeros((w, h, c))
 
+        # normalize the activations in each map activation
+        # for each neuron (c)
         for i in xrange(c):
             activations[0, :, :, i] = activations[0, :, :, i] / max_act[i]
 
+        # sort the activations for each w, h position in map activation
+        # in the neuron (c) dimension
         for i in xrange(w):
             for j in xrange(h):
                 tmp = activations[0, i, j, :]
@@ -168,17 +238,35 @@ class LayerData(object):
                 hc_activations[i, j, :] = tmp[idx]
                 hc_idx[i, j, :] = idx
 
-        # print activations[0, 0, 0, :]
-        # print hc_activations[0, 0, :]
-        # print hc_idx[0, 0, :]
         return hc_activations, hc_idx
 
-
     def decomposition_nf(self, neuron_id, target_layer, model, dataset):
+        """his function calculates the decomposition of a neuron feature
+         from this layer and returns the maximum activation values and
+         the neurons that provoke them.
+
+        :param neuron_id: Integer, index of the neuron with the neuron feature
+            to be decomposed.
+        :param target_layer: A LayerData instance, layer where decompose
+            the neuron_feature
+        :param model: A Keras model
+        :param dataset: An ImageDataset instance.
+
+        :return: Two numpy array of shape(w, h, k). Where w and h is the size of
+            the map activation in this layer, and k is the number of neurons in this
+            layer.
+
+            The first array, contains the activation values, sorted by maximum in
+            the k dimension for each w, h position.
+
+            The second array, contains the neurons index that provoke them.
+            Each position (w, h, k) from this array contains the index neuron that
+            corresponds to the activation value in the first array with the same
+            position (w, h, k).
+        """
 
         if self.filters[neuron_id].activations[0] == 0.0:
-            # A neuron feature within a neuron with no activations
-            # can't be decomposed
+            # A neuron with no activations can't be decomposed
             return None
 
         neuron_images = self.filters[neuron_id].images_id
@@ -187,6 +275,7 @@ class LayerData(object):
 
         neuron_images = dataset.load_images(neuron_images)
 
+        # build the patches from the neuron on this layer that we want to decompose
         for i in xrange(len(neuron_images)):
             loc = neuron_locations[i]
             row_ini, row_fin, col_ini, col_fin = self.receptive_field_map[loc[0], loc[1]]
@@ -197,27 +286,27 @@ class LayerData(object):
             img_size = dataset.target_size
             new_image = np.zeros((img_size[0], img_size[1], k))
             new_image[0:r, 0:c, :] = patch
-
             neuron_images[i] = new_image
-
-
 
         max_act = []
         for f in target_layer.filters:
             max_act.append(f.activations[0])
 
+        # get the activations for the patches
         activations = get_activations(model, neuron_images,
                                       print_shape_only=True,
                                       layer_name=target_layer.layer_id)
 
-
-
         activations = activations[0]
+        # get the activations shape, where:
+        # n_patches = number of patches,
+        # w, h = size of map activation,
+        # k = number of neurons
         n_patches, w, h, k = activations.shape
 
-
-        # print max_act
-
+        # normalize each map activation from each patch for each neuron and multiply
+        # each map activation from each patch with the normalized activation
+        # of that patch
         for i in xrange(n_patches):
             tmp = activations[i]
             for j in xrange(k):
@@ -228,6 +317,7 @@ class LayerData(object):
             tmp = tmp*norm_activations[i]
             activations[i] = tmp
 
+        # for each map activation from each patch average them
         mean_activations = np.zeros((w, h, k))
         for i in xrange(n_patches):
             a = activations[i]
@@ -237,6 +327,7 @@ class LayerData(object):
         hc_activations = np.zeros((w, h, k))
         hc_idx = np.zeros((w, h, k))
 
+        # sort the activations for each neuron
         for i in xrange(w):
             for j in xrange(h):
                 tmp = mean_activations[i, j, :]
@@ -248,13 +339,24 @@ class LayerData(object):
         return hc_activations, hc_idx
 
     def similar_neurons(self, neuron_idx, inf_thr=0.0, sup_thr=1.0):
+        """Given a neuron index, returns a sorted list of the neurons
+        with a similarity index between `inf_thr` and `sup_thr` similars
+        to that neuron.
 
+        :param neuron_idx: Integer, index of the neuron in the attribute
+            attribute class `filters`.
+        :param inf_thr: Float.
+        :param sup_thr: Float.
+
+        :return:
+        """
         sim_idx = self.similarity_index
 
         res_neurons = []
         idx_values = []
         n_sim = sim_idx[neuron_idx, :]
 
+        # get the similarity values between the threshold
         for i in xrange(len(n_sim)):
             idx = n_sim[i]
             if inf_thr <= idx <= sup_thr:
