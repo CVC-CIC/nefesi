@@ -1,4 +1,3 @@
-
 import numpy as np
 from PIL import ImageOps
 
@@ -65,7 +64,7 @@ class NeuronData(object):
         self.images_id[self._index] = image_id
         self.xy_locations[self._index] = xy_location
         self._index += 1
-        if self._index >= self._max_activations+self._batch_size:
+        if self._index >= self._max_activations + self._batch_size:
             self.sort()
             self._index = self._max_activations
 
@@ -86,7 +85,7 @@ class NeuronData(object):
         max_activation = max(self.activations)
         if max_activation == 0:
             return -1
-        self.norm_activations = self.activations/abs(max_activation)
+        self.norm_activations = self.activations / abs(max_activation)
 
     def set_max_activations(self):
         self.activations = self.activations[:self._max_activations]
@@ -161,12 +160,11 @@ class NeuronData(object):
                       self.xy_locations[i],
                       self.norm_activations[i])
 
-    def color_selectivity_idx(self, model, layer_data, filter_idx, dataset):
+    def color_selectivity_idx(self, model, layer_data, dataset):
         """Returns the color selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param filter_idx: Integer, neuron index in the layer.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: Float, value of color selectivity index.
@@ -175,16 +173,16 @@ class NeuronData(object):
         if color_idx is not None:
             return color_idx
 
-        color_idx = get_color_selectivity_index(self, model, layer_data, filter_idx, dataset)
+        color_idx = get_color_selectivity_index(self, model,
+                                                layer_data, dataset)
         self.selectivity_idx['color'] = color_idx
         return color_idx
 
-    def orientation_selectivity_idx(self, model, layer_data, filter_idx, dataset):
+    def orientation_selectivity_idx(self, model, layer_data, dataset):
         """Returns the orientation selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param filter_idx: Integer, neuron index in the layer.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: List of floats, values of orientation selectivity index.
@@ -193,17 +191,16 @@ class NeuronData(object):
         if orientation_idx is not None:
             return orientation_idx
 
-        orientation_idx = get_orientation_index(self, model, layer_data,
-                                                filter_idx, dataset)
+        orientation_idx = get_orientation_index(self, model,
+                                                layer_data, dataset)
         self.selectivity_idx['orientation'] = orientation_idx
         return orientation_idx
 
-    def symmetry_selectivity_idx(self, model, layer_data, filter_idx, dataset):
+    def symmetry_selectivity_idx(self, model, layer_data, dataset):
         """Returns the symmetry selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param filter_idx: Integer, neuron index in the layer.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: List of floats, values of symmetry selectivity index.
@@ -212,7 +209,7 @@ class NeuronData(object):
         if symmetry_idx is not None:
             return symmetry_idx
 
-        symmetry_idx = get_symmetry_index(self, model, layer_data, filter_idx, dataset)
+        symmetry_idx = get_symmetry_index(self, model, layer_data, dataset)
         self.selectivity_idx['symmetry'] = symmetry_idx
         return symmetry_idx
 
@@ -264,6 +261,3 @@ class NeuronData(object):
         population_code_idx = get_population_code_idx(self, labels, threshold)
         self.selectivity_idx['population code'] = population_code_idx
         return population_code_idx
-
-
-

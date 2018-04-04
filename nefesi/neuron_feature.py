@@ -1,8 +1,8 @@
+import numpy as np
 
 from keras.preprocessing import image
 from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import _Pooling2D
-import numpy as np
 
 
 def compute_nf(network_data, layer_data, filters):

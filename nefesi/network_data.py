@@ -26,6 +26,7 @@ class NetworkData(object):
         save_path: Path of directory where the results will be saved.
         dataset: The `nefesi.util.image.ImageDataset` instance.
     """
+
     def __init__(self, model):
         self.model = model
         self.layers = []
@@ -49,8 +50,8 @@ class NetworkData(object):
         self._save_path = save_path
 
     def _build_layers(self, layers):
-            for l in layers:
-                self.layers.append(LayerData(l))
+        for l in layers:
+            self.layers.append(LayerData(l))
 
     def eval_network(self, directory,
                      layer_names,
@@ -454,9 +455,9 @@ class NetworkData(object):
             if rf <= src_image.size[0] and cf <= src_image.size[1]:
                 clp = orp_image[ri:rf, ci:cf]
                 clp_size = clp.shape
-                clp_size = clp_size[0]*clp_size[1]
+                clp_size = clp_size[0] * clp_size[1]
                 non_zero = np.count_nonzero(clp)
-                c_overlapping = float(non_zero)/float(clp_size)
+                c_overlapping = float(non_zero) / float(clp_size)
 
                 if c_overlapping <= overlapping:
                     orp_image[ri:rf, ci:cf] = 1

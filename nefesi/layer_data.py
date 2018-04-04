@@ -1,6 +1,6 @@
-
 import numpy as np
 from itertools import permutations
+
 from read_activations import get_sorted_activations, get_activations
 from neuron_feature import compute_nf, get_image_receptive_field
 from similarity_index import get_similarity_index
@@ -28,6 +28,7 @@ class LayerData(object):
         receptive_field_size: Tuple of two integers. Size of receptive field
             of the input image in this layer.
     """
+
     def __init__(self, layer_name):
         self.layer_id = layer_name
         self.filters = None
@@ -70,13 +71,13 @@ class LayerData(object):
         sel_idx = []
         for f in self.filters:
             if index_name == 'color':
-                res = f.color_selectivity_idx(model, self, self.filters.index(f), dataset)
+                res = f.color_selectivity_idx(model, self, dataset)
                 sel_idx.append(res)
             elif index_name == 'orientation':
-                res = f.orientation_selectivity_idx(model, self, self.filters.index(f), dataset)
+                res = f.orientation_selectivity_idx(model, self, dataset)
                 sel_idx.append(res)
             elif index_name == 'symmetry':
-                res = f.symmetry_selectivity_idx(model, self, self.filters.index(f), dataset)
+                res = f.symmetry_selectivity_idx(model, self, dataset)
                 sel_idx.append(res)
             elif index_name == 'class':
                 res = f.class_selectivity_idx(labels, thr_class_idx)
@@ -149,12 +150,12 @@ class LayerData(object):
                     ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
                     # we have to add 1 in row_fin and col_fin due to behaviour
                     # of Numpy arrays.
-                    self.receptive_field_map[i, j] = (ri, rf+1, ci, cf+1)
+                    self.receptive_field_map[i, j] = (ri, rf + 1, ci, cf + 1)
 
         # calculate the size of receptive field
         if self.receptive_field_size is None:
-            r = int(w/2)
-            c = int(h/2)
+            r = int(w / 2)
+            c = int(h / 2)
             ri, rf, ci, cf = self.receptive_field_map[r, c]
             height = rf - ri
             width = cf - ci
@@ -174,7 +175,7 @@ class LayerData(object):
         stride_r = rf2 - rf
         stride_c = cf2 - cf
 
-        return row/stride_r, col/stride_c
+        return row / stride_r, col / stride_c
 
     def decomposition_image(self, model, img):
         """Calculates the decomposition of an image in this layer
@@ -305,7 +306,7 @@ class LayerData(object):
                     n_act = tmp[:, :, j] / max_act[j]
                     np.place(n_act, n_act > 1, 1)
                     tmp[:, :, j] = n_act
-            tmp = tmp*norm_activations[i]
+            tmp = tmp * norm_activations[i]
             activations[i] = tmp
 
         # for each map activation from each patch average them
@@ -363,5 +364,3 @@ class LayerData(object):
         idx_values = idx_values[sorted_idx]
 
         return res_neurons, idx_values
-
-
