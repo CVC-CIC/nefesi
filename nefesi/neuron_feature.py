@@ -6,31 +6,38 @@ import numpy as np
 
 
 def compute_nf(network_data, layer_data, filters):
+    """This function build the neuron features (NF) for all neurons
+    in `filters`.
 
+    :param network_data: The `nefesi.network_data.NetworkData` instance.
+    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param filters: List of `nefesi.neuron_data.NeuronData` instances.
+    """
     if layer_data.receptive_field_map is None:
         model = network_data.model
         layer_idx = find_layer_idx(model, layer_data.layer_id)
         _, w, h, _ = model.layers[layer_idx].output_shape
         layer_data.mapping_rf(model, w, h)
 
-
-    # now, we can calculate the NF for each neuron
     for f in filters:
         if f.norm_activations is not None:
-
             norm_activations = f.norm_activations
+            # get the receptive fields from a neuron
             patches = f.get_patches(network_data, layer_data)
             num_a = len(patches)
 
             total_act = np.zeros(np.array(patches[0]).shape)
             for i in xrange(num_a):
+                # multiply each receptive field per the normalized
+                # activation of the image to comes from.
                 img = image.img_to_array(patches[i])
                 norm_act = norm_activations[i]
                 total_act = total_act + (img * norm_act)
 
+            # average them with total number of patches (receptive field).
             nf = total_act / num_a
 
-            # maximize contrast
+            # maximize the contrast of the NF
             min_v = np.min(nf.ravel())
             max_v = np.max(nf.ravel())
             nf = nf - min_v
@@ -38,78 +45,88 @@ def compute_nf(network_data, layer_data, filters):
 
             f.neuron_feature = image.array_to_img(nf)
         else:
+            # if `norm_activations` from a neuron is None, that means this neuron
+            # doesn't have activations. NF is setting with None.
             f.neuron_feature = None
 
-    return filters
 
+def get_image_receptive_field(x, y, model, layer_name):
+    """This function takes `x` and `y` position from the map activation generated
+    on the output in the layer `layer_name`, and returns the window location
+    of the receptive field in the input image.
 
-def get_image_receptive_field(x, y, model, layer):
+    :param x: Integer, row position in the map activation.
+    :param y: Integer, column position in the map activation.
+    :param model: The `keras.models.Model` instance.
+    :param layer_name: String, name of the layer.
 
-    current_layer_idx = find_layer_idx(model, layer_name=layer)
+    :return: Tuple of integers, (x1, x2, y1, y2).
+        The exact position of the receptive field from an image.
+    """
+    current_layer_idx = find_layer_idx(model, layer_name=layer_name)
 
     row_ini = x
     col_ini = y
-
-    total_padding = 0
-
     row_fin = row_ini
     col_fin = col_ini
 
+    # goes throw the current layer until the first input layer.
+    # (input shape of the network)
     for i in xrange(current_layer_idx, -1, -1):
         current_layer = model.layers[i]
         _, current_size, _, _ = current_layer.input_shape
 
+        # some checks to boundaries of the current layer shape.
         if row_ini < 0:
             row_ini = 0
         if col_ini < 0:
             col_ini = 0
-
         if row_fin > current_size - 1:
             row_fin = current_size - 1
         if col_fin > current_size - 1:
             col_fin = current_size - 1
 
+        # check if the current layer is a convolution layer or
+        # a pooling layer (both have to be 2D).
         if isinstance(current_layer, Conv2D) or isinstance(current_layer, _Pooling2D):
+            # get some configuration parameters,
+            # padding, kernel_size, strides
             config_params = current_layer.get_config()
             padding = config_params['padding']
-            strides = config_params['strides'][0]
-            kernel_size = config_params.get('kernel_size', config_params.get('pool_size'))[0]
+            strides = config_params['strides']
+            kernel_size = config_params.get('kernel_size', config_params.get('pool_size'))
 
-            if padding == 'same':  # padding = same, means input shape = output shape
-                padding = (kernel_size - 1) / 2
-                total_padding += padding
+            if padding == 'same':
+                # padding = same, means input shape = output shape
+                padding = (kernel_size[0] - 1) / 2, (kernel_size[1] - 1) / 2
             else:
-                padding = 0
+                padding = (0, 0)
 
-            row_ini = row_ini*strides
-            col_ini = col_ini*strides
+            # calculate the window location applying the proper displacements.
+            row_ini = row_ini*strides[0]
+            col_ini = col_ini*strides[1]
+            row_fin = row_fin*strides[0] + kernel_size[0]-1
+            col_fin = col_fin*strides[1] + kernel_size[1]-1
 
-            row_fin = row_fin*strides + kernel_size-1
-            col_fin = col_fin*strides + kernel_size-1
-
-            row_ini -= padding
-            col_ini -= padding
-
-            row_fin -= padding
-            col_fin -= padding
-
-
-        # print 'Layer:', current_layer.layer_id, ' ri:', row_ini, ' rf:', row_fin, ' ci:', col_ini, ' cf:', col_fin
-        # print 'RF size: ', row_fin - row_ini, col_fin - col_ini
-    # print 'Final values: ', row_ini, row_fin, col_ini, col_fin
-
+            # apply the padding on the receptive field window.
+            row_ini -= padding[0]
+            col_ini -= padding[1]
+            row_fin -= padding[0]
+            col_fin -= padding[1]
     return row_ini, row_fin, col_ini, col_fin
 
 
 def find_layer_idx(model, layer_name):
-    """Looks up the layer index corresponding to `layer_name` from `model`.
+    """Returns the layer index corresponding to `layer_name` from `model`.
 
-    Args:
-        model: The `keras.models.Model` instance.
-        layer_name: The layer_id of the layer to lookup.
+    :param model: The `keras.models.Model` instance.
+    :param layer_name: String, name of the layer to lookup.
 
-    Returns:
-        The layer index if found. Raises an exception otherwise.
+    :return: Integer, the layer index.
+
+    :raise
+        ValueError: If there isn't a layer with layer id = `layer_name`
+            in the model.
     """
     layer_idx = None
     for idx, layer in enumerate(model.layers):

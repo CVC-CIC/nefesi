@@ -12,14 +12,13 @@ class LayerData(object):
 
     Arguments:
         layer_id: String, name of the layer (This name is the same
-            given for the Keras model)
+            inside of `keras.models.Model` instance)
 
     Attributes:
-        filters: List of NeuronData objects. For more information about
-            NeuronData class see: nefesi.neuron_data.NeuronData
+        filters: List of `nefesi.neuron_data.NeuronData` instances.
         similarity_index: Non-symmetric matrix containing the result of
             similarity index for each neuron in this layer. When this index is
-            calculated, the size of the matrix is len(filters) x len(filters)
+            calculated, the size of the matrix is len(filters) x len(filters).
         receptive_field_map: Matrix of integer tuples with size equal
             to map activation shape of this layer. Each position i, j from
             the matrix contains a tuple with four values: row_ini, row_fin,
@@ -51,9 +50,9 @@ class LayerData(object):
                         labels=None, thr_class_idx=1., thr_pc=0.1):
         """Returns the selectivity index value for the index in `index_name`.
 
-        :param model: A Keras model.
+        :param model: The `keras.models.Model` instance.
         :param index_name: String, name of the index.
-        :param dataset: An ImageDataset instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
         :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
             code index.
@@ -65,7 +64,6 @@ class LayerData(object):
         :return: List of floats. The index values for each neuron in this layer.
 
         :raises:
-            TypeError: If `labels` is None or is not a Dictionary.
             ValueError: If `index_name` is not one of theses: "color",
             "orientation", "symmetry", "class" or "population code".
         """
@@ -81,32 +79,25 @@ class LayerData(object):
                 res = f.symmetry_selectivity_idx(model, self, self.filters.index(f), dataset)
                 sel_idx.append(res)
             elif index_name == 'class':
-                if labels is None or type(labels) is not dict():
-                    raise TypeError('The `labels` argument should be '
-                                     'a dictionary')
                 res = f.class_selectivity_idx(labels, thr_class_idx)
                 sel_idx.append(res)
-
             elif index_name == 'population code':
-                if labels is None or type(labels) is not dict():
-                    raise TypeError('The `labels` argument should be '
-                                     'a dictionary')
                 res = f.population_code_idx(labels, thr_pc)
                 sel_idx.append(res)
             else:
-                raise ValueError('The `index_name` argument should be one '
-                                 'of theses: color, orientation, symmetry, '
-                                 'class or population code.')
+                raise ValueError("The `index_name` argument should be one "
+                                 "of theses: color, orientation, symmetry, "
+                                 "class or population code.")
         return sel_idx
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
-        """This function returns the similarity index matrix of this layer.
+        """Returns the similarity index matrix for this layer.
         If `neurons_idx` is not None, returns a subset of the similarity
-        matrix where `neurons_idx` is the index number of the neurons returned
-        within the subset.
+        matrix where `neurons_idx` is the neuron index of the neurons returned
+        within that subset.
 
-        :param model: A Keras model.
-        :param dataset: An ImageDataset instance.
+        :param model: The `keras.models.Model` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
         :param neurons_idx: List of integer. Neuron indexes in the attribute
             class `filters`.
 
@@ -124,8 +115,6 @@ class LayerData(object):
                     idx1 = neurons_idx[i]
                     for j in xrange(size_new_sim):
                         new_sim[i, j] = self.similarity_index[idx1, neurons_idx[j]]
-
-
                 return new_sim
         else:
             size = len(self.filters)
@@ -138,13 +127,16 @@ class LayerData(object):
                 sim_idx = get_similarity_index(self.filters[a], self.filters[b], a,
                                                model, self.layer_id, dataset)
                 self.similarity_index[a][b] = sim_idx
-
             return self.similarity_index
 
     def mapping_rf(self, model, w, h):
         """Maps each position in the map activation with the corresponding
         window from the input image (receptive field window).
         Also calculates the size of this receptive field.
+
+        :param model: The `keras.models.Model` instance.
+        :param w: Integer, row position in the map activation.
+        :param h: Integer, column position in the map activation.
         """
         if self.receptive_field_map is None:
             self.receptive_field_map = np.zeros(shape=(w, h),
@@ -155,6 +147,8 @@ class LayerData(object):
             for i in xrange(w):
                 for j in xrange(h):
                     ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
+                    # we have to add 1 in row_fin and col_fin due to behaviour
+                    # of Numpy arrays.
                     self.receptive_field_map[i, j] = (ri, rf+1, ci, cf+1)
 
         # calculate the size of receptive field
@@ -183,13 +177,13 @@ class LayerData(object):
         return row/stride_r, col/stride_c
 
     def decomposition_image(self, model, img):
-        """This function calculates the decomposition of an image in this layer
+        """Calculates the decomposition of an image in this layer
         and returns the maximum activation values and the neurons that provoke
         them.
 
-        :param model: A Keras model
+        :param model: The `keras.models.Model` instance.
         :param img: Numpy array. This image should be an image already preprocessed
-            by ImageDataset.
+            by the `nefesi.util.image.ImageDataset` instance.
 
         :return: Two numpy array of shape(w, h, k). Where w and h is the size of
             the map activation in this layer, and k is the number of neurons in this
@@ -202,9 +196,7 @@ class LayerData(object):
             Each position (w, h, k) from this array contains the index neuron that
             corresponds to the activation value in the first array with the same
             position (w, h, k).
-
         """
-
         max_act = []
         for f in self.filters:
             max_act.append(f.activations[0])
@@ -241,16 +233,16 @@ class LayerData(object):
         return hc_activations, hc_idx
 
     def decomposition_nf(self, neuron_id, target_layer, model, dataset):
-        """his function calculates the decomposition of a neuron feature
+        """Calculates the decomposition of a neuron
          from this layer and returns the maximum activation values and
          the neurons that provoke them.
 
         :param neuron_id: Integer, index of the neuron with the neuron feature
             to be decomposed.
-        :param target_layer: A LayerData instance, layer where decompose
-            the neuron_feature
-        :param model: A Keras model
-        :param dataset: An ImageDataset instance.
+        :param target_layer: The `nefesi.layer_data.LayerData` instance,
+            layer where decompose the neuron.
+        :param model: The `keras.models.Model` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: Two numpy array of shape(w, h, k). Where w and h is the size of
             the map activation in this layer, and k is the number of neurons in this
@@ -264,7 +256,6 @@ class LayerData(object):
             corresponds to the activation value in the first array with the same
             position (w, h, k).
         """
-
         if self.filters[neuron_id].activations[0] == 0.0:
             # A neuron with no activations can't be decomposed
             return None
@@ -340,15 +331,15 @@ class LayerData(object):
 
     def similar_neurons(self, neuron_idx, inf_thr=0.0, sup_thr=1.0):
         """Given a neuron index, returns a sorted list of the neurons
-        with a similarity index between `inf_thr` and `sup_thr` similars
-        to that neuron.
+        with a similarity index between `inf_thr` and `sup_thr`.
 
         :param neuron_idx: Integer, index of the neuron in the attribute
-            attribute class `filters`.
+            class `filters`.
         :param inf_thr: Float.
         :param sup_thr: Float.
 
-        :return:
+        :return: Two lists, list of `nefesi.neuron_data.NeuronData` instances
+            and values of similarity index.
         """
         sim_idx = self.similarity_index
 

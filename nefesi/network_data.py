@@ -17,16 +17,14 @@ class NetworkData(object):
     all evaluated data related with a Keras model.
 
     Arguments:
-        model: A Keras sequential model.
+        model: The `keras.models.Model` instance.
 
     Attributes:
-        layers: List of LayerData objects. For more information about
-            LayerData class see: nefesi.layer_data.LayerData.
+        layers: List of `nefesi.layer_data.LayerData` instances.
 
     Mutable-properties:
         save_path: Path of directory where the results will be saved.
-        dataset: Instance of ImageDataset. For more information
-            about ImageDataset class see: nefesi.util.image.ImageDataset.
+        dataset: The `nefesi.util.image.ImageDataset` instance.
     """
     def __init__(self, model):
         self.model = model
@@ -160,8 +158,8 @@ class NetworkData(object):
         self.save_to_disk()
 
     def get_layers_name(self):
-        """
-        Constructs a list with name of each layer in `layers`
+        """Builds a list with name of each layer in `layers`.
+
         :return: List of strings
         """
         names = [l.layer_id for l in self.layers]
@@ -208,8 +206,8 @@ class NetworkData(object):
                               and l == layer_data.layer_id), None)
 
                 if layer is None:
-                    raise ValueError('The layer_id ' + l + ' in `layer_name` '
-                                     'argument, is not valid.')
+                    raise ValueError("The layer_id '{}' `layer_name` "
+                                     "argument, is not valid.".format(l))
                 else:
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, labels=labels,
@@ -238,8 +236,8 @@ class NetworkData(object):
                           self.layers if l in self.get_layers_name()
                           and l == layer_data.layer_id), None)
             if layer is None:
-                raise ValueError('The layer_id ' + l + ' in `layer_name` '
-                                                       'argument, is not valid.')
+                raise ValueError("The layer_id '{}' `layer_name` "
+                                 "argument, is not valid.".format(l))
             else:
                 sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
         return sim_idx
@@ -253,8 +251,7 @@ class NetworkData(object):
         :param layers_or_neurons: List of strings, a string or a list of
             selective neurons.
             List of strings or string, name of the layer.
-            List of selective neurons, the output of this function itself,
-            (`get_selective_neurons()`)
+            List of selective neurons, the output of this function itself.
         :param idx1: String, index name
         :param idx2: String, index name
         :param inf_thr: Float between 0.0 and 1.0, gets the index values
@@ -267,8 +264,8 @@ class NetworkData(object):
             values: dictionary,
                 keys: string, layer name,
                 values: list of tuples with
-                neuron data object, index value, index value,
-                (the second one only if `idx2` is not None).
+                `nefesi.neuron_data.NeuronData` instance, index value, index value,
+                (the second index value, only if `idx2` is not None).
 
         :raise:
             TypeError: If `layers_or_neurons` is not a list of layer names,
@@ -340,7 +337,7 @@ class NetworkData(object):
             else:
                 idx1 = (sel_idx, idx1)
         else:
-            raise TypeError('Parameter 1 should be a list of layers, layer_id or dict')
+            raise TypeError("Parameter 1 should be a list of layers, layer_id or dict")
 
         if idx2 is not None:
             idx1 = (idx1, idx2)
@@ -354,12 +351,12 @@ class NetworkData(object):
         :param layer_id: String or integer index, layer name or index of the
             layer in `layers`. The layer where the image will be decomposed.
         :param img_name: String, image name. This image has to be in the same
-            directory set in `ImageDataset`.
+            directory set in `self.dataset.src_dataset`.
         :param location: Tuple of integers, pixel location from the image.
         :param num_max: Integer, Max number of activations returned.
 
         :return: List of floats, activation values,
-            List of neuron data objects,
+            List of `nefesi.neuron_data.NeuronData` instances,
             Location of receptive field related with the `location` of pixel.
         """
         layer = None
@@ -398,8 +395,8 @@ class NetworkData(object):
             of the activations in the input image or input neuron feature.
 
         :return: List of floats, activation values.
-            List of neuron data objects.
-            List of tuples of integers, activation locations for each
+            List of `nefesi.neuron_data.NeuronData` instances.
+            List of integer tuples, activation locations for each
             receptive field in the input image or input neuron feature.
             PIL image instance, in case we decompose a neuron feature,
             in other case, returns None.
@@ -470,14 +467,15 @@ class NetworkData(object):
         return res_act, res_neurons, res_loc, res_nf
 
     def save_to_disk(self, file_name=None, save_path=None, save_model=True):
-        """Save all results. The file saved will contain a NetworkData
-        object and the rest of containing instances.
+        """Save all results. The file saved will contain the
+        `nefesi.network_data.NetworkData` object and the rest
+         of containing objects.
 
         :param file_name: String, name of file.
             If `file_name` is None, the file will be named with the value
             of `model.name`.
         :param save_path: String, path to directory where save the results.
-        :param save_model: If its True, the Keras model will be saved
+        :param save_model: If its True, the model will be saved
             as a HDF5 file.
         """
         if file_name is None:
@@ -505,13 +503,13 @@ class NetworkData(object):
         :param model_file: String, path and file name.
             Expects a file with .h5 extension.
 
-        :return: A NetworkData instance.
+        :return: The `nefesi.network_data.NetworkData` instance.
         """
         my_net = pickle.load(open(file_name, 'rb'))
 
         if model_file is not None:
             my_net.model = load_model(model_file)
         if my_net.model is None:
-            warnings.warn('The model was *not* loaded. Load it manually.')
+            warnings.warn("The model was *not* loaded. Load it manually.")
 
         return my_net

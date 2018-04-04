@@ -11,7 +11,7 @@ from symmetry_index import get_symmetry_index
 class NeuronData(object):
     """This class contains all the results related with a neuron already
     evaluated, including:
-    - The N-top activations for this neuron.
+    - The N-top activation values for this neuron (normalized and unnormalized).
     - The selectivity indexes for this neuron.
     - The neuron feature.
 
@@ -81,7 +81,7 @@ class NeuronData(object):
         self.xy_locations = self.xy_locations[idx]
 
     def _normalize_activations(self):
-        """This method normalize the activations inside `activations`.
+        """Normalize the activations inside `activations`.
         """
         max_activation = max(self.activations)
         if max_activation == 0:
@@ -106,8 +106,8 @@ class NeuronData(object):
         """Returns the patches (receptive fields) from images in
         `images_id` for this neuron.
 
-        :param network_data: A NetworkData instance.
-        :param layer_data: A LayerData instance.
+        :param network_data: The `nefesi.network_data.NetworkData` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
 
         :return: List of PIL image instances.
         """
@@ -152,16 +152,22 @@ class NeuronData(object):
         Index of neuron, name of the image, activation value,
         activation location in map activation, normalized activation.
         """
-        for i in xrange(len(self.activations)):
-            print(i, self.images_id[i], self.activations[i], self.xy_locations[i], self.norm_activations[i])
+        if self.norm_activations is None:
+            print("Neuron with no activations.")
+        else:
+            for i in xrange(len(self.activations)):
+                print(i, self.images_id[i],
+                      self.activations[i],
+                      self.xy_locations[i],
+                      self.norm_activations[i])
 
     def color_selectivity_idx(self, model, layer_data, filter_idx, dataset):
         """Returns the color selectivity index for this neuron.
 
-        :param model: A Keras model.
-        :param layer_data: A LayerData instance.
+        :param model: The `keras.models.Model` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
         :param filter_idx: Integer, neuron index in the layer.
-        :param dataset: An ImageDataset instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: Float, value of color selectivity index.
         """
@@ -176,10 +182,10 @@ class NeuronData(object):
     def orientation_selectivity_idx(self, model, layer_data, filter_idx, dataset):
         """Returns the orientation selectivity index for this neuron.
 
-        :param model: A Keras model.
-        :param layer_data: A LayerData instance.
+        :param model: The `keras.models.Model` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
         :param filter_idx: Integer, neuron index in the layer.
-        :param dataset: An ImageDataset instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: List of floats, values of orientation selectivity index.
         """
@@ -195,10 +201,10 @@ class NeuronData(object):
     def symmetry_selectivity_idx(self, model, layer_data, filter_idx, dataset):
         """Returns the symmetry selectivity index for this neuron.
 
-        :param model: A Keras model.
-        :param layer_data: A LayerData instance.
+        :param model: The `keras.models.Model` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
         :param filter_idx: Integer, neuron index in the layer.
-        :param dataset: An ImageDataset instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: List of floats, values of symmetry selectivity index.
         """
@@ -227,8 +233,8 @@ class NeuronData(object):
             return class_idx
 
         if labels is None or type(labels) is not dict():
-            raise TypeError('The `labels` argument should be '
-                            'a dictionary')
+            raise TypeError("The `labels` argument should be "
+                            "a dictionary")
 
         class_idx = get_class_selectivity_idx(self, labels, threshold)
         self.selectivity_idx['class'] = class_idx
@@ -252,8 +258,8 @@ class NeuronData(object):
             return population_code_idx
 
         if labels is None or type(labels) is not dict():
-            raise TypeError('The `labels` argument should be '
-                            'a dictionary')
+            raise TypeError("The `labels` argument should be "
+                            "a dictionary")
 
         population_code_idx = get_population_code_idx(self, labels, threshold)
         self.selectivity_idx['population code'] = population_code_idx
