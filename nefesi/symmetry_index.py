@@ -45,7 +45,9 @@ def get_symmetry_index(filter, model, layer_data, idx_neuron, dataset):
         return results
 
     else:
-        return None
+        for x in xrange(len(symm_axes)+1):
+            results.append(0.0)
+        return results
 
 
 

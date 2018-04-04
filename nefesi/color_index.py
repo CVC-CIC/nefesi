@@ -50,7 +50,7 @@ def get_color_selectivity_index(filter, model, layer_data, idx_neuron, dataset):
         # print sum(norm_gray_activations)
         return 1 - (sum(norm_gray_activations)/sum(norm_activations))
     else:
-        return None
+        return 0.0
 
 
 

@@ -46,7 +46,9 @@ def get_orientation_index(filter, model, layer_data, idx_neuron, dataset):
         results.append(avg_orientation_index)
         return results
     else:
-        return None
+        for x in xrange(len(l_degrees)+1):
+            results.append(0.0)
+        return results
 
 
 

@@ -13,8 +13,7 @@ def get_class_selectivity_idx(filter, labels, threshold):
     rel_freq = relative_freq_class(filter, labels)
 
     if rel_freq is None:
-        print 'Msg'
-        return None
+        return None, 0.0
 
     else:
         freq_avoid_th = []
@@ -36,7 +35,6 @@ def get_class_selectivity_idx(filter, labels, threshold):
 
 
 def relative_freq_class(filter, labels):
-
 
     activations = filter.activations
     images = filter.images_id
@@ -61,8 +59,7 @@ def relative_freq_class(filter, labels):
 
         rel_freq = sorted(rel_freq, key=itemgetter(3), reverse=True)
 
-        print rel_freq
-        print len(rel_freq)
+
         return rel_freq
     else:
         return None
@@ -76,9 +73,7 @@ def get_population_code_idx(filter, labels, threshold_pc):
     rel_freq = relative_freq_class(filter, labels)
 
     if rel_freq is None:
-        print 'Msg'
-        return None
-
+        return 0
     else:
         pc = 0
         for r in rel_freq:
@@ -97,7 +92,7 @@ if __name__=='__main__':
     print labels
 
     my_net = pickle.load(open('/home/oprades/oscar/block1_3.obj', 'rb'))
-    l1 = my_net.get_layers()[6]
+    l1 = my_net.layers[6]
 
 
     neuron = l1.filters[96]

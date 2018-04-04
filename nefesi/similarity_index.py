@@ -30,5 +30,5 @@ def get_similarity_index(filter_a, filter_b, idx_a, model, layer_name, dataset):
         return sum(norm_new_act / sum(filter_a.norm_activations))
 
     else:
-        return None
+        return 0.0
 
