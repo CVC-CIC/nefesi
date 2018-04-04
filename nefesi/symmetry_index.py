@@ -1,102 +1,52 @@
-import os
-import pickle
-
 import read_activations
 from util.image import rotate_images_axis
 
 
-def get_symmetry_index(filter, model, layer_data, idx_neuron, dataset):
+def get_symmetry_index(neuron_data, model, layer_data, dataset):
+    """Returns the symmetry selectivity index.
+    This index is a list with four types of mirroring the image,
+    in the axes 0, 45, 90 and 135 degrees.
+    The last value in the list is the average of the rest of index values.
 
+    :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
+    :param model: The `keras.models.Model` instance.
+    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param dataset: The `nefesi.util.image.ImageDataset` instance.
+
+    :return: List of floats, index symmetry values.
+    """
     results = []
     symm_axes = [0, 45, 90, 135]
     avg_symmetry_idx = 0
 
-    activations = filter.activations
-    norm_activations = filter.norm_activations
-    image_names = filter.images_id
-    locations = filter.xy_locations
+    activations = neuron_data.activations
+    norm_activations = neuron_data.norm_activations
+    image_names = neuron_data.images_id
+    locations = neuron_data.xy_locations
 
     max_act = activations[0]
 
     if max_act != 0.0:
-
         images = dataset.load_images(image_names)
-
+        idx_neuron = layer_data.filters.index(neuron_data)
         for axes in symm_axes:
+            # apply the mirroring function over the images
             images_r = rotate_images_axis(images, axes, layer_data, locations)
-
             rot_activations = read_activations.get_activation_from_pos(images_r, model,
                                                                        layer_data.layer_id,
                                                                        idx_neuron, locations)
 
-
-            # print axes, rot_activations
-            norm_rot_act = rot_activations/max_act
-            partial_symmetry = sum(norm_rot_act)/sum(norm_activations)
-
+            # normalize activations.
+            norm_rot_act = rot_activations / max_act
+            partial_symmetry = sum(norm_rot_act) / sum(norm_activations)
             avg_symmetry_idx = avg_symmetry_idx + partial_symmetry
-
             results.append(partial_symmetry)
 
-
-        avg_symmetry_idx = avg_symmetry_idx/len(symm_axes)
-
+        # averaged symmetry index value (global symmetry).
+        avg_symmetry_idx = avg_symmetry_idx / len(symm_axes)
         results.append(avg_symmetry_idx)
         return results
-
     else:
-        for x in xrange(len(symm_axes)+1):
+        for x in xrange(len(symm_axes) + 1):
             results.append(0.0)
         return results
-
-
-
-
-
-if __name__=='__main__':
-    from external.vgg_matconvnet import VGG
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-    model = VGG()
-    layer_name = 'activation_1'
-    filters = pickle.load(open(layer_name + '.obj', 'rb'))
-
-    # fil = open('symmetry_idx_' + layer_name + '.txt', 'wb')
-
-    for i in xrange(1):
-        print i
-        res = get_symmetry_index(filters[i], model, layer_name, i)
-        print res
-    #     fil.write(str(i) + '\t')
-    #     for r in res:
-    #         fil.write(str(r) + '\t')
-    #     fil.write('\n')
-    # fil.close()
-
-
-    # filters[0].print_params()
-
-
-
-    #
-    # img = filters[0].get_activations()[0][0]
-    # pos = filters[0].get_activations()[2]
-    # img = load_images([img])
-    # #
-    # # image.array_to_img(img[0], scale=False).show()
-    # #
-    # x, y = pos[0]
-    # # print x, y
-    # # act = get_activations(model, img, print_shape_only=True, layer_name=layer_name)[0]
-    # # print act[0, x, y, 0]
-    # #
-    # img_rot = rotate_images(img, 45, model, layer_name, pos)
-    #
-    #
-    # image.array_to_img(img_rot[0], scale=False).show()
-    # #
-    #
-    #
-    # act = get_activations(model, img_rot, print_shape_only=True, layer_name=layer_name)[0]
-    # print act[0, x, y, 0]
