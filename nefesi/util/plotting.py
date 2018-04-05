@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
@@ -7,10 +8,18 @@ from sklearn.manifold import TSNE
 
 
 def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
-    # TODO: check what kind of index it is. For example, for symmetry plot only the avg
+    """Plots a summary over the selectivity indexes from a group of
+    specific layers.
+    If selectivity index is "orientation" or "symmetry", plots the
+    global index.
 
-    # avoid indexes lower than 0.0
+    :param selectivity_idx: The output from the function
+        `nefesi.network_data.NetworkData.get_selectivty_idx()`.
+    :param bins: Integer, number of bins for bars.
+    :param color_map: String, name of one color maps accepted by Matplotlib.
 
+    :return:
+    """
     cmap = plt.cm.get_cmap(color_map)
     colors = []
     for i in xrange(bins):
@@ -18,27 +27,21 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
 
     for k, v in selectivity_idx.items():
 
-        # if k == 'symmetry':
-        #     k = 'global symmetry'
-        #     idx = 4
-        #     new_l = []
-        #     for l in v:
-        #         for f in l:
-        #             new_l.append(f[idx])
-        #         l = new_l
-        #
-        #
-        # if k == 'orientation':
-        #     k = 'global orientation'
-        #     idx = 25
-
-
-
         N = len(v)
         pos = 0
-
         for l in v:
+            if k == 'symmetry' or k == 'orientation' or k == 'class':
+                n_idx = len(l[0])
+                l = [idx[n_idx - 1] for idx in l]
+
+            for i in xrange(len(l)):
+                if l[i] > 1.0:
+                    l[i] = 1.0
+                if l[i] < 0.0:
+                    l[i] = 0.0
+
             counts, bins = np.histogram(l, bins=bins, range=(0, 1))
+            print counts, bins
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
@@ -69,7 +72,18 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
 
 
 def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
+    """Plots the distribution of index symmetry values among
+    the distinct axes of symmetry.
 
+    :param selectivity_idx: The output from the function
+        `nefesi.network_data.NetworkData.get_selectivty_idx()`.
+    :param color_map: String, name of one color maps accepted by Matplotlib.
+
+    :return:
+
+    :raise:
+        ValueError: If index is not "symmetry".
+    """
     bins = 4
     cmap = plt.cm.get_cmap(color_map)
     colors = []
@@ -77,16 +91,17 @@ def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
         colors.append(cmap(1. * i / bins))
 
     for k, v in selectivity_idx.items():
+        if k != 'symmetry':
+            raise ValueError("This plot only works with symmetry index.")
+
         N = len(v)
         pos = 0
-
         for l in v:
             counts = [0, 0, 0, 0]
 
             for f in l:
                 max_idx = max(f)
                 counts[f.index(max_idx)] += 1
-            print counts
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
@@ -117,19 +132,33 @@ def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
 
 
 def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
+    """Plots the TOP scoring images (receptive fields) from a neuron
+    with index `neuron_idx`.
 
+    :param network_data: The `nefesi.network_data.NetworkData` instance.
+    :param layer_data:  The `nefesi.layer_data.LayerData` instance.
+    :param neuron_idx: Integer, index of the neuron.
+    :param n_max: Integer, number of images to show.
+
+    :return:
+
+    :raise:
+        ValueError: If `layer_data` doesn't match with any layer
+        inside `network_data.layers`.
+    """
     layers = network_data.layers
+    layer_name = None
     neuron = None
     for l in layers:
-        if l.name in layer_data.name:
+        if l.layer_id == layer_data.layer_id:
             neuron = l.filters[neuron_idx]
+            layer_name = l.layer_id
 
-    if neuron is None:
-        print 'Some msg error'
-        return
+    if layer_name is None:
+        raise ValueError("No layer {} in the model.".format(layer_data.layer_id))
 
     images = neuron.get_patches(network_data, layer_data)
-    activations = neuron.get_norm_activations()
+    activations = neuron.norm_activations
     images = images[:n_max]
     activations = activations[:n_max]
 
@@ -146,15 +175,20 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
     plt.show()
     fig.clear()
 
+
 def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
+    """Plots the curve of the activations values from the neuron
+    with index `neuron_idx`. Also plots 1 of each `num_images` above
+    the graph.
 
+    :param network_data: The `nefesi.network_data.NetworkData` instance.
+    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param neuron_idx: Integer, index of the neuron.
+    :param num_images:Integer, number of TOP scoring images plotted.
 
+    :return:
+    """
     neuron = layer_data.filters[neuron_idx]
-
-    if neuron is None:
-        print 'Some msg error'
-        return
-
     images = neuron.get_patches(network_data, layer_data)
     activations = neuron.norm_activations
 
@@ -166,7 +200,7 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
         img = images[img_idx]
         t = round(activations[img_idx], 2)
         a = fig.add_subplot(2, cols, n + 1)
-        plt.imshow(img)
+        plt.imshow(img, interpolation='bicubic')
         plt.axis('off')
         a.set_title(t)
 
@@ -190,8 +224,23 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 
     plt.show()
 
-def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
 
+def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
+    """Plots the neuron features that provokes the maximum
+    activations on specific pixel from an image.
+
+    :param activations: First output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param neurons: Second output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param img: A PIL image instance, the same image used in `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param loc: Third output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param rows: Integer, number of rows where to show the neuron features.
+
+    :return:
+    """
     nf = []
     img = img.copy()
     for n in neurons:
@@ -200,7 +249,6 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     n_images = len(nf)
 
     ri, rf, ci, cf = loc
-
 
     dr = ImageDraw.Draw(img)
     dr.rectangle([(ci,ri),(cf,rf)], outline='red')
@@ -220,19 +268,34 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
         t = round(activations[n], 2)
         a.set_title(t)
 
-    # plt.yticks(np.arange(0, 1.1, 0.1))
-
     plt.show()
 
-def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False):
 
+def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False):
+    """Plots a composition of a neuron feature or image, with the neuron features
+    that provokes the maximum activations in each pixel.
+
+    :param activations: First output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param neurons: Second output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param locations: Third output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param img: A PIL image instance. Should be the same image used in
+        `nefesi.network_data.NetworkData.get_max_activations()`.
+        If the decomposition is about a neuron feature, this argument should be
+        the fourth output value of the function `nefesi.network_data.
+        NetworkData.get_max_activations()`.
+    :param plot_nf_list: Boolean
+
+    :return:
+    """
     nf = []
     img = img.copy()
     for n in neurons:
         nf.append(n.neuron_feature)
 
     w, h = nf[0].size
-
     rows = 1
     if plot_nf_list:
         rows = 2
@@ -266,75 +329,27 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
             fig.add_subplot(rows, num_images, i + num_images + 1)
             plt.imshow(nf[i])
             plt.axis('off')
-
     plt.show()
-
-def test_neuron_sim(layer_data, n=None):
-    from scipy import spatial
-    # >> > airports = [(10, 10), (20, 20), (30, 30), (40, 40)]
-    # >> > tree = spatial.KDTree(airports)
-    # >> > tree.query([(21, 21)])
-
-    neurons = layer_data.filters
-
-    idx_neurons = None
-    if n is not None:
-        idx_neurons = [neurons.index(i) for i in n]
-        neurons = n
-
-    num_neurons = len(neurons)
-
-    # x = np.random.rand(num_neurons, num_neurons)
-    x = layer_data.get_similarity_idx(neurons_idx=idx_neurons)
-    # np.savetxt('sim_l1.txt', x)
-    # x = np.array([[0,0.2,1],[0.2,0,0.8],[0.6,0.1,0]])
-    x_result = TSNE(n_components=2, metric='euclidean',
-                    random_state=0).fit_transform(x)
-
-
-    x_max = np.max(x_result[:,0])
-    x_min = np.min(x_result[:,0])
-    y_max = np.max(x_result[:,1])
-    y_min = np.min(x_result[:,1])
-
-    # print x_max-abs(x_min), y_max -abs(y_min)
-    #
-    # print x_result
-    # print np.sum(x_result[:, 0])/x_result[:,0].shape
-
-    tree = spatial.KDTree(x_result)
-    idx_center = tree.query([x_max-abs(x_min), y_max -abs(y_min)])[1]
-
-
-
-    x_max = np.where(x_result[:, 0] == x_max)[0][0]
-    x_min = np.where(x_result[:, 0] == x_min)[0][0]
-    y_max = np.where(x_result[:, 1] == y_max)[0][0]
-    y_min = np.where(x_result[:, 1] == y_min)[0][0]
-
-    # print x_max, x_min, y_max, y_min
-
-    res = []
-    res.append(neurons[x_max])
-    res.append(neurons[x_min])
-    res.append(neurons[y_max])
-    res.append(neurons[y_min])
-    res.append(neurons[idx_center])
-
-
-
-    # nf = [n.get_neuron_feature() for n in neurons]
-
-
-
-    return res
 
 
 def plot_similarity_tsne(layer_data, n=None):
+    """Plots the neuron feature on the layer `layer_data`
+    applying the TSNE algorithm to the similarity index of this layer.
 
+    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param n: Optional, list of `nefesi.neuron_data.NeuronData` instances.
+        If `n` is not None, plots only the neuron features in `n`.
+
+    :return:
+
+    :raise: If layer `layer_data` has not similarity index.
+
+    """
+    if layer_data.similarity_index is None:
+        raise ValueError("The similarity index in layer {},"
+                         " is not yet calculated.".format(layer_data.layer_id))
 
     neurons = layer_data.filters
-
     idx_neurons = None
     if n is not None:
         idx_neurons = [neurons.index(i) for i in n]
@@ -343,14 +358,9 @@ def plot_similarity_tsne(layer_data, n=None):
 
     num_neurons = len(neurons)
 
-    # x = np.random.rand(num_neurons, num_neurons)
     x = layer_data.get_similarity_idx(neurons_idx=idx_neurons)
-    # np.savetxt('sim_l1.txt', x)
-    # x = np.array([[0,0.2,1],[0.2,0,0.8],[0.6,0.1,0]])
-    print x
     x_result = TSNE(n_components=2, metric='euclidean',
                     random_state=0).fit_transform(x)
-    print x_result
     nf = [n.neuron_feature for n in neurons]
     fig, ax = plt.subplots()
 
@@ -359,13 +369,26 @@ def plot_similarity_tsne(layer_data, n=None):
     zoom = (size_fig[0] + size_fig[1]) / nf_size[0]
 
     for i, x, y in zip(range(num_neurons), x_result[:, 0], x_result[:, 1]):
-        imscatter(x, y, nf[i], zoom=zoom, ax=ax, labels=str(i))
+        imscatter(x, y, nf[i], zoom=zoom, ax=ax, label=str(i))
         ax.plot(x, y)
     plt.axis('off')
     plt.show()
 
 
 def plot_similarity_circle(layer_data, target_neuron, bins=None):
+    """Plots the neuron features in circle from a layer,
+     based on the similarity index distance between the
+     `target_neuron` and the rest of neurons in that layer.
+
+    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param target_neuron: The `nefesi.neuron_data.NeuronData` instance.
+    :param bins: List of Integers. Bins applied to similarity indexes
+        thresholds.
+
+    :return:
+    """
+    if bins is None:
+        bins = [0.0, 0.4, 0.8, 1.0]
 
     neurons = layer_data.filters
 
@@ -381,9 +404,6 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
     imscatter(fig_center[0], fig_center[1], target_neuron.neuron_feature, zoom=zoom, ax=ax)
     ax.plot(fig_center[0], fig_center[1])
 
-    if bins is None:
-        bins = [0.0, 0.4, 0.8, 1.0]
-
     for i in xrange(3):
         neuron_data, _ = layer_data.similar_neurons(
             target_neuron_idx, inf_thr=bins[-(i+2)], sup_thr=bins[-(i+1)])
@@ -394,21 +414,12 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
         radius = r[i]
         circle = plt.Circle(fig_center, radius, fill=False)
         degrees = [j*(360/num_neurons) for j in xrange(num_neurons)]
-
         ax.add_artist(circle)
-
-        # print 0.3 + 0.2*np.sin(20)
-        # print 0.3 - 0.2*(1-np.cos(20))
 
         x1 = fig_center[0]
         y1 = fig_center[1] + radius
         x_coord = [x1 + radius * np.sin(d) for d in degrees]
         y_coord = [y1 - radius * (1 - np.cos(d)) for d in degrees]
-        # for d in degrees:
-        #     x2 = x1 + r*np.sin(d)
-        #     y2 = y1 - r*(1-np.cos(d))
-        #     x_coord.append(x2)
-        #     y_coord.append(y2)
 
         for idx, x, y in zip(range(num_neurons), x_coord, y_coord):
             imscatter(x, y, nf[idx], zoom=zoom, ax=ax)
@@ -416,29 +427,41 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
 
     ax.set_aspect('equal', adjustable='datalim')
     # ax.plot()  # Causes an autoscale update.
+    plt.axis('off')
     plt.show()
 
 
-def imscatter(x, y, image, ax=None, zoom=1, labels=None):
+def imscatter(x, y, image, ax=None, zoom=1, label=None):
+    """Plots an image on the `x` and `y` coordinates inside
+    another plot graph.
+    """
     if ax is None:
         ax = plt.gca()
-
     im = OffsetImage(image, zoom=zoom, interpolation='bicubic')
     x, y = np.atleast_1d(x, y)
-
     ab = AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
-
-    #ax.text(x+2, y+2, label) #TODO: put labels (number of the neuron)
+    #ax.text(x+2, y+2, label) # TODO: put labels (index of the neuron)
     ax.add_artist(ab)
     ax.update_datalim(np.column_stack([x, y]))
     ax.autoscale()
 
 
-def plot_2d_index(selectivity_neurons):
-    index_name = selectivity_neurons.keys()[0]
-    if type(index_name) is tuple and len(index_name) == 2:
+def plot_2d_index(selective_neurons):
+    """Plots the neuron features from a layer comparing two selectivity
+    indexes in the two axis of the plot.
 
-        layers_v = selectivity_neurons.values()[0]
+    :param selective_neurons: Output value of function
+        `nefesi.network_data.NetworkData.get_selective_neurons()`.
+
+    :return:
+
+    :raise:
+        ValueError: If the number of indexes in `selectivity neurons`
+         are not two.
+    """
+    index_name = selective_neurons.keys()[0]
+    if type(index_name) is tuple and len(index_name) == 2:
+        layers_v = selective_neurons.values()[0]
 
         for k, v in layers_v.items():
             layer_name = k
@@ -452,17 +475,28 @@ def plot_2d_index(selectivity_neurons):
             size_fig = fig.get_size_inches()
             nf_size = nf[0].size
             zoom = (size_fig[0]+size_fig[1])/nf_size[0]
-            print nf_size
             for i, x, y in zip(range(len(nf)), x_values, y_values):
                 imscatter(x, y, nf[i], zoom=zoom, ax=ax)
                 ax.plot(x, y)
-            plt.title('Layer: ' + layer_name)
-            plt.xlabel(index_name[0])
-            plt.ylabel(index_name[1])
+            plt.title("Layer: " + layer_name)
+            plt.xlabel(index_name[0] + " index")
+            plt.ylabel(index_name[1] + " index")
             plt.show()
+    else:
+        if len(index_name) != 2:
+            raise ValueError("This function only can plot 2 indexes.")
 
 
 def plot_nf_search(selective_neurons, n_max=150):
+    """Plots the neuron features in `selective_neurons`, order by their
+    index values.
+
+    :param selective_neurons: Output value of function
+        `nefesi.network_data.NetworkData.get_selective_neurons()`.
+    :param n_max: Integer, max number of neuron features to plot.
+
+    :return:
+    """
     index_name = selective_neurons.keys()[0]
     layers_v = selective_neurons.values()[0]
 
@@ -470,9 +504,6 @@ def plot_nf_search(selective_neurons, n_max=150):
 
         layer_name = k
         neurons = v
-        # if len(neurons) > n_max:
-        #     neurons = neurons[:n_max]
-
         neurons = sorted(neurons, key=lambda x: sum(x[1:]))
         num_neurons = len(neurons)
         if num_neurons > n_max:
@@ -500,10 +531,23 @@ def plot_nf_search(selective_neurons, n_max=150):
 
 
 def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
+    """Plots a list of neuron features in `sim_neuron` similars to
+    the `neuron_data` and their respective similarity index values.
+
+    :param neuron_data: The `nefesi.network_data.NetworkData` instance.
+    :param sim_neuron: First output value from the function
+        `nefesi.layer_data.LayerData.similar_neurons()`.
+    :param idx_values: Second output value from the function
+        `nefesi.layer_data.LayerData.similar_neurons()`.
+    :param rows: Integer, number of rows where to show the neuron features
+        from `sim_neurons`.
+
+    :return:
+    """
+    # removes to itself from the list
+    sim_neuron.remove(neuron_data)
 
     n_images = len(sim_neuron)
-
-    # cols = int(math.sqrt(n_max))
     titles = [round(v, 2) for v in idx_values]
 
     fig = plt.figure()
@@ -525,6 +569,14 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
 
 
 def plot_neuron_features(layer_data, neuron_list=None):
+    """Plot the neuron features from `layer_data` or the neuron features
+    in `neuron_list`.
+
+    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param neuron_list: List of `nefesi.neuron_data.NeuronData` instances.
+
+    :return:
+    """
     nf = []
     if neuron_list is None:
         neuron_list = layer_data.filters
@@ -532,9 +584,7 @@ def plot_neuron_features(layer_data, neuron_list=None):
     for f in neuron_list:
         nf.append(f.neuron_feature)
 
-
     n_images = len(nf)
-
     cols = int(math.sqrt(n_images))
     fig = plt.figure()
     for n, img in enumerate(zip(nf)):
@@ -548,36 +598,33 @@ def plot_neuron_features(layer_data, neuron_list=None):
 
 
 def main():
-    from keras.applications.vgg16 import VGG16, preprocess_input
-    from keras.preprocessing import image
-    import pickle
-    from image import ImageDataset
+
     from nefesi.network_data import NetworkData
-    from nefesi.neuron_feature import compute_nf
 
+    t = NetworkData.load_from_disk('/home/oprades/oscar/vgg16.obj',
+                                   model_file='/home/oprades/oscar/vgg16.h5')
 
-    dataset = '/home/oprades/ImageNet/train/'  # dataset path
-    save_path = '/home/oprades/oscar/'
-    layer_names = ['block1_conv1', 'block1_conv2',
-                   'block2_conv1', 'block2_conv2',
-                   'block3_conv1', 'block3_conv2', 'block3_conv3']
-
-    model = VGG16()
-
-    my_net = pickle.load(open(save_path + 'block1_3.obj', 'rb'))
-
-    img_dataset = ImageDataset(dataset, (224, 224), preprocess_input)
-    my_net.model = model
-    my_net.dataset = img_dataset
-    my_net.save_path = save_path
-
-    for l in my_net.get_layers():
-        print l
-
-    l = my_net.get_layers()[0]
-    plot_neuron_features(l)
+    neuron_data, idx_values = t.layers[1].similar_neurons(45)
+    plot_similarity_idx(t.layers[1].filters[45], neuron_data, idx_values)
+    #
+    # sel_idx = t.get_selectivity_idx(['color'], ['block1_conv1', 'block1_conv2'])
+    #
+    # # plot_sel_idx_summary(sel_idx)
+    # plot_symmetry_distribution_summary(sel_idx)
+    # plot_similarity_circle(t.layers[1], t.layers[1].filters[45])
+    # plot_activation_curve(t, t.layers[1], 34)
     # compute_nf(my_net, l, l.get_filters())
     # plot_neuron_features(l)
+    # print selective_neurons.values()[0].keys()
+
+    # selective_neurons = t.get_selective_neurons('block1_conv1', 'color')
+    # print selective_neurons
+    # # plot_2d_index(selective_neurons)
+    #
+    # plot_nf_search(selective_neurons)
+    # # plot_neuron_features(layer1)
+    #
+    # plot_nf_search(selective_neurons)
 
     # nf = l.get_filters()[131].get_neuron_feature()
     #
@@ -639,7 +686,7 @@ def main():
 
     # plot_activation_curve(my_net, layer3, 5)
 
-    sel_idx = my_net.get_selectivity_idx(['symmetry'], layer_names)
+    # sel_idx = my_net.get_selectivity_idx(['symmetry'], layer_names)
 
     # plot_sel_idx_summary(sel_idx)
 
@@ -648,7 +695,7 @@ def main():
     # decomposition
     # img_name = 'n03100240/n03100240_2539.JPEG'
     # act, neurons, loc = my_net.get_max_activations(3, img_name, (130, 190), 10)
-    # img = load_img(dataset + img_name, target_size=(224, 224))
+    #img = load_img(dataset + img_name, target_size=(224, 224))
     #
     # plot_pixel_decomposition(act, neurons, img, loc)
 
