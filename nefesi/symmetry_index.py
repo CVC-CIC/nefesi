@@ -35,7 +35,6 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
             rot_activations = read_activations.get_activation_from_pos(images_r, model,
                                                                        layer_data.layer_id,
                                                                        idx_neuron, locations)
-
             # normalize activations.
             norm_rot_act = rot_activations / max_act
             partial_symmetry = sum(norm_rot_act) / sum(norm_activations)

@@ -42,7 +42,8 @@ class LayerData(object):
 
     def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size):
         self.filters = get_sorted_activations(file_names, images, model,
-                                              self.layer_id, self.filters, num_max_activations, batch_size)
+                                              self.layer_id, self.filters,
+                                              num_max_activations, batch_size)
 
     def build_neuron_feature(self, network_data):
         compute_nf(network_data, self, self.filters)
@@ -341,8 +342,14 @@ class LayerData(object):
 
         :return: Two lists, list of `nefesi.neuron_data.NeuronData` instances
             and values of similarity index.
+
+        :raise:
+            ValueError: If `self.similarity_index` is None
         """
         sim_idx = self.similarity_index
+        if sim_idx is None:
+            raise ValueError("The similarity index in the layer '{}',"
+                             " is not calculated.".format(self.layer_id))
 
         res_neurons = []
         idx_values = []
@@ -363,4 +370,4 @@ class LayerData(object):
         res_neurons = res_neurons[sorted_idx]
         idx_values = idx_values[sorted_idx]
 
-        return res_neurons, idx_values
+        return list(res_neurons), list(idx_values)

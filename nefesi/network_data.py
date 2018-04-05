@@ -14,7 +14,7 @@ class NetworkData(object):
     """This is the main class of nefesi package.
 
     Creates an instance of NetworkData, the main object containing
-    all evaluated data related with a Keras model.
+    all evaluated data related with a `keras.models.Model` instance.
 
     Arguments:
         model: The `keras.models.Model` instance.
@@ -199,7 +199,6 @@ class NetworkData(object):
 
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
-            print type(layer_name), layer_name
 
             for l in layer_name:
                 layer = next((layer_data for layer_data in
@@ -248,6 +247,8 @@ class NetworkData(object):
         """Returns a list of neuron_data objects with their respective
         values of selectivity indexes between a threshold (`inf_thr` and `sup_thr`).
         This function works for one or two indexes (`idx1` and `idx2`).
+        If `idx1` or/and `idx2` are "symmetry" or "orientation" the index value
+        evaluated will be the global.
 
         :param layers_or_neurons: List of strings, a string or a list of
             selective neurons.
@@ -281,8 +282,7 @@ class NetworkData(object):
                 if l.layer_id in layers:
                     res_idx1 = []
                     index_values = l.selectivity_idx(self.model, idx1, self.dataset)
-
-                    if type(index_values[0]) is list:
+                    if type(index_values[0]) is list or type(index_values[0]) is tuple:
                         n_idx = len(index_values[0])
                         for i in index_values:
                             res_idx1.append(i[n_idx - 1])
@@ -292,8 +292,9 @@ class NetworkData(object):
                     if idx2 is not None:
                         res_idx2 = []
                         index_values2 = l.selectivity_idx(self.model, idx2, self.dataset)
+                        print type(index_values2[0])
 
-                        if type(index_values2[0]) is list:
+                        if type(index_values2[0]) is list or type(index_values2[0]) is tuple:
                             n_idx = len(index_values2[0])
                             for i in index_values2:
                                 res_idx2.append(i[n_idx - 1])
