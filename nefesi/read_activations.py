@@ -39,7 +39,7 @@ def get_activations(model, model_inputs, print_shape_only=False, layer_name=None
 
 
 def get_sorted_activations(file_names, images, model, layer_name,
-                           filters, num_max_activations, batch_size):
+                           neurons_data, num_max_activations, batch_size):
     """Returns the neurons with their maximum activations as the
     inputs (`images`) are processed.
 
@@ -47,8 +47,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
     :param images: List of inputs, the inputs expected by the network.
     :param model: The `keras.models.Model` instance.
     :param layer_name: String, name of the layer from which get the outputs.
-    :param filters: List of `nefesi.neuron_data.NeuronData` instances.
-        Class attribute `filters` from `nefesi.layer_data.LayerData`.
+    :param neurons_data: List of `nefesi.neuron_data.NeuronData` instances.
     :param num_max_activations: Integer, number of TOP activations stored
         in each `nefesi.neuron_data:NeuronData` instance.
     :param batch_size: Integer, size of batch.
@@ -63,33 +62,43 @@ def get_sorted_activations(file_names, images, model, layer_name,
     print('Time for get activations: ' + str(time.time() - start))
     start = time.time()
 
+    conv_layer = True
+
     for layer_activation in activations:
         # get the number of images and the number of neurons in this layer
-        num_images, _, _, num_filters = layer_activation.shape
+        if len(layer_activation.shape) == 2:
+            num_images, num_filters = layer_activation.shape
+            conv_layer = False
+        else:
+            num_images, _, _, num_filters = layer_activation.shape
 
-        if filters is None:
-            # if `filters` is None, creates the list and fill it
+        if neurons_data is None:
+            # if `neurons_data` is None, creates the list and fill it
             # with the `nefesi.neuron_data.NeuronData` instances
-            filters = []
+            neurons_data = []
             for i in xrange(num_filters):
                 n_data = NeuronData(num_max_activations, batch_size)
-                filters.append(n_data)
+                neurons_data.append(n_data)
 
-        for f in filters:
-            idx_filter = filters.index(f)
+        for f in neurons_data:
+            idx_filter = neurons_data.index(f)
             for j in xrange(num_images):
-                # get the map activation for each image and each neuron
-                activation_map = layer_activation[j, :, :, idx_filter]
-                # look up for the maximum activation
-                max_act = np.amax(activation_map)
+                if conv_layer is True:
+                    # get the map activation for each image and each channel
+                    activation_map = layer_activation[j, :, :, idx_filter]
+                    # look up for the maximum activation
+                    max_act = np.amax(activation_map)
+                    # get the location of the maximum activation inside the map
+                    xy_location = np.unravel_index(activation_map.argmax(),
+                                                   activation_map.shape)
+                else:
+                    max_act = layer_activation[j, idx_filter]
+                    xy_location = (0, 0)
                 image_id = file_names[j]
-                # get the location of the maximum activation inside the map
-                xy_location = np.unravel_index(activation_map.argmax(),
-                                               activation_map.shape)
                 f.add_activation(max_act, image_id, xy_location)
 
     print('Time for order in ', str(num_filters), ': ' + str(time.time() - start))
-    return filters
+    return neurons_data
 
 
 def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
