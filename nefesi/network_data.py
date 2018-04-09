@@ -382,7 +382,7 @@ class NetworkData(object):
         activations = hc_activations[loc[0], loc[1], :num_max]
         neuron_idx = hc_idx[loc[0], loc[1], :num_max]
 
-        f = layer.get_filters()
+        f = layer.filters
         neurons = []
         for idx in neuron_idx:
             neurons.append(f[int(idx)])

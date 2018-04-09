@@ -12,12 +12,10 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
     specific layers.
     If selectivity index is "orientation" or "symmetry", plots the
     global index.
-
     :param selectivity_idx: The output from the function
         `nefesi.network_data.NetworkData.get_selectivty_idx()`.
     :param bins: Integer, number of bins for bars.
     :param color_map: String, name of one color maps accepted by Matplotlib.
-
     :return:
     """
     cmap = plt.cm.get_cmap(color_map)
@@ -41,7 +39,7 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
                     l[i] = 0.0
 
             counts, bins = np.histogram(l, bins=bins, range=(0, 1))
-            print counts, bins
+#            print counts, bins
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
@@ -56,12 +54,17 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
                 y_offset = y_offset+prc[i]
             pos += 1
 
-        xticks = []
-        for i in xrange(N):
-            xticks.append('Layer ' + str(i + 1))
-        plt.xticks(np.arange(N), xticks)
+#        xticks = []
+#        for i in xrange(N):
+#            xticks.append('Layer ' + str(i + 1))
+#        plt.xticks(np.arange(N), xticks)
+        
+        plt.xticks(np.arange(N), layer_names)
         plt.yticks(np.arange(0, 101, 10))
 
+        for i in xrange(len(bins)):
+            bins[i]=round(bins[i],2)
+        print bins    
         labels = [str(bins[i]) + ':' + str(bins[i+1]) for i in xrange(len(prc))]
 
         plt.ylabel('% of Neurons')
@@ -69,7 +72,6 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
         plt.legend(bars, labels, bbox_to_anchor=(1.02, 1.02), loc=2)
         plt.subplots_adjust(right=0.75)
         plt.show()
-
 
 def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
     """Plots the distribution of index symmetry values among
