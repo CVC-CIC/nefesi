@@ -601,15 +601,15 @@ def main():
 
     from nefesi.network_data import NetworkData
 
-    t = NetworkData.load_from_disk('/home/oprades/oscar/vgg16.obj',
+    t = NetworkData.load_from_disk('/home/oprades/oscar/vgg16_new.obj',
                                    model_file='/home/oprades/oscar/vgg16.h5')
 
-    neuron_data, idx_values = t.layers[1].similar_neurons(45)
-    plot_similarity_idx(t.layers[1].filters[45], neuron_data, idx_values)
-    #
-    # sel_idx = t.get_selectivity_idx(['color'], ['block1_conv1', 'block1_conv2'])
-    #
-    # # plot_sel_idx_summary(sel_idx)
+
+    sel_idx = t.get_selectivity_idx(['class'], ['fc1', 'fc2'])
+
+    print sel_idx
+    plot_sel_idx_summary(sel_idx)
+
     # plot_symmetry_distribution_summary(sel_idx)
     # plot_similarity_circle(t.layers[1], t.layers[1].filters[45])
     # plot_activation_curve(t, t.layers[1], 34)

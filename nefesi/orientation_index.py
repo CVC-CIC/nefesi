@@ -29,7 +29,7 @@ def get_orientation_index(neuron_data, model, layer_data, dataset):
 
     if max_act != 0.0:
         images = dataset.load_images(image_names)
-        idx_neuron = layer_data.filters.index(neuron_data)
+        idx_neuron = layer_data.neurons_data.index(neuron_data)
         for degrees in l_degrees:
             # apply the rotation function
             images_r = rotate_images(images, degrees, locations, layer_data)

@@ -28,7 +28,7 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
 
     if max_act != 0.0:
         images = dataset.load_images(image_names)
-        idx_neuron = layer_data.filters.index(neuron_data)
+        idx_neuron = layer_data.neurons_data.index(neuron_data)
         for axes in symm_axes:
             # apply the mirroring function over the images
             images_r = rotate_images_axis(images, axes, layer_data, locations)

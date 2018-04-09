@@ -282,7 +282,7 @@ class LayerData(object):
             neuron_images[i] = new_image
 
         max_act = []
-        for f in target_layer.filters:
+        for f in target_layer.neurons_data:
             max_act.append(f.activations[0])
 
         # get the activations for the patches

@@ -382,7 +382,7 @@ class NetworkData(object):
         activations = hc_activations[loc[0], loc[1], :num_max]
         neuron_idx = hc_idx[loc[0], loc[1], :num_max]
 
-        f = layer.get_filters()
+        f = layer.neurons_data
         neurons = []
         for idx in neuron_idx:
             neurons.append(f[int(idx)])
@@ -423,7 +423,7 @@ class NetworkData(object):
             hc_activations, hc_idx = src_layer.decomposition_nf(
                 neuron_idx, target_layer, self.model, self.dataset)
 
-            neuron_data = src_layer.filters[neuron_idx]
+            neuron_data = src_layer.neurons_data[neuron_idx]
             src_image = neuron_data.neuron_feature
             res_nf = src_image
         else:  # Decomposition of image
@@ -468,7 +468,7 @@ class NetworkData(object):
 
                 if c_overlapping <= overlapping:
                     orp_image[ri:rf, ci:cf] = 1
-                    res_neurons.append(target_layer.get_filters()[int(neuron_idx)])
+                    res_neurons.append(target_layer.neurons_data[int(neuron_idx)])
                     res_loc.append(loc)
                     res_act.append(max_act)
 
