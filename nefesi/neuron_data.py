@@ -8,7 +8,7 @@ from symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
-    """This class contains all the results related with a neuron already
+    """This class contains all the results related with a neuron (filter) already
     evaluated, including:
     - The N-top activation values for this neuron (normalized and unnormalized).
     - The selectivity indexes for this neuron.

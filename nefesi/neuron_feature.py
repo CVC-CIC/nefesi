@@ -5,13 +5,13 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import _Pooling2D
 
 
-def compute_nf(network_data, layer_data, filters):
+def compute_nf(network_data, layer_data, neurons_data):
     """This function build the neuron features (NF) for all neurons
     in `filters`.
 
     :param network_data: The `nefesi.network_data.NetworkData` instance.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
-    :param filters: List of `nefesi.neuron_data.NeuronData` instances.
+    :param neurons_data: List of `nefesi.neuron_data.NeuronData` instances.
     """
     if layer_data.receptive_field_map is None:
         model = network_data.model
@@ -19,7 +19,7 @@ def compute_nf(network_data, layer_data, filters):
         _, w, h, _ = model.layers[layer_idx].output_shape
         layer_data.mapping_rf(model, w, h)
 
-    for f in filters:
+    for f in neurons_data:
         if f.norm_activations is not None:
             norm_activations = f.norm_activations
             # get the receptive fields from a neuron

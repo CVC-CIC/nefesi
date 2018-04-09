@@ -15,7 +15,7 @@ class LayerData(object):
             inside of `keras.models.Model` instance)
 
     Attributes:
-        filters: List of `nefesi.neuron_data.NeuronData` instances.
+        neurons_data: List of `nefesi.neuron_data.NeuronData` instances.
         similarity_index: Non-symmetric matrix containing the result of
             similarity index for each neuron in this layer. When this index is
             calculated, the size of the matrix is len(filters) x len(filters).
@@ -31,22 +31,22 @@ class LayerData(object):
 
     def __init__(self, layer_name):
         self.layer_id = layer_name
-        self.filters = None
+        self.neurons_data = None
         self.similarity_index = None
         self.receptive_field_map = None
         self.receptive_field_size = None
 
     def set_max_activations(self):
-        for f in self.filters:
+        for f in self.neurons_data:
             f.set_max_activations()
 
     def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size):
-        self.filters = get_sorted_activations(file_names, images, model,
-                                              self.layer_id, self.filters,
-                                              num_max_activations, batch_size)
+        self.neurons_data = get_sorted_activations(file_names, images, model,
+                                                   self.layer_id, self.neurons_data,
+                                                   num_max_activations, batch_size)
 
     def build_neuron_feature(self, network_data):
-        compute_nf(network_data, self, self.filters)
+        compute_nf(network_data, self, self.neurons_data)
 
     def selectivity_idx(self, model, index_name, dataset,
                         labels=None, thr_class_idx=1., thr_pc=0.1):
@@ -70,7 +70,7 @@ class LayerData(object):
             "orientation", "symmetry", "class" or "population code".
         """
         sel_idx = []
-        for f in self.filters:
+        for f in self.neurons_data:
             if index_name == 'color':
                 res = f.color_selectivity_idx(model, self, dataset)
                 sel_idx.append(res)
@@ -119,14 +119,14 @@ class LayerData(object):
                         new_sim[i, j] = self.similarity_index[idx1, neurons_idx[j]]
                 return new_sim
         else:
-            size = len(self.filters)
+            size = len(self.neurons_data)
             self.similarity_index = np.zeros((size, size))
 
             idx_a = np.arange(size)
             print idx_a
 
             for a, b in permutations(idx_a, 2):
-                sim_idx = get_similarity_index(self.filters[a], self.filters[b], a,
+                sim_idx = get_similarity_index(self.neurons_data[a], self.neurons_data[b], a,
                                                model, self.layer_id, dataset)
                 self.similarity_index[a][b] = sim_idx
             return self.similarity_index
@@ -200,7 +200,7 @@ class LayerData(object):
             position (w, h, k).
         """
         max_act = []
-        for f in self.filters:
+        for f in self.neurons_data:
             max_act.append(f.activations[0])
 
         # get the activations of image in this layer.
@@ -209,21 +209,21 @@ class LayerData(object):
         activations = activations[0]
 
         # get the activations shape, where:
-        #  _ = number of images(1),
+        #  _ = number of images = 1,
         # w, h = size of map activation,
-        # c = number of neurons
+        # c = number of channels
         _, w, h, c = activations.shape
 
         hc_activations = np.zeros((w, h, c))
         hc_idx = np.zeros((w, h, c))
 
         # normalize the activations in each map activation
-        # for each neuron (c)
+        # for each channel
         for i in xrange(c):
             activations[0, :, :, i] = activations[0, :, :, i] / max_act[i]
 
         # sort the activations for each w, h position in map activation
-        # in the neuron (c) dimension
+        # in the channel dimension
         for i in xrange(w):
             for j in xrange(h):
                 tmp = activations[0, i, j, :]
@@ -258,13 +258,13 @@ class LayerData(object):
             corresponds to the activation value in the first array with the same
             position (w, h, k).
         """
-        if self.filters[neuron_id].activations[0] == 0.0:
+        if self.neurons_data[neuron_id].activations[0] == 0.0:
             # A neuron with no activations can't be decomposed
             return None
 
-        neuron_images = self.filters[neuron_id].images_id
-        neuron_locations = self.filters[neuron_id].xy_locations
-        norm_activations = self.filters[neuron_id].norm_activations
+        neuron_images = self.neurons_data[neuron_id].images_id
+        neuron_locations = self.neurons_data[neuron_id].xy_locations
+        norm_activations = self.neurons_data[neuron_id].norm_activations
 
         neuron_images = dataset.load_images(neuron_images)
 
@@ -359,7 +359,7 @@ class LayerData(object):
         for i in xrange(len(n_sim)):
             idx = n_sim[i]
             if inf_thr <= idx <= sup_thr:
-                res_neurons.append(self.filters[i])
+                res_neurons.append(self.neurons_data[i])
                 idx_values.append(idx)
 
         # convert lists to numpy arrays and sort

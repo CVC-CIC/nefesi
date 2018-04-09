@@ -20,7 +20,7 @@ class NetworkData(object):
         model: The `keras.models.Model` instance.
 
     Attributes:
-        layers: List of `nefesi.layer_data.LayerData` instances.
+        layers_data: List of `nefesi.layer_data.LayerData` instances.
 
     Mutable-properties:
         save_path: Path of directory where the results will be saved.
@@ -29,7 +29,7 @@ class NetworkData(object):
 
     def __init__(self, model):
         self.model = model
-        self.layers = []
+        self.layers_data = []
         self._save_path = None
         self._dataset = None
 
@@ -51,11 +51,11 @@ class NetworkData(object):
 
     def _build_layers(self, layers):
         for l in layers:
-            self.layers.append(LayerData(l))
+            self.layers_data.append(LayerData(l))
 
-    def eval_network(self, directory,
-                     layer_names,
-                     save_path,
+    def eval_network(self, layer_names,
+                     directory=None,
+                     save_path=None,
                      num_max_activations=100,
                      target_size=(256, 256),
                      batch_size=100,
@@ -66,9 +66,9 @@ class NetworkData(object):
         """Evaluates the layers in `layer_names`, searching for the maximum
         activations for each neuron and build the neuron feature.
 
-        :param directory: Path to the directory to read images from.
         :param layer_names: List of strings (name of the layers that will be
             evaluated).
+        :param directory: Path to the directory to read images from.
         :param save_path: Path of directory to write the results.
         :param num_max_activations: Integer, number of maximum activations
             will be saved for each neuron.
@@ -84,27 +84,33 @@ class NetworkData(object):
             evaluated and the previous ones.
         :param build_nf:  Boolean, if its True, the neuron feature for each neuron
             will be built.
+            If layers in `layer_names` are fully connected layers, `build_nf`
+            has to be False.
         """
 
         # Creates the list of `layers`
         self._build_layers(layer_names)
         self._save_path = save_path
-        # self.num_max_activations = num_max_activations
 
         times_ex = []
 
         # Creates an ImageDataset object
-        self._dataset = ImageDataset(directory, target_size,
-                                     preprocessing_function, color_mode)
+        if self.dataset is None:
+            self.dataset = ImageDataset(directory, target_size,
+                                        preprocessing_function, color_mode)
 
-        for layer in self.layers:
+        if self.dataset.src_dataset is None:
+            raise ValueError("The argument `directory` should be a String.")
+
+        for layer in self.layers_data:
             if layer.layer_id in layer_names:
                 datagen = ImageDataGenerator()
                 data_batch = datagen.flow_from_directory(
-                    directory,
-                    target_size=target_size,
+                    self.dataset.src_dataset,
+                    target_size=self.dataset.target_size,
                     batch_size=batch_size,
-                    shuffle=False, color_mode=color_mode
+                    shuffle=False,
+                    color_mode=self.dataset.color_mode
                 )
 
                 start = time.time()
@@ -116,8 +122,8 @@ class NetworkData(object):
                     images = i[0]
 
                     # Apply the preprocessing function to the inputs
-                    if preprocessing_function is not None:
-                        images = preprocessing_function(images)
+                    if self.dataset.preprocessing_function is not None:
+                        images = self.dataset.preprocessing_function(images)
 
                     idx = (data_batch.batch_index - 1) * data_batch.batch_size
                     file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
@@ -163,7 +169,7 @@ class NetworkData(object):
 
         :return: List of strings
         """
-        names = [l.layer_id for l in self.layers]
+        names = [l.layer_id for l in self.layers_data]
         return names
 
     def get_selectivity_idx(self, sel_index, layer_name,
@@ -202,7 +208,7 @@ class NetworkData(object):
 
             for l in layer_name:
                 layer = next((layer_data for layer_data in
-                              self.layers if l in self.get_layers_name()
+                              self.layers_data if l in self.get_layers_name()
                               and l == layer_data.layer_id), None)
 
                 if layer is None:
@@ -233,7 +239,7 @@ class NetworkData(object):
 
         for l in layer_name:
             layer = next((layer_data for layer_data in
-                          self.layers if l in self.get_layers_name()
+                          self.layers_data if l in self.get_layers_name()
                           and l == layer_data.layer_id), None)
             if layer is None:
                 raise ValueError("The layer_id '{}' `layer_name` "
@@ -278,7 +284,7 @@ class NetworkData(object):
 
         if type(layers_or_neurons) is list or type(layers_or_neurons) is str:
             layers = layers_or_neurons
-            for l in self.layers:
+            for l in self.layers_data:
                 if l.layer_id in layers:
                     res_idx1 = []
                     index_values = l.selectivity_idx(self.model, idx1, self.dataset)
@@ -363,9 +369,9 @@ class NetworkData(object):
         """
         layer = None
         if type(layer_id) is int:
-            layer = self.layers[layer_id]
+            layer = self.layers_data[layer_id]
         if type(layer_id) is str:
-            for l in self.layers:
+            for l in self.layers_data:
                 if layer_id == l.layer_id:
                     layer = l
 
@@ -408,7 +414,7 @@ class NetworkData(object):
             src_layer = input_image[0]
             neuron_idx = input_image[1]
 
-            for l in self.layers:
+            for l in self.layers_data:
                 if src_layer == l.layer_id:
                     src_layer = l
                 elif target_layer == l.layer_id:
@@ -421,7 +427,7 @@ class NetworkData(object):
             src_image = neuron_data.neuron_feature
             res_nf = src_image
         else:  # Decomposition of image
-            for l in self.layers:
+            for l in self.layers_data:
                 if target_layer == l.layer_id:
                     target_layer = l
 

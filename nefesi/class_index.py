@@ -53,7 +53,7 @@ def relative_freq_class(neuron_data, labels):
             i = 0
             a = 0
             for c in xrange(len(images)):
-                # count the number of times that a class appears
+                # counts the number of times that a class appears
                 # among the TOP scoring images in a neuron.
                 # Also keeps a sum of normalized activations of that image
                 # that belongs to a class.
