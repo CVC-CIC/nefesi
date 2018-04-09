@@ -4,6 +4,10 @@ Neuron activity visualization
 
 ## Introduction
 
+In this package the terms filters and neurons can be used interchangably. While in computer vision, filters are consideres as the kernels that contain the convolutional weights, in our work we are formulating the behaviour of the filters as neuron concept.
+
+Assuming the basic definition of neuron as an entity that spikes given an specific stimulus, when we work in CNN we find out that neurons are usually referred as pixels in an activation/feature maps.  are sharing the filter weights (filter), we provide a tool to analyze the behaviour of all the neurons linked to a given filter. For simplicity, from now on we will call this set of neurons linked to the same filter as Neuron. Consequently, in this package the terms filter and neuron can be used interchangably.  
+
 ## Package structure
 
 
