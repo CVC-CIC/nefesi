@@ -146,12 +146,12 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
         ValueError: If `layer_data` doesn't match with any layer
         inside `network_data.layers`.
     """
-    layers = network_data.layers
+    layers = network_data.layers_data
     layer_name = None
     neuron = None
     for l in layers:
         if l.layer_id == layer_data.layer_id:
-            neuron = l.filters[neuron_idx]
+            neuron = l.neurons_data[neuron_idx]
             layer_name = l.layer_id
 
     if layer_name is None:
@@ -188,7 +188,7 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 
     :return:
     """
-    neuron = layer_data.filters[neuron_idx]
+    neuron = layer_data.neurons_data[neuron_idx]
     images = neuron.get_patches(network_data, layer_data)
     activations = neuron.norm_activations
 
@@ -251,7 +251,7 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     ri, rf, ci, cf = loc
 
     dr = ImageDraw.Draw(img)
-    dr.rectangle([(ci,ri),(cf,rf)], outline='red')
+    dr.rectangle([(ci, ri), (cf, rf)], outline='red')
     del dr
 
     fig = plt.figure()
@@ -349,7 +349,7 @@ def plot_similarity_tsne(layer_data, n=None):
         raise ValueError("The similarity index in layer {},"
                          " is not yet calculated.".format(layer_data.layer_id))
 
-    neurons = layer_data.filters
+    neurons = layer_data.neurons_data
     idx_neurons = None
     if n is not None:
         idx_neurons = [neurons.index(i) for i in n]
@@ -390,7 +390,7 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
     if bins is None:
         bins = [0.0, 0.4, 0.8, 1.0]
 
-    neurons = layer_data.filters
+    neurons = layer_data.neurons_data
 
     target_neuron_idx = neurons.index(target_neuron)
 
@@ -401,7 +401,8 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
 
     fig_center = (0.5, 0.5)
     r = [0.15, 0.25, 0.5]
-    imscatter(fig_center[0], fig_center[1], target_neuron.neuron_feature, zoom=zoom, ax=ax)
+    imscatter(fig_center[0], fig_center[1],
+              target_neuron.neuron_feature, zoom=zoom, ax=ax)
     ax.plot(fig_center[0], fig_center[1])
 
     for i in xrange(3):
@@ -579,7 +580,7 @@ def plot_neuron_features(layer_data, neuron_list=None):
     """
     nf = []
     if neuron_list is None:
-        neuron_list = layer_data.filters
+        neuron_list = layer_data.neurons_data
 
     for f in neuron_list:
         nf.append(f.neuron_feature)
