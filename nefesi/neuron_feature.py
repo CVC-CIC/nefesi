@@ -26,7 +26,7 @@ def compute_nf(network_data, layer_data, neurons_data):
             patches = f.get_patches(network_data, layer_data)
             num_a = len(patches)
 
-            total_act = np.zeros(np.array(patches[0]).shape)
+            total_act = np.zeros(image.img_to_array(patches[0]).shape)
             for i in xrange(num_a):
                 # multiply each receptive field per the normalized
                 # activation of the image to comes from.
@@ -37,11 +37,12 @@ def compute_nf(network_data, layer_data, neurons_data):
             # average them with total number of patches (receptive field).
             nf = total_act / num_a
 
-            # maximize the contrast of the NF
-            min_v = np.min(nf.ravel())
-            max_v = np.max(nf.ravel())
-            nf = nf - min_v
-            nf = nf / (max_v - min_v)
+            if nf.shape[2] == 3:  # RGB images
+                # maximize the contrast of the NF
+                min_v = np.min(nf.ravel())
+                max_v = np.max(nf.ravel())
+                nf = nf - min_v
+                nf = nf / (max_v - min_v)
 
             f.neuron_feature = image.array_to_img(nf)
         else:

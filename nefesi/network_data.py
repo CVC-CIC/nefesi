@@ -86,9 +86,20 @@ class NetworkData(object):
             will be built.
             If layers in `layer_names` are fully connected layers, `build_nf`
             has to be False.
-        """
 
-        # Creates the list of `layers`
+        :raises
+            TypeError: If some value in `layer_names` is not a String.
+            ValueError: If some name in `layer_names` doesn't exist in
+            the model `self.model`.
+        """
+        model_layer_names = [layer.name for layer in self.model.layers]
+        for layer_n in layer_names:
+            if type(layer_n) != str:
+                raise TypeError("`layer_names`, should be a list of Strings.")
+            if layer_n not in model_layer_names:
+                raise ValueError("Wrong layer name: {}.".format(str(layer_n)))
+
+        # Creates the list of `layers_data`
         self._build_layers(layer_names)
         self._save_path = save_path
 
@@ -119,6 +130,10 @@ class NetworkData(object):
                 # filters = None
 
                 for i in data_batch:
+                    n_batches += 1
+                    if n_batches >= num_images / data_batch.batch_size:
+                        break
+
                     images = i[0]
 
                     # Apply the preprocessing function to the inputs
@@ -126,7 +141,9 @@ class NetworkData(object):
                         images = self.dataset.preprocessing_function(images)
 
                     idx = (data_batch.batch_index - 1) * data_batch.batch_size
+
                     file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
+
 
                     # Search the maximum activations
                     layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
@@ -134,9 +151,7 @@ class NetworkData(object):
                     print 'On layer ', layer.layer_id, ', Get and sort activations in batch num: ', n_batches,
                     ' Images processed: ', idx + data_batch.batch_size
 
-                    n_batches += 1
-                    if n_batches >= num_images / data_batch.batch_size:
-                        break
+
 
                 # Set the number of maximum activations stored in each neuron
                 layer.set_max_activations()
@@ -162,7 +177,7 @@ class NetworkData(object):
             print 'total time execution for layer ', i, ' : ', times_ex[i]
 
         # Save all data
-        self.save_to_disk()
+        # self.save_to_disk()
 
     def get_layers_name(self):
         """Builds a list with name of each layer in `layers`.

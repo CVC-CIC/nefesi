@@ -22,7 +22,11 @@ def get_activations(model, model_inputs, print_shape_only=False, layer_name=None
         inp = [inp]
 
     # all layer outputs
-    outputs = [layer.output for layer in model.layers if
+
+    # uses .get_output_at() instead of .output. In case a layer is
+    # connected to multiple inputs. Assumes the input at node index=0
+    # is the input where the model inputs come from.
+    outputs = [layer.get_output_at(0) for layer in model.layers if
                layer.name == layer_name or layer_name is None]
 
     # evaluation functions
@@ -97,7 +101,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
                 image_id = file_names[j]
                 f.add_activation(max_act, image_id, xy_location)
 
-    print('Time for order in ', str(num_filters), ': ' + str(time.time() - start))
+    # print('Time for order in ', str(num_filters), ': ' + str(time.time() - start))
     return neurons_data
 
 
