@@ -162,13 +162,18 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
     images = images[:n_max]
     activations = activations[:n_max]
 
+    color_map = None
+    if images[0].mode == 'L':
+        color_map = 'gray'
+
     cols = int(math.sqrt(len(images)))
     n_images = len(images)
     titles = [round(act, 2) for act in activations]
     fig = plt.figure()
+    fig.suptitle('Layer: ' + layer_name + ', Filter index: ' + str(neuron_idx))
     for n, (img, title) in enumerate(zip(images, titles)):
         a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
-        plt.imshow(img, interpolation='bicubic')
+        plt.imshow(img, interpolation='bicubic', cmap=color_map)
         plt.axis('off')
         # a.set_title(title)
     # fig.set_size_inches(n_max*3,n_max*3)
@@ -192,6 +197,10 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
     images = neuron.get_patches(network_data, layer_data)
     activations = neuron.norm_activations
 
+    color_map = None
+    if images[0].mode == 'L':
+        color_map = 'gray'
+
     idx_images = np.arange(0, len(images), num_images)
     cols = len(idx_images)
 
@@ -200,7 +209,7 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
         img = images[img_idx]
         t = round(activations[img_idx], 2)
         a = fig.add_subplot(2, cols, n + 1)
-        plt.imshow(img, interpolation='bicubic')
+        plt.imshow(img, interpolation='bicubic', cmap=color_map)
         plt.axis('off')
         a.set_title(t)
 
@@ -246,8 +255,11 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     for n in neurons:
         nf.append(n.neuron_feature)
 
-    n_images = len(nf)
+    color_map = 'gray'
+    if nf[0].mode == 'L':
+        color_map = 'gray'
 
+    n_images = len(nf)
     ri, rf, ci, cf = loc
 
     dr = ImageDraw.Draw(img)
@@ -262,8 +274,8 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     for n in xrange(n_images):
         img = nf[n]
         c = np.ceil(n_images/float(rows))
-        a = fig.add_subplot(rows+1, c, n + c +1)
-        plt.imshow(img, interpolation='bicubic')
+        a = fig.add_subplot(rows+1, c, n + c + 1)
+        plt.imshow(img, interpolation='bicubic', cmap=color_map)
         plt.axis('off')
         t = round(activations[n], 2)
         a.set_title(t)
@@ -292,6 +304,9 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
     """
     nf = []
     img = img.copy()
+    color_map = None
+    if img.mode == 'L':
+        color_map = 'gray'
     for n in neurons:
         nf.append(n.neuron_feature)
 
@@ -302,7 +317,7 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
 
     fig = plt.figure()
     fig.add_subplot(rows,2,1)
-    plt.imshow(img)
+    plt.imshow(img, cmap=color_map)
     plt.axis('off')
 
     for i in xrange(len(activations)-1, -1, -1):
@@ -320,14 +335,17 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
         img.paste(nf[i], (ci, ri, cf, rf))
 
     fig.add_subplot(rows,2,2)
-    plt.imshow(img)
+    plt.imshow(img, cmap=color_map)
     plt.axis('off')
 
     if plot_nf_list:
+        if nf[0].mode == 'L':
+            color_map = 'gray'
+
         num_images = len(nf)
         for i in xrange(num_images):
             fig.add_subplot(rows, num_images, i + num_images + 1)
-            plt.imshow(nf[i])
+            plt.imshow(nf[i], cmap=color_map)
             plt.axis('off')
     plt.show()
 
@@ -438,7 +456,12 @@ def imscatter(x, y, image, ax=None, zoom=1, label=None):
     """
     if ax is None:
         ax = plt.gca()
-    im = OffsetImage(image, zoom=zoom, interpolation='bicubic')
+
+    color_map = None
+    if image.mode == 'L':
+        color_map = 'gray'
+
+    im = OffsetImage(image, zoom=zoom, interpolation='bicubic', cmap=color_map)
     x, y = np.atleast_1d(x, y)
     ab = AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
     #ax.text(x+2, y+2, label) # TODO: put labels (index of the neuron)
@@ -520,7 +543,12 @@ def plot_nf_search(selective_neurons, n_max=150):
 
         for i, (n, title) in enumerate(zip(neurons, titles)):
             a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), i + 1,)
-            plt.imshow(n[0].neuron_feature, interpolation='bicubic')
+
+            color_map = None
+            if n[0].neuron_feature.mode == 'L':
+                color_map = 'gray'
+
+            plt.imshow(n[0].neuron_feature, interpolation='bicubic', cmap=color_map)
             plt.axis('off')
             tmp_t = ''
             for t in title:
@@ -532,7 +560,7 @@ def plot_nf_search(selective_neurons, n_max=150):
 
 
 def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
-    """Plots a list of neuron features in `sim_neuron` similars to
+    """Plots the list of neuron features in `sim_neuron`, similars to
     the `neuron_data` and their respective similarity index values.
 
     :param neuron_data: The `nefesi.network_data.NetworkData` instance.
@@ -555,13 +583,18 @@ def plot_similarity_idx(neuron_data, sim_neuron, idx_values, rows=2):
     fig.suptitle('Similarity index')
 
     fig.add_subplot(rows+1, 1, 1)
-    plt.imshow(neuron_data.neuron_feature, interpolation='bicubic')
+
+    color_map = None
+    if neuron_data.neuron_feature.mode == 'L':
+        color_map = 'gray'
+
+    plt.imshow(neuron_data.neuron_feature, interpolation='bicubic', cmap=color_map)
     plt.axis('off')
 
     for i, (n, title) in enumerate(zip(sim_neuron, titles)):
         c = np.ceil(n_images/float(rows))
         a = fig.add_subplot(rows+1, c, i + c+1)
-        plt.imshow(n.neuron_feature, interpolation='bicubic')
+        plt.imshow(n.neuron_feature, interpolation='bicubic', cmap=color_map)
         plt.axis('off')
         a.set_title(title)
     # fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
@@ -585,12 +618,17 @@ def plot_neuron_features(layer_data, neuron_list=None):
     for f in neuron_list:
         nf.append(f.neuron_feature)
 
+    color_map = None
+    if nf[0].mode == 'L':
+        color_map = 'gray'
+
     n_images = len(nf)
     cols = int(math.sqrt(n_images))
     fig = plt.figure()
+    fig.suptitle('NF from layer: ' + layer_data.layer_id)
     for n, img in enumerate(zip(nf)):
         a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
-        plt.imshow(nf[n], interpolation='bicubic')
+        plt.imshow(nf[n], interpolation='bicubic', cmap=color_map)
         plt.axis('off')
         a.set_title(str(n))
     # fig.set_size_inches(n_max*3,n_max*3)
@@ -606,10 +644,10 @@ def main():
                                    model_file='/home/oprades/oscar/vgg16.h5')
 
 
-    sel_idx = t.get_selectivity_idx(['class'], ['fc1', 'fc2'])
-
-    print sel_idx
-    plot_sel_idx_summary(sel_idx)
+    # sel_idx = t.get_selectivity_idx(['class'], ['fc1', 'fc2'])
+    #
+    # print sel_idx
+    # plot_sel_idx_summary(sel_idx)
 
     # plot_symmetry_distribution_summary(sel_idx)
     # plot_similarity_circle(t.layers[1], t.layers[1].filters[45])
@@ -618,11 +656,11 @@ def main():
     # plot_neuron_features(l)
     # print selective_neurons.values()[0].keys()
 
-    # selective_neurons = t.get_selective_neurons('block1_conv1', 'color')
-    # print selective_neurons
-    # # plot_2d_index(selective_neurons)
+    selective_neurons = t.get_selective_neurons('block1_conv1', 'color')
+    print selective_neurons
+    # plot_2d_index(selective_neurons)
     #
-    # plot_nf_search(selective_neurons)
+    plot_nf_search(selective_neurons)
     # # plot_neuron_features(layer1)
     #
     # plot_nf_search(selective_neurons)
