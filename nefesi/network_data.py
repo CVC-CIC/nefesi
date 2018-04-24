@@ -62,7 +62,9 @@ class NetworkData(object):
                      preprocessing_function=None,
                      color_mode='rgb',
                      save_for_layers=True,
-                     build_nf=True):
+                     build_nf=True,
+                     file_name=None,
+                     verbose=True):
         """Evaluates the layers in `layer_names`, searching for the maximum
         activations for each neuron and build the neuron feature.
 
@@ -86,6 +88,9 @@ class NetworkData(object):
             will be built.
             If layers in `layer_names` are fully connected layers, `build_nf`
             has to be False.
+        :param file_name: String, name of the file containing the result data,
+            if its None, the file will be stored with the model name.
+        :param verbose: Verbosity, False=Silent, True=one line per batch
 
         :raises
             TypeError: If some value in `layer_names` is not a String.
@@ -124,63 +129,49 @@ class NetworkData(object):
                     color_mode=self.dataset.color_mode
                 )
 
-                start = time.time()
                 num_images = data_batch.samples
                 n_batches = 0
-                # filters = None
+                idx = data_batch.batch_index
 
                 for i in data_batch:
-                    n_batches += 1
-                    if n_batches >= num_images / data_batch.batch_size:
-                        break
-
                     images = i[0]
 
                     # Apply the preprocessing function to the inputs
                     if self.dataset.preprocessing_function is not None:
                         images = self.dataset.preprocessing_function(images)
 
-                    idx = (data_batch.batch_index - 1) * data_batch.batch_size
-
                     file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
-
-
                     # Search the maximum activations
                     layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
 
-                    print 'On layer ', layer.layer_id, ', Get and sort activations in batch num: ', n_batches,
-                    ' Images processed: ', idx + data_batch.batch_size
+                    if verbose:
+                        print("Layer: {}, Num batch: {},"
+                              " Num images processed: {}/{}".format(
+                                layer.layer_id,
+                                n_batches,
+                                idx + data_batch.batch_size,
+                                num_images))
 
-
+                    idx = data_batch.batch_index * data_batch.batch_size
+                    n_batches += 1
+                    if n_batches >= num_images / data_batch.batch_size:
+                        break
 
                 # Set the number of maximum activations stored in each neuron
                 layer.set_max_activations()
 
-                end_act_time = time.time() - start
-
                 if build_nf:
                     # Build the neuron features
                     layer.build_neuron_feature(self)
-
-                end_comp_nf_time = time.time() - end_act_time - start
-
-                print 'Time (s) to get and sort activations from ', num_images, ' images: ', end_act_time
-                print 'Time (s) to compute_nf and receptive fields from each neuron: ', end_comp_nf_time
-
-                times_ex.append(time.time() - start)
-
                 if save_for_layers:
                     # Save the results each time we have a evaluated layer
                     self.save_to_disk(layer.layer_id)
 
-        for i in xrange(len(times_ex)):
-            print 'total time execution for layer ', i, ' : ', times_ex[i]
-
         # Save all data
-        # self.save_to_disk()
+        self.save_to_disk(file_name=file_name)
 
     def get_layers_name(self):
-        """Builds a list with name of each layer in `layers`.
+        """Builds a list with the name of each layer in `layers_data`.
 
         :return: List of strings
         """
