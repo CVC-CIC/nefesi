@@ -75,7 +75,12 @@ def get_image_receptive_field(x, y, model, layer_name):
     # (input shape of the network)
     for i in xrange(current_layer_idx, -1, -1):
         current_layer = model.layers[i]
-        _, current_size, _, _ = current_layer.input_shape
+
+        # print current_layer.name
+        # print current_layer.input_shape
+
+        if len(current_layer.input_shape) == 4:
+            _, current_size, _, _ = current_layer.input_shape
 
         # some checks to boundaries of the current layer shape.
         if row_ini < 0:
@@ -114,6 +119,7 @@ def get_image_receptive_field(x, y, model, layer_name):
             col_ini -= padding[1]
             row_fin -= padding[0]
             col_fin -= padding[1]
+
     return row_ini, row_fin, col_ini, col_fin
 
 

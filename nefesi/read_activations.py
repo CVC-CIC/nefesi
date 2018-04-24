@@ -1,5 +1,4 @@
 import numpy as np
-import time
 
 import keras.backend as K
 from neuron_data import NeuronData
@@ -20,8 +19,6 @@ def get_activations(model, model_inputs, print_shape_only=False, layer_name=None
     inp = model.input
     if not isinstance(inp, list):
         inp = [inp]
-
-    # all layer outputs
 
     # uses .get_output_at() instead of .output. In case a layer is
     # connected to multiple inputs. Assumes the input at node index=0
@@ -58,16 +55,10 @@ def get_sorted_activations(file_names, images, model, layer_name,
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
-    start = time.time()
     activations = get_activations(model, images,
                                   print_shape_only=False,
                                   layer_name=layer_name)
-
-    print('Time for get activations: ' + str(time.time() - start))
-    start = time.time()
-
     conv_layer = True
-
     for layer_activation in activations:
         # get the number of images and the number of neurons in this layer
         if len(layer_activation.shape) == 2:
@@ -100,8 +91,6 @@ def get_sorted_activations(file_names, images, model, layer_name,
                     xy_location = (0, 0)
                 image_id = file_names[j]
                 f.add_activation(max_act, image_id, xy_location)
-
-    # print('Time for order in ', str(num_filters), ': ' + str(time.time() - start))
     return neurons_data
 
 
