@@ -1,0 +1,5 @@
+# ignore .pyc files
+*.pyc
+dist/*
+build/*
+nefesi.egg-info
