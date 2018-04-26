@@ -7,7 +7,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
 from layer_data import LayerData
-from util.image import ImageDataset
+from utils.image import ImageDataset
 
 
 class NetworkData(object):
@@ -24,7 +24,7 @@ class NetworkData(object):
 
     Mutable-properties:
         save_path: Path of directory where the results will be saved.
-        dataset: The `nefesi.util.image.ImageDataset` instance.
+        dataset: The `nefesi.utils.image.ImageDataset` instance.
     """
 
     def __init__(self, model):

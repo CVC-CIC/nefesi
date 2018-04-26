@@ -1,5 +1,5 @@
 import read_activations
-from util.image import rotate_images
+from utils.image import rotate_images
 
 
 def get_orientation_index(neuron_data, model, layer_data, dataset):
@@ -10,7 +10,7 @@ def get_orientation_index(neuron_data, model, layer_data, dataset):
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param model: The `keras.models.Model` instance.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
-    :param dataset: The `nefesi.util.image.ImageDataset` instance.
+    :param dataset: The `nefesi.utils.image.ImageDataset` instance.
 
     :return: List of floats, index orientation values.
     """

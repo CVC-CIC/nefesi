@@ -10,7 +10,7 @@ def get_similarity_index(neuron_a, neuron_b, idx_a, model, layer_name, dataset):
     :param idx_a: Integer, index of `filter_a` in the layer.
     :param model: The `keras.models.Model` instance.
     :param layer_name: String, name of layer (`layer_id`).
-    :param dataset: The `nefesi.util.image.ImageDataset` instance.
+    :param dataset: The `nefesi.utils.image.ImageDataset` instance.
 
     :return: Float, index similarity value.
     """

@@ -165,7 +165,7 @@ class NeuronData(object):
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
 
         :return: Float, value of color selectivity index.
         """
@@ -183,7 +183,7 @@ class NeuronData(object):
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
 
         :return: List of floats, values of orientation selectivity index.
         """
@@ -201,7 +201,7 @@ class NeuronData(object):
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
 
         :return: List of floats, values of symmetry selectivity index.
         """

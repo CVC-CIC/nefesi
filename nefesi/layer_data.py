@@ -54,7 +54,7 @@ class LayerData(object):
 
         :param model: The `keras.models.Model` instance.
         :param index_name: String, name of the index.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
         :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
             code index.
@@ -99,7 +99,7 @@ class LayerData(object):
         within that subset.
 
         :param model: The `keras.models.Model` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
         :param neurons_idx: List of integer. Neuron indexes in the attribute
             class `filters`.
 
@@ -185,7 +185,7 @@ class LayerData(object):
 
         :param model: The `keras.models.Model` instance.
         :param img: Numpy array. This image should be an image already preprocessed
-            by the `nefesi.util.image.ImageDataset` instance.
+            by the `nefesi.utils.image.ImageDataset` instance.
 
         :return: Two numpy array of shape(w, h, k). Where w and h is the size of
             the map activation in this layer, and k is the number of neurons in this
@@ -244,7 +244,7 @@ class LayerData(object):
         :param target_layer: The `nefesi.layer_data.LayerData` instance,
             layer where decompose the neuron.
         :param model: The `keras.models.Model` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
 
         :return: Two numpy array of shape(w, h, k). Where w and h is the size of
             the map activation in this layer, and k is the number of neurons in this
