@@ -12,6 +12,6 @@ from nefesi import orientation_index
 from nefesi import similarity_index
 from nefesi import symmetry_index
 
-from nefesi import utils
+from nefesi import util
 
 __version__ = '1.0.4'
