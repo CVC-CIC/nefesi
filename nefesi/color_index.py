@@ -1,7 +1,7 @@
 import numpy as np
 
 import read_activations
-from utils.image import rgb2opp, image2max_gray
+from .util.image import rgb2opp, image2max_gray
 
 
 def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
@@ -10,7 +10,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param model: The `keras.models.Model` instance.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
-    :param dataset: The `nefesi.utils.image.ImageDataset` instance.
+    :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
     :return: Float, the color selectivity index value.
     """

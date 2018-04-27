@@ -1,10 +1,10 @@
 import numpy as np
 from PIL import ImageOps
 
-from class_index import get_class_selectivity_idx, get_population_code_idx
-from color_index import get_color_selectivity_index
-from orientation_index import get_orientation_index
-from symmetry_index import get_symmetry_index
+from .class_index import get_class_selectivity_idx, get_population_code_idx
+from .color_index import get_color_selectivity_index
+from .orientation_index import get_orientation_index
+from .symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
@@ -165,7 +165,7 @@ class NeuronData(object):
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: Float, value of color selectivity index.
         """
@@ -183,7 +183,7 @@ class NeuronData(object):
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: List of floats, values of orientation selectivity index.
         """
@@ -201,7 +201,7 @@ class NeuronData(object):
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.utils.image.ImageDataset` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
         :return: List of floats, values of symmetry selectivity index.
         """
