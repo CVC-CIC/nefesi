@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # nefesi (Neuron Feature and Selectivity Indexes)
 Neuron activity visualization
 
@@ -67,8 +66,3 @@ _**Goal**_: Describe a specific neuron of a deep layer through the set of neuron
 
 * _Application_: Visualize the feature composition of a neuron through the set of NFs of the neurons of shallower layers that are highly related to the studied neuron. It provides an illustration emphasizing the simpler features combined to detect more complex features in deeper layers.
 
-=======
-# NEFESI
-Neuron activity visualization
-
->>>>>>> d08423d5002434bf239b2a915e1dd6b3c1361753
