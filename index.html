@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Documentation for nefesi.">
+  
+  <link rel="shortcut icon" href="./img/favicon.ico">
+  <title>Home - Nefesi Documentation</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="./css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = "/";
+  </script>
+  
+  <script src="./js/jquery-2.1.1.min.js"></script>
+  <script src="./js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="./js/highlight.pack.js"></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Nefesi Documentation</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Home</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#nefesi-neuron-feature-and-selectivity-indexes">nefesi (Neuron Feature and Selectivity Indexes)</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#introduction">Introduction</a></li>
+        
+            <li><a class="toctree-l3" href="#package-structure">Package structure</a></li>
+        
+            <li><a class="toctree-l3" href="#neuron-feature-nf">Neuron feature (NF)</a></li>
+        
+            <li><a class="toctree-l3" href="#selectivity-indexes">Selectivity indexes</a></li>
+        
+            <li><a class="toctree-l3" href="#image-decomposition">Image decomposition</a></li>
+        
+            <li><a class="toctree-l3" href="#hierarchical-decomposition">Hierarchical decomposition</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Nefesi Documentation</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="http://github.com/CVC-CIC/nefesi/edit/master/docs/index.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="nefesi-neuron-feature-and-selectivity-indexes">nefesi (Neuron Feature and Selectivity Indexes)</h1>
+<p>Neuron activity visualization</p>
+<h2 id="introduction">Introduction</h2>
+<p>In this package the terms filters and neurons can be used interchangably. While in computer vision, filters are consideres as the kernels that contain the convolutional weights, in our work we are formulating the behaviour of the filters as neuron concept.</p>
+<p>Assuming the basic definition of neuron as an entity that spikes given an specific stimulus, when we work in CNN we find out that neurons are usually referred as pixels in an activation/feature maps.  are sharing the filter weights (filter), we provide a tool to analyze the behaviour of all the neurons linked to a given filter. For simplicity, from now on we will call this set of neurons linked to the same filter as Neuron. Consequently, in this package the terms filter and neuron can be used interchangably.  </p>
+<h2 id="package-structure">Package structure</h2>
+<h2 id="neuron-feature-nf">Neuron feature (NF)</h2>
+<p>This package provides the Neuron Feature to understand the internal representations that capture the intrinsic image features, which are a natural consequence of an automatic feature learning to achieve the goal task. Each of the stacked layers of the architecture operates on their inputs to produce a representation change. Taking into account that convolutional layers are the main responsible elements in detecting visual features encoded through their set of neurons, these representation changes are carried out in terms of the features encoded in each layer, likewise each neuron codifies certain features based on the previous layer feature space. Whilst the effects of the first convolutional layer can be easily understood, the understanding of the learned features becomes more difficult in deeper layers when several layers are stacked. This unawareness boosted the interest in understanding and analyzing learned features and several works have proposed different methodologies to address this understanding problem, going beyond proposing different CNN architectures or learning techniques.</p>
+<p><em><strong>Definition:</strong></em> visualizes the features provoking a high activation of a specific neuron.
+<em>Properties</em>: 
+   * Image independent
+   * Visualization of each neuron independently
+   * Realistic appearance</p>
+<p><em><strong>Construction:</strong></em> Weighted mean of the set of N-top-scoring images. Each of the set of N-top-scoring images is weighted by the activation provided by the specific neuron on this receptive field.</p>
+<ul>
+<li><em>Top-scoring images</em>: Set of receptive fields of the training set that gives the highest activations for each neuron with respect to the overall receptive fields analyzed on the training set.</li>
+</ul>
+<h2 id="selectivity-indexes">Selectivity indexes</h2>
+<p>Selectivity indexes allow us to describe neurons according to their inherent response to a specific property and to rank the whole neuron population proportionally to their related indexes.</p>
+<p><em><strong>Definition:</strong></em> a property related to a neuron that measures how much the neuronal response (<em>i.e.</em>, the neuron activity) is affected by changes in the stimulus. In this sense, a high selectivity index characterizes a neuron to be highly dependent to a specific property, therefore, when this property is slightly changed, the neuron activity is considerably decreased.</p>
+<h3 id="selectivity-indexes-included">Selectivity indexes included</h3>
+<p>In this package we include four different selectivity indexes that allow us to describe each neuron according to color, symmetry, orienation and class properties.</p>
+<ul>
+<li><strong>Color selectivity index</strong>: measures the activity of a neuron to an input stimulus presenting certain color bias. </li>
+<li><em>High value</em>: the neuron is sensitive to a color</li>
+<li>
+<p><em>Low value</em>: the neuron is not sensitive to a color</p>
+</li>
+<li>
+<p><strong>Symmetry selectivity index</strong>: measures the activity of a neuron to an input stimulus presenting a mirror symmetry property.</p>
+</li>
+<li><em>High value</em>:  the neuron is sensitive to a mirror symmetry</li>
+<li>
+<p><em>Low value</em>: the neuron is not sensitive to a mirror symmetry</p>
+</li>
+<li>
+<p><strong>Orientation selectivity index</strong>: measures the activity of a neuron to an input stimulus presenting an orientation bias.</p>
+</li>
+<li><em>High value</em>:  the neuron is sensitive to orientation</li>
+<li>
+<p><em>Low value</em>: the neuron is not sensitive to orientation</p>
+</li>
+<li>
+<p><strong>Class selectivity index</strong>: measures the activity of a neuron to an input stimulus related to a specific class.</p>
+</li>
+<li><em>High value</em>: the neuron is sensitive to a feature that belongs to a class</li>
+<li><em>Low value</em>:  the neuron is sensitive to features found in several classes</li>
+</ul>
+<h2 id="image-decomposition">Image decomposition</h2>
+<p><em><strong>Goal</strong></em>: Describe a given image through the set of features that are relevant in the CNN representation.</p>
+<ul>
+<li>
+<p><em>Relevant neurons</em>: set of neurons that are highly activated in each specific position.</p>
+</li>
+<li>
+<p><em>Application</em>: Visualize image representation through the set of NFs of the corresponding relevant neurons. It provides an illustration emphasizing the most relevant selected features for describing a specific image through the network. </p>
+</li>
+</ul>
+<h2 id="hierarchical-decomposition">Hierarchical decomposition</h2>
+<p><em><strong>Goal</strong></em>: Describe a specific neuron of a deep layer through the set of neurons of a previous layer in order to provide insight into how shallower neurons are composed to provide a more complex feature in the neuron of the deeper layer</p>
+<ul>
+<li><em>Application</em>: Visualize the feature composition of a neuron through the set of NFs of the neurons of shallower layers that are highly related to the studied neuron. It provides an illustration emphasizing the simpler features combined to detect more complex features in deeper layers.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="http://github.com/CVC-CIC/nefesi/" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="./js/theme.js"></script>
+      <script src="./search/require.js"></script>
+      <script src="./search/search.js"></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 0.17.3
+Build Date UTC : 2018-04-27 16:30:05
+-->
