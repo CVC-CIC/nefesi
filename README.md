@@ -1,5 +1,6 @@
 # nefesi (Neuron Feature and Selectivity Indexes)
 Neuron activity visualization
+More info at https://cvc-cic.github.io/nefesi/
 
 
 ## Introduction
