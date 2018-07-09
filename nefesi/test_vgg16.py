@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 
-from network_data import NetworkData
+from nefesi.network_data import NetworkData
 from keras.applications.vgg16 import VGG16
 
 def main():
@@ -11,7 +11,7 @@ def main():
     dataset = '/data/local/datasets/ImageNet/train/'
     save_path = '/data/115-1/users/oscar/'
     layer_names = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
-    avg_img = np.load('nefesi/external/averageImage.npy')
+    avg_img = np.load('../nefesi/external/averageImage.npy')
     num_max_activations = 100
 
     def norm_input(x):

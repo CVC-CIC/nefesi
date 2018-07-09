@@ -6,8 +6,8 @@ import warnings
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
-from .layer_data import LayerData
-from .util.image import ImageDataset
+from nefesi.layer_data import LayerData
+from nefesi.util.image import ImageDataset
 
 
 class NetworkData(object):
@@ -71,7 +71,7 @@ class NetworkData(object):
         :param layer_names: List of strings (name of the layers that will be
             evaluated).
         :param directory: Path to the directory to read images from.
-        :param save_path: Path of directory to write the results.
+        :param save_path: Path of directory to write the results. If None the value of self._save_path will be used.
         :param num_max_activations: Integer, number of maximum activations
             will be saved for each neuron.
         :param target_size: Tuple of integers, dimensions to resize input images to.
@@ -106,7 +106,8 @@ class NetworkData(object):
 
         # Creates the list of `layers_data`
         self._build_layers(layer_names)
-        self._save_path = save_path
+        if save_path != None:
+            self._save_path = save_path
 
         times_ex = []
 
@@ -304,7 +305,7 @@ class NetworkData(object):
                     if idx2 is not None:
                         res_idx2 = []
                         index_values2 = l.selectivity_idx(self.model, idx2, self.dataset)
-                        print type(index_values2[0])
+                        print(type(index_values2[0]))
 
                         if type(index_values2[0]) is list or type(index_values2[0]) is tuple:
                             n_idx = len(index_values2[0])

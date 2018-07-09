@@ -1,7 +1,8 @@
 import numpy as np
-
+import os
 from keras.preprocessing import image
 from scipy.ndimage.interpolation import rotate
+import warnings
 
 
 class ImageDataset(object):
@@ -20,11 +21,18 @@ class ImageDataset(object):
 
     def __init__(self, src_dataset, target_size=None,
                  preprocessing_function=None, color_mode='rgb'):
+        #----------------CHECKING CONSISTENCY OF PARAMS------------------
+        if not os.path.isdir(src_dataset):
+            raise FileNotFoundError(src_dataset+" not exists or is not a directory")
+        elif os.listdir(src_dataset) == []:
+            warnings.warn(src_dataset+" is an empty directory",RuntimeWarning)
+        #----------------------INICIALIZATION----------------------------
         self.src_dataset = src_dataset
         self.target_size = target_size
         self.preprocessing_function = preprocessing_function
         self.color_mode = color_mode
 
+    #TO COMMENT.
     def load_images(self, image_names, prep_function=True):
         """Returns a list of images after applying the
          corresponding transformations.

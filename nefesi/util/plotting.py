@@ -41,7 +41,7 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
                     l[i] = 0.0
 
             counts, bins = np.histogram(l, bins=bins, range=(0, 1))
-            print counts, bins
+            print(counts, bins)
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
@@ -322,7 +322,7 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
 
     for i in xrange(len(activations)-1, -1, -1):
         ri, rf, ci, cf = locations[i]
-        print locations[i]
+        print(locations[i])
         if rf < h:
             ri = ri - (h - rf)
         if cf < w:
@@ -372,7 +372,7 @@ def plot_similarity_tsne(layer_data, n=None):
     if n is not None:
         idx_neurons = [neurons.index(i) for i in n]
         neurons = n
-        print idx_neurons
+        print(idx_neurons)
 
     num_neurons = len(neurons)
 
@@ -657,7 +657,7 @@ def main():
     # print selective_neurons.values()[0].keys()
 
     selective_neurons = t.get_selective_neurons('block1_conv1', 'color')
-    print selective_neurons
+    print(selective_neurons)
     # plot_2d_index(selective_neurons)
     #
     plot_nf_search(selective_neurons)

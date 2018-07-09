@@ -1,4 +1,4 @@
-import read_activations
+import nefesi.read_activations
 from .util.image import rotate_images
 
 

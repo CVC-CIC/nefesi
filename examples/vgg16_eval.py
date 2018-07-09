@@ -17,8 +17,8 @@ def main():
 
     t = NetworkData.load_from_disk(path='/home/oprades/', file_name='block1_conv1.obj')
 
-    print t.model, t.layers
-    print t.dataset.preprocessing_function, t.dataset.src_dataset
+    print(t.model, t.layers)
+    print(t.dataset.preprocessing_function, t.dataset.src_dataset)
 
     for f in t.layers[0].get_filters():
         f.print_params()

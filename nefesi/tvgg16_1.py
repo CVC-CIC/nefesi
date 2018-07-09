@@ -10,7 +10,7 @@ from keras.applications.vgg16 import VGG16
 def main():
 
     dataset = '/home/oprades/ImageNet/train/' # dataset path
-    save_path = '/home/oprades/oscar/'
+    save_path = '/home/eric/Nefesi/'
     layer_names = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
     num_max_activations = 100
 

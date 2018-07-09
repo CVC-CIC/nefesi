@@ -123,7 +123,7 @@ class LayerData(object):
             self.similarity_index = np.zeros((size, size))
 
             idx_a = np.arange(size)
-            print idx_a
+            print(idx_a)
 
             for a, b in permutations(idx_a, 2):
                 sim_idx = get_similarity_index(self.neurons_data[a], self.neurons_data[b], a,

@@ -1,7 +1,7 @@
 import numpy as np
 
-import read_activations
-from .util.image import rgb2opp, image2max_gray
+import nefesi.read_activations
+from nefesi.util.image import rgb2opp, image2max_gray
 
 
 def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
