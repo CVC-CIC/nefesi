@@ -1,5 +1,6 @@
 import pickle
 import time
+import re #Regular Expresions
 import numpy as np
 import warnings
 
@@ -20,18 +21,64 @@ class NetworkData(object):
         model: The `keras.models.Model` instance.
 
     Attributes:
-        layers_data: List of `nefesi.layer_data.LayerData` instances.
+        layers_data: List of `nefesi.layer_data.LayerData` instances at the end, setted by:
+            RegularExpression ('.*' by default) applyed in model layer names or a list of names(string) that user knows to
+            exists in model (can be shown by self.showModelLayerNames). Also accepts a list of nefesi.layer_data.LayerData objects.
+            Specifies the layers that will be analyzed.
+
 
     Mutable-properties:
         save_path: Path of directory where the results will be saved.
         dataset: The `nefesi.util.image.ImageDataset` instance.
     """
 
-    def __init__(self, model):
+    def __init__(self, model,layer_data = '.*', save_path = None, dataset = None):
         self.model = model
-        self.layers_data = []
-        self._save_path = None
-        self._dataset = None
+        self.layers_data = layer_data
+        self._save_path = save_path
+        self._dataset = dataset
+
+    @property
+    def layers_data(self):
+        return self._layers_data
+
+    @layers_data.setter
+    def layers_data(self, layer_data):
+        if layer_data is None:
+            self._layers_data = None
+        #If is a regular expresion
+        elif type(layer_data) is str:
+            #Compile the Regular expresion
+            regEx = re.compile(layer_data)
+            #Select the layerNames that satisfies RegEx
+            okList = list(filter(regEx.match,[layer.name for layer in self.model.layers]))
+            #Put as LayerData objects
+            self._layers_data = [LayerData(layer) for layer in okList]
+            if self._layers_data == []:
+                warnings.warn("No layer was caught from filter: '"+layer_data+"'. For see all layer names of the model"
+                                                                              "calls showModelLayerNames()",RuntimeWarning)
+        #if layer_data is a list
+        elif type(layer_data) is list:
+            #list of strings
+            if all(type(name) is str for name in layer_data):
+                model_layer_names = [layer.name for layer in self.model.layers]
+                for layer_n in layer_data:
+                    if layer_n not in model_layer_names:
+                        raise ValueError("Wrong layer name: '"+layer_n+"'. For see all layer names of the model calls"
+                                                                       " showModelLayerNames()")
+                self._layers_data = [LayerData(layer) for layer in layer_data]
+            #list of layerData
+            elif all(type(name) is LayerData for name in layer_data):
+                model_layer_names = [layer.name for layer in self.model.layers]
+                for layer_n in layer_data:
+                    if layer_n.layer_id not in model_layer_names:
+                        raise ValueError("Wrong layer at LayerData object with id: '"+layer_n.layer_id+"'."
+                                                " For see all layer names of the model calls showModelLayerNames()")
+                self._layers_data = [LayerData(layer) for layer in layer_data]
+            else:
+                raise ValueError("The list types values accepted by 'layer_data' are only String Lists and LayerData Lists")
+        else:
+            raise ValueError("The value of LayerData must be: 'None', 'String List', 'LayerData List', or a Regular Expresion (Regex)")
 
     @property
     def dataset(self):
@@ -39,6 +86,9 @@ class NetworkData(object):
 
     @dataset.setter
     def dataset(self, dataset):
+        if type(dataset) is not ImageDataset:
+            raise TypeError("Dataset must be an nefesi.util.Image.ImageDataset object "
+                            "(https://github.com/CVC-CIC/nefesi/blob/master/nefesi/util/image.py)")
         self._dataset = dataset
 
     @property
@@ -47,13 +97,15 @@ class NetworkData(object):
 
     @save_path.setter
     def save_path(self, save_path):
+
         self._save_path = save_path
 
     def _build_layers(self, layers):
         for l in layers:
             self.layers_data.append(LayerData(l))
 
-    def eval_network(self, layer_names,
+    #COMENTAR BIEN QUE ES LAYER_NAMES!!!
+    def eval_network(self, layer_names = None,
                      directory=None,
                      save_path=None,
                      num_max_activations=100,
@@ -97,15 +149,8 @@ class NetworkData(object):
             ValueError: If some name in `layer_names` doesn't exist in
             the model `self.model`.
         """
-        model_layer_names = [layer.name for layer in self.model.layers]
-        for layer_n in layer_names:
-            if type(layer_n) != str:
-                raise TypeError("`layer_names`, should be a list of Strings.")
-            if layer_n not in model_layer_names:
-                raise ValueError("Wrong layer name: {}.".format(str(layer_n)))
-
-        # Creates the list of `layers_data`
-        self._build_layers(layer_names)
+        if layer_names != None:
+            self.layers_data = layer_names
         if save_path != None:
             self._save_path = save_path
 
@@ -528,3 +573,8 @@ class NetworkData(object):
             warnings.warn("The model was *not* loaded. Load it manually.")
 
         return my_net
+    #--------------------------------HELP FUNCTIONS-------------------------------------------------
+    def showModelLayerNames(self):
+        print([layer.name for layer in self.model.layers])
+    def getLayerNamesToAnalyze(self):
+        return [layer.layer_id for layer in self._layers_data]

@@ -23,15 +23,34 @@ Evaluate a Network. By the nature of the analisi, this will be based on an Image
 """
 def example4NetworkEvaluation():
 	"""
-	Nefesi analisi is based on neuron activations produced by a dataset of example images. This analisis produces a results
+	Nefesi analisys is based on neuron activations produced by a dataset of example images. This analisis produces a results
 	based in the input images (Mean of activations, N-Top Images...) for this reason the NetworkData object needs to be
 	associated with a dataset, that is from where Nefesi take this images
 	"""
+	#Take the instance (of previous example)
 	nefesiModel = example3NefesiInstance()
-	dataset = chargeNefesiImageDataset()
-	nefesiModel.dataset = dataset
-
+	#Set the dataset that will be use in analisis
+	nefesiModel.dataset = chargeNefesiImageDataset()
 	print("Dataset saved correctly and assigned to Nefesi object (NetworkData) correctly")
+	#save_path atttribute save the path where results will be saved. This attribute (same as dataset) is optional, because
+	#can be initialized in function nefesiModel.eval_network(...) that will see in next example
+	nefesiModel.save_path = "../Data"
+	print("Path to save results saved correctly --> "+nefesiModel.save_path)
+	"""
+	Nefesi analysis is selected by layers. The param layer_data indicates the layers that will be analyzed.
+	For example in VGG16 this are the list of layers that contains:
+	['input_1', 'block1_conv1', 'block1_conv2', 'block1_pool', 'block2_conv1', 'block2_conv2', 'block2_pool', 'block3_conv1',
+	'block3_conv2', 'block3_conv3', 'block3_pool', 'block4_conv1', 'block4_conv2', 'block4_conv3', 'block4_pool',
+	'block5_conv1', 'block5_conv2', 'block5_conv3', 'block5_pool', 'flatten', 'fc1', 'fc2', 'predictions'].
+	For select the layers to analyze nefesi offers 2 ways: By regular expresion or by Name.
+	An example of regular expression can be... ".*conv*" to select all convolutional layers (by default the value is ".*"
+	(all layers).
+	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
+	"""
+	#Select to analyze all convolutional layers
+	nefesiModel.layers_data = ".*conv*"
+	print("Layers "+str(nefesiModel.getLayerNamesToAnalyze())+" selected to analyze\n"
+															  "NetworkData object is full configured now")
 	return nefesiModel
 
 """
@@ -87,7 +106,7 @@ def example2ChargeModel():
 	"""
 	print("Loading VGG16.h5 model")
 
-	model = load_model('../VGG16.h5')
+	model = load_model('../Data/VGG16.h5')
 
 	print("Model loaded. \n Many times, when model is loaded, 'UserWarning: No training configuration found in save file' can be raised. "
 		  "This is because the model saved was not compiled (model.compile(...)). This warning is not rellevant if you "
@@ -112,7 +131,7 @@ def example1SaveModel():
 
 	print("Model charge, saving model at ./VGG16.h5")
 	# Save the model locally on path+name.h5 file.
-	saveModel(model=model, path='../', name='VGG16')  # Save it locally
+	saveModel(model=model, path='../Data', name='VGG16')  # Save it locally
 
 """
 Save model in Keras is so easy one instruction. A model object type has the method "save('fileName.h5')" that
