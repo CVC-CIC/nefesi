@@ -109,7 +109,7 @@ class NetworkData(object):
                      directory=None,
                      save_path=None,
                      num_max_activations=100,
-                     target_size=(256, 256),
+                     target_size=(254, 254),
                      batch_size=100,
                      preprocessing_function=None,
                      color_mode='rgb',
@@ -165,53 +165,53 @@ class NetworkData(object):
             raise ValueError("The argument `directory` should be a String.")
 
         for layer in self.layers_data:
-            if layer.layer_id in layer_names:
-                datagen = ImageDataGenerator()
-                data_batch = datagen.flow_from_directory(
-                    self.dataset.src_dataset,
-                    target_size=self.dataset.target_size,
-                    batch_size=batch_size,
-                    shuffle=False,
-                    color_mode=self.dataset.color_mode
-                )
+            #if layer.layer_id in layer_names: #if is not, exception was raised
+            datagen = ImageDataGenerator()
+            data_batch = datagen.flow_from_directory(
+                self.dataset.src_dataset,
+                target_size=self.dataset.target_size,
+                batch_size=batch_size,
+                shuffle=False,
+                color_mode=self.dataset.color_mode
+            )
 
-                num_images = data_batch.samples
-                n_batches = 0
-                idx = data_batch.batch_index
+            num_images = data_batch.samples
+            n_batches = 0
+            idx = data_batch.batch_index
 
-                for i in data_batch:
-                    images = i[0]
+            for i in data_batch:
+                images = i[0]
 
-                    # Apply the preprocessing function to the inputs
-                    if self.dataset.preprocessing_function is not None:
-                        images = self.dataset.preprocessing_function(images)
+                # Apply the preprocessing function to the inputs
+                if self.dataset.preprocessing_function is not None:
+                    images = self.dataset.preprocessing_function(images)
 
-                    file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
-                    # Search the maximum activations
-                    layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
+                file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
+                # Search the maximum activations
+                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
 
-                    if verbose:
-                        print("Layer: {}, Num batch: {},"
-                              " Num images processed: {}/{}".format(
-                                layer.layer_id,
-                                n_batches,
-                                idx + data_batch.batch_size,
-                                num_images))
+                if verbose:
+                    print("Layer: {}, Num batch: {},"
+                          " Num images processed: {}/{}".format(
+                            layer.layer_id,
+                            n_batches,
+                            idx + data_batch.batch_size,
+                            num_images))
 
-                    idx = data_batch.batch_index * data_batch.batch_size
-                    n_batches += 1
-                    if n_batches >= num_images / data_batch.batch_size:
-                        break
+                idx = data_batch.batch_index * data_batch.batch_size
+                n_batches += 1
+                if n_batches >= num_images / data_batch.batch_size:
+                    break
 
-                # Set the number of maximum activations stored in each neuron
-                layer.set_max_activations()
+            # Set the number of maximum activations stored in each neuron
+            layer.set_max_activations()
 
-                if build_nf:
-                    # Build the neuron features
-                    layer.build_neuron_feature(self)
-                if save_for_layers:
-                    # Save the results each time we have a evaluated layer
-                    self.save_to_disk(layer.layer_id)
+            if build_nf:
+                # Build the neuron features
+                layer.build_neuron_feature(self)
+            if save_for_layers:
+                # Save the results each time we have a evaluated layer
+                self.save_to_disk(layer.layer_id)
 
         # Save all data
         self.save_to_disk(file_name=file_name)

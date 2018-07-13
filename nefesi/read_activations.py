@@ -71,13 +71,13 @@ def get_sorted_activations(file_names, images, model, layer_name,
             # if `neurons_data` is None, creates the list and fill it
             # with the `nefesi.neuron_data.NeuronData` instances
             neurons_data = []
-            for i in xrange(num_filters):
+            for i in range(num_filters):
                 n_data = NeuronData(num_max_activations, batch_size)
                 neurons_data.append(n_data)
 
         for f in neurons_data:
             idx_filter = neurons_data.index(f)
-            for j in xrange(num_images):
+            for j in range(num_images):
                 if conv_layer is True:
                     # get the map activation for each image and each channel
                     activation_map = layer_activation[j, :, :, idx_filter]
@@ -114,7 +114,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
         num_images, _, _, num_filters = layer_activation.shape
 
         new_activations = np.zeros(num_images)
-        for j in xrange(num_images):
+        for j in range(num_images):
             # for each input in `images`, get the activation value in `pos`
             x, y = pos[j]
             f = layer_activation[j, x, y, idx_neuron]

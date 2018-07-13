@@ -16,12 +16,22 @@ def main():
 	#example1SaveModel() #Charge a standard model and save it locally
 	#example2ChargeModel() #Charge a model locally
 	#example3NefesiInstance()
-	example4NetworkEvaluation()
+	#example4FullFillNefesiInstance()
+	example5NetworkEvaluation()
 
 """
-Evaluate a Network. By the nature of the analisi, this will be based on an Image Dataset (Charged Locally).
+Makes the network evaluation
 """
-def example4NetworkEvaluation():
+def example5NetworkEvaluation():
+	nefesiModel = example4FullFillNefesiInstance()
+	nefesiModel.eval_network()
+
+"""
+Full fills the NetworkData object. By the nature of the analisi, this will be based on an Image Dataset (Charged Locally),
+the specification of layers to be analyzed (beacause not all layers will have sense to analyze (like input layer), and
+the path to save the results. In this example is explained how to set this parameters correctly.
+"""
+def example4FullFillNefesiInstance():
 	"""
 	Nefesi analisys is based on neuron activations produced by a dataset of example images. This analisis produces a results
 	based in the input images (Mean of activations, N-Top Images...) for this reason the NetworkData object needs to be
@@ -47,8 +57,8 @@ def example4NetworkEvaluation():
 	(all layers).
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
-	#Select to analyze all convolutional layers
-	nefesiModel.layers_data = ".*conv*"
+	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
+	nefesiModel.layers_data = "block(1|3|5)_conv1"
 	print("Layers "+str(nefesiModel.getLayerNamesToAnalyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
@@ -92,7 +102,6 @@ def example3NefesiInstance():
 	"""
 	model = example2ChargeModel() #Charges the model from a local file
 	nefesiModel = NetworkData(model=model) #Instantiate the NetworkData object
-
 	print("Nefesi object (NetworkData) instantiated")
 	return nefesiModel
 """
