@@ -17,8 +17,22 @@ def main():
 	#example2ChargeModel() #Charge a model locally
 	#example3NefesiInstance()
 	#example4FullFillNefesiInstance()
-	example5NetworkEvaluation()
+	#example5NetworkEvaluation()
 	#example6LoadingResults()
+	example7AnalyzingResults()
+
+"""
+Analyze the results of the evaluation
+"""
+def example7AnalyzingResults():
+	"""
+	The truth kernel part of Nefesi, the analysis of the evaluation maded in example5. Nefesi analysis is based on index,
+	and allows user to inspect the neurons that maximize this index, minimize... Index that allows are: "color", "orientation",
+	 "symmetry", "class" or "population code". Let's to see it in a example
+	"""
+	nefesiModel = example6LoadingResults()
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="color", layer_name="block1_conv1")
+	print(selIdx['color'][1])
 
 """
 Charges one of the last files saved, in order to start analyzing it
@@ -31,6 +45,7 @@ def example6LoadingResults():
 	and block3_conv2.obj, and you wants to analyze block1_conv1, block2_conv1 layers you need to set file_name=block2_conv1.obj)
 	"""
 	nefesiModel = NetworkData.load_from_disk(file_name="../Data/block1_conv1.obj", model_file="../Data/VGG16.h5")
+	return nefesiModel
 
 """
 Makes the network evaluation. This is a kernel part of Nefesi package, and will generate the files that after will be

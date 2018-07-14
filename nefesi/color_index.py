@@ -1,6 +1,6 @@
 import numpy as np
 
-import nefesi.read_activations
+from nefesi import read_activations
 from nefesi.util.image import rgb2opp, image2max_gray
 
 
@@ -39,8 +39,9 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
             images_gray.append(init_image)
 
         # once the images have been converted to grayscale,
-        # apply the preprocessing function.
-        images_gray = dataset.preprocessing_function(np.asarray(images_gray))
+        # apply the preprocessing function, if exist.
+        if dataset.preprocessing_function != None:
+            images_gray = dataset.preprocessing_function(np.asarray(images_gray))
         new_activations = read_activations.get_activation_from_pos(images_gray, model,
                                                                    layer_data.layer_id,
                                                                    idx_neuron, locations)

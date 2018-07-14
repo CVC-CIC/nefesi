@@ -69,27 +69,26 @@ class LayerData(object):
             ValueError: If `index_name` is not one of theses: "color",
             "orientation", "symmetry", "class" or "population code".
         """
-        sel_idx = []
-        for f in self.neurons_data:
-            if index_name == 'color':
-                res = f.color_selectivity_idx(model, self, dataset)
-                sel_idx.append(res)
-            elif index_name == 'orientation':
-                res = f.orientation_selectivity_idx(model, self, dataset)
-                sel_idx.append(res)
-            elif index_name == 'symmetry':
-                res = f.symmetry_selectivity_idx(model, self, dataset)
-                sel_idx.append(res)
-            elif index_name == 'class':
-                res = f.class_selectivity_idx(labels, thr_class_idx)
-                sel_idx.append(res)
-            elif index_name == 'population code':
-                res = f.population_code_idx(labels, thr_pc)
-                sel_idx.append(res)
-            else:
-                raise ValueError("The `index_name` argument should be one "
-                                 "of theses: color, orientation, symmetry, "
-                                 "class or population code.")
+        sel_idx = np.zeros(len(self.neurons_data),dtype=np.float)
+        if index_name == 'color':
+            for i in range(len(self.neurons_data)):
+                sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
+        elif index_name == 'orientation':
+            for i in range(len(self.neurons_data)):
+                sel_idx[i] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
+        elif index_name == 'symmetry':
+            for i in range(len(self.neurons_data)):
+                sel_idx[i] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
+        elif index_name == 'class':
+            for i in range(len(self.neurons_data)):
+                sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
+        elif index_name == 'population code':
+            for i in range(len(self.neurons_data)):
+                sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
+        else:
+            raise ValueError("The `index_name` argument should be one "
+                             "of theses: color, orientation, symmetry, "
+                             "class or population code.")
         return sel_idx
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
@@ -219,13 +218,13 @@ class LayerData(object):
 
         # normalize the activations in each map activation
         # for each channel
-        for i in xrange(c):
+        for i in range(c):
             activations[0, :, :, i] = activations[0, :, :, i] / max_act[i]
 
         # sort the activations for each w, h position in map activation
         # in the channel dimension
-        for i in xrange(w):
-            for j in xrange(h):
+        for i in range(w):
+            for j in range(h):
                 tmp = activations[0, i, j, :]
                 idx = np.argsort(tmp)
                 idx = idx[::-1]
@@ -269,7 +268,7 @@ class LayerData(object):
         neuron_images = dataset.load_images(neuron_images)
 
         # build the patches from the neuron on this layer that we want to decompose
-        for i in xrange(len(neuron_images)):
+        for i in range(len(neuron_images)):
             loc = neuron_locations[i]
             row_ini, row_fin, col_ini, col_fin = self.receptive_field_map[loc[0], loc[1]]
             patch = neuron_images[i]
@@ -300,9 +299,9 @@ class LayerData(object):
         # normalize each map activation from each patch for each neuron and multiply
         # each map activation from each patch with the normalized activation
         # of that patch
-        for i in xrange(n_patches):
+        for i in range(n_patches):
             tmp = activations[i]
-            for j in xrange(k):
+            for j in range(k):
                 if max_act[j] != 0.0:
                     n_act = tmp[:, :, j] / max_act[j]
                     np.place(n_act, n_act > 1, 1)
@@ -312,7 +311,7 @@ class LayerData(object):
 
         # for each map activation from each patch average them
         mean_activations = np.zeros((w, h, k))
-        for i in xrange(n_patches):
+        for i in range(n_patches):
             a = activations[i]
             mean_activations += a
         mean_activations = mean_activations / n_patches
@@ -321,8 +320,8 @@ class LayerData(object):
         hc_idx = np.zeros((w, h, k))
 
         # sort the activations for each neuron
-        for i in xrange(w):
-            for j in xrange(h):
+        for i in range(w):
+            for j in range(h):
                 tmp = mean_activations[i, j, :]
                 idx = np.argsort(tmp)
                 idx = idx[::-1]
@@ -356,7 +355,7 @@ class LayerData(object):
         n_sim = sim_idx[neuron_idx, :]
 
         # get the similarity values between the threshold
-        for i in xrange(len(n_sim)):
+        for i in range(len(n_sim)):
             idx = n_sim[i]
             if inf_thr <= idx <= sup_thr:
                 res_neurons.append(self.neurons_data[i])

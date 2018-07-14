@@ -237,6 +237,7 @@ class NetworkData(object):
         in `layer_name`.
 
         :param sel_index: List of strings or string, name of the selectivity indexes.
+            Values: "color", "orientation", "symmetry", "class" or "population code".
         :param layer_name: List of strings or string, name of the layers.
         :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
@@ -554,7 +555,7 @@ class NetworkData(object):
             file_name = self._save_path + file_name
             model_name = self._save_path + self.model.name
         #If directory not exists create it recursively
-        os.makedirs(path=self.save_path, exist_ok=True)
+        os.makedirs(name=self.save_path, exist_ok=True)
         model = self.model
         if save_model:
             self.model.save(model_name + '.h5')
