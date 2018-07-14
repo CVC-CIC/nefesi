@@ -41,7 +41,7 @@ class NeuronData(object):
         self._batch_size = batch_size
 
         self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
-        self.images_id = np.ndarray(shape=self._max_activations + self._batch_size, dtype='a150')
+        self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
         self.xy_locations = np.ndarray(shape=self._max_activations + self._batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
         self.norm_activations = None
 
@@ -107,7 +107,6 @@ class NeuronData(object):
 
         :param network_data: The `nefesi.network_data.NetworkData` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-
         :return: List of PIL image instances.
         """
         patches = []
@@ -115,7 +114,7 @@ class NeuronData(object):
         receptive_field = layer_data.receptive_field_map
         rf_size = layer_data.receptive_field_size
 
-        for i in xrange(self._max_activations):
+        for i in range(self._max_activations):
             img = self.images_id[i]
             loc = self.xy_locations[i]
 
@@ -154,7 +153,7 @@ class NeuronData(object):
         if self.norm_activations is None:
             print("Neuron with no activations.")
         else:
-            for i in xrange(len(self.activations)):
+            for i in range(len(self.activations)):
                 print(i, self.images_id[i],
                       self.activations[i],
                       self.xy_locations[i],

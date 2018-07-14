@@ -25,7 +25,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
         idx_neuron = layer_data.neurons_data.index(neuron_data)
 
         images_gray = []
-        for i in xrange(len(images)):
+        for i in range(len(images)):
             # get the receptive field from the origin image.
             x, y = locations[i]
             row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]

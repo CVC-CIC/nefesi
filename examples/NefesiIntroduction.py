@@ -18,13 +18,43 @@ def main():
 	#example3NefesiInstance()
 	#example4FullFillNefesiInstance()
 	example5NetworkEvaluation()
+	#example6LoadingResults()
 
 """
-Makes the network evaluation
+Charges one of the last files saved, in order to start analyzing it
+"""
+def example6LoadingResults():
+	"""
+	Charges a model with analysis data. In order to have it a sthatic function is used (NetworkData.load_from_disk(...)
+	and it takes the files generated in last example. In order to charge results of more than one layer, is needed to charge
+	the .obj with the name of the last layer that you wants to analyze (For example: if you have block1_conv1.obj, block2_conv1.obj,
+	and block3_conv2.obj, and you wants to analyze block1_conv1, block2_conv1 layers you need to set file_name=block2_conv1.obj)
+	"""
+	nefesiModel = NetworkData.load_from_disk(file_name="../Data/block1_conv1.obj", model_file="../Data/VGG16.h5")
+
+"""
+Makes the network evaluation. This is a kernel part of Nefesi package, and will generate the files that after will be
+used to analyze the network.
 """
 def example5NetworkEvaluation():
+	"""
+	Nefesi will eval the network, and save results in a directory nefesiModel.save_path (setted at last example as
+	"../Data/" . In this directory will appears a list of '.obj' files. One per layer evaluated and all with the name
+	of corresponding layer. Each file will have the information of all previous evaluated layers (for example: if you
+	eval block1_conv1 and block2_conv1, in the directory will appears block1_conv1.obj, and block2_conv1.obj. The last
+	one with the content of block1_conv1.obj and his own content (block2_conv2). The reason of it is because when you
+	will charge a .obj in order to analyze results, you will only charge one file to analyze all layers).
+	"""
 	nefesiModel = example4FullFillNefesiInstance()
-	nefesiModel.eval_network()
+	#This function will have the evaluation. All parameters setted in example4 are also parameters of this function. If
+	#user don't set it in .evalNetwork(...) takes by default the values of nefesiModel object
+	print("Let's start to evaluate network. This process is based on dataset and the time that spent is depenent of the "
+		  "size of it. Is recommended to use have a visible GPU for this process "
+		  "(os.environment[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
+		  "GO TO EVALUATE! :)")
+	nefesiModel.eval_network(verbose=True)
+	print("Evaluation finished, nefesiObject have now the info of analysis and results can be reloaded with files (.obj)"
+		  "in dir --> "+nefesiModel.save_path)
 
 """
 Full fills the NetworkData object. By the nature of the analisi, this will be based on an Image Dataset (Charged Locally),
@@ -44,7 +74,7 @@ def example4FullFillNefesiInstance():
 	print("Dataset saved correctly and assigned to Nefesi object (NetworkData) correctly")
 	#save_path atttribute save the path where results will be saved. This attribute (same as dataset) is optional, because
 	#can be initialized in function nefesiModel.eval_network(...) that will see in next example
-	nefesiModel.save_path = "../Data"
+	nefesiModel.save_path = "../Data/"
 	print("Path to save results saved correctly --> "+nefesiModel.save_path)
 	"""
 	Nefesi analysis is selected by layers. The param layer_data indicates the layers that will be analyzed.
@@ -58,7 +88,7 @@ def example4FullFillNefesiInstance():
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	nefesiModel.layers_data = "block(1|3|5)_conv1"
+	nefesiModel.layers_data = "block(1)_conv1"#|3|5
 	print("Layers "+str(nefesiModel.getLayerNamesToAnalyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
@@ -79,7 +109,7 @@ def chargeNefesiImageDataset():
 	ClassAFolder -> Img1, Img2, Img3...
 	ClassBFolder -> Img1, Img2, Img3...
 	"""
-	path = '../Datasets/TinyImagenet/train/'
+	path = '../Datasets/TinyImagenet/trainSubset/'
 	#target_size is the size of the images will be resized and cropped before to put in the net, in this case the best
 	#option is to set as (224 (height), 224 (width)) cause this is the input size of VGG16.
 	targetSize = (224,224)
@@ -138,9 +168,9 @@ def example1SaveModel():
 
 	model = VGG16()
 
-	print("Model charge, saving model at ./VGG16.h5")
+	print("Model charge, saving model at ../Data/VGG16.h5")
 	# Save the model locally on path+name.h5 file.
-	saveModel(model=model, path='../Data', name='VGG16')  # Save it locally
+	saveModel(model=model, path='../Data/', name='VGG16')  # Save it locally
 
 """
 Save model in Keras is so easy one instruction. A model object type has the method "save('fileName.h5')" that
@@ -150,6 +180,8 @@ def saveModel(model,path='', name='myModel'):
 	#The file format of keras models is '.h5'
 	if not name.endswith('.h5'):
 		name = name+'.h5'
+	if not path.endswith('/'):
+		path = path+'/'
 	# Save the model (model) locally
 	model.save(path+name)
 

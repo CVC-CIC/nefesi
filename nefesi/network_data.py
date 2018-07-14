@@ -1,4 +1,5 @@
 import pickle
+import os
 import time
 import re #Regular Expresions
 import numpy as np
@@ -97,7 +98,12 @@ class NetworkData(object):
 
     @save_path.setter
     def save_path(self, save_path):
-
+        #Ensures that path ends with '/' (To save confusions to user)
+        if not save_path.endswith('/'):
+            save_path = save_path + '/'
+        #Ensures that folder exists
+        if not os.path.isdir(save_path):
+            warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
         self._save_path = save_path
 
     def _build_layers(self, layers):
@@ -547,10 +553,12 @@ class NetworkData(object):
         if self._save_path is not None:
             file_name = self._save_path + file_name
             model_name = self._save_path + self.model.name
-
+        #If directory not exists create it recursively
+        os.makedirs(path=self.save_path, exist_ok=True)
         model = self.model
         if save_model:
             self.model.save(model_name + '.h5')
+        #Save the object without model info
         self.model = None
         pickle.dump(self, open(file_name + '.obj', 'wb'))
         self.model = model

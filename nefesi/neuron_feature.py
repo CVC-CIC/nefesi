@@ -27,7 +27,7 @@ def compute_nf(network_data, layer_data, neurons_data):
             num_a = len(patches)
 
             total_act = np.zeros(image.img_to_array(patches[0]).shape)
-            for i in xrange(num_a):
+            for i in range(num_a):
                 # multiply each receptive field per the normalized
                 # activation of the image to comes from.
                 img = image.img_to_array(patches[i])
@@ -73,7 +73,7 @@ def get_image_receptive_field(x, y, model, layer_name):
 
     # goes throw the current layer until the first input layer.
     # (input shape of the network)
-    for i in xrange(current_layer_idx, -1, -1):
+    for i in range(current_layer_idx, -1, -1):
         current_layer = model.layers[i]
 
         # print current_layer.name
@@ -107,7 +107,6 @@ def get_image_receptive_field(x, y, model, layer_name):
                 padding = (kernel_size[0] - 1) / 2, (kernel_size[1] - 1) / 2
             else:
                 padding = (0, 0)
-
             # calculate the window location applying the proper displacements.
             row_ini = row_ini*strides[0]
             col_ini = col_ini*strides[1]

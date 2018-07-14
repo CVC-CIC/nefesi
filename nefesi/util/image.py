@@ -71,7 +71,7 @@ class ImageDataset(object):
 
         :param img_name: String, name of the image.
 
-        :return: PIL image instance.
+        :return: PIL image instance
         """
         grayscale = self.color_mode == 'grayscale'
         return image.load_img(self.src_dataset + img_name,

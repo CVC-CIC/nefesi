@@ -146,8 +146,8 @@ class LayerData(object):
                                                        ('x2', 'i4'),
                                                        ('y1', 'i4'),
                                                        ('y2', 'i4')])
-            for i in xrange(w):
-                for j in xrange(h):
+            for i in range(w):
+                for j in range(h):
                     ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
                     # we have to add 1 in row_fin and col_fin due to behaviour
                     # of Numpy arrays.
