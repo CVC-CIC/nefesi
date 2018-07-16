@@ -107,6 +107,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
 
     :return: List of floats, activation values for each input in `images`.
     """
+    #REVIEW THIS FUNCTION, it's necessary to CALC ALL activations to only one neuron?
     activations = get_activations(model, images, print_shape_only=False, layer_name=layer_name)
 
     new_activations = None

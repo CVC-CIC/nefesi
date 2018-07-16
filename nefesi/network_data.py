@@ -57,7 +57,7 @@ class NetworkData(object):
             self._layers_data = [LayerData(layer) for layer in okList]
             if self._layers_data == []:
                 warnings.warn("No layer was caught from filter: '"+layer_data+"'. For see all layer names of the model"
-                                                                              "calls showModelLayerNames()",RuntimeWarning)
+                                                                              "calls show_model_layer_names()",RuntimeWarning)
         #if layer_data is a list
         elif type(layer_data) is list:
             #list of strings
@@ -110,7 +110,6 @@ class NetworkData(object):
         for l in layers:
             self.layers_data.append(LayerData(l))
 
-    #COMENTAR BIEN QUE ES LAYER_NAMES!!!
     def eval_network(self, layer_names = None,
                      directory=None,
                      save_path=None,
@@ -126,8 +125,8 @@ class NetworkData(object):
         """Evaluates the layers in `layer_names`, searching for the maximum
         activations for each neuron and build the neuron feature.
 
-        :param layer_names: List of strings (name of the layers that will be
-            evaluated).
+        :param layer_names: List of strings, string, or Regular Expressions (name of the layers of the network that will be
+            evaluate (in order to see the disponible layers use show_model_layer_names())).
         :param directory: Path to the directory to read images from.
         :param save_path: Path of directory to write the results. If None the value of self._save_path will be used.
         :param num_max_activations: Integer, number of maximum activations
@@ -238,7 +237,7 @@ class NetworkData(object):
 
         :param sel_index: List of strings or string, name of the selectivity indexes.
             Values: "color", "orientation", "symmetry", "class" or "population code".
-        :param layer_name: List of strings or string, name of the layers.
+        :param layer_name: List of strings, string or Regular Expression, name of the layers.
         :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
             code index.
@@ -260,7 +259,10 @@ class NetworkData(object):
         if type(sel_index) is not list:
             sel_index = [sel_index]
         if type(layer_name) is not list:
-            layer_name = [layer_name]
+            # Compile the Regular expresion
+            regEx = re.compile(layer_name)
+            # Select the layerNames that satisfies RegEx
+            layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
 
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
@@ -283,7 +285,7 @@ class NetworkData(object):
     def similarity_idx(self, layer_name):
         """Returns the similarity index for each layer in `layer_name`.
 
-        :param layer_name: List of strings or string, name of the layers.
+        :param layer_name: List of strings, string or Regular Expression, name of the layers.
 
         :return: List of Numpy arrays, each array belows to one layer.
 
@@ -294,7 +296,11 @@ class NetworkData(object):
         sim_idx = []
 
         if type(layer_name) is not list:
-            layer_name = [layer_name]
+            # Compile the Regular expresion
+            regEx = re.compile(layer_name)
+            # Select the layerNames that satisfies RegEx
+            layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
+
 
         for l in layer_name:
             layer = next((layer_data for layer_data in
@@ -368,7 +374,7 @@ class NetworkData(object):
 
                     selective_neurons[l.layer_id] = []
                     neurons = l.filters
-                    for i in xrange(len(neurons)):
+                    for i in range(len(neurons)):
                         if inf_thr <= res_idx1[i] <= sup_thr:
                             if res_idx2 is not None:
                                 if inf_thr <= res_idx2[i] <= sup_thr:
@@ -583,7 +589,7 @@ class NetworkData(object):
 
         return my_net
     #--------------------------------HELP FUNCTIONS-------------------------------------------------
-    def showModelLayerNames(self):
+    def show_model_layer_names(self):
         print([layer.name for layer in self.model.layers])
-    def getLayerNamesToAnalyze(self):
+    def get_layer_names_to_analyze(self):
         return [layer.layer_id for layer in self._layers_data]

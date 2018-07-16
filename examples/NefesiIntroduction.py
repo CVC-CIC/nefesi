@@ -7,6 +7,8 @@ from keras.applications.vgg16 import VGG16
 from keras.models import load_model #For load local keras models (h5 files)
 from nefesi.network_data import NetworkData
 from nefesi.util.image import ImageDataset
+import numpy as np
+import time
 #from nefesi.util.plotting import plot_nf_search
 
 import os
@@ -31,8 +33,84 @@ def example7AnalyzingResults():
 	 "symmetry", "class" or "population code". Let's to see it in a example
 	"""
 	nefesiModel = example6LoadingResults()
-	selIdx = nefesiModel.get_selectivity_idx(sel_index="color", layer_name="block1_conv1")
-	print(selIdx['color'][1])
+	#start = time.time()
+	#colorSelectivity(nefesiModel)
+	symmetrySelectivity(nefesiModel)
+	#end = time.time()
+	#print("TIME ELAPSED: ")
+	#print(end - start)
+
+"""
+Looks each neuron symmetry selectivity on the network
+"""
+def symmetrySelectivity(nefesiModel):
+	"""
+	Simmetry selectivity is an index that specifies how much a specific neuron is selective to simmerty. In order to evaluate it,
+	 this neuron takes his N-Top images (the N images that more activation produced to it) and evaluate the diference between
+	 the activation of the neuron to the image_i and the activation with the same image mirrored and repeat the result rotating
+	 the image 45º, 90º and 135º. The result will be a list (numpy) of 5 floats per each neuron in range [0.0,1.0] (index for
+	 0º rotated image, 45º rotated image, 90º rotated image, 135º rotated image, the mean) that specifies the area between
+	 two graphics (activations with images vs activations with mirrored images)
+	"""
+	layersToEvaluate = ["block1_conv1"]
+	print("Let's Evaluate the symmetry selectivity index of " + str(len(layersToEvaluate)) + " layers: " + str(layersToEvaluate)+
+		  " (This operation can take minutes)")
+	"""
+	selIdx will be a dictionary that contains per each key in sel_index a list (numpy) that contains a entrance per each layer
+	in layer_name, that contains list of float per each neuron that is his symmetry selectivity index(list of len 5).
+	For example in the case sel_index="simmetry", layer_name=["block1_conv1","block3_conv1"] selIdx will be:
+
+	selIdx-->selIdx['simmetry']-->[numpy with the simmetry_idx of each neuron in layer "block1_conv1"]-->[0º,45º,90º,135º,mean] of neuron 1
+										 															  -->[0º,45º,90º,135º,mean] of neuron 2
+																									  ...
+																									  -->[0º,45º,90º,135º,mean] of neuron n
+							   -->[numpy with the simmetry_idx of each neuron in layer "block3_conv1"]-->[0º,45º,90º,135º,mean] of neuron 1
+								   																      -->[0º,45º,90º,135º,mean] of neuron 2
+																								      ...
+																								      -->[0º,45º,90º,135º,mean] of neuron n
+	"""
+	# Calculate the color index of layer block1_conv1 (this process can take more than ten minutes)
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="symmetry", layer_name=layersToEvaluate)
+	print("Symmetry selectivity index calculated for each neuron of layer 'block1_conv1'\n"
+		  "Max value of mean simmetry selectivity encountered in this layer: {} in neuron: {}  (symmetryIndex in "
+		  "[0º,45º,90º,135º,mean]: {}).\n"
+		  "Neurons with more than 60% of symmetry selectivity: {}".format(np.max(selIdx['symmetry'][0][:,4]),
+																	   np.argmax(selIdx['symmetry'][0][:,4]),
+		  											selIdx['symmetry'][0][np.argmax(selIdx['symmetry'][0][:, 4]), :],
+		  											len(np.where(selIdx['symmetry'][0][:, 4] > 0.6)[0])))
+
+
+"""
+Looks each neuron color selectivity on the network
+"""
+def colorSelectivity(nefesiModel):
+	"""
+	Color selectivity is an index that specifies how much a specific neuron is selective to color. In order to evaluate it,
+	this neuron takes his N-Top images (the N images that more activation produced to it) and evaluate the diference between
+	the activation of the neuron to the colorImage_i and the activation with the same image in grayScale. The result will
+	be a float per each neuron in range [0.0,1.0], that specifies the area between two graphics (activations with color vs
+	activations with grayscale)
+
+	More info at: https://arxiv.org/abs/1702.00382v1
+	"""
+	layersToEvaluate = ["block1_conv1"]
+	print("Let's Evaluate the color selectivity index of "+str(len(layersToEvaluate))+" layers: "+str(layersToEvaluate))
+	"""
+	selIdx will be a dictionary that contains per each key in sel_index a list that contains a entrance per each layer
+	in layer_name, that contains a float per each neuron that is his selectivity index. For example in the case
+	sel_index="color", layer_name=["block1_conv1","block3_conv1"] selIdx will be:
+
+	selIdx-->selIdx['color']-->[list with the color_idx of each neuron in layer "block1_conv1"]
+							-->[list with the color_idx of each neuron in layer "block3_conv1"]
+	"""
+	#Calculate the color index of layer block1_conv1 (this process can take more than a minute)
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="color", layer_name=layersToEvaluate)
+	print("Color selectivity index calculated for each neuron of layer 'block1_conv1'\n"
+		  "Max value of color selectivity encountered in this layer: "+str(np.max(selIdx['color'][0]))+" in neuron: "
+		  ""+str(np.argmax(selIdx['color'][0]))+". \n"
+		  "Neurons with more than 60% of color selectivity: "+str(len(np.where(selIdx['color'][0]>0.6)[0]))+ ". Mean of "
+		  "Color Selectivity in layer 'block1_conv1': "+str(np.mean(selIdx['color'][0]))+".")
+
 
 """
 Charges one of the last files saved, in order to start analyzing it
@@ -42,9 +120,11 @@ def example6LoadingResults():
 	Charges a model with analysis data. In order to have it a sthatic function is used (NetworkData.load_from_disk(...)
 	and it takes the files generated in last example. In order to charge results of more than one layer, is needed to charge
 	the .obj with the name of the last layer that you wants to analyze (For example: if you have block1_conv1.obj, block2_conv1.obj,
-	and block3_conv2.obj, and you wants to analyze block1_conv1, block2_conv1 layers you need to set file_name=block2_conv1.obj)
+	block3_conv2.obj and vgg16.obj, and you wants to analyze block1_conv1, block2_conv1 layers you need to set file_name=block2_conv1.obj,
+	or file_name=vgg16.obj (vgg16.obj==block2_conv1.obj (in this case)) if you want to charge all layer results)
+
 	"""
-	nefesiModel = NetworkData.load_from_disk(file_name="../Data/block1_conv1.obj", model_file="../Data/VGG16.h5")
+	nefesiModel = NetworkData.load_from_disk(file_name="../Data/vgg16.obj", model_file="../Data/VGG16.h5")
 	return nefesiModel
 
 """
@@ -104,7 +184,7 @@ def example4FullFillNefesiInstance():
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
 	nefesiModel.layers_data = "block(1)_conv1"#|3|5
-	print("Layers "+str(nefesiModel.getLayerNamesToAnalyze())+" selected to analyze\n"
+	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
 

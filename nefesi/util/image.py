@@ -40,16 +40,24 @@ class ImageDataset(object):
         :param image_names: List of strings, name of the images.
         :param prep_function: Boolean.
 
-        :return: List of Numpy arrays.
+        :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
         """
-        images = []
-        for n in image_names:
-            i = self._load_image(n)
-            i = image.img_to_array(i)
-            images.append(i)
+        #Have the first to generalize channel shapes (in order to don't need to recode if new color_modes will be accepted)
+        img = self._load_image(image_names[0])
+        img = image.img_to_array(img)
+        #Gets the output shape in order to assing a shape to images matrix
+        outputShape = [len(image_names)]
+        outputShape.extend(list(img.shape))
+        #Declare the numpy where all images will be saved
+        images = np.ndarray(shape=tuple(outputShape),dtype=img.dtype)
+        images[0] = img #assign de first
+        for i in range(1,len(image_names)):
+            img = self._load_image(image_names[i])
+            images[i] = image.img_to_array(img)
 
         if self.preprocessing_function is not None and prep_function is True:
-            images = self.preprocessing_function(np.asarray(images))
+            images = self.preprocessing_function(images) #np.asarray(images)) #Now are array right since the beginning
+                                                            #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
         return images
 
     def get_patch(self, img_name, crop_pos):
@@ -87,9 +95,9 @@ class ImageDataset(object):
 
 
 def rgb2opp(img):
-    """Converts an image from RGB space to OPP (Opponent color space).
+    """Converts an image or imageSet from RGB space to OPP (Opponent color space).
 
-    :param img: Numpy array of shape (height, width, channels).
+    :param img: Numpy array of shape ([numOfImages], height, width, channels).
         RGB image with values between [0, 255].
 
     :return: Numpy array, same shape as the input.
@@ -97,17 +105,27 @@ def rgb2opp(img):
     :raise:
         ValueError: If invalid `img` is passed.
     """
-    if img.shape[2] != 3:
+    if img.shape[-1] != 3:
         raise ValueError("Unsupported image shape: {}.", img.shape)
 
-    opp = np.zeros(shape=img.shape)
+    opp = np.zeros(shape=img.shape, dtype=np.float)
     x = img / 255.
-    R = x[:, :, 0]
-    G = x[:, :, 1]
-    B = x[:, :, 2]
-    opp[:, :, 0] = (R + G + B - 1.5) / 1.5
-    opp[:, :, 1] = (R - G)
-    opp[:, :, 2] = (R + G - 2 * B) / 2
+    if len(img.shape) == 3:
+        R = x[:, :, 0]
+        G = x[:, :, 1]
+        B = x[:, :, 2]
+        opp[:, :, 0] = (R + G + B - 1.5) / 1.5
+        opp[:, :, 1] = (R - G)
+        opp[:, :, 2] = (R + G - 2 * B) / 2
+    elif len(img.shape) == 4:
+        R = x[:, :, :, 0]
+        G = x[:, :, :, 1]
+        B = x[:, :, :, 2]
+        opp[:, :, :, 0] = (R + G + B - 1.5) / 1.5
+        opp[:, :, :, 1] = (R - G)
+        opp[:, :, :, 2] = (R + G - 2 * B) / 2
+    else:
+        raise ValueError("Unsupported image object shape: {}. Only 3 or 4 dimensions images accepted", img.shape)
     return opp
 
 
@@ -133,6 +151,7 @@ def image2max_gray(img):
 
 
 def crop_image(img, crop_x, crop_y):
+
     y, x, _ = img.shape
     start_x = x // 2 - (crop_x // 2)
     start_y = y // 2 - (crop_y // 2)
@@ -147,10 +166,11 @@ def rotate_images(images, degrees, pos, layer_data):
     :param pos: List of receptive fields locations on `images`.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
 
-    :return: List of numpy arrays, same as the input `images` but rotated.
+    :return: Numpy array that contains the images rotated (1+N dimension where N is the dimension of an image).
+    Same as the input `images` but rotated.
     """
-    images_rotated = []
-    for i in xrange(len(images)):
+    images_rotated = np.ndarray(shape=images.shape, dtype=images.dtype)
+    for i in range(len(images)):
         init_image = np.copy(images[i])
         x, y = pos[i]
 
@@ -168,7 +188,7 @@ def rotate_images(images, degrees, pos, layer_data):
             padding_h += 1
         new_shape = np.zeros((w + padding_w, h + padding_h, d),
                              dtype=receptive_field.dtype)
-        for dim in xrange(d):
+        for dim in range(d):
             new_shape[:, :, dim] = np.pad(receptive_field[:, :, dim],
                                           ((padding_w / 2, padding_w / 2),
                                            (padding_h / 2, padding_h / 2)),
@@ -180,7 +200,7 @@ def rotate_images(images, degrees, pos, layer_data):
         img = crop_image(img, h, w)
         init_image[row_ini:row_fin, col_ini:col_fin] = img
 
-        images_rotated.append(init_image)
+        images_rotated[i] = init_image
     return images_rotated
 
 
@@ -192,11 +212,12 @@ def rotate_images_axis(images, rot_axis, layer_data, pos):
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
     :param pos: List of receptive fields locations on `images`.
 
-    :return: List of numpy arrays, same as the input `images` but flipped.
+    :return: 1+N-Dimensional numpy array where N is the dimension of the input images (axis 0 refers to an image (image_i
+     will be img[i]), same as the input `images` but flipped.
     """
-    rot_images = []
+    rot_images = np.ndarray(shape=images.shape,dtype=images.dtype)
 
-    for i in xrange(len(images)):
+    for i in range(len(images)):
         init_image = np.copy(images[i])
         x, y = pos[i]
         # get the receptive field from the image
@@ -213,7 +234,7 @@ def rotate_images_axis(images, rot_axis, layer_data, pos):
 
         # build back the origin image with receptive field flipped
         init_image[row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
-        rot_images.append(init_image)
+        rot_images[i] = init_image
     return rot_images
 
 

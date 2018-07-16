@@ -69,20 +69,27 @@ class LayerData(object):
             ValueError: If `index_name` is not one of theses: "color",
             "orientation", "symmetry", "class" or "population code".
         """
-        sel_idx = np.zeros(len(self.neurons_data),dtype=np.float)
         if index_name == 'color':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
         elif index_name == 'orientation':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
-                sel_idx[i] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
+                sel_idx[i,:] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
         elif index_name == 'symmetry':
+            #array of size (len(self.neurons_data) x 5), 5 is the size of [0 deg., 45 deg., 90 deg., 135 deg., mean]
+            sel_idx = np.zeros((len(self.neurons_data), 5), dtype=np.float)
             for i in range(len(self.neurons_data)):
-                sel_idx[i] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
+                sel_idx[i,:4] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
+            #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency
+            sel_idx[:,4] = np.mean(sel_idx[:,0:4],axis=1)
         elif index_name == 'class':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
         elif index_name == 'population code':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
         else:
@@ -112,9 +119,9 @@ class LayerData(object):
             else:
                 size_new_sim = len(neurons_idx)
                 new_sim = np.zeros((size_new_sim, size_new_sim))
-                for i in xrange(size_new_sim):
+                for i in range(size_new_sim):
                     idx1 = neurons_idx[i]
-                    for j in xrange(size_new_sim):
+                    for j in range(size_new_sim):
                         new_sim[i, j] = self.similarity_index[idx1, neurons_idx[j]]
                 return new_sim
         else:

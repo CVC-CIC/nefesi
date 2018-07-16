@@ -24,7 +24,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
         images = dataset.load_images(image_names, prep_function=False)
         idx_neuron = layer_data.neurons_data.index(neuron_data)
 
-        images_gray = []
+        images_gray = np.ndarray(shape=images.shape, dtype=images.dtype)
         for i in range(len(images)):
             # get the receptive field from the origin image.
             x, y = locations[i]
@@ -36,16 +36,16 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
             im_opp = rgb2opp(img_crop)
             im_gray = image2max_gray(im_opp)
             init_image[row_ini:row_fin, col_ini:col_fin] = im_gray
-            images_gray.append(init_image)
+            images_gray[i] = init_image
 
         # once the images have been converted to grayscale,
         # apply the preprocessing function, if exist.
         if dataset.preprocessing_function != None:
-            images_gray = dataset.preprocessing_function(np.asarray(images_gray))
+            images_gray = dataset.preprocessing_function(images_gray)#np.asarray(images_gray))
         new_activations = read_activations.get_activation_from_pos(images_gray, model,
                                                                    layer_data.layer_id,
                                                                    idx_neuron, locations)
         norm_gray_activations = new_activations / max_rgb_activation
-        return 1 - (sum(norm_gray_activations) / sum(norm_activations))
+        return 1 - (np.sum(norm_gray_activations) / np.sum(norm_activations))
     else:
         return 0.0
