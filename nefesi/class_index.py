@@ -1,5 +1,8 @@
 from operator import itemgetter
+import numpy as np
 
+ORIGINAL_LABEL = 0
+HUMAN_LABEL = 1
 
 def get_class_selectivity_idx(neuron_data, labels, threshold):
     """Returns the class selectivity index value.
@@ -26,8 +29,14 @@ def get_class_selectivity_idx(neuron_data, labels, threshold):
                 break
 
         m = len(freq_avoid_th)
+<<<<<<< HEAD
+        c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1.))
+        #For the most freqüent class freq_avoid_th[0] the: label ([1]) and his selectivity index rounded to two decimals
+        return freq_avoid_th[0][1], round(c_select_idx, 2)
+=======
         c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1))
         return (freq_avoid_th[0][1], round(c_select_idx, 2))
+>>>>>>> f0a5e39deb734c076e24850696ed21609c371657
 
 
 def relative_freq_class(neuron_data, labels):
@@ -44,29 +53,36 @@ def relative_freq_class(neuron_data, labels):
         - The normalized relative frequency.
     """
     activations = neuron_data.activations
-    images = neuron_data.images_id
+    image_names = neuron_data.images_id
     norm_act = neuron_data.norm_activations
 
     rel_freq = []
     if activations[0] != 0.0:
+<<<<<<< HEAD
+        for key, value in labels.items():
+            appearances_count = 0
+            norm_activation_sum = 0
+            for c in range(len(image_names)):
+=======
         for k, v in labels.items():
             i = 0
             a = 0
             for c in range(len(images)):
+>>>>>>> f0a5e39deb734c076e24850696ed21609c371657
                 # counts the number of times that a class appears
                 # among the TOP scoring images in a neuron.
                 # Also keeps a sum of normalized activations of that image
                 # that belongs to a class.
-                if k in images[c]:
-                    i += 1
-                    a += norm_act[c]
-            if i != 0:
-                rel_freq.append([k, v, i, a])
+                if key in image_names[c]:
+                    appearances_count += 1
+                    norm_activation_sum += norm_act[c]
+            if appearances_count != 0:
+                rel_freq.append([key, value, appearances_count, norm_activation_sum])
 
         # normalize the sum of the activations with the sum of
         # the whole normalized activations in this neuron.
         for rel in rel_freq:
-            rel[3] = rel[3] / sum(norm_act)
+            rel[3] = rel[3] / np.sum(norm_act)
 
         # sorts the list by their relative frequencies.
         rel_freq = sorted(rel_freq, key=itemgetter(3), reverse=True)
