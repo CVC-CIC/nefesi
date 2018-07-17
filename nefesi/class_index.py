@@ -1,9 +1,6 @@
 from operator import itemgetter
 import numpy as np
 
-ORIGINAL_LABEL = 0
-HUMAN_LABEL = 1
-
 def get_class_selectivity_idx(neuron_data, labels, threshold):
     """Returns the class selectivity index value.
 
@@ -29,14 +26,9 @@ def get_class_selectivity_idx(neuron_data, labels, threshold):
                 break
 
         m = len(freq_avoid_th)
-<<<<<<< HEAD
-        c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1.))
-        #For the most freqüent class freq_avoid_th[0] the: label ([1]) and his selectivity index rounded to two decimals
-        return freq_avoid_th[0][1], round(c_select_idx, 2)
-=======
         c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1))
+        # For the most freqüent class freq_avoid_th[0] the: label ([1]) and his selectivity index rounded to two decimals
         return (freq_avoid_th[0][1], round(c_select_idx, 2))
->>>>>>> f0a5e39deb734c076e24850696ed21609c371657
 
 
 def relative_freq_class(neuron_data, labels):
@@ -58,17 +50,10 @@ def relative_freq_class(neuron_data, labels):
 
     rel_freq = []
     if activations[0] != 0.0:
-<<<<<<< HEAD
         for key, value in labels.items():
             appearances_count = 0
             norm_activation_sum = 0
             for c in range(len(image_names)):
-=======
-        for k, v in labels.items():
-            i = 0
-            a = 0
-            for c in range(len(images)):
->>>>>>> f0a5e39deb734c076e24850696ed21609c371657
                 # counts the number of times that a class appears
                 # among the TOP scoring images in a neuron.
                 # Also keeps a sum of normalized activations of that image
