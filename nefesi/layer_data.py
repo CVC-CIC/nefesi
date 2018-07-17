@@ -71,7 +71,7 @@ class LayerData(object):
         """
         if index_name in ['color','orientation','symmetry','population code']:
             sel_idx = np.zeros(len(self.neurons_data),dtype=np.float)
-        else: #'class'
+        else: #'class' 
             sel_idx = np.empty(len(self.neurons_data), dtype=object)
 
         for i in range(len(self.neurons_data)):
