@@ -69,24 +69,24 @@ class LayerData(object):
             ValueError: If `index_name` is not one of theses: "color",
             "orientation", "symmetry", "class" or "population code".
         """
-        sel_idx = np.zeros(len(self.neurons_data),dtype=np.float)
-        if index_name == 'color':
-            for i in range(len(self.neurons_data)):
+        if index_name in ['color','orientation','symmetry','population code']:
+            sel_idx = np.zeros(len(self.neurons_data),dtype=np.float)
+        else: #'class'
+            sel_idx = np.empty(len(self.neurons_data), dtype=object)
+
+        for i in range(len(self.neurons_data)):
+            if index_name == 'color':
                 sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
-        elif index_name == 'orientation':
-            for i in range(len(self.neurons_data)):
+            elif index_name == 'orientation':
                 sel_idx[i] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
-        elif index_name == 'symmetry':
-            for i in range(len(self.neurons_data)):
+            elif index_name == 'symmetry':
                 sel_idx[i] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
-        elif index_name == 'class':
-            for i in range(len(self.neurons_data)):
+            elif index_name == 'class':
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
-        elif index_name == 'population code':
-            for i in range(len(self.neurons_data)):
+            elif index_name == 'population code':
                 sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
-        else:
-            raise ValueError("The `index_name` argument should be one "
+            else:
+                raise ValueError("The `index_name` argument should be one "
                              "of theses: color, orientation, symmetry, "
                              "class or population code.")
         return sel_idx

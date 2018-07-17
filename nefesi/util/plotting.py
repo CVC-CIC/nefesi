@@ -22,7 +22,7 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
     """
     cmap = plt.cm.get_cmap(color_map)
     colors = []
-    for i in xrange(bins):
+    for i in range(bins):
         colors.append(cmap(1.*i/bins))
 
     for k, v in selectivity_idx.items():
@@ -34,7 +34,7 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
                 n_idx = len(l[0])
                 l = [idx[n_idx - 1] for idx in l]
 
-            for i in xrange(len(l)):
+            for i in range(len(l)):
                 if l[i] > 1.0:
                     l[i] = 1.0
                 if l[i] < 0.0:
@@ -45,24 +45,24 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
-            for i in xrange(len(counts)):
+            for i in range(len(counts)):
                 prc[i] = float(counts[i])/num_f*100.
             y_offset = 0
 
             bars = []
-            for i in xrange(len(prc)):
+            for i in range(len(prc)):
                 p = plt.bar(pos, prc[i], bottom=y_offset, width=0.35, color=colors[i])
                 bars.append(p)
                 y_offset = y_offset+prc[i]
             pos += 1
 
         xticks = []
-        for i in xrange(N):
+        for i in range(N):
             xticks.append('Layer ' + str(i + 1))
         plt.xticks(np.arange(N), xticks)
         plt.yticks(np.arange(0, 101, 10))
 
-        labels = [str(bins[i]) + ':' + str(bins[i+1]) for i in xrange(len(prc))]
+        labels = [str(bins[i]) + ':' + str(bins[i+1]) for i in range(len(prc))]
 
         plt.ylabel('% of Neurons')
         plt.title(k + ' selectivity')
@@ -87,7 +87,7 @@ def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
     bins = 4
     cmap = plt.cm.get_cmap(color_map)
     colors = []
-    for i in xrange(bins):
+    for i in range(bins):
         colors.append(cmap(1. * i / bins))
 
     for k, v in selectivity_idx.items():
@@ -105,19 +105,19 @@ def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
             num_f = sum(counts)
             prc = np.zeros(len(counts))
 
-            for i in xrange(len(counts)):
+            for i in range(len(counts)):
                 prc[i] = float(counts[i]) / num_f * 100.
             y_offset = 0
 
             bars = []
-            for i in xrange(len(prc)):
+            for i in range(len(prc)):
                 p = plt.bar(pos, prc[i], bottom=y_offset, width=0.35, color=colors[i])
                 bars.append(p)
                 y_offset = y_offset + prc[i]
             pos += 1
 
         xticks = []
-        for i in xrange(N):
+        for i in range(N):
             xticks.append('Layer ' + str(i + 1))
         plt.xticks(np.arange(N), xticks)
         plt.yticks(np.arange(0, 101, 10))
@@ -271,7 +271,7 @@ def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     plt.imshow(img)
     plt.axis('off')
 
-    for n in xrange(n_images):
+    for n in range(n_images):
         img = nf[n]
         c = np.ceil(n_images/float(rows))
         a = fig.add_subplot(rows+1, c, n + c + 1)
@@ -320,7 +320,7 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
     plt.imshow(img, cmap=color_map)
     plt.axis('off')
 
-    for i in xrange(len(activations)-1, -1, -1):
+    for i in range(len(activations)-1, -1, -1):
         ri, rf, ci, cf = locations[i]
         print(locations[i])
         if rf < h:
@@ -343,7 +343,7 @@ def plot_decomposition(activations, neurons, locations, img, plot_nf_list=False)
             color_map = 'gray'
 
         num_images = len(nf)
-        for i in xrange(num_images):
+        for i in range(num_images):
             fig.add_subplot(rows, num_images, i + num_images + 1)
             plt.imshow(nf[i], cmap=color_map)
             plt.axis('off')
@@ -423,7 +423,7 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
               target_neuron.neuron_feature, zoom=zoom, ax=ax)
     ax.plot(fig_center[0], fig_center[1])
 
-    for i in xrange(3):
+    for i in range(3):
         neuron_data, _ = layer_data.similar_neurons(
             target_neuron_idx, inf_thr=bins[-(i+2)], sup_thr=bins[-(i+1)])
 
@@ -432,7 +432,7 @@ def plot_similarity_circle(layer_data, target_neuron, bins=None):
 
         radius = r[i]
         circle = plt.Circle(fig_center, radius, fill=False)
-        degrees = [j*(360/num_neurons) for j in xrange(num_neurons)]
+        degrees = [j*(360/num_neurons) for j in range(num_neurons)]
         ax.add_artist(circle)
 
         x1 = fig_center[0]

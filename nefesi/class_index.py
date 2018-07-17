@@ -27,7 +27,7 @@ def get_class_selectivity_idx(neuron_data, labels, threshold):
 
         m = len(freq_avoid_th)
         c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1))
-        return freq_avoid_th[0][1], round(c_select_idx, 2)
+        return (freq_avoid_th[0][1], round(c_select_idx, 2))
 
 
 def relative_freq_class(neuron_data, labels):
@@ -52,7 +52,7 @@ def relative_freq_class(neuron_data, labels):
         for k, v in labels.items():
             i = 0
             a = 0
-            for c in xrange(len(images)):
+            for c in range(len(images)):
                 # counts the number of times that a class appears
                 # among the TOP scoring images in a neuron.
                 # Also keeps a sum of normalized activations of that image
