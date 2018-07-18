@@ -69,6 +69,7 @@ class LayerData(object):
             ValueError: If `index_name` is not one of theses: "color",
             "orientation", "symmetry", "class" or "population code".
         """
+
         if index_name == 'color':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
