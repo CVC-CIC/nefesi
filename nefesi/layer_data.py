@@ -86,7 +86,8 @@ class LayerData(object):
             #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency
             sel_idx[:,4] = np.mean(sel_idx[:,0:4],axis=1)
         elif index_name == 'class':
-            sel_idx = np.zeros(len(self.neurons_data), dtype=object)
+            #array that contains in each a tuple (HumanReadableLabelName(max 75 characters str), selectivityIndex)
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label_name','U75'), ('index_value',np.float)]))
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
         elif index_name == 'population code':

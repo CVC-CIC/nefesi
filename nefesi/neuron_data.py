@@ -228,9 +228,9 @@ class NeuronData(object):
         if class_idx is not None:
             return class_idx
 
-        if labels is None or type(labels) is not dict:
-            raise TypeError("The `labels` argument should be "
-                            "a dictionary")
+        #Labels always must to be a dictionary
+        if type(labels) is not dict:
+            raise TypeError("The 'labels' argument should be a dictionary")
 
         class_idx = get_class_selectivity_idx(self, labels, threshold)
         self.selectivity_idx['class'] = class_idx

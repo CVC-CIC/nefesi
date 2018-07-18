@@ -33,12 +33,35 @@ def example7AnalyzingResults():
 	 "symmetry", "class" or "population code". Let's to see it in a example
 	"""
 	nefesiModel = example6LoadingResults()
-	#start = time.time()
+	start = time.time()
 	#colorSelectivity(nefesiModel)
-	symmetrySelectivity(nefesiModel)
-	#end = time.time()
-	#print("TIME ELAPSED: ")
-	#print(end - start)
+	#symmetrySelectivity(nefesiModel)
+	classSelectivity(nefesiModel)
+	end = time.time()
+	print("TIME ELAPSED: ")
+	print(end - start)
+
+def classSelectivity(nefesiModel):
+	"""
+		Class  selectivity is an index that specifies what classt the neuron is more selective. In order to evaluate it,
+		 this neuron takes his N-Top images (the N images that more activation produced to it) and evaluate what is the
+		 classe that more accumulated activation produces. This index will be in range [0.0,1.0] and an 1.0 idx will indicate
+		 that all the images that produces an activation in this neuron are of the specified class. The return of class
+		selectivity index will be a tuple for each neuron that contains: (humanLabelNameOfClass(String),
+		SelectivityIndexForThisClass(float)). This index only take a seconds to calculate.
+	"""
+	#Let's to evaluate all layers charged
+	layersToEvaluate = 'block(1|3)_conv1'
+	"""
+	This selectivity index accepts a dictionary, that translate from real label names (often not human readable as n03794056)
+	to another label names (that can be human readable as 'mousetrap'). This dictionary can be specified as a none if this
+	parameter (labels) is not specified, real label names will be used
+	"""
+	#Charge a pyhton dict that translate from imageNet labels (like n03794056) to human readable labels (like 'mousetrap')
+	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
+	print("Let's Evaluate the symmetry selectivity index of all layers (This operation will take seconds)")
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels=labelsDict)
+	print(selIdx)
 
 """
 Looks each neuron symmetry selectivity on the network
