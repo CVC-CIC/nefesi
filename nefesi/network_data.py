@@ -259,10 +259,7 @@ class NetworkData(object):
         if type(sel_index) is not list:
             sel_index = [sel_index]
         if type(layer_name) is not list:
-            # Compile the Regular expresion
-            regEx = re.compile(layer_name)
-            # Select the layerNames that satisfies RegEx
-            layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
+           layer_name = self.get_layers_analyzed_that_match_regEx(layer_name)
 
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
@@ -599,3 +596,8 @@ class NetworkData(object):
         print([layer.name for layer in self.model.layers])
     def get_layer_names_to_analyze(self):
         return [layer.layer_id for layer in self._layers_data]
+    def get_layers_analyzed_that_match_regEx(self, regEx):
+        # Compile the Regular expresion
+        regEx = re.compile(regEx)
+        # Select the layerNames that satisfies RegEx
+        return list(filter(regEx.match, [layer for layer in self.get_layers_name()]))

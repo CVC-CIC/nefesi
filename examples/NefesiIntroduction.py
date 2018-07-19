@@ -61,7 +61,30 @@ def classSelectivity(nefesiModel):
 	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
 	print("Let's Evaluate the symmetry selectivity index of all layers (This operation will take seconds)")
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels=labelsDict)
-	print(selIdx)
+	"""
+	The selIdx that is returned for index 'class' has a little different property. It's an heterogeneus array, that contains
+	a for each position a tuple ('label','value'). Cause his content is a tuple you can access in the next forms:
+	selIdx = {'class': [list of tuples for layer 1] --> ('goldfish',0.25)
+													--> ('mousetrap',0.41)
+													--> ('goldfish', 0.009)
+					   [list of tuples for layer 2] --> ('chair',0.72)
+													--> ('cherry',0.08)
+													--> ('goldfish', 0.95)
+	print(selIdx['class'][0][1]) ----> ('mousetrap',0.41)
+	print(selIdx['class'][0][1][1]) ----> 0.41
+	print(selIdx['class'][0]['label']) ----> ['goldfish','mousetrap','goldfish]
+	print(selIdx['class'][0]['value']) ----> [0.25,0.41,0.009]
+
+	NOTE: 'label', and 'value' are the important names to remember. (Working like pandas)
+	"""
+	print("This selectivity index contains an structured tuples ('label','value') you can acces to all only labels or all"
+		  "only value attributes. Keys: "+str(selIdx['class'][0].dtype.names))
+
+	for layer_idx, layer_name in enumerate(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)):
+		print("---------------- LAYER "+layer_name.upper()+" ----------------\n"
+			  "Class with higher selectivity index and his index: "+
+			  str(selIdx['class'][layer_idx][np.argmax(selIdx['class'][layer_idx]['value'])])+
+			  "\n Mean idx of class selecitivity: "+ str(np.mean(selIdx['class'][layer_idx]['value'])))
 
 """
 Looks each neuron symmetry selectivity on the network

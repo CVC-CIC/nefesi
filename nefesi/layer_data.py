@@ -5,6 +5,7 @@ from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_image_receptive_field
 from .similarity_index import get_similarity_index
 
+ALL_INDEX_NAMES = ['color', 'orientation', 'symmetry', 'class', 'population code']
 
 class LayerData(object):
     """This class contains all the information related with the
@@ -70,34 +71,33 @@ class LayerData(object):
             "orientation", "symmetry", "class" or "population code".
         """
 
-        if index_name == 'color':
+        if index_name.lower() == 'color':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
-        elif index_name == 'orientation':
+        elif index_name.lower() == 'orientation':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i,:] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
-        elif index_name == 'symmetry':
+        elif index_name.lower() == 'symmetry':
             #array of size (len(self.neurons_data) x 5), 5 is the size of [0 deg., 45 deg., 90 deg., 135 deg., mean]
             sel_idx = np.zeros((len(self.neurons_data), 5), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i,:4] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
             #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency
             sel_idx[:,4] = np.mean(sel_idx[:,0:4],axis=1)
-        elif index_name == 'class':
-            #array that contains in each a tuple (HumanReadableLabelName(max 75 characters str), selectivityIndex)
-            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label_name','U75'), ('index_value',np.float)]))
+        elif index_name.lower() == 'class':
+            #array that contains in each a tuple (HumanReadableLabelName(max 64 characters str), selectivityIndex)
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
-        elif index_name == 'population code':
+        elif index_name.lower() == 'population code':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
         else:
-            raise ValueError("The `index_name` argument should be one "
-                             "of theses: color, orientation, symmetry, "
-                             "class or population code.")
+            raise ValueError("The 'index_name' argument should be one "
+                             "of theses: "+str(ALL_INDEX_NAMES))
         return sel_idx
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
