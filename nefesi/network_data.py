@@ -229,6 +229,16 @@ class NetworkData(object):
         names = [l.layer_id for l in self.layers_data]
         return names
 
+    def remove_selectivity_idx(self, idx):
+        """Removes de idx selectivity index from the neurons of the layers of the network.
+
+        :param idx: The selectivity index.
+
+        :return: none.
+        """
+        for l in self.layers_data:
+            l.remove_selectivity_idx(idx)
+
     def get_selectivity_idx(self, sel_index, layer_name,
                             labels=None, thr_class_idx=1.,
                             thr_pc=0.1):
