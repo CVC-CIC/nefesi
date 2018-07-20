@@ -51,7 +51,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='i
             norm_gray_activations = new_activations / max_rgb_activation
             return 1 - (np.sum(norm_gray_activations) / np.sum(norm_activations))
         else:
-            norm_gray_activations = np.minimum(1,new_activations / max_rgb_activation)
-            return np.mean(np.maximum(0, 1 - norm_gray_activations/norm_activations))
+            gray_activations = np.minimum(1, new_activations / activations)
+            return np.mean( 1 -  np.maximum(0, norm_gray_activations/norm_activations))
     else:
         return 0.0
