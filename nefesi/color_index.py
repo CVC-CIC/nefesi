@@ -4,13 +4,14 @@ from nefesi import read_activations
 from nefesi.util.image import rgb2opp, image2max_gray
 
 
-def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
+def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='ive'):
     """Returns the color selectivity index for a neuron (`neuron_data`).
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param model: The `keras.models.Model` instance.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
     :param dataset: The `nefesi.util.image.ImageDataset` instance.
+    :param type: How to calculate color index: Ivet thesis style or contolling idex between [0,1]
 
     :return: Float, the color selectivity index value.
     """
@@ -45,7 +46,12 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
         new_activations = read_activations.get_activation_from_pos(images_gray, model,
                                                                    layer_data.layer_id,
                                                                    idx_neuron, locations)
-        norm_gray_activations = new_activations / max_rgb_activation
-        return 1 - (np.sum(norm_gray_activations) / np.sum(norm_activations))
+
+        if type=='ivet':
+            norm_gray_activations = new_activations / max_rgb_activation
+            return 1 - (np.sum(norm_gray_activations) / np.sum(norm_activations))
+        else:
+            norm_gray_activations = np.minimum(1,new_activations / max_rgb_activation)
+            return np.mean(np.maximum(0, 1 - norm_gray_activations/norm_activations))
     else:
         return 0.0

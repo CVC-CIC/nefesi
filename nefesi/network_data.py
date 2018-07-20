@@ -379,7 +379,7 @@ class NetworkData(object):
                             res_idx2 = index_values2
 
                     selective_neurons[l.layer_id] = []
-                    neurons = l.filters
+                    neurons = l.neurons_data
                     for i in range(len(neurons)):
                         if inf_thr <= res_idx1[i] <= sup_thr:
                             if res_idx2 is not None:
