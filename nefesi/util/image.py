@@ -169,6 +169,8 @@ def rotate_images(images, degrees, pos, layer_data):
     :return: Numpy array that contains the images rotated (1+N dimension where N is the dimension of an image).
     Same as the input `images` but rotated.
     """
+    if degrees%360 == 0:
+        return images
     images_rotated = np.ndarray(shape=images.shape, dtype=images.dtype)
     for i in range(len(images)):
         init_image = np.copy(images[i])
@@ -186,12 +188,11 @@ def rotate_images(images, degrees, pos, layer_data):
             padding_w += 1
         if padding_h % 2 != 0:
             padding_h += 1
-        new_shape = np.zeros((w + padding_w, h + padding_h, d),
-                             dtype=receptive_field.dtype)
-        for dim in range(d):
-            new_shape[:, :, dim] = np.pad(receptive_field[:, :, dim],
-                                          ((padding_w / 2, padding_w / 2),
-                                           (padding_h / 2, padding_h / 2)),
+
+        new_shape = np.pad(receptive_field,
+                                          ((padding_w // 2, padding_w // 2),
+                                           (padding_h // 2, padding_h // 2),
+                                           (0,0)),
                                           mode='edge')
 
         # apply the rotation function

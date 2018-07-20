@@ -15,7 +15,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
     :return: Float, the color selectivity index value.
     """
     activations = neuron_data.activations
-    norm_activations = neuron_data.norm_activations
+    norm_activations_sum = np.sum(neuron_data.norm_activations)
     image_names = neuron_data.images_id
     locations = neuron_data.xy_locations
     max_rgb_activation = activations[0]
@@ -45,7 +45,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset):
         new_activations = read_activations.get_activation_from_pos(images_gray, model,
                                                                    layer_data.layer_id,
                                                                    idx_neuron, locations)
-        norm_gray_activations = new_activations / max_rgb_activation
-        return 1 - (np.sum(norm_gray_activations) / np.sum(norm_activations))
+        norm_gray_activations = np.sum(new_activations) / max_rgb_activation
+        return 1 - (norm_gray_activations / norm_activations_sum)
     else:
         return 0.0

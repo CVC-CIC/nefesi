@@ -18,7 +18,7 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
     symm_axes = [0, 45, 90, 135]
     results = np.zeros(len(symm_axes),dtype=np.float)
     activations = neuron_data.activations
-    norm_activations = neuron_data.norm_activations
+    norm_activations_sum = np.sum(neuron_data.norm_activations)
     image_names = neuron_data.images_id
     locations = neuron_data.xy_locations
 
@@ -34,7 +34,7 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
                                                                        layer_data.layer_id,
                                                                        idx_neuron, locations)
             # normalize activations.
-            norm_rot_act = rot_activations / max_act
-            partial_symmetry = sum(norm_rot_act) / sum(norm_activations)
-            results[i] = partial_symmetry
+            norm_rot_act_sum = np.sum(rot_activations) / max_act
+            symmetry_idx = norm_rot_act_sum / norm_activations_sum
+            results[i] = symmetry_idx
     return results

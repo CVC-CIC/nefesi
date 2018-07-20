@@ -36,10 +36,17 @@ def example7AnalyzingResults():
 	start = time.time()
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
-	classSelectivity(nefesiModel)
+	#classSelectivity(nefesiModel)
+	orientationSelectivity(nefesiModel)
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
+
+
+def orientationSelectivity(nefesiModel):
+	layersToEvaluate = 'block1_conv1'
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="orientation", layer_name=layersToEvaluate, degrees_orientation_idx=180)
+	print(selIdx)
 
 def classSelectivity(nefesiModel):
 	"""
@@ -59,8 +66,9 @@ def classSelectivity(nefesiModel):
 	"""
 	#Charge a pyhton dict that translate from imageNet labels (like n03794056) to human readable labels (like 'mousetrap')
 	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
-	print("Let's Evaluate the symmetry selectivity index of all layers (This operation will take seconds)")
-	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels=labelsDict)
+	print("Let's Evaluate the class selectivity index of layers:"+
+		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)) +" (This operation will take seconds)")
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels_class_idx=labelsDict)
 	"""
 	The selIdx that is returned for index 'class' has a little different property. It's an heterogeneus array, that contains
 	a for each position a tuple ('label','value'). Cause his content is a tuple you can access in the next forms:

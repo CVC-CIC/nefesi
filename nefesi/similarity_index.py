@@ -1,4 +1,4 @@
-import nefesi.read_activations
+from nefesi import read_activations
 
 
 def get_similarity_index(neuron_a, neuron_b, idx_a, model, layer_name, dataset):

@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import permutations
-
+import math
 from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_image_receptive_field
 from .similarity_index import get_similarity_index
@@ -49,13 +49,14 @@ class LayerData(object):
     def build_neuron_feature(self, network_data):
         compute_nf(network_data, self, self.neurons_data)
 
-    def selectivity_idx(self, model, index_name, dataset,
+    def selectivity_idx(self, model, index_name, dataset,degrees_orientation_idx = 15,
                         labels=None, thr_class_idx=1., thr_pc=0.1):
         """Returns the selectivity index value for the index in `index_name`.
 
         :param model: The `keras.models.Model` instance.
         :param index_name: String, name of the index.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param degrees_orientation_idx: degrees to each rotation step on orientation index
         :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
             code index.
@@ -76,16 +77,19 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
         elif index_name.lower() == 'orientation':
-            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
+            #Size is (number of neurons, number of rotations with not 0 + mean)
+            sel_idx = np.zeros((len(self.neurons_data), int(math.ceil(360/degrees_orientation_idx))), dtype=np.float)
             for i in range(len(self.neurons_data)):
-                sel_idx[i,:] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
+                sel_idx[i,:-1] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset,
+                                                                        degrees_to_rotate=degrees_orientation_idx)
+            sel_idx[:, -1] = np.mean(sel_idx[:,0:-1],axis=1)
         elif index_name.lower() == 'symmetry':
             #array of size (len(self.neurons_data) x 5), 5 is the size of [0 deg., 45 deg., 90 deg., 135 deg., mean]
             sel_idx = np.zeros((len(self.neurons_data), 5), dtype=np.float)
             for i in range(len(self.neurons_data)):
-                sel_idx[i,:4] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
+                sel_idx[i,:-1] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
             #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency
-            sel_idx[:,4] = np.mean(sel_idx[:,0:4],axis=1)
+            sel_idx[:,-1] = np.mean(sel_idx[:,0:-1],axis=1)
         elif index_name.lower() == 'class':
             #array that contains in each a tuple (HumanReadableLabelName(max 64 characters str), selectivityIndex)
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))

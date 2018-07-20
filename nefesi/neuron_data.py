@@ -177,12 +177,13 @@ class NeuronData(object):
         self.selectivity_idx['color'] = color_idx
         return color_idx
 
-    def orientation_selectivity_idx(self, model, layer_data, dataset):
+    def orientation_selectivity_idx(self, model, layer_data, dataset, degrees_to_rotate = 15):
         """Returns the orientation selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param degrees_to_rotate: degrees of each rotation step
 
         :return: List of floats, values of orientation selectivity index.
         """
@@ -191,7 +192,7 @@ class NeuronData(object):
             return orientation_idx
 
         orientation_idx = get_orientation_index(self, model,
-                                                layer_data, dataset)
+                                                layer_data, dataset,degrees_to_rotate = degrees_to_rotate)
         self.selectivity_idx['orientation'] = orientation_idx
         return orientation_idx
 
