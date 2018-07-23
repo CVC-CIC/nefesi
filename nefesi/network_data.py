@@ -229,8 +229,18 @@ class NetworkData(object):
         names = [l.layer_id for l in self.layers_data]
         return names
 
-    def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = 15,
-                            labels_class_idx=None, thr_class_idx=1.,
+    def remove_selectivity_idx(self, idx):
+        """Removes de idx selectivity index from the neurons of the layers of the network.
+
+        :param idx: The selectivity index.
+
+        :return: none.
+        """
+        for l in self.layers_data:
+            l.remove_selectivity_idx(idx)
+
+    def get_selectivity_idx(self, sel_index, layer_name,
+                            labels=None, thr_class_idx=1.,
                             thr_pc=0.1):
         """Returns the selectivity indexes in `sel_index` for each layer
         in `layer_name`.
@@ -238,7 +248,7 @@ class NetworkData(object):
         :param sel_index: List of strings or string, name of the selectivity indexes.
             Values: "color", "orientation", "symmetry", "class" or "population code".
         :param layer_name: List of strings, string or Regular Expression, name of the layers.
-        :param labels_class_idx: Dictionary, key: name class, value: label.
+        :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
             code index.
         :param thr_class_idx: Float between 0.0 and 1.0, threshold applied in
@@ -259,7 +269,10 @@ class NetworkData(object):
         if type(sel_index) is not list:
             sel_index = [sel_index]
         if type(layer_name) is not list:
-           layer_name = self.get_layers_analyzed_that_match_regEx(layer_name)
+            # Compile the Regular expresion
+            regEx = re.compile(layer_name)
+            # Select the layerNames that satisfies RegEx
+            layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
 
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
@@ -274,15 +287,14 @@ class NetworkData(object):
                                      "argument, is not valid.".format(l))
                 else:
                     #This makes a dictionary with RealName:RealName of each class, in order no force to user to have a
-                    #traduction dictionary if is not needed (admit labels_class_idx == None)
+                    #traduction dictionary if is not needed (admit labels == None)
                     #[This rare dic is not the more elegant way to solve the problem, change the class_selectivity class
                     #could be better. But... this makes the code of the class_selectivity class more easy and readable
-                    if index_name == 'class' and labels_class_idx is None:
-                        labels_class_idx = {key:key for key in os.listdir(self.dataset.src_dataset)}
-
-                    sel_idx_dict[index_name].append(layer.selectivity_idx( self.model, index_name, self.dataset,
-                                        degrees_orientation_idx = degrees_orientation_idx, labels=labels_class_idx,
-                                        thr_class_idx=thr_class_idx, thr_pc=thr_pc))
+                    if index_name == 'class' and labels is None:
+                        labels = {key:key for key in os.listdir(self.dataset.src_dataset)}
+                    sel_idx_dict[index_name].append(layer.selectivity_idx(
+                        self.model, index_name, self.dataset, labels=labels,
+                        thr_class_idx=thr_class_idx, thr_pc=thr_pc))
 
         return sel_idx_dict
 
@@ -377,7 +389,7 @@ class NetworkData(object):
                             res_idx2 = index_values2
 
                     selective_neurons[l.layer_id] = []
-                    neurons = l.filters
+                    neurons = l.neurons_data
                     for i in range(len(neurons)):
                         if inf_thr <= res_idx1[i] <= sup_thr:
                             if res_idx2 is not None:
@@ -597,8 +609,3 @@ class NetworkData(object):
         print([layer.name for layer in self.model.layers])
     def get_layer_names_to_analyze(self):
         return [layer.layer_id for layer in self._layers_data]
-    def get_layers_analyzed_that_match_regEx(self, regEx):
-        # Compile the Regular expresion
-        regEx = re.compile(regEx)
-        # Select the layerNames that satisfies RegEx
-        return list(filter(regEx.match, [layer for layer in self.get_layers_name()]))

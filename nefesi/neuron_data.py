@@ -159,6 +159,15 @@ class NeuronData(object):
                       self.xy_locations[i],
                       self.norm_activations[i])
 
+    def remove_selectivity_idx(self, idx):
+        """Removes de idx selectivity index from the neuron.
+
+        :param idx: The selectivity index.
+
+        :return: none.
+        """
+        self.selectivity_idx.pop(idx,None)
+
     def color_selectivity_idx(self, model, layer_data, dataset):
         """Returns the color selectivity index for this neuron.
 

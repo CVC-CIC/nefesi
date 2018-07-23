@@ -49,14 +49,23 @@ class LayerData(object):
     def build_neuron_feature(self, network_data):
         compute_nf(network_data, self, self.neurons_data)
 
-    def selectivity_idx(self, model, index_name, dataset,degrees_orientation_idx = 15,
+    def remove_selectivity_idx(self, idx):
+        """Removes de idx selectivity index from the neurons of the layer.
+
+        :param idx: The selectivity index.
+
+        :return: none.
+        """
+        for n in self.neurons_data:
+            n.remove_selectivity_idx(idx)
+
+    def selectivity_idx(self, model, index_name, dataset,
                         labels=None, thr_class_idx=1., thr_pc=0.1):
         """Returns the selectivity index value for the index in `index_name`.
 
         :param model: The `keras.models.Model` instance.
         :param index_name: String, name of the index.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
-        :param degrees_orientation_idx: degrees to each rotation step on orientation index
         :param labels: Dictionary, key: name class, value: label.
             This argument is needed for calculate the class and the population
             code index.

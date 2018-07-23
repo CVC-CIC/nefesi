@@ -12,3 +12,4 @@ nefesi.egg-info
 #Dataset path
 Datasets/*
 *.h5
+*.pyc
