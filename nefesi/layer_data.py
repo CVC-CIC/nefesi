@@ -60,7 +60,7 @@ class LayerData(object):
             n.remove_selectivity_idx(idx)
 
     def selectivity_idx(self, model, index_name, dataset,
-                        labels=None, thr_class_idx=1., thr_pc=0.1):
+                        labels=None, thr_class_idx=1., thr_pc=0.1,degrees_orientation_idx = 15):
         """Returns the selectivity index value for the index in `index_name`.
 
         :param model: The `keras.models.Model` instance.
