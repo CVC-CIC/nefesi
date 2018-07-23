@@ -38,7 +38,6 @@ def get_orientation_index(neuron_data, model, layer_data, dataset, degrees_to_ro
                                                                        locations)
             # normalize activations
             norm_rot_act_sum = np.sum(rot_activations) / max_act
-            partial_orientation = 1 - (norm_rot_act_sum / norm_activations_sum)
-            results[degrees_to_rotate_idx] = partial_orientation
+            results[degrees_to_rotate_idx] = 1 - (norm_rot_act_sum / norm_activations_sum)
 
     return results

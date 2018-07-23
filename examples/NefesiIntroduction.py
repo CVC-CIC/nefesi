@@ -42,11 +42,33 @@ def example7AnalyzingResults():
 	print("TIME ELAPSED: ")
 	print(end - start)
 
-
 def orientationSelectivity(nefesiModel):
+	"""
+	Orientation selectivity is an index that specifies, how much the neuron is resistent to image rotations.
+	(experimentally we determined that is so usefull to detect, neurons that are selectives to circular things).
+	In order to evaluate it, this neuron takes his N-Top images (the N images that more activation produced to it)
+	and rotate each image degrees_orientation_idx degrees (15 by default) n times, until complete the 360 degrees.
+	This index will be in range [0.0,1.0] and an 1.0 idx will indicate that the activitation was the same for no-rotated
+	image, and rotated image. The return of orientation selectivity index will be a numpy for each neuron with m positions.
+	Where m is ceil(360/degrees_orientation_idx). (A position for each rotation tried (with his the index obtained) and the
+	last position won't be the 360 degrees rotation, will be the mean of all rotations tried (on this neuron)). For example
+	for degrees orientation 90 and block1_conv1 layer will be:
+	selIdx['orientation']--->[list of orientation_idx values] --> idx for 90 degrees
+															  --> idx for 180 degrees
+															  --> idx for 270 degrees
+															  --> mean of last 3 values
+	"""
+	#Let's evaluate first layer (64 neurons)
 	layersToEvaluate = 'block1_conv1'
+	print("Let's Evaluate the class selectivity index of layers: "+
+		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate))+ " (This operation will take minutes).")
+	#degrees_orientation_idx 180 will be only one rotation
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="orientation", layer_name=layersToEvaluate, degrees_orientation_idx=180)
-	print(selIdx)
+	print("Orientation selectivity index calculated for each neuron of layer 'block1_conv1'\n"
+		  "Max value of color selectivity encountered in first layer analyzed"+ str(np.max(selIdx['orientation'][0][:,-1]))+
+		  " in neuron: " +str(np.argmax(selIdx['orientation'][0][:,-1]))+". \n"
+		  "Neurons with more than 60% of mean orientation selectivity: "+str(len(np.where(selIdx['orientation'][0][:,-1]>0.6)[0]))+
+		  ".\n Mean of Color Selectivity in first layer: "+str(np.mean(selIdx['orientation'][0][:,-1]))+".")
 
 def classSelectivity(nefesiModel):
 	"""
@@ -57,7 +79,7 @@ def classSelectivity(nefesiModel):
 		selectivity index will be a tuple for each neuron that contains: (humanLabelNameOfClass(String),
 		SelectivityIndexForThisClass(float)). This index only take a seconds to calculate.
 	"""
-	#Let's to evaluate all layers charged
+	#Let's to evaluate layers 1 and 3
 	layersToEvaluate = 'block(1|3)_conv1'
 	"""
 	This selectivity index accepts a dictionary, that translate from real label names (often not human readable as n03794056)
@@ -85,7 +107,7 @@ def classSelectivity(nefesiModel):
 
 	NOTE: 'label', and 'value' are the important names to remember. (Working like pandas)
 	"""
-	print("This selectivity index contains an structured tuples ('label','value') you can acces to all only labels or all"
+	print("Class selectivity index contains an structured tuples ('label','value') you can acces to all only labels or all"
 		  "only value attributes. Keys: "+str(selIdx['class'][0].dtype.names))
 
 	for layer_idx, layer_name in enumerate(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)):
