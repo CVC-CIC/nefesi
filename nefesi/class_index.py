@@ -1,6 +1,11 @@
 from operator import itemgetter
 import numpy as np
 
+LABEL_NAME_POS = 0
+HUMAN_NAME_POS = 1
+COUNT_POS = 2
+REL_FREQ_POS = 3
+
 def get_class_selectivity_idx(neuron_data, labels, threshold):
     """Returns the class selectivity index value.
 
@@ -20,15 +25,15 @@ def get_class_selectivity_idx(neuron_data, labels, threshold):
         sum_fr = 0.0
         for rel in rel_freq:
             # check the frequencies that fills the `threshold`.
-            sum_fr += rel[3]
+            sum_fr += rel[REL_FREQ_POS]
             freq_avoid_th.append(rel)
             if sum_fr >= threshold:
                 break
 
         m = len(freq_avoid_th)
         c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1))
-        # For the most freqüent class freq_avoid_th[0] the: label ([1]) and his selectivity index rounded to two decimals
-        return (freq_avoid_th[0][1], round(c_select_idx, 2))
+        # For the most freqüent class freq_avoid_th[0] the: label ([HUMAN_NAME_POS]) and his selectivity index rounded to two decimals
+        return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 2))
 
 
 def relative_freq_class(neuron_data, labels):
@@ -67,10 +72,9 @@ def relative_freq_class(neuron_data, labels):
         # normalize the sum of the activations with the sum of
         # the whole normalized activations in this neuron.
         for rel in rel_freq:
-            rel[3] = rel[3] / np.sum(norm_act)
-
+            rel[REL_FREQ_POS] = rel[REL_FREQ_POS] / np.sum(norm_act)
         # sorts the list by their relative frequencies.
-        rel_freq = sorted(rel_freq, key=itemgetter(3), reverse=True)
+        rel_freq = sorted(rel_freq, key=itemgetter(REL_FREQ_POS), reverse=True)
         return rel_freq
     else:
         return None
@@ -81,9 +85,9 @@ def get_population_code_idx(neuron_data, labels, threshold_pc):
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param labels: Dictionary, key: name class, value: label class.
-    :param threshold_pc: Float.
+    :param threshold_pc: Float. Threshold to consider that neuron is well selective to a class
 
-    :return: Integer, population code value
+    :return: Integer, population code value. (Number of classes with frequency higher to threshold_pc in N-top activations
     """
     rel_freq = relative_freq_class(neuron_data, labels)
     if rel_freq is None:
@@ -92,7 +96,7 @@ def get_population_code_idx(neuron_data, labels, threshold_pc):
         pc = 0
         # count the number of classes above `threshold_pc`
         for r in rel_freq:
-            if r[3] >= threshold_pc:
+            if r[REL_FREQ_POS] >= threshold_pc:
                 pc += 1
             else:
                 break

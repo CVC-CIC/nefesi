@@ -239,7 +239,7 @@ class NetworkData(object):
         for l in self.layers_data:
             l.remove_selectivity_idx(idx)
 
-    def get_selectivity_idx(self, sel_index, layer_name,
+    def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = 15,
                             labels=None, thr_class_idx=1.,
                             thr_pc=0.1):
         """Returns the selectivity indexes in `sel_index` for each layer
@@ -290,11 +290,11 @@ class NetworkData(object):
                     #traduction dictionary if is not needed (admit labels == None)
                     #[This rare dic is not the more elegant way to solve the problem, change the class_selectivity class
                     #could be better. But... this makes the code of the class_selectivity class more easy and readable
-                    if index_name == 'class' and labels is None:
+                    if (index_name == 'class' or index_name == 'population code') and labels is None:
                         labels = {key:key for key in os.listdir(self.dataset.src_dataset)}
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
-                        self.model, index_name, self.dataset, labels=labels,
-                        thr_class_idx=thr_class_idx, thr_pc=thr_pc))
+                        self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
+                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc))
 
         return sel_idx_dict
 
@@ -609,3 +609,8 @@ class NetworkData(object):
         print([layer.name for layer in self.model.layers])
     def get_layer_names_to_analyze(self):
         return [layer.layer_id for layer in self._layers_data]
+    def get_layers_analyzed_that_match_regEx(self, regEx):
+        # Compile the Regular expresion
+        regEx = re.compile(regEx)
+        # Select the layerNames that satisfies RegEx
+        return list(filter(regEx.match, [layer for layer in self.get_layers_name()]))

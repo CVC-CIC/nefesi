@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import ImageOps
-
+import os
 from .class_index import get_class_selectivity_idx, get_population_code_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
@@ -22,6 +22,8 @@ class NeuronData(object):
         activations: Numpy array of floats, activation values
         images_id: Numpy array of strings, name of the images that provokes
             the maximum activations.
+        top_labels_count: dict with keys: labels of images that provokes the maximum activations,
+         value: count of images with this label in top-scoring images
         xy_locations: Numpy array of integer tuples, location of the activation
             in the map activation.
         norm_activations: Numpy array of floats, normalized activation
@@ -42,6 +44,7 @@ class NeuronData(object):
 
         self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
         self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
+        self.top_labels_count = dict()
         self.xy_locations = np.ndarray(shape=self._max_activations + self._batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
         self.norm_activations = None
 
@@ -62,6 +65,11 @@ class NeuronData(object):
         """
         self.activations[self._index] = activation
         self.images_id[self._index] = image_id
+        class_name = image_id[:image_id.index(os.path.sep)]
+        if class_name in self.top_labels_count:
+            self.top_labels_count[class_name] += 1
+        else:
+            self.top_labels_count[class_name] = 1
         self.xy_locations[self._index] = xy_location
         self._index += 1
         if self._index >= self._max_activations + self._batch_size:
@@ -263,7 +271,7 @@ class NeuronData(object):
         if population_code_idx is not None:
             return population_code_idx
 
-        if labels is None or type(labels) is not dict:
+        if type(labels) is not dict:
             raise TypeError("The `labels` argument should be "
                             "a dictionary")
 
