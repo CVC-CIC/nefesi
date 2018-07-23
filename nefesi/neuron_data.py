@@ -263,7 +263,7 @@ class NeuronData(object):
         if population_code_idx is not None:
             return population_code_idx
 
-        if labels is None or type(labels) is not dict:
+        if type(labels) is not dict:
             raise TypeError("The `labels` argument should be "
                             "a dictionary")
 

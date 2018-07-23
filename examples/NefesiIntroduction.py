@@ -37,10 +37,16 @@ def example7AnalyzingResults():
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
 	#classSelectivity(nefesiModel)
-	orientationSelectivity(nefesiModel)
+	#orientationSelectivity(nefesiModel)
+	populationCode(nefesiModel)
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
+
+def populationCode(nefesiModel):
+	layersToEvaluate = 'block1_conv1'
+	# degrees_orientation_idx 180 will be only one rotation
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="population code", layer_name=layersToEvaluate)
 
 def orientationSelectivity(nefesiModel):
 	"""

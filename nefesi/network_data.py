@@ -290,7 +290,7 @@ class NetworkData(object):
                     #traduction dictionary if is not needed (admit labels == None)
                     #[This rare dic is not the more elegant way to solve the problem, change the class_selectivity class
                     #could be better. But... this makes the code of the class_selectivity class more easy and readable
-                    if index_name == 'class' and labels is None:
+                    if (index_name == 'class' or index_name == 'population code') and labels is None:
                         labels = {key:key for key in os.listdir(self.dataset.src_dataset)}
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
