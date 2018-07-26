@@ -44,13 +44,12 @@ class NeuronData(object):
 
         self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
         self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
-        self.top_labels_count = dict()
         self.xy_locations = np.ndarray(shape=(self._max_activations + self._batch_size,2), dtype=np.int)
         self.norm_activations = None
 
         self.selectivity_idx = dict()
         self._neuron_feature = None
-
+        self.top_labels = None
         # index used for ordering activations.
         self._index = 0
     def add_activations(self,activations, image_ids, xy_locations):
@@ -81,11 +80,6 @@ class NeuronData(object):
         """
         self.activations[self._index] = activation
         self.images_id[self._index] = image_id
-        class_name = image_id[:image_id.index(os.path.sep)]
-        if class_name in self.top_labels_count:
-            self.top_labels_count[class_name] += 1
-        else:
-            self.top_labels_count[class_name] = 1
         self.xy_locations[self._index] = xy_location
         self._index += 1
         if self._index >= self._max_activations + self._batch_size:

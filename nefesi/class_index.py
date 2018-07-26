@@ -1,12 +1,13 @@
 from operator import itemgetter
 import numpy as np
+import os
 
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
 REL_FREQ_POS = 3
 
-def get_class_selectivity_idx(neuron_data, labels, threshold):
+def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
     """Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
@@ -36,51 +37,51 @@ def get_class_selectivity_idx(neuron_data, labels, threshold):
         return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 2))
 
 
-def relative_freq_class(neuron_data, labels):
+def relative_freq_class(neuron_data, labels = None):
     """Calculates the relative frequencies of appearance of each class among
     the TOP scoring images from `neuron_data`.
 
-    :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
-    :param labels: Dictionary, key: name class, value: label class.
+    :param neuron_data: The 'nefesi.neuron_data.NeuronData' instance.
+    :param labels: Dictionary, key: name class, value: human readable name class.
 
-    :return: List of lists. Each list contains:
-        - The name class
-        - The label class
-        - Number of appearance in this neuron of this class among all classes.
-        - The normalized relative frequency.
+    :return: Numpy of slices. Each slice contains:
+        - The name class 'label_name' (to access as pandas)
+        - The human name class 'human_name' (to access as pandas)
+        - Number of appearance in this neuron of this class among all classes. 'count' (to access as pandas)
+        - The normalized relative frequency. 'rel_freq' (to access as pandas)
     """
-    activations = neuron_data.activations
-    image_names = neuron_data.images_id
-    norm_act = neuron_data.norm_activations
 
-    rel_freq = []
-    if activations[0] != 0.0:
-        for key, value in labels.items():
-            appearances_count = 0
-            norm_activation_sum = 0
-            for c in range(len(image_names)):
-                # counts the number of times that a class appears
-                # among the TOP scoring images in a neuron.
-                # Also keeps a sum of normalized activations of that image
-                # that belongs to a class.
-                if key in image_names[c]:
-                    appearances_count += 1
-                    norm_activation_sum += norm_act[c]
-            if appearances_count != 0:
-                rel_freq.append([key, value, appearances_count, norm_activation_sum])
-
-        # normalize the sum of the activations with the sum of
-        # the whole normalized activations in this neuron.
-        for rel in rel_freq:
-            rel[REL_FREQ_POS] = rel[REL_FREQ_POS] / np.sum(norm_act)
-        # sorts the list by their relative frequencies.
-        rel_freq = sorted(rel_freq, key=itemgetter(REL_FREQ_POS), reverse=True)
-        return rel_freq
-    else:
+    #If the max activation is 0 not continue
+    if np.isclose(neuron_data.activations[0], 0.0):
         return None
 
+    #------------------------INITS NEURON_DATA.TOP_LABELS IF NOT IS INITIALIZED---------------------------------
+    if neuron_data.top_labels is None:
+        _fill_top_labels(neuron_data)
+    #-----------------------INITS THE PARAMETERS THAT WILL BE USEFUL TO MAKE CALCULS-----------------------------
+    norm_act = neuron_data.norm_activations
+    norm_activation_total = np.sum(norm_act)
+    classes, classes_idx, classes_counts =  np.unique(neuron_data.top_labels, return_inverse=True, return_counts=True)
+    rel_freq = np.zeros(len(classes),dtype=[('label_name','U64'),('human_name','U64'),('count',np.int), ('rel_freq',np.float)])
 
-def get_population_code_idx(neuron_data, labels, threshold_pc):
+    #-------------------------------------------CALC THE INDEX-------------------------------------------------
+    for label_idx in range(len(classes)):
+        appearances_count = classes_counts[label_idx]
+        # normalize the sum of the activations with the sum of
+        # the whole normalized activations in this neuron.
+        norm_activation_label_sum = np.sum(norm_act[classes_idx == label_idx])/norm_activation_total
+        if labels is not None:
+            rel_freq[label_idx] = (classes[label_idx], labels[classes[label_idx]], appearances_count, norm_activation_label_sum)
+        else:
+            rel_freq[label_idx] = (classes[label_idx], classes[label_idx], appearances_count, norm_activation_label_sum)
+
+    # sorts the list by their relative frequencies of norm activations.
+    rel_freq = np.sort(rel_freq, order='rel_freq')[::-1]
+    return rel_freq
+
+
+
+def get_population_code_idx(neuron_data, labels=None, threshold_pc=0.1):
     """Returns the population code index value
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
@@ -93,11 +94,15 @@ def get_population_code_idx(neuron_data, labels, threshold_pc):
     if rel_freq is None:
         return 0
     else:
-        pc = 0
-        # count the number of classes above `threshold_pc`
-        for r in rel_freq:
-            if r[REL_FREQ_POS] >= threshold_pc:
-                pc += 1
-            else:
-                break
-        return pc
+        #classes with relative  frequency more than threshold_pc
+        return np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
+
+def _fill_top_labels(neuron_data):
+    """
+    Fills the 'nefesi.neuron_data.NeuronData.top_labels' attribute
+    :param neuron_data: The 'nefesi.neuron_data.NeuronData' instance.
+    """
+    image_names = neuron_data.images_id
+    neuron_data.top_labels = np.zeros(len(image_names), dtype='U64')
+    for i, image_name in enumerate(image_names):
+        neuron_data.top_labels[i] = image_name[:image_name.index(os.path.sep)]
