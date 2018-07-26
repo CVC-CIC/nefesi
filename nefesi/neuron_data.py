@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import ImageOps
-
+import os
 from .class_index import get_class_selectivity_idx, get_population_code_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
@@ -22,6 +22,8 @@ class NeuronData(object):
         activations: Numpy array of floats, activation values
         images_id: Numpy array of strings, name of the images that provokes
             the maximum activations.
+        top_labels_count: dict with keys: labels of images that provokes the maximum activations,
+         value: count of images with this label in top-scoring images
         xy_locations: Numpy array of integer tuples, location of the activation
             in the map activation.
         norm_activations: Numpy array of floats, normalized activation
@@ -42,15 +44,31 @@ class NeuronData(object):
 
         self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
         self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
-        self.xy_locations = np.ndarray(shape=self._max_activations + self._batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
+        self.xy_locations = np.ndarray(shape=(self._max_activations + self._batch_size,2), dtype=np.int)
         self.norm_activations = None
 
         self.selectivity_idx = dict()
         self._neuron_feature = None
-
+        self.top_labels = None
         # index used for ordering activations.
         self._index = 0
+    def add_activations(self,activations, image_ids, xy_locations):
+        """Set the information of n activation. When the assigned
+				 activations reach a certain size, they are ordered.
 
+				:param activations: numpy of Floats, activation values
+				:param image_ids: numpy of Strings, image names
+				:param xy_locations: numpy of tuples of integers, location of the activations
+					in the map activation.
+				"""
+        end_idx = self._index+len(activations)
+        self.activations[self._index:end_idx] = activations
+        self.images_id[self._index:end_idx] = image_ids
+        self.xy_locations[self._index:end_idx,:] = xy_locations
+        self._index += len(activations)
+        if self._index >= self._max_activations + self._batch_size:
+            self.sort()
+            self._index = self._max_activations
     def add_activation(self, activation, image_id, xy_location):
         """Set the information of one activation. When the assigned
          activations reach a certain size, they are ordered.

@@ -4,20 +4,18 @@ import keras.backend as K
 from .neuron_data import NeuronData
 
 
-def get_activations(model, model_inputs, print_shape_only=False, layer_name=None):
+def get_activations(model, model_inputs, layer_name=None):
     """Returns the output (activations) from the model.
 
     :param model: The `keras.models.Model` instance.
     :param model_inputs: List of inputs, the inputs expected by the network.
-    :param print_shape_only: Boolean, if its True print the shape of the output tensor.
     :param layer_name: String, name of the layer from which get the outputs.
         If its None, returns the outputs from all the layers in the model.
 
     :return: List of activations, one output for each given layer.
     """
-    activations = []
     inp = model.input
-    if not isinstance(inp, list):
+    if type(inp) is not list:
         inp = [inp]
 
     # uses .get_output_at() instead of .output. In case a layer is
@@ -32,11 +30,7 @@ def get_activations(model, model_inputs, print_shape_only=False, layer_name=None
     # K.learning_phase flag = 1 (train mode)
     layer_outputs = [func([model_inputs, 1])[0] for func in funcs]
 
-    for layer_activations in layer_outputs:
-        activations.append(layer_activations)
-        if print_shape_only:
-            print(layer_activations.shape)
-    return activations
+    return layer_outputs
 
 
 def get_sorted_activations(file_names, images, model, layer_name,
@@ -55,9 +49,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
-    activations = get_activations(model, images,
-                                  print_shape_only=False,
-                                  layer_name=layer_name)
+    activations = get_activations(model, images, layer_name=layer_name)
     conv_layer = True
     for layer_activation in activations:
         # get the number of images and the number of neurons in this layer
@@ -70,27 +62,29 @@ def get_sorted_activations(file_names, images, model, layer_name,
         if neurons_data is None:
             # if `neurons_data` is None, creates the list and fill it
             # with the `nefesi.neuron_data.NeuronData` instances
-            neurons_data = []
-            for i in range(num_filters):
-                n_data = NeuronData(num_max_activations, batch_size)
-                neurons_data.append(n_data)
-
-        for f in neurons_data:
-            idx_filter = neurons_data.index(f)
-            for j in range(num_images):
-                if conv_layer is True:
+            neurons_data = np.zeros(num_filters, dtype=np.object)
+            for idx_filter in range(num_filters):
+                neurons_data[idx_filter] = NeuronData(num_max_activations, batch_size)
+        if conv_layer:
+            #Calculate here all maximum activations
+            max_acts = np.max(layer_activation, axis = (1,2))
+            xy_locations = np.zeros((num_filters,num_images,2), dtype=np.int)
+            for idx_filter in range(num_filters):
+                activation_maps = layer_activation[:, :, :, idx_filter]
+                for j in range(num_images):
                     # get the map activation for each image and each channel
-                    activation_map = layer_activation[j, :, :, idx_filter]
+                    activation_map = activation_maps[j, :, :]
                     # look up for the maximum activation
-                    max_act = np.amax(activation_map)
+                    #max_acts[idx_filter,j] = np.max(activation_map)
                     # get the location of the maximum activation inside the map
-                    xy_location = np.unravel_index(activation_map.argmax(),
+                    xy_locations[idx_filter,j,:] = np.unravel_index(activation_map.argmax(),
                                                    activation_map.shape)
-                else:
-                    max_act = layer_activation[j, idx_filter]
-                    xy_location = (0, 0)
-                image_id = file_names[j]
-                f.add_activation(max_act, image_id, xy_location)
+                neurons_data[idx_filter].add_activations(max_acts[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
+
+        else:
+            xy_locations = np.zeros((num_filters, num_images, 2), dtype=np.int)
+            for idx_filter in range(len(neurons_data)):
+                neurons_data[idx_filter].add_activations(layer_activation[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
     return neurons_data
 
 

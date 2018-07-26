@@ -3,7 +3,7 @@ This file contains a toy examples to have a first contact with Nefesi, and Keras
 This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2.0, and python 3.6 (with anaconda3 interpreter)
 """
 
-from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
 from nefesi.network_data import NetworkData
 from nefesi.util.image import ImageDataset
@@ -19,7 +19,9 @@ def main():
 	#example2ChargeModel() #Charge a model locally
 	#example3NefesiInstance()
 	#example4FullFillNefesiInstance()
+	start = time.time()
 	#example5NetworkEvaluation()
+	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
 	example7AnalyzingResults()
 
@@ -36,9 +38,15 @@ def example7AnalyzingResults():
 	start = time.time()
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
+<<<<<<< HEAD
 	#classSelectivity(nefesiModel)
 	#orientationSelectivity(nefesiModel)
 	populationCode(nefesiModel)
+=======
+	classSelectivity(nefesiModel)
+	#orientationSelectivity(nefesiModel)
+	#populationCode(nefesiModel)
+>>>>>>> Eric-Branch
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
@@ -47,7 +55,11 @@ def populationCode(nefesiModel):
 	layersToEvaluate = 'block1_conv1'
 	# degrees_orientation_idx 180 will be only one rotation
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="population code", layer_name=layersToEvaluate)
+<<<<<<< HEAD
 
+=======
+	print("a")
+>>>>>>> Eric-Branch
 def orientationSelectivity(nefesiModel):
 	"""
 	Orientation selectivity is an index that specifies, how much the neuron is resistent to image rotations.
@@ -96,7 +108,7 @@ def classSelectivity(nefesiModel):
 	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
 	print("Let's Evaluate the class selectivity index of layers:"+
 		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)) +" (This operation will take seconds)")
-	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels_class_idx=labelsDict)
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels=labelsDict)
 	"""
 	The selIdx that is returned for index 'class' has a little different property. It's an heterogeneus array, that contains
 	a for each position a tuple ('label','value'). Cause his content is a tuple you can access in the next forms:
@@ -226,7 +238,7 @@ def example5NetworkEvaluation():
 	#This function will have the evaluation. All parameters setted in example4 are also parameters of this function. If
 	#user don't set it in .evalNetwork(...) takes by default the values of nefesiModel object
 	print("Let's start to evaluate network. This process is based on dataset and the time that spent is depenent of the "
-		  "size of it. Is recommended to use have a visible GPU for this process "
+		  "size of it. Is recommended to have a visible GPU for this process "
 		  "(os.environment[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
 		  "GO TO EVALUATE! :)")
 	nefesiModel.eval_network(verbose=True)
@@ -278,7 +290,7 @@ def chargeNefesiImageDataset():
 	Nefesi uses a ImageDataset to evaluate the features of the network. This Dataset is specified as an object, and have
 	 the preproces of each image (resize, crop... or specific function), in order to give to an heterogeneus dataset a list
 	 of well known caractheristics (As size, color space...).
-	Imports needed: from nefesi.util.image import ImageDataset
+	Imports needed: from nefesi.util.image import ImageDataset, preprocess_input
 	:return: ImageDataset instance, that represents de Dataset that will be used to evaluate the network
 	"""
 	#the path from where images will be taken must to have the next architecture:
@@ -293,8 +305,8 @@ def chargeNefesiImageDataset():
 	#the color mode selected ('rgb' or 'grayscale') is the color mode to READ the images, not the internal treatment colorMode.
 	#In the most cases it will be 'rgb', cause is the common input of the nets and have more info than 'grayscale'.
 	colorMode = 'rgb'
-	#Calls to constructor
-	dataset = ImageDataset(src_dataset=path, target_size=targetSize,preprocessing_function=None, color_mode=colorMode)
+	#Calls to constructor. Preprocess_input is the function that applies the preprocess with the VGG16 was trained.
+	dataset = ImageDataset(src_dataset=path, target_size=targetSize,preprocessing_function=preprocess_input, color_mode=colorMode)
 
 	return dataset
 

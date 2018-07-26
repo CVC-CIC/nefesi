@@ -7,9 +7,11 @@ docs/sources/*
 
 dist/*
 build/*
+nefesi/__pycache__/*
 nefesi.egg-info
 
 #Dataset path
 Datasets/*
 *.h5
 *.pyc
+nefesi/Pruebas.py
