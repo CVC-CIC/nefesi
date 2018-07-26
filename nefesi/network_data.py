@@ -90,6 +90,7 @@ class NetworkData(object):
         if type(dataset) is not ImageDataset:
             raise TypeError("Dataset must be an nefesi.util.Image.ImageDataset object "
                             "(https://github.com/CVC-CIC/nefesi/blob/master/nefesi/util/image.py)")
+
         self._dataset = dataset
 
     @property
@@ -98,17 +99,16 @@ class NetworkData(object):
 
     @save_path.setter
     def save_path(self, save_path):
+        if type(save_path) is not str:
+            raise ValueError("save_path must be a str.")
         #Ensures that path ends with '/' (To save confusions to user)
-        if not save_path.endswith('/'):
+        elif not save_path.endswith('/'):
             save_path = save_path + '/'
-        #Ensures that folder exists
+        #Looks folder exists
         if not os.path.isdir(save_path):
             warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
-        self._save_path = save_path
 
-    def _build_layers(self, layers):
-        for l in layers:
-            self.layers_data.append(LayerData(l))
+        self._save_path = save_path
 
     def eval_network(self, layer_names = None,
                      directory=None,
@@ -154,20 +154,28 @@ class NetworkData(object):
             ValueError: If some name in `layer_names` doesn't exist in
             the model `self.model`.
         """
-        if layer_names != None:
+        #Assign layer_names if is specified and control that self.layers_data are setted consistently
+        if layer_names is not None:
             self.layers_data = layer_names
-        if save_path != None:
-            self._save_path = save_path
+        elif type(self.layers_data) is not list:
+            raise ValueError("layers_data attribute not setted. It must be setted on network_data object, before call"
+                             " eval_network(...) or setted as argument (layer_names) in eval_network function")
 
-        times_ex = []
+        #Assign save_path if is specified and control that self.save_path is setted consistently
+        if save_path is not None:
+            self.save_path = save_path
+        elif type(self.save_path) is not str:
+            raise ValueError("Save_path attribute not setted. It must be setted on network_data object, before call"
+                             " eval_network(...) or setted as argument (save_path) in eval_network function")
 
-        # Creates an ImageDataset object
-        if self.dataset is None:
-            self.dataset = ImageDataset(directory, target_size,
+        #Creates an ImageDataset object if it not exists and control that self.dataset is setted consistenly
+        if directory is not None:
+                self.dataset = ImageDataset(directory, target_size,
                                         preprocessing_function, color_mode)
-
-        if self.dataset.src_dataset is None:
-            raise ValueError("The argument `directory` should be a String.")
+        elif type(self.dataset) is not ImageDataset:
+            raise ValueError("Dataset attribute not setted. It must be setted on network_data object, before call"
+                             " eval_network(...) or setted as argument(s) (directory,[target_size, preprocessing_function,"
+                             " color_mode]) in eval_network function ")
 
         for layer in self.layers_data:
             #if layer.layer_id in layer_names: #if is not, exception was raised
@@ -181,31 +189,30 @@ class NetworkData(object):
             )
 
             num_images = data_batch.samples
-            n_batches = 0
-            idx = data_batch.batch_index
+            idx_start = data_batch.batch_index
+            idx_end = idx_start + data_batch.batch_size
+            for n_batches, imgs in enumerate(data_batch):
 
-            for i in data_batch:
-                images = i[0]
-
+                images = imgs[0]
                 # Apply the preprocessing function to the inputs
                 if self.dataset.preprocessing_function is not None:
                     images = self.dataset.preprocessing_function(images)
 
-                file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
+                file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U150')
                 # Search the maximum activations
                 layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
 
                 if verbose:
-                    print("Layer: {}, Num batch: {},"
-                          " Num images processed: {}/{}".format(
-                            layer.layer_id,
-                            n_batches,
-                            idx + data_batch.batch_size,
-                            num_images))
+                    print("Layer: {layer}, Num batch: {batch},"
+                          " Num images processed: {processed}/{total}".format(
+                            layer=layer.layer_id,
+                            batch=n_batches,
+                            processed=idx_end,
+                            total=num_images))
 
-                idx = data_batch.batch_index * data_batch.batch_size
-                n_batches += 1
-                if n_batches >= num_images / data_batch.batch_size:
+                idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
+                #If the idx of the next last image will overpass the total num of images, ends the analysis
+                if idx_end > num_images:
                     break
 
             # Set the number of maximum activations stored in each neuron

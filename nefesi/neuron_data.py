@@ -45,7 +45,7 @@ class NeuronData(object):
         self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
         self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
         self.top_labels_count = dict()
-        self.xy_locations = np.ndarray(shape=self._max_activations + self._batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
+        self.xy_locations = np.ndarray(shape=(self._max_activations + self._batch_size,2), dtype=np.int)
         self.norm_activations = None
 
         self.selectivity_idx = dict()
@@ -53,7 +53,23 @@ class NeuronData(object):
 
         # index used for ordering activations.
         self._index = 0
+    def add_activations(self,activations, image_ids, xy_locations):
+        """Set the information of n activation. When the assigned
+				 activations reach a certain size, they are ordered.
 
+				:param activations: numpy of Floats, activation values
+				:param image_ids: numpy of Strings, image names
+				:param xy_locations: numpy of tuples of integers, location of the activations
+					in the map activation.
+				"""
+        end_idx = self._index+len(activations)
+        self.activations[self._index:end_idx] = activations
+        self.images_id[self._index:end_idx] = image_ids
+        self.xy_locations[self._index:end_idx,:] = xy_locations
+        self._index += len(activations)
+        if self._index >= self._max_activations + self._batch_size:
+            self.sort()
+            self._index = self._max_activations
     def add_activation(self, activation, image_id, xy_location):
         """Set the information of one activation. When the assigned
          activations reach a certain size, they are ordered.

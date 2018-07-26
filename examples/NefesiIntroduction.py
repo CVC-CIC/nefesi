@@ -19,7 +19,9 @@ def main():
 	#example2ChargeModel() #Charge a model locally
 	#example3NefesiInstance()
 	#example4FullFillNefesiInstance()
+	start = time.time()
 	example5NetworkEvaluation()
+	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 
@@ -265,7 +267,7 @@ def example4FullFillNefesiInstance():
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	nefesiModel.layers_data = "block(1|3|5)_conv1"
+	nefesiModel.layers_data = "block(1)_conv1"#|3|5
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel

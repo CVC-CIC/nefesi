@@ -62,29 +62,27 @@ def get_sorted_activations(file_names, images, model, layer_name,
         if neurons_data is None:
             # if `neurons_data` is None, creates the list and fill it
             # with the `nefesi.neuron_data.NeuronData` instances
-            neurons_data = np.zeros(num_filters,dtype=np.object)
-            for i in range(num_filters):
-                neurons_data[i] = NeuronData(num_max_activations, batch_size)
+            neurons_data = np.full(num_filters, NeuronData(num_max_activations, batch_size), dtype=np.object)
         if conv_layer:
-            for idx_filter in range(len(neurons_data)):
+            #Calculate here all maximum activations
+            max_acts = np.max(layer_activation, axis = (1,2))
+            xy_locations = np.zeros((num_filters,num_images,2), dtype=np.int)
+            for idx_filter in range(num_filters):
+                activation_maps = layer_activation[:, :, :, idx_filter]
                 for j in range(num_images):
                     # get the map activation for each image and each channel
-                    activation_map = layer_activation[j, :, :, idx_filter]
+                    activation_map = activation_maps[j, :, :]
                     # look up for the maximum activation
-                    max_act = np.max(activation_map)
+                    #max_acts[idx_filter,j] = np.max(activation_map)
                     # get the location of the maximum activation inside the map
-                    xy_location = np.unravel_index(activation_map.argmax(),
+                    xy_locations[idx_filter,j,:] = np.unravel_index(activation_map.argmax(),
                                                    activation_map.shape)
-                    image_id = file_names[j]
-                    neurons_data[idx_filter].add_activation(max_act, image_id, xy_location)
+                neurons_data[idx_filter].add_activations(max_acts[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
 
         else:
+            xy_locations = np.zeros((num_filters, num_images, 2), dtype=np.int)
             for idx_filter in range(len(neurons_data)):
-                for j in range(num_images):
-                    max_act = layer_activation[j, idx_filter]
-                    xy_location = (0, 0)
-                    image_id = file_names[j]
-                    neurons_data[idx_filter].add_activation(max_act, image_id, xy_location)
+                neurons_data[idx_filter].add_activation(layer_activation[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
     return neurons_data
 
 

@@ -1,9 +1,11 @@
 import numpy as np
 import os
+import numbers
 from keras.preprocessing import image
 from scipy.ndimage.interpolation import rotate
 import warnings
 
+ACCEPTED_COLOR_MODES = ['rgb','grayscale']
 
 class ImageDataset(object):
     """This class stores the whole information about a dataset and provides
@@ -19,18 +21,90 @@ class ImageDataset(object):
         color_mode: One of `"rgb"`, `"grayscale"`. Color mode to read images.
     """
 
+    # ------------------------------------------- CONSTRUCTOR -----------------------------------------------
+
+
     def __init__(self, src_dataset, target_size=None,
                  preprocessing_function=None, color_mode='rgb'):
-        #----------------CHECKING CONSISTENCY OF PARAMS------------------
-        if not os.path.isdir(src_dataset):
+
+        self._src_dataset = src_dataset
+        self._target_size = target_size
+        self._preprocessing_function = preprocessing_function
+        self._color_mode = color_mode
+
+    #---------------------------------------- SETTERS AND GETTERS -------------------------------------------
+
+    @property
+    def target_size(self):
+        return self._target_size
+
+    @target_size.setter
+    def target_size(self, target_size):
+        #Convert if is list or set to tuple to add flexibility
+        if type(target_size) in (list,set):
+            target_size = tuple(target_size)
+        #Verify that is None or a valid formatted tuple
+        if type(target_size) is tuple:
+            if len(target_size) != 2 or type(target_size[0]) != int or type(target_size[1] != int):
+                raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
+        elif type(target_size) is not None:
+            raise ValueError("target_size must be a (height, width) tuple (or None). '"+str(type(target_size))+
+                             "' type not admitted ")
+        # Sets
+        self._target_size = target_size
+
+    @property
+    def src_dataset(self):
+        return self._src_dataset
+    @src_dataset.setter
+    def src_dataset(self,src_dataset):
+        if type(src_dataset) is not str:
+            raise ValueError("src_dataset attribute must be str")
+        elif not os.path.isdir(src_dataset):
             raise FileNotFoundError(src_dataset+" not exists or is not a directory")
         elif os.listdir(src_dataset) == []:
-            warnings.warn(src_dataset+" is an empty directory",RuntimeWarning)
-        #----------------------INICIALIZATION----------------------------
-        self.src_dataset = src_dataset
-        self.target_size = target_size
-        self.preprocessing_function = preprocessing_function
-        self.color_mode = color_mode
+            warnings.warn(src_dataset+" is an empty directory",FutureWarning)
+        # Sets
+        self._src_dataset = src_dataset
+
+    @property
+    def preprocessing_function(self):
+        return self._preprocessing_function
+    @preprocessing_function.setter
+    def preprocessing_function(self, preprocessing_function):
+        #Verify if preprocessing function is None or a function that takes only 1 non-default argument
+        if preprocessing_function is not None:
+            #if function don't takes one non-default argument
+            if callable(preprocessing_function):
+                if ((preprocessing_function.__code__.co_argcount - preprocessing_function.__defaults__) != 1):
+                    raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
+                                     " (any number of default arguments also admitted) and must return a numpy tensor of same"
+                                     "dimension.")
+            #if not is None or a function
+            else:
+                raise ValueError("preprocessing_function must be None or a function (that takes a numpy tensor 4D"
+                             "(with a batch of images) as argument and returns a numpy tensor of same dimension")
+        # Sets
+        self._preprocessing_function = preprocessing_function
+
+
+    @property
+    def color_mode(self):
+        return self._color_mode
+    @color_mode.setter
+    def color_mode(self,color_mode):
+        #Verify if is an admitted color_mode and put it in lower case before assign it
+        if type(color_mode) is not str:
+            raise ValueError("color_mode attribute must be str. With one of these values: "+str(ACCEPTED_COLOR_MODES))
+        color_mode = color_mode.lower()
+        if color_mode not in ACCEPTED_COLOR_MODES:
+            raise ValueError("color_mode attribute must be one of these values: " + str(ACCEPTED_COLOR_MODES)+". '"+color_mode+
+                             "' not accepted.")
+        #Sets
+        self._color_mode = color_mode
+
+# ------------------------------------------- FUNCTIONS -----------------------------------------------
+
 
     #TO COMMENT.
     def load_images(self, image_names, prep_function=True):
