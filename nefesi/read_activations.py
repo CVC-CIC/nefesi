@@ -62,7 +62,9 @@ def get_sorted_activations(file_names, images, model, layer_name,
         if neurons_data is None:
             # if `neurons_data` is None, creates the list and fill it
             # with the `nefesi.neuron_data.NeuronData` instances
-            neurons_data = np.full(num_filters, NeuronData(num_max_activations, batch_size), dtype=np.object)
+            neurons_data = np.zeros(num_filters, dtype=np.object)
+            for idx_filter in range(num_filters):
+                neurons_data[idx_filter] = NeuronData(num_max_activations, batch_size)
         if conv_layer:
             #Calculate here all maximum activations
             max_acts = np.max(layer_activation, axis = (1,2))
@@ -82,7 +84,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
         else:
             xy_locations = np.zeros((num_filters, num_images, 2), dtype=np.int)
             for idx_filter in range(len(neurons_data)):
-                neurons_data[idx_filter].add_activation(layer_activation[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
+                neurons_data[idx_filter].add_activations(layer_activation[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
     return neurons_data
 
 
