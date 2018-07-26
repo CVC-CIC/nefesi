@@ -38,15 +38,9 @@ def example7AnalyzingResults():
 	start = time.time()
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
-<<<<<<< HEAD
-	#classSelectivity(nefesiModel)
-	#orientationSelectivity(nefesiModel)
-	populationCode(nefesiModel)
-=======
 	classSelectivity(nefesiModel)
 	#orientationSelectivity(nefesiModel)
 	#populationCode(nefesiModel)
->>>>>>> Eric-Branch
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
@@ -55,11 +49,7 @@ def populationCode(nefesiModel):
 	layersToEvaluate = 'block1_conv1'
 	# degrees_orientation_idx 180 will be only one rotation
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="population code", layer_name=layersToEvaluate)
-<<<<<<< HEAD
-
-=======
 	print("a")
->>>>>>> Eric-Branch
 def orientationSelectivity(nefesiModel):
 	"""
 	Orientation selectivity is an index that specifies, how much the neuron is resistent to image rotations.

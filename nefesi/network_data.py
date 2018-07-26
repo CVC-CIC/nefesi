@@ -293,15 +293,6 @@ class NetworkData(object):
                     raise ValueError("The layer_id '{}' `layer_name` "
                                      "argument, is not valid.".format(l))
                 else:
-<<<<<<< HEAD
-                    #This makes a dictionary with RealName:RealName of each class, in order no force to user to have a
-                    #traduction dictionary if is not needed (admit labels == None)
-                    #[This rare dic is not the more elegant way to solve the problem, change the class_selectivity class
-                    #could be better. But... this makes the code of the class_selectivity class more easy and readable
-                    if (index_name == 'class' or index_name == 'population code') and labels is None:
-                        labels = {key:key for key in os.listdir(self.dataset.src_dataset)}
-=======
->>>>>>> Eric-Branch
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
                         labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc))
