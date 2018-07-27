@@ -20,10 +20,10 @@ def main():
 	#example3NefesiInstance()
 	#example4FullFillNefesiInstance()
 	start = time.time()
-	#example5NetworkEvaluation()
+	example5NetworkEvaluation()
 	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
-	example7AnalyzingResults()
+	#example7AnalyzingResults()
 
 """
 Analyze the results of the evaluation
