@@ -231,7 +231,10 @@ def example5NetworkEvaluation():
 		  "size of it. Is recommended to have a visible GPU for this process "
 		  "(os.environment[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
 		  "GO TO EVALUATE! :)")
+	start = time.time()
 	nefesiModel.eval_network(verbose=True)
+	print("TIME ELAPSED: "+str(time.time()-start))
+
 	print("Evaluation finished, nefesiObject have now the info of analysis and results can be reloaded with files (.obj)"
 		  "in dir --> "+nefesiModel.save_path)
 

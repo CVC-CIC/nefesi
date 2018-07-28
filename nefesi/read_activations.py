@@ -68,22 +68,26 @@ def get_sorted_activations(file_names, images, model, layer_name,
         if conv_layer:
             unravel_shape = layer_activation.shape[1:-1]
             #the activation map of each image for each filter idx filter, with map reshaped in one dim for optimization
-            #(numberImg, activationMapReshaped, idx_filter
-            activation_reshaped = layer_activation.reshape(layer_activation.shape[0],
+            #(numberImg, activationMapReshaped, idx_filter)
+            activation_reshaped = layer_activation.reshape(num_images,
                                                            layer_activation.shape[1]*layer_activation.shape[2],
-                                                           layer_activation.shape[3])
-            #The position on reshaped activations of max values
-            argmax_idx = activation_reshaped.argmax(1)
-            #range of num_images, to apply on the first axis
-            num_images_range = range(num_images)
+                                                           num_filters)
+            #The position on reshaped activations of max values.
+            argmax_idx = activation_reshaped.argmax(axis = 1).reshape(-1)
+            # The corresponding xy location of this maxs. xy_locations[i,j,:] will be the [x,y] position of the max activation
+            # for the image i on neuron j.
+            xy_locations = np.array(np.unravel_index(argmax_idx, unravel_shape)).\
+                reshape(2,num_images,num_filters).transpose()
+            #index of axis 2 and 0, for extract all max activations in one operation
+            filters_idx, images_idx = np.meshgrid(range(num_filters),range(num_images))
+            # the list of the num_images max activations for each filter (maxActs[i,j] will be the max activation
+            # for the image i on neuron j.
+            max_acts = activation_reshaped[images_idx.reshape(-1),
+                                           argmax_idx,
+                                           filters_idx.reshape(-1)].reshape(num_images,num_filters)
             for idx_filter in range(num_filters):
-                #The position of argmaxs corresponding to this filter
-                argmaxs_of_filter = argmax_idx[:, idx_filter]
-                #the list of the num_images max activations. (One value for each image)
-                max_acts_of_filter = activation_reshaped[num_images_range, argmaxs_of_filter, idx_filter]
-                #The corresponding xy location of this maxs
-                xy_locations = np.array(np.unravel_index(argmaxs_of_filter, unravel_shape)).transpose()
-                neurons_data[idx_filter].add_activations(max_acts_of_filter, file_names, xy_locations)
+                #Add the results to his correspondent neuron
+                neurons_data[idx_filter].add_activations(max_acts[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
 
         else:
             xy_locations = np.zeros((num_images, 2), dtype=np.int)
