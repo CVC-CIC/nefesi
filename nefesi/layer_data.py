@@ -41,10 +41,10 @@ class LayerData(object):
         for f in self.neurons_data:
             f.set_max_activations()
 
-    def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size):
+    def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size,batches_to_buffer = 20):
         self.neurons_data = get_sorted_activations(file_names, images, model,
                                                    self.layer_id, self.neurons_data,
-                                                   num_max_activations, batch_size)
+                                                   num_max_activations, batch_size,batches_to_buffer=batches_to_buffer)
 
     def build_neuron_feature(self, network_data):
         compute_nf(network_data, self, self.neurons_data)

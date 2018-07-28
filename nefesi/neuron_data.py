@@ -17,7 +17,7 @@ class NeuronData(object):
     Arguments:
         max_activations: Integer, number of maximum activations stored.
         batch_size: Integer, size of batch.
-
+        buffered_iterations: name of iterations that are saved in buffer until sort.
     Attributes:
         activations: Numpy array of floats, activation values
         images_id: Numpy array of strings, name of the images that provokes
@@ -38,13 +38,15 @@ class NeuronData(object):
         neuron_feature: PIL image instance.
     """
 
-    def __init__(self, max_activations, batch_size):
+    def __init__(self, max_activations, batch_size,buffered_iterations = 20):
         self._max_activations = max_activations
         self._batch_size = batch_size
-
-        self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
-        self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
-        self.xy_locations = np.ndarray(shape=(self._max_activations + self._batch_size,2), dtype=np.int)
+        self._buffer_size = self._max_activations + (self._batch_size*buffered_iterations)
+        # If is the final iteration reduce the size of activations, images_id and xy_locations to max_activations
+        self._reduce_data = True
+        self.activations = np.zeros(shape=self._buffer_size)
+        self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
+        self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
         self.norm_activations = None
 
         self.selectivity_idx = dict()
@@ -66,9 +68,25 @@ class NeuronData(object):
         self.images_id[self._index:end_idx] = image_ids
         self.xy_locations[self._index:end_idx,:] = xy_locations
         self._index += len(activations)
-        if self._index >= self._max_activations + self._batch_size:
-            self.sort()
-            self._index = self._max_activations
+        if self._index >= self._buffer_size:
+            self._reduce_data = False
+            self.sortResults()
+            self._reduce_data = True
+            #self._index = self._max_activations #Is maded on function
+    def sortResults(self):
+        idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
+        self._index = self._max_activations
+        if self._reduce_data:
+            self.activations = self.activations[idx]
+            self.images_id = self.images_id[idx]
+            self.xy_locations = self.xy_locations[idx,:]
+        else:
+            self.activations[:self._index] = self.activations[idx]
+            self.images_id[:self._index] = self.images_id[idx]
+            self.xy_locations[:self._index,:] = self.xy_locations[idx, :]
+
+
+
     def add_activation(self, activation, image_id, xy_location):
         """Set the information of one activation. When the assigned
          activations reach a certain size, they are ordered.

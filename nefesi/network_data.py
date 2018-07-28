@@ -191,6 +191,8 @@ class NetworkData(object):
             num_images = data_batch.samples
             idx_start = data_batch.batch_index
             idx_end = idx_start + data_batch.batch_size
+            #the min between full size and 16MB by array
+            buffer_size = min(num_images//batch_size, 16777216//(batch_size*np.dtype(np.float).itemsize))
             for n_batches, imgs in enumerate(data_batch):
 
                 images = imgs[0]
@@ -198,9 +200,10 @@ class NetworkData(object):
                 if self.dataset.preprocessing_function is not None:
                     images = self.dataset.preprocessing_function(images)
 
-                file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U150')
+                file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
                 # Search the maximum activations
-                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
+                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size,
+                                           batches_to_buffer=buffer_size)
 
                 if verbose:
                     print("Layer: {layer}, Num batch: {batch},"
@@ -214,6 +217,8 @@ class NetworkData(object):
                 #If the idx of the next last image will overpass the total num of images, ends the analysis
                 if idx_end > num_images:
                     break
+            for neuron in layer.neurons_data:
+                neuron.sortResults()
 
             # Set the number of maximum activations stored in each neuron
             layer.set_max_activations()

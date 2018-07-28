@@ -34,7 +34,7 @@ def get_activations(model, model_inputs, layer_name=None):
 
 
 def get_sorted_activations(file_names, images, model, layer_name,
-                           neurons_data, num_max_activations, batch_size):
+                           neurons_data, num_max_activations, batch_size, batches_to_buffer = 20):
     """Returns the neurons with their maximum activations as the
     inputs (`images`) are processed.
 
@@ -46,6 +46,8 @@ def get_sorted_activations(file_names, images, model, layer_name,
     :param num_max_activations: Integer, number of TOP activations stored
         in each `nefesi.neuron_data:NeuronData` instance.
     :param batch_size: Integer, size of batch.
+    :param batches_to_buffer: quantity of results that are saved in buffer before having sort (the best value will be the total
+    number of batches, but controlling memory (memory used will be 128*3*batchSize bytes)
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
@@ -64,7 +66,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
             # with the `nefesi.neuron_data.NeuronData` instances
             neurons_data = np.zeros(num_filters, dtype=np.object)
             for idx_filter in range(num_filters):
-                neurons_data[idx_filter] = NeuronData(num_max_activations, batch_size)
+                neurons_data[idx_filter] = NeuronData(num_max_activations, batch_size, buffered_iterations=batches_to_buffer)
         if conv_layer:
             unravel_shape = layer_activation.shape[1:-1]
             #the activation map of each image for each filter idx filter, with map reshaped in one dim for optimization
