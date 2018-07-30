@@ -2,7 +2,7 @@ import numpy as np
 from itertools import permutations
 import math
 from .read_activations import get_sorted_activations, get_activations
-from .neuron_feature import compute_nf, get_image_receptive_field
+from .neuron_feature import compute_nf, get_image_receptive_field, get_each_point_receptive_field,find_layer_idx
 from .similarity_index import get_similarity_index
 
 ALL_INDEX_NAMES = ['color', 'orientation', 'symmetry', 'class', 'population code']
@@ -47,7 +47,7 @@ class LayerData(object):
                                                    num_max_activations, batch_size,batches_to_buffer=batches_to_buffer)
 
     def build_neuron_feature(self, network_data):
-        compute_nf(network_data, self, self.neurons_data)
+        compute_nf(network_data, self)
 
     def remove_selectivity_idx(self, idx):
         """Removes de idx selectivity index from the neurons of the layer.
@@ -152,35 +152,30 @@ class LayerData(object):
                 self.similarity_index[a][b] = sim_idx
             return self.similarity_index
 
-    def mapping_rf(self, model, w, h):
+    def mapping_rf(self, model):
         """Maps each position in the map activation with the corresponding
         window from the input image (receptive field window).
         Also calculates the size of this receptive field.
 
         :param model: The `keras.models.Model` instance.
-        :param w: Integer, row position in the map activation.
-        :param h: Integer, column position in the map activation.
+        :raise ValueError: If this layer is apparently non convolutional
         """
+
         if self.receptive_field_map is None:
-            self.receptive_field_map = np.zeros(shape=(w, h),
-                                                dtype=[('x1', 'i4'),
-                                                       ('x2', 'i4'),
-                                                       ('y1', 'i4'),
-                                                       ('y2', 'i4')])
-            for i in range(w):
-                for j in range(h):
-                    ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
-                    # we have to add 1 in row_fin and col_fin due to behaviour
-                    # of Numpy arrays.
-                    self.receptive_field_map[i, j] = (ri, rf + 1, ci, cf + 1)
+            self.receptive_field_map = get_each_point_receptive_field(model, self.layer_id)
 
         # calculate the size of receptive field
         if self.receptive_field_size is None:
-            r = int(w / 2)
-            c = int(h / 2)
-            ri, rf, ci, cf = self.receptive_field_map[r, c]
-            height = rf - ri
-            width = cf - ci
+            layer_idx = find_layer_idx(model, self.layer_id)
+            if len(model.layers[layer_idx].output_shape) == 4:
+                _, w, h, _ = model.layers[layer_idx].output_shape
+            else:
+                raise ValueError("You're trying to get the receptive field of a NON Convolutional layer? --> "+self.layer_id)
+            row = int(w // 2)
+            col = int(h // 2)
+            row_ini, row_fin, col_ini, col_fin = self.receptive_field_map[row, col]
+            height = row_fin - row_ini
+            width = col_fin - col_ini
             self.receptive_field_size = (width, height)
 
     def get_location_from_rf(self, location):

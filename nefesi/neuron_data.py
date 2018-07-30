@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import ImageOps
 import os
+from keras.preprocessing import image
 from .class_index import get_class_selectivity_idx, get_population_code_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
@@ -72,7 +73,7 @@ class NeuronData(object):
             self._reduce_data = False
             self.sortResults()
             self._reduce_data = True
-            #self._index = self._max_activations #Is maded on function
+            #self._index = self._max_activations #Is maded on function (in order to make more consistent on last iteration
     def sortResults(self):
         idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
         self._index = self._max_activations
@@ -143,7 +144,7 @@ class NeuronData(object):
 
         :param network_data: The `nefesi.network_data.NetworkData` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :return: List of PIL image instances.
+        :return: List of numpy images.
         """
         patches = []
         image_dataset = network_data.dataset
@@ -178,7 +179,7 @@ class NeuronData(object):
                     else:
                         bd = rf_size[1] - h
                 p = ImageOps.expand(p, (bl, bu, br, bd))
-            patches.append(p)
+            patches.append(p)#img_to_array(p))
         return patches
 
     def print_params(self):
