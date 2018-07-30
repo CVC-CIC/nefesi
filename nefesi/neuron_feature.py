@@ -22,25 +22,18 @@ def compute_nf(network_data, layer_data):
             # get the receptive fields from a neuron
             patches = neuron.get_patches(network_data, layer_data)
             num_a = len(patches)
-
-            total_act = np.zeros(image.img_to_array(patches[0]).shape)
-            for i in range(num_a):
-                # multiply each receptive field per the normalized
-                # activation of the image to comes from.
-                img = image.img_to_array(patches[i])
-                norm_act = norm_activations[i]
-                total_act = total_act + (img * norm_act)
-
-            # average them with total number of patches (receptive field).
-            nf = total_act / num_a
+            #NeuronFeature (nf) is the weighted mean of all n-top images (weighted each image by his normalized activation)
+            nf = np.mean(patches.reshape(num_a,-1)*norm_activations[:,np.newaxis],axis=0).reshape(patches.shape[1:])
 
             if nf.shape[2] == 3:  # RGB images
                 # maximize the contrast of the NF
                 min_v = np.min(nf.ravel())
                 max_v = np.max(nf.ravel())
-                nf = nf - min_v
-                nf = nf / (max_v - min_v)
-
+                #If max-min not is 0
+                if not np.isclose(min_v, max_v):
+                    nf = nf - min_v
+                    nf = nf / (max_v - min_v)
+            #save as PIL image
             neuron.neuron_feature = image.array_to_img(nf)
         else:
             # if `norm_activations` from a neuron is None, that means this neuron

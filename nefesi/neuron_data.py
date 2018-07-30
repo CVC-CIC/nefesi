@@ -144,43 +144,49 @@ class NeuronData(object):
 
         :param network_data: The `nefesi.network_data.NetworkData` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :return: List of numpy images.
+        :return: Images as numpy .
         """
-        patches = []
         image_dataset = network_data.dataset
         receptive_field = layer_data.receptive_field_map
         rf_size = layer_data.receptive_field_size
+        crop_positions = receptive_field[self.xy_locations[:,0],self.xy_locations[:,1]]
 
-        for i in range(self._max_activations):
-            img = self.images_id[i]
-            loc = self.xy_locations[i]
-
-            # get the location of the receptive field
-            crop_pos = receptive_field[loc[0], loc[1]]
+        #First iteration of for, maded first in order to set the output array size
+        patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
+        if rf_size != patch.size:
+            patch = self._adjust_patch_size(patch, crop_positions[0], rf_size)
+        patch = image.img_to_array(patch)
+        patches = np.zeros(shape = (self._max_activations,)+patch.shape)
+        patches[0] = patch
+        for i in range(1, self._max_activations):
+            crop_pos = crop_positions[i]
             # crop the origin image with previous location
-            p = image_dataset.get_patch(img, crop_pos)
+            patch = image_dataset.get_patch(self.images_id[i], crop_pos)
 
             # add a black padding to a patch that not match with the receptive
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
-            if rf_size != p.size:
-                w, h = p.size
-                ri, rf, ci, cf = crop_pos
-                bl, bu, br, bd = (0, 0, 0, 0)
-                if rf_size[0] != w:
-                    if ci == 0:
-                        bl = rf_size[0] - w
-                    else:
-                        bl = rf_size[0] - w
-                if rf_size[1] != h:
-                    if ri == 0:
-                        bu = rf_size[1] - h
-                    else:
-                        bd = rf_size[1] - h
-                p = ImageOps.expand(p, (bl, bu, br, bd))
-            patches.append(p)#img_to_array(p))
+            if rf_size != patch.size:
+                patch = self._adjust_patch_size(patch,crop_pos, rf_size)
+            patches[i] = image.img_to_array(patch)
         return patches
+
+    def _adjust_patch_size(self, patch, crop_position, rf_size):
+        w, h = patch.size
+        ri, rf, ci, cf = crop_position
+        bl, bu, br, bd = (0, 0, 0, 0)
+        if rf_size[0] != w:
+            if ci == 0:
+                bl = rf_size[0] - w
+            else:
+                bl = rf_size[0] - w
+        if rf_size[1] != h:
+            if ri == 0:
+                bu = rf_size[1] - h
+            else:
+                bd = rf_size[1] - h
+        return ImageOps.expand(patch, (bl, bu, br, bd))
 
     def print_params(self):
         """Returns a string with some information about this neuron.
