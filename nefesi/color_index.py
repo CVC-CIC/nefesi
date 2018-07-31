@@ -24,7 +24,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='i
 
     if max_rgb_activation != 0.0:
         images = dataset.load_images(image_names, prep_function=False)
-        idx_neuron = layer_data.neurons_data.index(neuron_data)
+        idx_neuron = np.where(layer_data.neurons_data == neuron_data)[0][0]
 
         images_gray = np.ndarray(shape=images.shape, dtype=images.dtype)
         for i in range(len(images)):

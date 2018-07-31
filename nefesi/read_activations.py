@@ -1,5 +1,5 @@
 import numpy as np
-
+import warnings
 import keras.backend as K
 from .neuron_data import NeuronData
 
@@ -31,6 +31,35 @@ def get_activations(model, model_inputs, layer_name=None):
     layer_outputs = [func([model_inputs, 1])[0] for func in funcs]
 
     return layer_outputs
+
+def get_one_neuron_activations(model, model_inputs, idx_neuron, layer_name=None):
+    """Returns the output (activations) from the model.
+
+    :param model: The `keras.models.Model` instance.
+    :param model_inputs: List of inputs, the inputs expected by the network.
+    :param layer_name: String, name of the layer from which get the outputs.
+        If its None, returns the outputs from all the layers in the model.
+
+    :return: List of activations, one output for each given layer.
+    """
+    inp = model.input
+    if type(inp) is not list:
+        inp = [inp]
+
+    # uses .get_output_at() instead of .output. In case a layer is
+    # connected to multiple inputs. Assumes the input at node index=0
+    # is the input where the model inputs come from.
+    outputs = [layer.get_output_at(0)[...,idx_neuron] for layer in model.layers if
+               layer.name == layer_name or layer_name is None]
+
+    # evaluation functions
+    funcs = [K.function(inp + [K.learning_phase()], [out]) for out in outputs]
+
+    # K.learning_phase flag = 1 (train mode)
+    layer_outputs = [func([model_inputs, 1])[0] for func in funcs]
+    if len(layer_outputs) > 1:
+        warnings.warn("Layer outputs is a list of more than one element? REVIEW THIS CODE SECTION!",RuntimeWarning)
+    return layer_outputs[0]
 
 
 def get_sorted_activations(file_names, images, model, layer_name,
@@ -99,7 +128,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
 
 
 def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
-    """Returns the activations of a neuron, given a location (`pos`)
+    """Returns the activations of a neuron, given a location ('pos')
      on the activation map for each input (`images`).
 
     :param images: List of inputs, the inputs expected by the network.
@@ -107,21 +136,10 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
     :param layer_name: String, name of the layer from which get the outputs.
     :param idx_neuron: Integer, index of the neuron from which get
         the activation.
-    :param pos: Tuple of integers, location in the activation map.
+    :param pos: numpy of integers, location in the activation map.
 
     :return: List of floats, activation values for each input in `images`.
     """
-    #REVIEW THIS FUNCTION, it's necessary to CALC ALL activations to only one neuron?
-    activations = get_activations(model, images, print_shape_only=False, layer_name=layer_name)
-
-    new_activations = None
-    for layer_activation in activations:
-        num_images, _, _, num_filters = layer_activation.shape
-
-        new_activations = np.zeros(num_images)
-        for j in range(num_images):
-            # for each input in `images`, get the activation value in `pos`
-            x, y = pos[j]
-            f = layer_activation[j, x, y, idx_neuron]
-            new_activations[j] = f
-    return new_activations
+    activations = get_one_neuron_activations(model, images,idx_neuron=idx_neuron, layer_name=layer_name)
+    # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
+    return activations[range(len(activations)),pos[:,0],pos[:,1]]

@@ -20,10 +20,10 @@ def main():
 	#example3NefesiInstance()
 	#example4FullFillNefesiInstance()
 	start = time.time()
-	example5NetworkEvaluation()
+	#example5NetworkEvaluation()
 	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
-	#example7AnalyzingResults()
+	example7AnalyzingResults()
 
 """
 Analyze the results of the evaluation
@@ -38,9 +38,9 @@ def example7AnalyzingResults():
 	start = time.time()
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
-	classSelectivity(nefesiModel)
+	#classSelectivity(nefesiModel)
 	#orientationSelectivity(nefesiModel)
-	#populationCode(nefesiModel)
+	populationCode(nefesiModel)
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
@@ -68,7 +68,7 @@ def orientationSelectivity(nefesiModel):
 	"""
 	#Let's evaluate first layer (64 neurons)
 	layersToEvaluate = 'block1_conv1'
-	print("Let's Evaluate the class selectivity index of layers: "+
+	print("Let's Evaluate the orientation selectivity index of layers: "+
 		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate))+ " (This operation will take minutes).")
 	#degrees_orientation_idx 180 will be only one rotation
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="orientation", layer_name=layersToEvaluate, degrees_orientation_idx=180)

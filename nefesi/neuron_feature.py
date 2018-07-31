@@ -5,7 +5,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import _Pooling2D
 
 
-def compute_nf(network_data, layer_data):
+def compute_nf(network_data, layer_data, maximize_contrast = True):
     """This function build the neuron features (NF) for all neurons
     in `filters`.
 
@@ -21,18 +21,18 @@ def compute_nf(network_data, layer_data):
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron
             patches = neuron.get_patches(network_data, layer_data)
-            num_a = len(patches)
             #NeuronFeature (nf) is the weighted mean of all n-top images (weighted each image by his normalized activation)
-            nf = np.mean(patches.reshape(num_a,-1)*norm_activations[:,np.newaxis],axis=0).reshape(patches.shape[1:])
+            nf = np.sum(patches.reshape(patches.shape[0],-1)*(norm_activations/np.sum(norm_activations))[:,np.newaxis],axis=0).\
+                reshape(patches.shape[1:])
 
-            if nf.shape[2] == 3:  # RGB images
+            if nf.shape[2] == 3 and maximize_contrast:  # RGB images
                 # maximize the contrast of the NF
                 min_v = np.min(nf.ravel())
                 max_v = np.max(nf.ravel())
                 #If max-min not is 0
                 if not np.isclose(min_v, max_v):
-                    nf = nf - min_v
-                    nf = nf / (max_v - min_v)
+                    nf -= min_v
+                    nf /= (max_v - min_v)
             #save as PIL image
             neuron.neuron_feature = image.array_to_img(nf)
         else:

@@ -306,10 +306,6 @@ class NeuronData(object):
         if population_code_idx is not None:
             return population_code_idx
 
-        if type(labels) is not dict:
-            raise TypeError("The `labels` argument should be "
-                            "a dictionary")
-
         population_code_idx = get_population_code_idx(self, labels, threshold)
         self.selectivity_idx['population code'] = population_code_idx
         return population_code_idx

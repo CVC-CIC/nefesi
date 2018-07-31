@@ -179,27 +179,19 @@ def rgb2opp(img):
     :raise:
         ValueError: If invalid `img` is passed.
     """
+    if len(img.shape) not in [3,4]:
+        raise ValueError("Unsupported image object shape: {}. Only 3 or 4 dimensions images accepted", img.shape)
     if img.shape[-1] != 3:
         raise ValueError("Unsupported image shape: {}.", img.shape)
 
     opp = np.zeros(shape=img.shape, dtype=np.float)
     x = img / 255.
-    if len(img.shape) == 3:
-        R = x[:, :, 0]
-        G = x[:, :, 1]
-        B = x[:, :, 2]
-        opp[:, :, 0] = (R + G + B - 1.5) / 1.5
-        opp[:, :, 1] = (R - G)
-        opp[:, :, 2] = (R + G - 2 * B) / 2
-    elif len(img.shape) == 4:
-        R = x[:, :, :, 0]
-        G = x[:, :, :, 1]
-        B = x[:, :, :, 2]
-        opp[:, :, :, 0] = (R + G + B - 1.5) / 1.5
-        opp[:, :, :, 1] = (R - G)
-        opp[:, :, :, 2] = (R + G - 2 * B) / 2
-    else:
-        raise ValueError("Unsupported image object shape: {}. Only 3 or 4 dimensions images accepted", img.shape)
+    R = x[..., 0]
+    G = x[..., 1]
+    B = x[..., 2]
+    opp[..., 0] = (R + G + B - 1.5) / 1.5
+    opp[..., 1] = (R - G)
+    opp[..., 2] = (R + G - 2 * B) / 2
     return opp
 
 
