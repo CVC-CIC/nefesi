@@ -9,10 +9,10 @@ from nefesi.network_data import NetworkData
 from nefesi.util.image import ImageDataset
 import numpy as np
 import time
+from nefesi.util import InterfacePlotting
 #from nefesi.util.plotting import plot_nf_search
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
 
 def main():
@@ -24,8 +24,9 @@ def main():
 	#example5NetworkEvaluation()
 	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
-	example7AnalyzingResults()
-
+	#example7AnalyzingResults()
+	from nefesi.interface import interface
+	interface.Interface(example6LoadingResults())
 """
 Analyze the results of the evaluation
 """
@@ -39,9 +40,9 @@ def example7AnalyzingResults():
 	start = time.time()
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
-	#classSelectivity(nefesiModel)
+	classSelectivity(nefesiModel)
 	#orientationSelectivity(nefesiModel)
-	populationCode(nefesiModel)
+	#populationCode(nefesiModel)
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
@@ -99,7 +100,7 @@ def classSelectivity(nefesiModel):
 	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
 	print("Let's Evaluate the class selectivity index of layers:"+
 		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)) +" (This operation will take seconds)")
-	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels=labelsDict)
+	InterfacePlotting.get_plot_net_summary_figure("class",nefesiModel)
 	"""
 	The selIdx that is returned for index 'class' has a little different property. It's an heterogeneus array, that contains
 	a for each position a tuple ('label','value'). Cause his content is a tuple you can access in the next forms:
@@ -178,7 +179,7 @@ def colorSelectivity(nefesiModel):
 
 	More info at: https://arxiv.org/abs/1702.00382v1
 	"""
-	layersToEvaluate = ["block1_conv1"]
+	layersToEvaluate = ".*"
 	print("Let's Evaluate the color selectivity index of "+str(len(layersToEvaluate))+" layers: "+str(layersToEvaluate))
 	"""
 	selIdx will be a dictionary that contains per each key in sel_index a list that contains a entrance per each layer
@@ -189,12 +190,8 @@ def colorSelectivity(nefesiModel):
 							-->[list with the color_idx of each neuron in layer "block3_conv1"]
 	"""
 	#Calculate the color index of layer block1_conv1 (this process can take more than a minute)
-	selIdx = nefesiModel.get_selectivity_idx(sel_index="color", layer_name=layersToEvaluate)
-	print("Color selectivity index calculated for each neuron of layer 'block1_conv1'\n"
-		  "Max value of color selectivity encountered in this layer: "+str(np.max(selIdx['color'][0]))+" in neuron: "
-		  ""+str(np.argmax(selIdx['color'][0]))+". \n"
-		  "Neurons with more than 60% of color selectivity: "+str(len(np.where(selIdx['color'][0]>0.6)[0]))+ ". Mean of "
-		  "Color Selectivity in layer 'block1_conv1': "+str(np.mean(selIdx['color'][0]))+".")
+	plotting.plot_sel_idx_summary(nefesiModel.get_selectivity_idx(sel_index="color", layer_name=layersToEvaluate))
+
 
 
 """
@@ -230,7 +227,7 @@ def example5NetworkEvaluation():
 	#user don't set it in .evalNetwork(...) takes by default the values of nefesiModel object
 	print("Let's start to evaluate network. This process is based on dataset and the time that spent is depenent of the "
 		  "size of it. Is recommended to have a visible GPU for this process "
-		  "(os.environ[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
+		  "(os.environment[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
 		  "GO TO EVALUATE! :)")
 	start = time.time()
 	nefesiModel.eval_network(verbose=True)

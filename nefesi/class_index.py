@@ -104,5 +104,12 @@ def _fill_top_labels(neuron_data):
     """
     image_names = neuron_data.images_id
     neuron_data.top_labels = np.zeros(len(image_names), dtype='U64')
+    #Compatibility between Linux/Windows/Mac Os filenames
+    path_sep = os.path.sep
+    if image_names[0].find(os.path.sep) < 0:
+        if os.path.sep == '\\':
+            path_sep = '/'
+        else:
+            path_sep = '\\'
     for i, image_name in enumerate(image_names):
-        neuron_data.top_labels[i] = image_name[:image_name.index(os.path.sep)]
+        neuron_data.top_labels[i] = image_name[:image_name.index(path_sep)]

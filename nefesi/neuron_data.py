@@ -55,6 +55,7 @@ class NeuronData(object):
         self.top_labels = None
         # index used for ordering activations.
         self._index = 0
+
     def add_activations(self,activations, image_ids, xy_locations):
         """Set the information of n activation. When the assigned
 				 activations reach a certain size, they are ordered.
@@ -119,7 +120,7 @@ class NeuronData(object):
     def _normalize_activations(self):
         """Normalize the activations inside `activations`.
         """
-        max_activation = max(self.activations)
+        max_activation = np.max(self.activations)
         if max_activation == 0:
             return -1
         self.norm_activations = self.activations / abs(max_activation)
@@ -282,8 +283,8 @@ class NeuronData(object):
             return class_idx
 
         #Labels always must to be a dictionary
-        if type(labels) is not dict:
-            raise TypeError("The 'labels' argument should be a dictionary")
+        if type(labels) is not dict and labels is not None:
+            raise TypeError("The 'labels' argument should be a dictionary if is specified")
 
         class_idx = get_class_selectivity_idx(self, labels, threshold)
         self.selectivity_idx['class'] = class_idx
