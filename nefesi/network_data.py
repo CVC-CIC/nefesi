@@ -11,6 +11,7 @@ from keras.models import load_model
 from nefesi.layer_data import LayerData
 from nefesi.util.image import ImageDataset
 
+MIN_PROCESS_TIME_TO_OVERWRITE = 20
 
 class NetworkData(object):
     """This is the main class of nefesi package.
@@ -36,8 +37,9 @@ class NetworkData(object):
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None):
         self.model = model
         self.layers_data = layer_data
-        self._save_path = save_path
-        self._dataset = dataset
+        self.save_path = save_path
+        self.dataset = dataset
+        self.save_changes = False
 
     @property
     def layers_data(self):
@@ -87,7 +89,7 @@ class NetworkData(object):
 
     @dataset.setter
     def dataset(self, dataset):
-        if type(dataset) is not ImageDataset:
+        if type(dataset) is not ImageDataset and dataset is not None:
             raise TypeError("Dataset must be an nefesi.util.Image.ImageDataset object "
                             "(https://github.com/CVC-CIC/nefesi/blob/master/nefesi/util/image.py)")
 
@@ -99,14 +101,15 @@ class NetworkData(object):
 
     @save_path.setter
     def save_path(self, save_path):
-        if type(save_path) is not str:
-            raise ValueError("save_path must be a str.")
-        #Ensures that path ends with '/' (To save confusions to user)
-        elif not save_path.endswith('/'):
-            save_path = save_path + '/'
-        #Looks folder exists
-        if not os.path.isdir(save_path):
-            warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
+        if save_path is not None:
+            if type(save_path) is not str:
+                raise ValueError("save_path must be a str.")
+            #Ensures that path ends with '/' (To save confusions to user)
+            elif not save_path.endswith('/'):
+                save_path = save_path + '/'
+            #Looks folder exists
+            if not os.path.isdir(save_path):
+                warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
 
         self._save_path = save_path
 
@@ -276,6 +279,7 @@ class NetworkData(object):
             ValueError: If layer name in `layer_name` doesn't match with any layer
             inside the class property `layers`.
         """
+        start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = dict()
 
         if type(sel_index) is not list:
@@ -301,6 +305,12 @@ class NetworkData(object):
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
                         labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc))
+        if self.save_changes:
+            end_time = time.time()
+            if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
+                #Update only the modelName.obj
+                self.save_to_disk(file_name=None, save_model=False)
+
 
         return sel_idx_dict
 
@@ -603,7 +613,10 @@ class NetworkData(object):
         :return: The `nefesi.network_data.NetworkData` instance.
         """
         my_net = pickle.load(open(file_name, 'rb'))
-
+        """
+        TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
+        obj's with news implementations of network_data that can have more attributes
+        """
         if model_file is not None:
             my_net.model = load_model(model_file)
         if my_net.model is None:

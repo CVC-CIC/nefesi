@@ -5,7 +5,7 @@ from keras.preprocessing import image
 from .class_index import get_class_selectivity_idx, get_population_code_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
-from .symmetry_index import get_symmetry_index
+from .symmetry_index import get_symmetry_index, SYMMETRY_AXES
 
 
 class NeuronData(object):
@@ -240,13 +240,14 @@ class NeuronData(object):
 
         :return: List of floats, values of orientation selectivity index.
         """
-        orientation_idx = self.selectivity_idx.get('orientation')
+        key = 'orientation'+str(int(degrees_to_rotate))
+        orientation_idx = self.selectivity_idx.get(key)
         if orientation_idx is not None:
             return orientation_idx
 
         orientation_idx = get_orientation_index(self, model,
                                                 layer_data, dataset,degrees_to_rotate = degrees_to_rotate)
-        self.selectivity_idx['orientation'] = orientation_idx
+        self.selectivity_idx[key] = orientation_idx
         return orientation_idx
 
     def symmetry_selectivity_idx(self, model, layer_data, dataset):
@@ -258,12 +259,13 @@ class NeuronData(object):
 
         :return: List of floats, values of symmetry selectivity index.
         """
-        symmetry_idx = self.selectivity_idx.get('symmetry')
+        key= 'symmetry'+str(SYMMETRY_AXES)
+        symmetry_idx = self.selectivity_idx.get(key)
         if symmetry_idx is not None:
             return symmetry_idx
 
         symmetry_idx = get_symmetry_index(self, model, layer_data, dataset)
-        self.selectivity_idx['symmetry'] = symmetry_idx
+        self.selectivity_idx[key] = symmetry_idx
         return symmetry_idx
 
     def class_selectivity_idx(self, labels=None, threshold=1.):
@@ -303,10 +305,12 @@ class NeuronData(object):
         :raise:
             TypeError: If `labels` is None or not a dictionary.
         """
-        population_code_idx = self.selectivity_idx.get('population code')
+        key = 'population code'+str(round(threshold,2))
+        population_code_idx = self.selectivity_idx.get(key)
         if population_code_idx is not None:
             return population_code_idx
 
         population_code_idx = get_population_code_idx(self, labels, threshold)
-        self.selectivity_idx['population code'] = population_code_idx
+
+        self.selectivity_idx[key] = population_code_idx
         return population_code_idx

@@ -4,7 +4,7 @@ import numpy as np
 
 SYMMETRY_AXES = [0, 45, 90, 135]
 
-def get_symmetry_index(neuron_data, model, layer_data, dataset):
+def get_symmetry_index(neuron_data, model, layer_data, dataset, symm_axes=SYMMETRY_AXES):
     """Returns the symmetry selectivity index.
     This index is a list with four types of mirroring the image,
     having a previous rotation of 0, 45, 90 and 135 degrees.
@@ -14,10 +14,9 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
     :param model: The `keras.models.Model` instance.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
     :param dataset: The `nefesi.util.image.ImageDataset` instance.
-
+    :param symm_axes: List. Symmetry axes to use (by default [0,45,90,135]
     :return: List of floats, index symmetry values.
     """
-    symm_axes = SYMMETRY_AXES
     results = np.zeros(len(symm_axes),dtype=np.float)
     activations = neuron_data.activations
     norm_activations_sum = np.sum(neuron_data.norm_activations)

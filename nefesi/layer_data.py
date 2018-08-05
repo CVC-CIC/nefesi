@@ -7,6 +7,7 @@ from .similarity_index import get_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 ALL_INDEX_NAMES = ['color', 'orientation', 'symmetry', 'class', 'population code']
 
+
 class LayerData(object):
     """This class contains all the information related with the
     layers already evaluated.

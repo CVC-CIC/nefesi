@@ -21,7 +21,7 @@ class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
         self.network_data = network_data
         self.visible_plots_canvas = np.zeros(MAX_PLOTS_VISIBLES_IN_WINDOW,
-                                             dtype=np.dtype([('canvas', np.object), ('used',np.bool),('have_plot',np.bool)]))
+                                             dtype=np.dtype([('canvas', np.object), ('used',np.bool)]))
         #Window element
         self.window = tk.Tk()
         self.window.title(title)
@@ -35,17 +35,17 @@ class Interface():
         self.plots_canvas = Canvas(master=self.window, background='white')
         #RIGHT part with general buttons of interface
         self.general_buttons_frame = Frame(master=self.window, borderwidth=1)
-        self.set_general_buttons_frame('init')
-        #self.general_buttons_frame.bind("<Configure>", self._on_resize_plot_canvas)
+        self.set_general_buttons_frame()
+
         tk.Label(self.general_buttons_frame, text="Place to put texts").pack()
         ttk.Button(self.general_buttons_frame, text="button",style="TButton").pack()
         tk.Label(self.general_info_frame, text="Place to put texts").pack()
         self.state = 'init'
         self.plot_general_index(index='class')
         #self.plot_general_index(index='symmetry')
-        self.plot_general_index(index='class')
-        self.plot_general_index(index='class')
-        self.plot_general_index(index='class')
+        #self.plot_general_index(index='class')
+        #self.plot_general_index(index='class')
+        #self.plot_general_index(index='class')
         #self.plot_general_index(index='orientation')
         self.window.mainloop()
 
@@ -95,7 +95,7 @@ class Interface():
         self._plots_canvas = plots_canvas
         #In order to make the plots resizables on resize window
         self.addapt_widget_for_grid(self._plots_canvas)
-        self._plots_canvas.pack(side=RIGHT, expand=True,padx=(100,0))
+        self._plots_canvas.pack(side=RIGHT, expand=True,padx=(150,0))
 
     @property
     def general_buttons_frame(self):
@@ -123,18 +123,31 @@ class Interface():
             self.clean_widget(self.plots_canvas)
 
 
-    def set_general_buttons_frame(self,state='init'):
-        #Title just in top of selector
+    def set_general_buttons_frame(self):
+        self.set_save_changes_check_box(master=self.general_buttons_frame)
+        self.graphics_to_show_combo = self.set_grafics_to_show_combobox(master=self.general_buttons_frame)
+
+    def set_save_changes_check_box(self,master):
+        checkbox_value = tk.BooleanVar(master=master)
+        checkbox = ttk.Checkbutton(master=master, text="Save all index updated", variable=checkbox_value,
+                                        command= lambda: self._on_checkbox_clicked(checkbox_value))
+        checkbox.pack()
+
+    def _on_checkbox_clicked(self,checkbox_value):
+        self.network_data.save_changes = checkbox_value.get()
+
+    def set_grafics_to_show_combobox(self, master):
+        # Title just in top of selector
         combo_title = ttk.Label(self.general_buttons_frame, text="Graphics to show")
         combo_title.pack(expand=False)
         # Options will be 1,2,3,4
-        options = [i for i in range(1,MAX_PLOTS_VISIBLES_IN_WINDOW+1)]
+        options = [i for i in range(1, MAX_PLOTS_VISIBLES_IN_WINDOW + 1)]
         combo = ttk.Combobox(master=self.general_buttons_frame, values=options, state='readonly', width=4)
-        #When selection is changed, calls the function _on_number_of_plots_to_show_changed
+        # When selection is changed, calls the function _on_number_of_plots_to_show_changed
         combo.bind("<<ComboboxSelected>>", self._on_number_of_plots_to_show_changed)
         combo.set(options[0])
         combo.pack(expand=False)
-
+        return combo
 
     def clean_widget(self, widget):
         for child in list(widget.children.values()):
@@ -144,7 +157,7 @@ class Interface():
                 self.clean_widget(child)
 
 
-    def plot_general_index(self, index):
+    def plot_general_index(self, index, master_canvas=None, degrees_orientation_idx = 180):
         """
         Plots a general graphic of specified index in the general plots section
         :param index: String representing the index to plot. Needs to be one of prensents in
@@ -152,61 +165,37 @@ class Interface():
         :return:
         """
         figure,hidden_annotations = get_plot_net_summary_figure(index,
-                                             layersToEvaluate='.*',#'block1_conv1',
-                                             degrees_orientation_idx=180,
+                                             layersToEvaluate='block1_conv1',
+                                             degrees_orientation_idx=degrees_orientation_idx,
                                              network_data=self.network_data)
-        self.add_figure_to_frame(figure=figure,hidden_annotations=hidden_annotations)
+        self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations, index=index)
 
-    def add_figure_to_frame(self, figure=None, hidden_annotations=None):
-        first_util_place = np.where(self.visible_plots_canvas['used']==False)[0][0]
-        canvas = Canvas(master=self.plots_canvas)
-        self.addapt_widget_for_grid(canvas)
-        canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
+    def add_figure_to_frame(self,master_canvas=None, figure=None, hidden_annotations=None, index=None):
+        if master_canvas is None:
+            first_util_place = np.where(self.visible_plots_canvas['used'] == False)[0][0]
+            master_canvas = Canvas(master=self.plots_canvas)
+            self.addapt_widget_for_grid(master_canvas)
+            master_canvas.configure(width=800, height=450)
+            master_canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
+            self.visible_plots_canvas[first_util_place] = (master_canvas, True)
         if figure is not None:
-            plot_canvas = FigureCanvasTkAgg(figure, master=canvas)
-            if hidden_annotations is not None:
-                plot_canvas.mpl_connect('motion_notify_event', lambda event: self._on_in_bar_hover(event, hidden_annotations))
-            self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
-            plot_canvas.get_tk_widget().configure(width=800, height=450)
-            #plot_canvas.draw()
-            plot_canvas.get_tk_widget().grid(row=1,sticky=SW)
+            self.put_figure_plot(master=master_canvas, figure=figure, hidden_annotations=hidden_annotations)
 
-        selector = self.get_index_button_general(canvas)
+        selector = self.get_index_button_general(master_canvas,default_index=index)
         selector.place(relx=0.25,rely=0)#grid(row=0,column=0, columnspan=2)
-        erase_button = self.get_erase_plot_button(master=canvas)
+        erase_button = self.get_erase_plot_button(master=master_canvas)
         erase_button.place(relx=0.85,rely=0)#((row=0,column=3)
 
-        if figure is None:
-            self.visible_plots_canvas[first_util_place] = (canvas, True,False)
-        else:
-            self.visible_plots_canvas[first_util_place] = (canvas, True, True)
+    def put_figure_plot(self, master, figure, hidden_annotations):
+        plot_canvas = FigureCanvasTkAgg(figure, master=master)
+        if hidden_annotations is not None:
+            plot_canvas.mpl_connect('motion_notify_event',
+                                    lambda event: self._on_in_bar_hover(event, hidden_annotations))
+        self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
+        plot_canvas.get_tk_widget().configure(width=800, height=450)
+        # plot_canvas.draw()
+        plot_canvas.get_tk_widget().grid(row=1, sticky=SW)
 
-    def _on_in_bar_hover(self, event, hidden_annotations):
-        if event.inaxes is not None:
-            x, y = event.xdata, event.ydata
-            for annotation, x0, x1, y0, y1 in hidden_annotations:
-                if x0 < x < x1 and y0 < y < y1:
-                    if not annotation.get_visible():
-                        annotation.set_visible(True)
-                        annotation.figure.canvas.draw()
-                else:
-                    if annotation.get_visible():
-                        annotation.set_visible(False)
-                        annotation.figure.canvas.draw()
-        else:
-            for annotation in hidden_annotations['annotation']:
-                if annotation.get_visible():
-                    annotation.set_visible(False)
-                    annotation.figure.canvas.draw()
-
-    """
-    def _on_resize_plot_canvas(self,event):
-        print("HOLIS")
-        w,h = max(self.plots_frame.winfo_width()-100,50), max(self.plots_frame.winfo_height()-100,50)
-        plots_widget = event.widget.children['!canvas'].children['!canvas']
-        plots_widget.configure(width=w, height=h)
-        print("HOLIS")
-    """
     def addapt_widget_for_grid(self, widget):
         for i in range(3):
             Grid.columnconfigure(widget, i, weight=1)
@@ -238,12 +227,33 @@ class Interface():
     def destroy_plot_canvas(self, plot_canvas):
         self.clean_widget(plot_canvas)
         pos = np.where(self.visible_plots_canvas['canvas'] == plot_canvas)[0][0]
-        self.visible_plots_canvas[pos] = (None, False, False)
+        self.visible_plots_canvas[pos] = (None, False)
         plot_canvas.destroy()
+
+
+    def _on_in_bar_hover(self, event, hidden_annotations):
+        if event.inaxes is not None:
+            x, y = event.xdata, event.ydata
+            for annotation, x0, x1, y0, y1 in hidden_annotations:
+                if x0 < x < x1 and y0 < y < y1:
+                    if not annotation.get_visible():
+                        annotation.set_visible(True)
+                        annotation.figure.canvas.draw()
+                else:
+                    if annotation.get_visible():
+                        annotation.set_visible(False)
+                        annotation.figure.canvas.draw()
+        else:
+            for annotation in hidden_annotations['annotation']:
+                if annotation.get_visible():
+                    annotation.set_visible(False)
+                    annotation.figure.canvas.draw()
+
 
     def _on_click_destroy_subplot(self, event):
         #Is the master of the button (the canvas that have button,selector and plot)
         self.destroy_plot_canvas(plot_canvas=event.widget.master)
+        self.graphics_to_show_combo.set(np.count_nonzero(self.visible_plots_canvas['used']))
 
     def _on_general_plot_selector_changed(self,event):
         """
@@ -257,10 +267,12 @@ class Interface():
             rotation_degrees = self.get_value_from_popup(index='Orientation', text='Set degrees of each rotation\n'
                                                                                 '(only values in range [1,359] allowed).\n'
                                                                             'NOTE: Lower values will increment processing time')
-        oldplot = master.children['!canvas']
-        self.clean_widget(oldplot)
-        oldplot.destroy()
-        print ("Change selector event. Acaba esto ya")
+        if '!canvas' in master.children:
+            oldplot = master.children['!canvas']
+            self.clean_widget(widget=oldplot)
+            oldplot.destroy()
+        self.plot_general_index(index=selected, master_canvas=master,degrees_orientation_idx=rotation_degrees)
+
 
     def _on_number_of_plots_to_show_changed(self, event):
         """
@@ -285,7 +297,7 @@ class Interface():
             idx = [i for i in range(len(self.visible_plots_canvas))]
             valids_idx, non_valids = idx[:selected], idx[selected:]
             self.visible_plots_canvas[valids_idx] = self.visible_plots_canvas[plots_in_use_idx]
-            self.visible_plots_canvas[non_valids] = (None, False, False)
+            self.visible_plots_canvas[non_valids] = (None, False)
             # Readjust in screen too
             for i, canvas in enumerate(self.visible_plots_canvas['canvas'][valids_idx]):
                 canvas.grid(column=i % 2, row=(i // 2) + 1, sticky=SW)

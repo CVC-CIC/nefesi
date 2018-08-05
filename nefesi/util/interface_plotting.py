@@ -169,7 +169,7 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
         title += ' (' + str(degrees_orientation_idx) + 'º by rotation)'
     subplot.set_title(title, fontdict={'size': 12, 'weight': 'bold'})
 
-    subplot.figure.legend(different_bars['bar'][different_bars['used']], different_bars['label'][different_bars['used']],
+    subplot.figure.legend(different_bars['bar'][different_bars['used']][::-1], different_bars['label'][different_bars['used']][::-1],
                   bbox_to_anchor=(1, 0.85), loc="upper right", title='Selectivity Range')
     if index == 'orientation' or index == 'symmetry':
         appendix = '* σ\' is the mean of std beetween the specific index of each rotation'
@@ -177,26 +177,9 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
 
 
 def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
-    counts, bins = np.histogram(layer_idx[:,-1], bins=bins, range=(0., 1.001))
-    freq_percent = (counts / len(layer_idx[:,-1])) * 100
-    y_offset = 0
-    for i in range(len(freq_percent)):
-        if not np.isclose(freq_percent[i], 0.):
-            bar = subplot.bar(layer_pos, freq_percent[i], bottom=y_offset, width=0.45, color=colors[i])
-            if freq_percent[i] > 15:
-                digits_to_print = len(str(counts[i]))
-                x_offset = (font_size * (digits_to_print - 1) / (100 * digits_to_print))
-                subplot.text(layer_pos - x_offset, y_offset + (freq_percent[i] / 2) - (font_size / 10),
-                             str(counts[i]), fontdict={'size': font_size, 'weight': 'bold'})
-            y_offset += freq_percent[i]
-            # if is the first bar of this bin encountered
-            if not different_bars[i][2]:
-                different_bars[i][0] = bar
-                different_bars[i][1] = str(int(bins[i] * 100)) + '% - ' + str(int(bins[i + 1] * 100)) + '%'
-                different_bars[i][2] = True
-
-    mean_selectivity = np.mean(layer_idx[:,-1])
-    std_selectivity = np.std(layer_idx[:,-1])
+    layer_idx_values = layer_idx[:,-1]
+    last_bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
+                                                                         layer_idx_values, layer_pos, subplot)
     mean_std_between_axys = np.mean(np.std(layer_idx[:,:-1], axis=0))
     each_axis_mean = np.round(a=np.mean(layer_idx[:,:-1],axis=0)*100,decimals=1)
     each_axis_std = np.round(a=np.std(layer_idx[:,:-1],axis=0)*100,decimals=1)
@@ -207,14 +190,37 @@ def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, b
         '   μ=' + str(each_axis_mean[axis_idx]) + ' σ=' + str(each_axis_std[axis_idx]) + '\n'
 
     hidden_annotations = get_annotation_for_event(subplot=subplot, different_bars=different_bars, layer_pos=layer_pos,
-                                                  actual_bar=bar,text=text_of_annotation)
+                                                  actual_bar=last_bar,text=text_of_annotation, y_pos=90-15*len(SYMMETRY_AXES))
     return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_axys * 100, 1), \
            hidden_annotations
 
-
 def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
-    counts, bins = np.histogram(layer_idx[:,-1], bins=bins, range=(0., 1.))
-    freq_percent = (counts / len(layer_idx[:,-1])) * 100
+    layer_idx_values = layer_idx[:, -1]
+    last_bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
+                                                                         layer_idx_values, layer_pos, subplot)
+    mean_std_between_rotations = np.mean(np.std(layer_idx[:,:-1], axis=0))
+
+    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
+                                                 actual_bar = last_bar, text="INFORMACION ADICIONAL")
+
+    return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_rotations * 100, 1),\
+           hidden_annotation
+
+
+def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12, figure=None):
+    layer_idx_values = layer_idx['value']
+    bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
+                                                                         layer_idx_values, layer_pos, subplot)
+    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
+                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL")
+
+    return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
+
+
+
+def plot_bars_in_general_figure(bins, colors, different_bars, font_size, layer_idx_values, layer_pos, subplot):
+    counts, bins = np.histogram(layer_idx_values, bins=bins, range=(0., 1.001))
+    freq_percent = (counts / len(layer_idx_values)) * 100
     y_offset = 0
     for i in range(len(freq_percent)):
         if not np.isclose(freq_percent[i], 0.):
@@ -230,48 +236,15 @@ def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars
                 different_bars[i][0] = bar
                 different_bars[i][1] = str(int(bins[i] * 100)) + '% - ' + str(int(bins[i + 1] * 100)) + '%'
                 different_bars[i][2] = True
-    mean_selectivity = np.mean(layer_idx[:,-1])
-    std_selectivity = np.std(layer_idx[:,-1])
-    mean_std_between_rotations = np.mean(np.std(layer_idx[:,:-1], axis=0))
-
-    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="INFORMACION ADICIONAL")
-
-    return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_rotations * 100, 1),\
-           hidden_annotation
+    mean_selectivity = np.mean(layer_idx_values)
+    std_selectivity = np.std(layer_idx_values)
+    return bar, mean_selectivity, std_selectivity
 
 
-def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12, figure=None):
-    layer_idx['value'] = np.clip(a=layer_idx['value'],a_min=0.,a_max=1.)
-    counts, bins = np.histogram(layer_idx['value'], bins=bins, range=(0., 1.))
-    freq_percent = (counts/len(layer_idx['value']))*100
-    y_offset=0
-    for i in range(len(freq_percent)):
-        if not np.isclose(freq_percent[i],0.):
-            bar = subplot.bar(layer_pos, freq_percent[i], bottom=y_offset, width=0.45, color=colors[i])
-            if freq_percent[i]>15:
-                digits_to_print = len(str(counts[i]))
-                x_offset = (font_size*(digits_to_print-1)/(100*digits_to_print))
-                subplot.text(layer_pos-x_offset, y_offset+(freq_percent[i]/2)-(font_size/10),
-                             str(counts[i]),fontdict={'size':font_size, 'weight':'bold'})
-            y_offset += freq_percent[i]
-            #if is the first bar of this bin encountered
-            if not different_bars[i][2]:
-                different_bars[i][0] =  bar
-                different_bars[i][1] = str(int(bins[i]*100)) + '% - ' + str(int(bins[i + 1]*100))+'%'
-                different_bars[i][2] = True
 
-    mean_selectivity = np.mean(layer_idx['value'])
-    std_selectivity = np.std(layer_idx['value'])
-    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL")
-
-    return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
-
-
-def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text):
+def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text, y_pos=70):
     annotation = subplot.annotate(text, xy=(layer_pos, 0),
-                                  xytext=(layer_pos, 70),
+                                  xytext=(layer_pos, y_pos),
                                   bbox=dict(boxstyle="round", fc="w"))
     annotation.set_visible(False)
     actual_bar = actual_bar[0]
