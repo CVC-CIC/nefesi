@@ -4,7 +4,7 @@ import math
 from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_image_receptive_field, get_each_point_receptive_field,find_layer_idx
 from .similarity_index import get_similarity_index
-
+from .symmetry_index import SYMMETRY_AXES
 ALL_INDEX_NAMES = ['color', 'orientation', 'symmetry', 'class', 'population code']
 
 class LayerData(object):
@@ -94,7 +94,7 @@ class LayerData(object):
             sel_idx[:, -1] = np.mean(sel_idx[:,0:-1],axis=1)
         elif index_name.lower() == 'symmetry':
             #array of size (len(self.neurons_data) x 5), 5 is the size of [0 deg., 45 deg., 90 deg., 135 deg., mean]
-            sel_idx = np.zeros((len(self.neurons_data), 5), dtype=np.float)
+            sel_idx = np.zeros((len(self.neurons_data), len(SYMMETRY_AXES)+1), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 sel_idx[i,:-1] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
             #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency

@@ -9,7 +9,7 @@ except ImportError:
 orientation_idx_range = (1,359)
 
 class PopupWindow(object):
-    def __init__(self, master, text='Set the value',index='' ):
+    def __init__(self, master, text='Set the value',index='', default_entry=180 ):
         self.value = -1 #Returned value if user clicks on X
         self.top=Toplevel(master)
         self.top.title(index + ' Selectivity')
@@ -20,7 +20,7 @@ class PopupWindow(object):
             self.validate_command = (master.register(self._on_entry_updated_check_orientation_index_float),
                                      '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         self.value_entry=Entry(self.top, validate ='key', validatecommand=self.validate_command,
-                               textvariable=StringVar(master=self.top,value=180))
+                               textvariable=StringVar(master=self.top,value=default_entry))
         self.value_entry.pack()
         self.ok_button.pack()
     def cleanup(self):
@@ -33,7 +33,7 @@ class PopupWindow(object):
         is_valid = False
         # action=1 -> insert
         if(action=='1'):
-            if text in '-+0123456789.':
+            if text in '+0123456789.':
                 try:
                     #if new value is valid float
                     value = float(value_if_allowed)

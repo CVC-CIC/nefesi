@@ -11,8 +11,8 @@ import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from nefesi.layer_data import ALL_INDEX_NAMES
-from nefesi.util.InterfacePlotting import get_plot_net_summary_figure
-from .popup_window import PopupWindow
+from nefesi.util.interface_plotting import get_plot_net_summary_figure
+from nefesi.interface.popup_window import PopupWindow
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -42,9 +42,11 @@ class Interface():
         tk.Label(self.general_info_frame, text="Place to put texts").pack()
         self.state = 'init'
         self.plot_general_index(index='class')
+        #self.plot_general_index(index='symmetry')
         self.plot_general_index(index='class')
         self.plot_general_index(index='class')
         self.plot_general_index(index='class')
+        #self.plot_general_index(index='orientation')
         self.window.mainloop()
 
     @property
@@ -149,17 +151,23 @@ class Interface():
          nefesi.layer_data.ALL_INDEX_NAMES ('color', 'orientation', 'symmetry', 'class' or 'population code')
         :return:
         """
-        self.add_figure_to_frame(figure=get_plot_net_summary_figure('class', self.network_data))
+        figure,hidden_annotations = get_plot_net_summary_figure(index,
+                                             layersToEvaluate='.*',#'block1_conv1',
+                                             degrees_orientation_idx=180,
+                                             network_data=self.network_data)
+        self.add_figure_to_frame(figure=figure,hidden_annotations=hidden_annotations)
 
-    def add_figure_to_frame(self, figure=None):
+    def add_figure_to_frame(self, figure=None, hidden_annotations=None):
         first_util_place = np.where(self.visible_plots_canvas['used']==False)[0][0]
         canvas = Canvas(master=self.plots_canvas)
         self.addapt_widget_for_grid(canvas)
         canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
         if figure is not None:
             plot_canvas = FigureCanvasTkAgg(figure, master=canvas)
+            if hidden_annotations is not None:
+                plot_canvas.mpl_connect('motion_notify_event', lambda event: self._on_in_bar_hover(event, hidden_annotations))
             self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
-            plot_canvas.get_tk_widget().configure(width=600, height=375)
+            plot_canvas.get_tk_widget().configure(width=800, height=450)
             #plot_canvas.draw()
             plot_canvas.get_tk_widget().grid(row=1,sticky=SW)
 
@@ -172,6 +180,24 @@ class Interface():
             self.visible_plots_canvas[first_util_place] = (canvas, True,False)
         else:
             self.visible_plots_canvas[first_util_place] = (canvas, True, True)
+
+    def _on_in_bar_hover(self, event, hidden_annotations):
+        if event.inaxes is not None:
+            x, y = event.xdata, event.ydata
+            for annotation, x0, x1, y0, y1 in hidden_annotations:
+                if x0 < x < x1 and y0 < y < y1:
+                    if not annotation.get_visible():
+                        annotation.set_visible(True)
+                        annotation.figure.canvas.draw()
+                else:
+                    if annotation.get_visible():
+                        annotation.set_visible(False)
+                        annotation.figure.canvas.draw()
+        else:
+            for annotation in hidden_annotations['annotation']:
+                if annotation.get_visible():
+                    annotation.set_visible(False)
+                    annotation.figure.canvas.draw()
 
     """
     def _on_resize_plot_canvas(self,event):

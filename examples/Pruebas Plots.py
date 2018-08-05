@@ -9,7 +9,7 @@ from nefesi.network_data import NetworkData
 from nefesi.util.image import ImageDataset
 import numpy as np
 import time
-from nefesi.util import InterfacePlotting
+from nefesi.util import interface_plotting
 #from nefesi.util.plotting import plot_nf_search
 
 import os
@@ -100,7 +100,7 @@ def classSelectivity(nefesiModel):
 	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
 	print("Let's Evaluate the class selectivity index of layers:"+
 		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)) +" (This operation will take seconds)")
-	InterfacePlotting.get_plot_net_summary_figure("class",nefesiModel)
+	interface_plotting.get_plot_net_summary_figure("class", nefesiModel)
 	"""
 	The selIdx that is returned for index 'class' has a little different property. It's an heterogeneus array, that contains
 	a for each position a tuple ('label','value'). Cause his content is a tuple you can access in the next forms:

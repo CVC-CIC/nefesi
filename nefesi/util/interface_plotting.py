@@ -7,8 +7,11 @@ import math
 from PIL import ImageDraw
 from sklearn.manifold import TSNE
 from matplotlib import gridspec
+from nefesi.symmetry_index import SYMMETRY_AXES
 
-FONTSIZE_BY_LAYERS_NUMBER = [None,30,20,10,8,6]
+FONTSIZE_BY_LAYERS = [None, 15, 12, 10, 8, 6]
+APPENDIX_FONT_SIZE = 6
+
 
 def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
     """Plots a summary over the selectivity indexes from a group of
@@ -74,42 +77,171 @@ def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
         plt.show()
 
 
-def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degrees_orientation_idx=15,
+def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degrees_orientation_idx=45,
                             labels=None, thr_class_idx=1., thr_pc=0.1, bins=10, color_map='jet'):
-
-    sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layersToEvaluate, degrees_orientation_idx=15,
-                                     labels=None, thr_class_idx=1., thr_pc=0.1)[index]
-    figure = Figure(figsize=(8, 6))
-    gs = gridspec.GridSpec(8, 6)
-    subplot = figure.add_subplot(gs[:,:-1])
-    cmap = plt.cm.get_cmap(color_map)
-    colors = [cmap(float(i) / bins) for i in range(bins)]
+    #-------------------------------------------INITIALIZATIONS---------------------------------------
+    index = index.lower()
+    #Set the names of layersToEvaluate (in order to plot it if user used RegEx)
     if type(layersToEvaluate) is not list:
         layersToEvaluate = network_data.get_layers_analyzed_that_match_regEx(layersToEvaluate)
-    if len(layersToEvaluate)>len(FONTSIZE_BY_LAYERS_NUMBER):
-        font_size = FONTSIZE_BY_LAYERS_NUMBER[-1]
-    else:
-        font_size = FONTSIZE_BY_LAYERS_NUMBER[len(layersToEvaluate)]
-    #This array will be filled in function as parameter
+    #Initiate the font_size to looks goods with the quantity of layers to show
+    font_size = FONTSIZE_BY_LAYERS[-1] if len(layersToEvaluate) > len(FONTSIZE_BY_LAYERS) else \
+                FONTSIZE_BY_LAYERS[len(layersToEvaluate)]
+    #Initiate the figure to plot and de color map
+    figure = plt.figure(figsize=(12, 18))
+    subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1,:-2])
+    cmap = plt.cm.get_cmap(color_map)
+    colors = [cmap(float(i) / bins) for i in range(bins)]
+
+    #Initate auxiliar arrays that will be usefull in order to plot more beautiful result
+     #This array will be filled in function as parameter. Used for take count of bars that appears along the chart
     different_bars = np.zeros(bins+1, dtype=np.dtype([('bar',np.object),('label','U64'),('used',np.bool)]))
-    layerLabels= np.zeros(3, dtype='U256')
-    for pos,(layerName, layerIdx) in enumerate(zip(layersToEvaluate,sel_idx)):
+     #The labels of axis X, filled in each iteration with some information
+    x_axis_labels= np.zeros(len(layersToEvaluate), dtype='U128')
+     #The hidden annotations that will appears only when user hover the correspondant bar with the mouse. (Correspondant
+      #bar is the rectangle with edges x0,x1,y0,y1)
+    hidden_annotations = np.zeros(len(layersToEvaluate),
+            dtype=np.dtype([('annotation',np.object),('x0',np.float),('x1',np.float),('y0',np.float),('y1',np.float)]))
+
+    #-----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
+    sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layersToEvaluate,
+                                               degrees_orientation_idx=degrees_orientation_idx, labels=labels,
+                                               thr_class_idx=1., thr_pc=0.1)[index]
+
+    #------------------------------------------MAKE PLOTS-------------------------------------------------------
+    for pos,(layer_name, sel_idx_of_layer) in enumerate(zip(layersToEvaluate,sel_idx)):
         if index == 'class':
-            mean, std = class_layer_bars(layerIdx,pos,subplot,colors,different_bars,font_size=font_size)
-            layerLabels[pos] = layerName +" \n" \
-                                          "μ="+str(mean)+" σ="+str(std)
-    subplot.set_xticks(range(len(layerLabels)))
-    subplot.set_xticklabels(layerLabels,fontsize=font_size)
+            mean, std, hidden_annotations[pos] = class_layer_bars(sel_idx_of_layer,pos,subplot,colors,different_bars,
+                                                                    font_size=font_size+2)
+            x_axis_labels[pos] = layer_name + " \n" \
+                                           "μ=" + str(mean) + " σ=" + str(std)
+        elif index == 'orientation':
+            mean, std, mean_std_between_rotations,hidden_annotations[pos] = \
+                orientation_layer_bars(sel_idx_of_layer, pos, subplot, colors, different_bars, font_size=font_size+2)
+            if len(layersToEvaluate)>2:
+                x_axis_labels[pos] = layer_name + "\n" \
+                                           "μ=" + str(mean) + " σ=" + str(std)+"\n" \
+                                            "(σ'=" +str(mean_std_between_rotations)+")*"
+            else:
+                x_axis_labels[pos] = layer_name + "\n" \
+                    "μ=" + str(mean) + " σ=" + str(std) + " (σ'=" + str(mean_std_between_rotations) + ")*"
+        elif index == 'symmetry':
+            mean, std, mean_std_between_axys,hidden_annotations[pos] = \
+                symmetry_layer_bars(sel_idx_of_layer, pos, subplot, colors,different_bars, font_size=font_size + 2)
+            if len(layersToEvaluate) > 2:
+                x_axis_labels[pos] = layer_name + "\n" \
+                                               "μ=" + str(mean) + " σ=" + str(std) + "\n" \
+                                                "(σ'=" + str(mean_std_between_axys) + ")*"
+            else:
+                x_axis_labels[pos] = layer_name + "\n" \
+                                "μ=" + str(mean) + " σ=" + str(std) + " (σ'=" + str(mean_std_between_axys) + ")*"
+
+    #-------------------------------SET THE PLOT ADDITIONAL INFORMATION--------------------------------------------
+
+    set_aditional_general_plot_information(index, bins, different_bars, subplot,
+                                           x_axis_labels, degrees_orientation_idx, font_size)
+
+    return figure,hidden_annotations
+
+
+def set_aditional_general_plot_information(index, bins, different_bars, subplot,
+                                           x_axis_labels, degrees_orientation_idx=180, font_size=12):
+    """
+    Sets the additional plot information on general plots (Tittles, labels of axis, legend...)
+    :param index: Str, the name of the index that represents
+    :param bins: The number of bins from the histogram
+    :param different_bars: The different_bars auxiliar array with the bars used
+    :param subplot:
+    :param x_axis_labels:
+    :param degrees_orientation_idx:
+    :param font_size:
+    :return:
+    """
+    xticks_fontsize = int(font_size / 1.5) if len(x_axis_labels)>2 and (index=='orientation' or index == 'symmetry') \
+                else font_size
+    subplot.set_xticks(range(len(x_axis_labels)))
+    subplot.set_xticklabels(x_axis_labels, fontsize=xticks_fontsize)
     subplot.set_yticks(range(0, 101, bins))
-    subplot.set_yticklabels([str(i)+'%' for i in range(0, 101, bins)])
+    subplot.set_yticklabels([str(i) + '%' for i in range(0, 101, bins)])
     subplot.set_ylabel('% of Neurons')
-    subplot.set_title(index + ' selectivity',fontdict={'size': 12, 'weight': 'bold' })
-    figure.legend(different_bars['bar'][different_bars['used']], different_bars['label'][different_bars['used']],
+    title = index.title() + ' Selectivity'
+    if index == 'orientation':
+        title += ' (' + str(degrees_orientation_idx) + 'º by rotation)'
+    subplot.set_title(title, fontdict={'size': 12, 'weight': 'bold'})
+
+    subplot.figure.legend(different_bars['bar'][different_bars['used']], different_bars['label'][different_bars['used']],
                   bbox_to_anchor=(1, 0.85), loc="upper right", title='Selectivity Range')
-    return figure
-#TRACTS TO ADD CLICKABLES!
-def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
-    font_size+=2
+    if index == 'orientation' or index == 'symmetry':
+        appendix = '* σ\' is the mean of std beetween the specific index of each rotation'
+        subplot.figure.text(x=0.35, y=0.0025, s=appendix, fontdict={'size': APPENDIX_FONT_SIZE, 'style': 'italic'})
+
+
+def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
+    counts, bins = np.histogram(layer_idx[:,-1], bins=bins, range=(0., 1.001))
+    freq_percent = (counts / len(layer_idx[:,-1])) * 100
+    y_offset = 0
+    for i in range(len(freq_percent)):
+        if not np.isclose(freq_percent[i], 0.):
+            bar = subplot.bar(layer_pos, freq_percent[i], bottom=y_offset, width=0.45, color=colors[i])
+            if freq_percent[i] > 15:
+                digits_to_print = len(str(counts[i]))
+                x_offset = (font_size * (digits_to_print - 1) / (100 * digits_to_print))
+                subplot.text(layer_pos - x_offset, y_offset + (freq_percent[i] / 2) - (font_size / 10),
+                             str(counts[i]), fontdict={'size': font_size, 'weight': 'bold'})
+            y_offset += freq_percent[i]
+            # if is the first bar of this bin encountered
+            if not different_bars[i][2]:
+                different_bars[i][0] = bar
+                different_bars[i][1] = str(int(bins[i] * 100)) + '% - ' + str(int(bins[i + 1] * 100)) + '%'
+                different_bars[i][2] = True
+
+    mean_selectivity = np.mean(layer_idx[:,-1])
+    std_selectivity = np.std(layer_idx[:,-1])
+    mean_std_between_axys = np.mean(np.std(layer_idx[:,:-1], axis=0))
+    each_axis_mean = np.round(a=np.mean(layer_idx[:,:-1],axis=0)*100,decimals=1)
+    each_axis_std = np.round(a=np.std(layer_idx[:,:-1],axis=0)*100,decimals=1)
+
+    text_of_annotation = 'Symmetry Axis:\n'
+    for axis_idx, axis in enumerate(SYMMETRY_AXES):
+        text_of_annotation += '  ' + str(axis) + 'º:\n' \
+        '   μ=' + str(each_axis_mean[axis_idx]) + ' σ=' + str(each_axis_std[axis_idx]) + '\n'
+
+    hidden_annotations = get_annotation_for_event(subplot=subplot, different_bars=different_bars, layer_pos=layer_pos,
+                                                  actual_bar=bar,text=text_of_annotation)
+    return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_axys * 100, 1), \
+           hidden_annotations
+
+
+def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
+    counts, bins = np.histogram(layer_idx[:,-1], bins=bins, range=(0., 1.))
+    freq_percent = (counts / len(layer_idx[:,-1])) * 100
+    y_offset = 0
+    for i in range(len(freq_percent)):
+        if not np.isclose(freq_percent[i], 0.):
+            bar = subplot.bar(layer_pos, freq_percent[i], bottom=y_offset, width=0.45, color=colors[i])
+            if freq_percent[i] > 15:
+                digits_to_print = len(str(counts[i]))
+                x_offset = (font_size * (digits_to_print - 1) / (100 * digits_to_print))
+                subplot.text(layer_pos - x_offset, y_offset + (freq_percent[i] / 2) - (font_size / 10),
+                             str(counts[i]), fontdict={'size': font_size, 'weight': 'bold'})
+            y_offset += freq_percent[i]
+            # if is the first bar of this bin encountered
+            if not different_bars[i][2]:
+                different_bars[i][0] = bar
+                different_bars[i][1] = str(int(bins[i] * 100)) + '% - ' + str(int(bins[i + 1] * 100)) + '%'
+                different_bars[i][2] = True
+    mean_selectivity = np.mean(layer_idx[:,-1])
+    std_selectivity = np.std(layer_idx[:,-1])
+    mean_std_between_rotations = np.mean(np.std(layer_idx[:,:-1], axis=0))
+
+    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
+                                                 actual_bar = bar, text="INFORMACION ADICIONAL")
+
+    return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_rotations * 100, 1),\
+           hidden_annotation
+
+
+def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12, figure=None):
     layer_idx['value'] = np.clip(a=layer_idx['value'],a_min=0.,a_max=1.)
     counts, bins = np.histogram(layer_idx['value'], bins=bins, range=(0., 1.))
     freq_percent = (counts/len(layer_idx['value']))*100
@@ -128,9 +260,25 @@ def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins
                 different_bars[i][0] =  bar
                 different_bars[i][1] = str(int(bins[i]*100)) + '% - ' + str(int(bins[i + 1]*100))+'%'
                 different_bars[i][2] = True
+
     mean_selectivity = np.mean(layer_idx['value'])
     std_selectivity = np.std(layer_idx['value'])
-    return round(mean_selectivity*100,1), round(std_selectivity*100,1)
+    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
+                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL")
+
+    return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
+
+
+def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text):
+    annotation = subplot.annotate(text, xy=(layer_pos, 0),
+                                  xytext=(layer_pos, 70),
+                                  bbox=dict(boxstyle="round", fc="w"))
+    annotation.set_visible(False)
+    actual_bar = actual_bar[0]
+    first_bar = different_bars['bar'][different_bars['used']][0][0] #the bottom (0)
+    last_bar = different_bars['bar'][different_bars['used']][-1][0] #the top (100)
+    rect_x0, rect_x1, rect_y0, rect_y1 = actual_bar._x0, actual_bar._x1, first_bar._y0, last_bar._y1
+    return (annotation,rect_x0,rect_x1,rect_y0,rect_y1)
 
 def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
     """Plots the distribution of index symmetry values among

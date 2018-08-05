@@ -2,6 +2,8 @@ from nefesi import read_activations
 from .util.image import rotate_images_axis
 import numpy as np
 
+SYMMETRY_AXES = [0, 45, 90, 135]
+
 def get_symmetry_index(neuron_data, model, layer_data, dataset):
     """Returns the symmetry selectivity index.
     This index is a list with four types of mirroring the image,
@@ -15,7 +17,7 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
 
     :return: List of floats, index symmetry values.
     """
-    symm_axes = [0, 45, 90, 135]
+    symm_axes = SYMMETRY_AXES
     results = np.zeros(len(symm_axes),dtype=np.float)
     activations = neuron_data.activations
     norm_activations_sum = np.sum(neuron_data.norm_activations)
@@ -38,4 +40,5 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset):
             norm_rot_act_sum = np.sum(rot_activations) / max_act
             symmetry_idx = norm_rot_act_sum / norm_activations_sum
             results[i] = symmetry_idx
+        np.clip(a=results, a_min=0., a_max=1.)
     return results
