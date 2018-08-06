@@ -9,8 +9,8 @@ from sklearn.manifold import TSNE
 from matplotlib import gridspec
 from nefesi.symmetry_index import SYMMETRY_AXES
 
-FONTSIZE_BY_LAYERS = [None, 15, 12, 10, 8, 6]
-APPENDIX_FONT_SIZE = 6
+FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
+APPENDIX_FONT_SIZE = 8
 
 
 def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
@@ -157,7 +157,7 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
     :param font_size:
     :return:
     """
-    xticks_fontsize = int(font_size / 1.5) if len(x_axis_labels)>2 and (index=='orientation' or index == 'symmetry') \
+    xticks_fontsize = int(font_size / 1.15) if len(x_axis_labels)>2 and (index=='orientation' or index == 'symmetry') \
                 else font_size
     subplot.set_xticks(range(len(x_axis_labels)))
     subplot.set_xticklabels(x_axis_labels, fontsize=xticks_fontsize)
@@ -173,7 +173,7 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
                   bbox_to_anchor=(1, 0.85), loc="upper right", title='Selectivity Range')
     if index == 'orientation' or index == 'symmetry':
         appendix = '* σ\' is the mean of std beetween the specific index of each rotation'
-        subplot.figure.text(x=0.35, y=0.0025, s=appendix, fontdict={'size': APPENDIX_FONT_SIZE, 'style': 'italic'})
+        subplot.figure.text(x=0.2, y=0.0025, s=appendix, fontdict={'size': APPENDIX_FONT_SIZE, 'style': 'italic'})
 
 
 def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
@@ -186,8 +186,8 @@ def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, b
 
     text_of_annotation = 'Symmetry Axis:\n'
     for axis_idx, axis in enumerate(SYMMETRY_AXES):
-        text_of_annotation += '  ' + str(axis) + 'º:\n' \
-        '   μ=' + str(each_axis_mean[axis_idx]) + ' σ=' + str(each_axis_std[axis_idx]) + '\n'
+        text_of_annotation += str(axis) + 'º:\n' \
+        ' μ=' + str(each_axis_mean[axis_idx]) + ' σ=' + str(each_axis_std[axis_idx]) + '\n'
 
     hidden_annotations = get_annotation_for_event(subplot=subplot, different_bars=different_bars, layer_pos=layer_pos,
                                                   actual_bar=last_bar,text=text_of_annotation, y_pos=90-15*len(SYMMETRY_AXES))
@@ -244,7 +244,7 @@ def plot_bars_in_general_figure(bins, colors, different_bars, font_size, layer_i
 
 def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text, y_pos=70):
     annotation = subplot.annotate(text, xy=(layer_pos, 0),
-                                  xytext=(layer_pos, y_pos),
+                                  xytext=(layer_pos-0.1, y_pos),
                                   bbox=dict(boxstyle="round", fc="w"))
     annotation.set_visible(False)
     actual_bar = actual_bar[0]

@@ -314,6 +314,19 @@ class NetworkData(object):
 
         return sel_idx_dict
 
+    """
+    def get_progress(self):
+        if not hasattr(self, 'layers_in_analysis') or not hasattr(self, 'last_layers_to_analyze')\
+                or self.last_layers_analyzed != self.last_layers_to_analyze:
+            self.layers_in_analysis = [layer_data for layer_data in
+                                       self.layers_data if layer_data.layer_id in self.last_layers_to_analyze]
+            for layer in self.layers_in_analysis:
+                layer.neurons_complete = 0
+        self.last_layers_analyzed = self.last_layers_to_analyze
+        total_neurons = sum([len(l.neurons_data) for l in self.layers_in_analysis])
+        neurons_completed = sum([l.neurons_complete for l in self.layers_in_analysis])
+        return neurons_completed/total_neurons
+    """
     def similarity_idx(self, layer_name):
         """Returns the similarity index for each layer in `layer_name`.
 

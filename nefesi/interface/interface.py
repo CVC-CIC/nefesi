@@ -4,8 +4,11 @@ try:
     from tkinter import ttk
 except ImportError:
     from Tkinter import *
-    from tkinter import ttk
+    from Tkinter import ttk
 
+import threading
+import multiprocessing
+import time
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -16,12 +19,14 @@ from nefesi.interface.popup_window import PopupWindow
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
-
+MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
         self.network_data = network_data
         self.visible_plots_canvas = np.zeros(MAX_PLOTS_VISIBLES_IN_WINDOW,
-                                             dtype=np.dtype([('canvas', np.object), ('used',np.bool)]))
+                                dtype=np.dtype([('canvas', np.object), ('used',np.bool),
+                                                ('index', 'U64'), ('special_value',np.object)]))
+        self.current_layers_in_view = '.*'
         #Window element
         self.window = tk.Tk()
         self.window.title(title)
@@ -37,8 +42,6 @@ class Interface():
         self.general_buttons_frame = Frame(master=self.window, borderwidth=1)
         self.set_general_buttons_frame()
 
-        tk.Label(self.general_buttons_frame, text="Place to put texts").pack()
-        ttk.Button(self.general_buttons_frame, text="button",style="TButton").pack()
         tk.Label(self.general_info_frame, text="Place to put texts").pack()
         self.state = 'init'
         self.plot_general_index(index='class')
@@ -125,12 +128,66 @@ class Interface():
 
     def set_general_buttons_frame(self):
         self.set_save_changes_check_box(master=self.general_buttons_frame)
+        self.layers_listbox = self.set_info_to_show_listbox(master=self.general_buttons_frame)
         self.graphics_to_show_combo = self.set_grafics_to_show_combobox(master=self.general_buttons_frame)
+
+    def set_info_to_show_listbox(self, master):
+        # Title just in top of selector
+        lstbox_frame = Frame(master=master)
+        lstbox_tittle = ttk.Label(master=lstbox_frame, text="Layers to show")
+        list_values = [layer.layer_id for layer in self.network_data.layers_data]
+        scrollbar = tk.Scrollbar(master=lstbox_frame, orient="vertical")
+        lstbox = Listbox(master=lstbox_frame, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
+                         height=min(len(list_values)+2,MAX_VALUES_VISIBLES_IN_LISTBOX))
+        scrollbar.config(command=lstbox.yview)
+        lstbox.insert(END, 'all')
+        for item in list_values:
+            lstbox.insert(END, item)
+        self.lstbox_last_selection = (0,)
+        lstbox.bind('<<ListboxSelect>>',lambda event: self._on_listbox_change_selection(event, lstbox))
+        lstbox.selection_set(0)
+        ok_button = ttk.Button(master=master, text="Proceed", style="TButton",
+                               command=self._on_click_proceed_button)
+        lstbox_frame.pack()
+        lstbox_tittle.pack(side=TOP)
+        lstbox.pack(side=LEFT)
+        scrollbar.pack(side=RIGHT, fill="y")
+        ok_button.pack()
+        return lstbox
+
+    def _on_click_proceed_button(self):
+        current_plots = self.visible_plots_canvas[self.visible_plots_canvas['used']]
+        for canvas, _,index, special_value in current_plots:
+            if index in ALL_INDEX_NAMES:
+                self.plot_general_index(index=index, master_canvas=canvas,
+                                        special_value=special_value)
+
+    def get_listbox_selection(self, lstbox):
+        selection = lstbox.curselection()
+        last_idx = selection[-1] if len(selection) > 1 else None
+        layers_selected = lstbox.get(first=selection[0], last=last_idx)
+        if type(layers_selected) is not str:
+            layers_selected = list(layers_selected)
+        elif layers_selected == 'all':
+            layers_selected = '.*'
+        return layers_selected
+    def _on_listbox_change_selection(self,event,lstbox):
+        selection = lstbox.curselection()
+        if len(selection) <= 0:
+            selection = self.lstbox_last_selection
+            for idx in self.lstbox_last_selection:
+                lstbox.select_set(idx)
+        #'all' not have sense to be selected with more layer_names
+        if 0 in selection and len(selection)>1:
+            lstbox.select_clear(selection[1],END)
+        self.lstbox_last_selection = selection
+        self.current_layers_in_view = self.get_listbox_selection(lstbox)
+
 
     def set_save_changes_check_box(self,master):
         checkbox_value = tk.BooleanVar(master=master)
         checkbox = ttk.Checkbutton(master=master, text="Save all index updated", variable=checkbox_value,
-                                        command= lambda: self._on_checkbox_clicked(checkbox_value))
+                                    command= lambda: self._on_checkbox_clicked(checkbox_value))
         checkbox.pack()
 
     def _on_checkbox_clicked(self,checkbox_value):
@@ -155,38 +212,56 @@ class Interface():
                 child.destroy()
             else:
                 self.clean_widget(child)
+    """
+    def thread_show_progress_bar(self, master, seconds_between_updates=1):
+        print("PACKED")
+        while self.is_occuped:
+            print("a")
+            #self.progress_bar["value"] = self.network_data.get_progress()
+            #time.sleep(seconds_between_updates)
+        print("END WHILE")
+        self.progress_bar.destroy()
 
-
-    def plot_general_index(self, index, master_canvas=None, degrees_orientation_idx = 180):
+    def show_progress_bar(self, master, seconds_after_progress_bar=1):
+        self.progress_bar = ttk.Progressbar(master=self.window, orient="horizontal", length=200, mode="determinate",maximum=100)
+        self.progress_bar.pack()
+        threading.Thread(target=self.thread_show_progress_bar, args=(master,)).start()
+    """
+    def plot_general_index(self, index, master_canvas=None, special_value = 180):
         """
         Plots a general graphic of specified index in the general plots section
         :param index: String representing the index to plot. Needs to be one of prensents in
          nefesi.layer_data.ALL_INDEX_NAMES ('color', 'orientation', 'symmetry', 'class' or 'population code')
         :return:
         """
-        figure,hidden_annotations = get_plot_net_summary_figure(index,
-                                             layersToEvaluate='block1_conv1',
-                                             degrees_orientation_idx=degrees_orientation_idx,
-                                             network_data=self.network_data)
-        self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations, index=index)
+        figure, hidden_annotations = get_plot_net_summary_figure(index,
+                                                                 layersToEvaluate=self.current_layers_in_view,
+                                                                 degrees_orientation_idx=special_value,
+                                                                 network_data=self.network_data)
+        self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations,
+                                 index=index, special_value=special_value)
 
-    def add_figure_to_frame(self,master_canvas=None, figure=None, hidden_annotations=None, index=None):
+
+    def add_figure_to_frame(self,master_canvas=None, figure=None, hidden_annotations=None, index=None, special_value=None):
         if master_canvas is None:
             first_util_place = np.where(self.visible_plots_canvas['used'] == False)[0][0]
             master_canvas = Canvas(master=self.plots_canvas)
             self.addapt_widget_for_grid(master_canvas)
             master_canvas.configure(width=800, height=450)
             master_canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
-            self.visible_plots_canvas[first_util_place] = (master_canvas, True)
+            self.visible_plots_canvas[first_util_place] = (master_canvas, True, index, special_value)
         if figure is not None:
             self.put_figure_plot(master=master_canvas, figure=figure, hidden_annotations=hidden_annotations)
-
+            visible_plot_idx = np.where(self.visible_plots_canvas['canvas'] == master_canvas)[0][0]
+            self.visible_plots_canvas[visible_plot_idx]['index'] = index
+            self.visible_plots_canvas[visible_plot_idx]['special_value'] = special_value
         selector = self.get_index_button_general(master_canvas,default_index=index)
         selector.place(relx=0.25,rely=0)#grid(row=0,column=0, columnspan=2)
         erase_button = self.get_erase_plot_button(master=master_canvas)
         erase_button.place(relx=0.85,rely=0)#((row=0,column=3)
 
     def put_figure_plot(self, master, figure, hidden_annotations):
+        self.destroy_canvas_subplot_if_exist(master_canvas=master)
         plot_canvas = FigureCanvasTkAgg(figure, master=master)
         if hidden_annotations is not None:
             plot_canvas.mpl_connect('motion_notify_event',
@@ -227,7 +302,7 @@ class Interface():
     def destroy_plot_canvas(self, plot_canvas):
         self.clean_widget(plot_canvas)
         pos = np.where(self.visible_plots_canvas['canvas'] == plot_canvas)[0][0]
-        self.visible_plots_canvas[pos] = (None, False)
+        self.visible_plots_canvas[pos] = (None, False, '', None)
         plot_canvas.destroy()
 
 
@@ -267,12 +342,14 @@ class Interface():
             rotation_degrees = self.get_value_from_popup(index='Orientation', text='Set degrees of each rotation\n'
                                                                                 '(only values in range [1,359] allowed).\n'
                                                                             'NOTE: Lower values will increment processing time')
-        if '!canvas' in master.children:
-            oldplot = master.children['!canvas']
+        self.destroy_canvas_subplot_if_exist(master_canvas=master)
+        self.plot_general_index(index=selected, master_canvas=master, special_value=rotation_degrees)
+
+    def destroy_canvas_subplot_if_exist(self, master_canvas):
+        if '!canvas' in master_canvas.children:
+            oldplot = master_canvas.children['!canvas']
             self.clean_widget(widget=oldplot)
             oldplot.destroy()
-        self.plot_general_index(index=selected, master_canvas=master,degrees_orientation_idx=rotation_degrees)
-
 
     def _on_number_of_plots_to_show_changed(self, event):
         """
@@ -288,7 +365,6 @@ class Interface():
         while len(plots_in_use_idx) > selected:
             # index of last plot that not have place for exist in new plots length
             element_to_erase = plots_in_use_idx[-1]
-            print("plot " + str(element_to_erase) + " erased")
             self.destroy_plot_canvas(self.visible_plots_canvas['canvas'][element_to_erase])
             plots_in_use_idx = np.where(self.visible_plots_canvas['used'] == True)[0]
         # Readjust the plots in order to put put ordered. (example: if remains plots 1 and 3 and selected is 2, plots
@@ -297,11 +373,10 @@ class Interface():
             idx = [i for i in range(len(self.visible_plots_canvas))]
             valids_idx, non_valids = idx[:selected], idx[selected:]
             self.visible_plots_canvas[valids_idx] = self.visible_plots_canvas[plots_in_use_idx]
-            self.visible_plots_canvas[non_valids] = (None, False)
+            self.visible_plots_canvas[non_valids] = (None, False,'', None)
             # Readjust in screen too
             for i, canvas in enumerate(self.visible_plots_canvas['canvas'][valids_idx]):
                 canvas.grid(column=i % 2, row=(i // 2) + 1, sticky=SW)
-                print("plot readjusted")
 
         # Put new empty places for plot charts
         for i in range(len(plots_in_use_idx), selected):
