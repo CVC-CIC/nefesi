@@ -10,18 +10,18 @@ import threading
 import multiprocessing
 import time
 import numpy as np
-import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.figure import Figure
 from nefesi.layer_data import ALL_INDEX_NAMES
 from nefesi.util.interface_plotting import get_plot_net_summary_figure
 from nefesi.interface.popup_window import PopupWindow
+import nefesi.interface.EventController as events
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
+        self.event_controller = events.EventController(self)
         self.network_data = network_data
         self.visible_plots_canvas = np.zeros(MAX_PLOTS_VISIBLES_IN_WINDOW,
                                 dtype=np.dtype([('canvas', np.object), ('used',np.bool),
@@ -144,10 +144,10 @@ class Interface():
         for item in list_values:
             lstbox.insert(END, item)
         self.lstbox_last_selection = (0,)
-        lstbox.bind('<<ListboxSelect>>',lambda event: self._on_listbox_change_selection(event, lstbox))
+        lstbox.bind('<<ListboxSelect>>',lambda event: self.event_controller._on_listbox_change_selection(event, lstbox))
         lstbox.selection_set(0)
         ok_button = ttk.Button(master=master, text="Proceed", style="TButton",
-                               command=self._on_click_proceed_button)
+                               command=self.event_controller._on_click_proceed_button)
         lstbox_frame.pack()
         lstbox_tittle.pack(side=TOP)
         lstbox.pack(side=LEFT)
@@ -155,43 +155,18 @@ class Interface():
         ok_button.pack()
         return lstbox
 
-    def _on_click_proceed_button(self):
-        current_plots = self.visible_plots_canvas[self.visible_plots_canvas['used']]
-        for canvas, _,index, special_value in current_plots:
-            if index in ALL_INDEX_NAMES:
-                self.plot_general_index(index=index, master_canvas=canvas,
-                                        special_value=special_value)
-
     def get_listbox_selection(self, lstbox):
         selection = lstbox.curselection()
-        last_idx = selection[-1] if len(selection) > 1 else None
-        layers_selected = lstbox.get(first=selection[0], last=last_idx)
-        if type(layers_selected) is not str:
-            layers_selected = list(layers_selected)
-        elif layers_selected == 'all':
+        layers_selected = [lstbox.get(first=selection[i]) for i in range(len(selection))]
+        if len(layers_selected) == 1 and layers_selected[0] == 'all':
             layers_selected = '.*'
         return layers_selected
-    def _on_listbox_change_selection(self,event,lstbox):
-        selection = lstbox.curselection()
-        if len(selection) <= 0:
-            selection = self.lstbox_last_selection
-            for idx in self.lstbox_last_selection:
-                lstbox.select_set(idx)
-        #'all' not have sense to be selected with more layer_names
-        if 0 in selection and len(selection)>1:
-            lstbox.select_clear(selection[1],END)
-        self.lstbox_last_selection = selection
-        self.current_layers_in_view = self.get_listbox_selection(lstbox)
-
 
     def set_save_changes_check_box(self,master):
         checkbox_value = tk.BooleanVar(master=master)
         checkbox = ttk.Checkbutton(master=master, text="Save all index updated", variable=checkbox_value,
-                                    command= lambda: self._on_checkbox_clicked(checkbox_value))
+                                    command= lambda: self.event_controller._on_checkbox_clicked(checkbox_value))
         checkbox.pack()
-
-    def _on_checkbox_clicked(self,checkbox_value):
-        self.network_data.save_changes = checkbox_value.get()
 
     def set_grafics_to_show_combobox(self, master):
         # Title just in top of selector
@@ -201,7 +176,7 @@ class Interface():
         options = [i for i in range(1, MAX_PLOTS_VISIBLES_IN_WINDOW + 1)]
         combo = ttk.Combobox(master=self.general_buttons_frame, values=options, state='readonly', width=4)
         # When selection is changed, calls the function _on_number_of_plots_to_show_changed
-        combo.bind("<<ComboboxSelected>>", self._on_number_of_plots_to_show_changed)
+        combo.bind("<<ComboboxSelected>>", self.event_controller._on_number_of_plots_to_show_changed)
         combo.set(options[0])
         combo.pack(expand=False)
         return combo
@@ -265,7 +240,7 @@ class Interface():
         plot_canvas = FigureCanvasTkAgg(figure, master=master)
         if hidden_annotations is not None:
             plot_canvas.mpl_connect('motion_notify_event',
-                                    lambda event: self._on_in_bar_hover(event, hidden_annotations))
+                                    lambda event: self.event_controller._on_in_bar_hover(event, hidden_annotations))
         self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
         plot_canvas.get_tk_widget().configure(width=800, height=450)
         # plot_canvas.draw()
@@ -282,14 +257,14 @@ class Interface():
         :return: A select button with each index possible, and the event to plot it when called
         """
         combo = ttk.Combobox(master=master, values=ALL_INDEX_NAMES, state='readonly')
-        combo.bind("<<ComboboxSelected>>", self._on_general_plot_selector_changed)
+        combo.bind("<<ComboboxSelected>>", self.event_controller._on_general_plot_selector_changed)
         if default_index is not None:
             combo.set(default_index)
         return combo
 
     def get_erase_plot_button(self, master):
         button = ttk.Button(master=master, text="X", style="TButton")
-        button.bind('<Button-1>', self._on_click_destroy_subplot)
+        button.bind('<Button-1>', self.event_controller._on_click_destroy_subplot)
         return button
 
 
@@ -306,81 +281,12 @@ class Interface():
         plot_canvas.destroy()
 
 
-    def _on_in_bar_hover(self, event, hidden_annotations):
-        if event.inaxes is not None:
-            x, y = event.xdata, event.ydata
-            for annotation, x0, x1, y0, y1 in hidden_annotations:
-                if x0 < x < x1 and y0 < y < y1:
-                    if not annotation.get_visible():
-                        annotation.set_visible(True)
-                        annotation.figure.canvas.draw()
-                else:
-                    if annotation.get_visible():
-                        annotation.set_visible(False)
-                        annotation.figure.canvas.draw()
-        else:
-            for annotation in hidden_annotations['annotation']:
-                if annotation.get_visible():
-                    annotation.set_visible(False)
-                    annotation.figure.canvas.draw()
-
-
-    def _on_click_destroy_subplot(self, event):
-        #Is the master of the button (the canvas that have button,selector and plot)
-        self.destroy_plot_canvas(plot_canvas=event.widget.master)
-        self.graphics_to_show_combo.set(np.count_nonzero(self.visible_plots_canvas['used']))
-
-    def _on_general_plot_selector_changed(self,event):
-        """
-        event called when user selects another chart to show in the combobox of the plot canvas (in general state (init)
-        :param event: event with the widget of the combobox changed
-        """
-        master = event.widget.master
-        selected = event.widget.get()
-        rotation_degrees = None
-        if selected == 'orientation':
-            rotation_degrees = self.get_value_from_popup(index='Orientation', text='Set degrees of each rotation\n'
-                                                                                '(only values in range [1,359] allowed).\n'
-                                                                            'NOTE: Lower values will increment processing time')
-        self.destroy_canvas_subplot_if_exist(master_canvas=master)
-        self.plot_general_index(index=selected, master_canvas=master, special_value=rotation_degrees)
-
     def destroy_canvas_subplot_if_exist(self, master_canvas):
         if '!canvas' in master_canvas.children:
             oldplot = master_canvas.children['!canvas']
             self.clean_widget(widget=oldplot)
             oldplot.destroy()
 
-    def _on_number_of_plots_to_show_changed(self, event):
-        """
-        Event called when user change the value of the combobox with... How many charts show? Add place to new charts
-        or delete the charts that overflows
-        :param event: event with the widget of combobox changed
-        """
-        # value selected by user
-        selected = int(event.widget.get())
-        # pos on array self.visible_plots_canvas of plots that are in use now
-        plots_in_use_idx = np.where(self.visible_plots_canvas['used'] == True)[0]
-        # erase the plots that overflows the new number of plots
-        while len(plots_in_use_idx) > selected:
-            # index of last plot that not have place for exist in new plots length
-            element_to_erase = plots_in_use_idx[-1]
-            self.destroy_plot_canvas(self.visible_plots_canvas['canvas'][element_to_erase])
-            plots_in_use_idx = np.where(self.visible_plots_canvas['used'] == True)[0]
-        # Readjust the plots in order to put put ordered. (example: if remains plots 1 and 3 and selected is 2, plots
-        # 1 and 3 will be plots 0 and 1)
-        if plots_in_use_idx[-1] >= selected:
-            idx = [i for i in range(len(self.visible_plots_canvas))]
-            valids_idx, non_valids = idx[:selected], idx[selected:]
-            self.visible_plots_canvas[valids_idx] = self.visible_plots_canvas[plots_in_use_idx]
-            self.visible_plots_canvas[non_valids] = (None, False,'', None)
-            # Readjust in screen too
-            for i, canvas in enumerate(self.visible_plots_canvas['canvas'][valids_idx]):
-                canvas.grid(column=i % 2, row=(i // 2) + 1, sticky=SW)
-
-        # Put new empty places for plot charts
-        for i in range(len(plots_in_use_idx), selected):
-            self.add_figure_to_frame(figure=None)
 
 
 if __name__ == '__main__':
