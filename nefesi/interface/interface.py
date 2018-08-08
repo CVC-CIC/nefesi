@@ -204,27 +204,27 @@ class Interface():
         self.progress_bar.pack()
         threading.Thread(target=self.thread_show_progress_bar, args=(master,)).start()
     """
-    def plot_general_index(self, index, master_canvas=None, special_value = 180):
+    def plot_general_index(self, index, master_canvas=None, layers='.*', neuron=-1, special_value = 180):
         """
         Plots a general graphic of specified index in the general plots section
         :param index: String representing the index to plot. Needs to be one of prensents in
          nefesi.layer_data.ALL_INDEX_NAMES ('color', 'orientation', 'symmetry', 'class' or 'population code')
         :return:
         """
-        if type(self.current_layers_in_view) is str:
-            self.current_layers_in_view = self.network_data.get_layers_analyzed_that_match_regEx(self.current_layers_in_view)
-        if type(self.current_layers_in_view) is list:
-            if len(self.current_layers_in_view) == 0:
-                warnings.warn("self.current_layers_in_view is a 0-lenght list. Check why. Value: "+
-                              str(self.current_layers_in_view), RuntimeWarning)
+        if type(layers) in [str, np.str_]:
+                layers = self.network_data.get_layers_analyzed_that_match_regEx(layers)
+        if type(layers) is list:
+            if len(layers) == 0:
+                warnings.warn("layers is a 0-lenght list. Check why. Value: "+
+                              str(layers), RuntimeWarning)
                 figure = hidden_annotations = None
             else:
-                figure, hidden_annotations = get_plot(index, layers_to_evaluate=self.current_layers_in_view,
+                figure, hidden_annotations = get_plot(index, layers_to_evaluate=layers,
                                                      degrees_orientation_idx=special_value,
                                                      network_data=self.network_data)
         else:
             warnings.warn("self.current_layers_in_view is not a list. Check why. Value: "+
-                              str(self.current_layers_in_view), RuntimeWarning)
+                              str(layers)+str(type(layers)), RuntimeWarning)
             figure = hidden_annotations = None
 
         self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations,
@@ -240,7 +240,7 @@ class Interface():
             master_canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
             self.visible_plots_canvas[first_util_place] = (master_canvas, True, index, special_value)
         if figure is not None:
-            self.put_figure_plot(master=master_canvas, figure=figure, hidden_annotations=hidden_annotations)
+            self.put_figure_plot(master=master_canvas, figure=figure, hidden_annotations=hidden_annotations,index=index)
             visible_plot_idx = np.where(self.visible_plots_canvas['canvas'] == master_canvas)[0][0]
             self.visible_plots_canvas[visible_plot_idx]['index'] = index
             self.visible_plots_canvas[visible_plot_idx]['special_value'] = special_value
@@ -249,15 +249,16 @@ class Interface():
         erase_button = self.get_erase_plot_button(master=master_canvas)
         erase_button.place(relx=0.85,rely=0)#((row=0,column=3)
 
-    def put_figure_plot(self, master, figure, hidden_annotations):
+    def put_figure_plot(self, master, figure,index, hidden_annotations, special_value = 180):
         self.destroy_canvas_subplot_if_exist(master_canvas=master)
         plot_canvas = FigureCanvasTkAgg(figure, master=master)
         if hidden_annotations is not None:
             plot_canvas.mpl_connect('motion_notify_event',
-                                    lambda event: self.event_controller._on_in_bar_hover(event, hidden_annotations))
+                                    lambda event: self.event_controller._on_in_plot_element_hover(event, hidden_annotations))
 
-        plot_canvas.mpl_connect('motion_notify_event',
-                                lambda event: self.event_controller._on_neuron_click(event, hidden_annotations))
+        plot_canvas.mpl_connect('button_press_event',
+                                lambda event: self.event_controller._on_in_plot_element_double_click(event, hidden_annotations,
+                                                                                                     master, index, special_value))
         self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
         plot_canvas.get_tk_widget().configure(width=800, height=450)
         # plot_canvas.draw()

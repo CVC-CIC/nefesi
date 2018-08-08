@@ -12,6 +12,7 @@ FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
 APPENDIX_FONT_SIZE = 8
 NEURON_FONT_SIZE = 11
 
+INVALID_NEURON_IDX = -1
 def get_plot(index, network_data, layers_to_evaluate='.*', degrees_orientation_idx=45,
                             labels=None, thr_class_idx=1., thr_pc=0.1,bins = 10, color_map='jet'):
 
@@ -29,14 +30,6 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
     figure = plt.figure(figsize=(12, 18))
     subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
 
-    #Initate auxiliar arrays that will be usefull in order to plot more beautiful result
-     #This array will be filled in function as parameter. Used for take count of bars that appears along the chart
-    different_bars = np.zeros(bins+1, dtype=np.dtype([('bar',np.object),('label','U64'),('used',np.bool)]))
-     #The hidden annotations that will appears only when user hover the correspondant bar with the mouse. (Correspondant
-      #bar is the rectangle with edges x0,x1,y0,y1)
-    hidden_annotations = np.zeros(len(layer_to_evaluate),
-            dtype=np.dtype([('annotation',np.object),('x0',np.float),('x1',np.float),('y0',np.float),('y1',np.float)]))
-
     # -----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layer_to_evaluate,
                                                degrees_orientation_idx=degrees_orientation_idx, labels=labels,
@@ -44,7 +37,7 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
 
 
     if index == 'class':
-        hidden_annotations = class_neurons_plot(sel_idx, subplot, font_size=font_size + 2)
+        hidden_annotations = class_neurons_plot(sel_idx, subplot,layer_name=layer_to_evaluate, font_size=font_size + 2)
     elif index == 'orientation':
         mean, std, mean_std_between_rotations, hidden_annotations[pos] = \
             orientation_layer_bars(sel_idx, pos, subplot, colors, different_bars, font_size=font_size + 2)
@@ -57,7 +50,8 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
     print("ONE LAYER PLOT")
     return figure, hidden_annotations
 
-def class_neurons_plot(sel_idx, subplot, font_size,max=1, min =0, max_number=15, order='descend',color_map='jet'):
+def class_neurons_plot(sel_idx, subplot, font_size, layer_name='default',
+                       max=1, min =0, max_number=15, order='descend',color_map='jet'):
     """
 
     :param sel_idx:
@@ -70,24 +64,31 @@ def class_neurons_plot(sel_idx, subplot, font_size,max=1, min =0, max_number=15,
     :param order: 'ascend' or 'descend'
     :return:
     """
+    if type(layer_name) is list:
+        if len(layer_name) == 1:
+            layer_name=layer_name[0]
+        else:
+            raise ValueError("Invalid layer_name"+str(layer_name))
 
     neurons_in_decision= np.where((sel_idx['value']>=min) & (sel_idx['value']<=max))
-    sel_idx = np.sort(sel_idx[neurons_in_decision],order='value')
-    if order.lower() == 'ascend':
-        sel_idx = sel_idx[::-1]
 
-    neurons_to_show = np.minimum(len(sel_idx), max_number)
-    sel_idx = sel_idx[:neurons_to_show]
+    sel_idx_sorted_args = np.argsort(sel_idx[neurons_in_decision]['value'])
+    if order.lower() == 'ascend':
+        sel_idx = sel_idx_sorted_args[::-1]
+    neurons_to_show = np.minimum(len(sel_idx_sorted_args), max_number)
+    sel_idx_sorted_args = sel_idx_sorted_args[:neurons_to_show]
+    sel_idx= sel_idx[sel_idx_sorted_args]
 
     hidden_annotations = np.zeros(len(sel_idx),
-                                      dtype=np.dtype([('annotation', np.object), ('x0', np.float), ('x1', np.float),
-                                                      ('y0', np.float), ('y1', np.float)]))
+                                      dtype=np.dtype([('layer_name','U64'), ('neuron_idx',np.int), ('annotation',np.object),
+                            ('x0',np.float), ('x1',np.float), ('y0',np.float), ('y1',np.float)]))
 
     circles = get_n_circles_well_distributed(sel_idx['value'],color_map)
     circles = circles[np.argsort(circles['y_center'])]
 
     for i in range(len(circles)):
-        hidden_annotations[i] = set_neuron_annotation(subplot=subplot,text=str(sel_idx[i]['label']),position=circles[i])
+        hidden_annotations[i] = set_neuron_annotation(subplot=subplot,text=str(sel_idx[i]['label']),position=circles[i],
+                                                      layer_name=layer_name, neuron_idx=sel_idx_sorted_args[i])
         subplot.text(circles[i]['x0']+6, circles[i]['y_center']-12,str(round(sel_idx[i]['value'],2)),
                      fontdict={'size': NEURON_FONT_SIZE, 'weight': 'bold'})
     #adds each patch to plot
@@ -98,14 +99,14 @@ def class_neurons_plot(sel_idx, subplot, font_size,max=1, min =0, max_number=15,
 
     return hidden_annotations
 
-def set_neuron_annotation(subplot, text, position):
+def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-1):
 
     annotation = subplot.annotate(text, xy=(position['x_center'], position['y_center']),
                                   xytext=(10, 10), textcoords='offset points',
                                   bbox=dict(boxstyle="round", fc="w"))
     annotation.set_visible(False)
 
-    return (annotation,position['x0'],position['x1'],position['y0'],position['y1'])
+    return (layer_name, neuron_idx, annotation,position['x0'],position['x1'],position['y0'],position['y1'])
 
 
 def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degrees_orientation_idx=45,
@@ -132,7 +133,8 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degr
      #The hidden annotations that will appears only when user hover the correspondant bar with the mouse. (Correspondant
       #bar is the rectangle with edges x0,x1,y0,y1)
     hidden_annotations = np.zeros(len(layersToEvaluate),
-            dtype=np.dtype([('annotation',np.object),('x0',np.float),('x1',np.float),('y0',np.float),('y1',np.float)]))
+            dtype=np.dtype([('layer_name','U64'), ('neuron_idx',np.int), ('annotation',np.object),
+                            ('x0',np.float), ('x1',np.float), ('y0',np.float), ('y1',np.float)]))
 
     #-----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layersToEvaluate,
@@ -143,12 +145,13 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degr
     for pos,(layer_name, sel_idx_of_layer) in enumerate(zip(layersToEvaluate,sel_idx)):
         if index == 'class':
             mean, std, hidden_annotations[pos] = class_layer_bars(sel_idx_of_layer,pos,subplot,colors,different_bars,
-                                                                    font_size=font_size+2)
+                                                                  layer_name=layer_name, font_size=font_size+2)
             x_axis_labels[pos] = layer_name + " \n" \
                                            "μ=" + str(mean) + " σ=" + str(std)
         elif index == 'orientation':
             mean, std, mean_std_between_rotations,hidden_annotations[pos] = \
-                orientation_layer_bars(sel_idx_of_layer, pos, subplot, colors, different_bars, font_size=font_size+2)
+                orientation_layer_bars(sel_idx_of_layer, pos, subplot, colors, different_bars,
+                                       layer_name=layer_name,font_size=font_size+2)
             if len(layersToEvaluate)>2:
                 x_axis_labels[pos] = layer_name + "\n" \
                                            "μ=" + str(mean) + " σ=" + str(std)+"\n" \
@@ -158,7 +161,8 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degr
                     "μ=" + str(mean) + " σ=" + str(std) + " (σ'=" + str(mean_std_between_rotations) + ")*"
         elif index == 'symmetry':
             mean, std, mean_std_between_axys,hidden_annotations[pos] = \
-                symmetry_layer_bars(sel_idx_of_layer, pos, subplot, colors,different_bars, font_size=font_size + 2)
+                symmetry_layer_bars(sel_idx_of_layer, pos, subplot, colors,different_bars,
+                                    layer_name=layer_name, font_size=font_size + 2)
             if len(layersToEvaluate) > 2:
                 x_axis_labels[pos] = layer_name + "\n" \
                                                "μ=" + str(mean) + " σ=" + str(std) + "\n" \
@@ -207,7 +211,8 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
         subplot.figure.text(x=0.2, y=0.0025, s=appendix, fontdict={'size': APPENDIX_FONT_SIZE, 'style': 'italic'})
 
 
-def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
+def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,layer_name='default',
+                        font_size = 12):
     layer_idx_values = layer_idx[:,-1]
     last_bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx_values, layer_pos, subplot)
@@ -221,11 +226,13 @@ def symmetry_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, b
         ' μ=' + str(each_axis_mean[axis_idx]) + ' σ=' + str(each_axis_std[axis_idx]) + '\n'
 
     hidden_annotations = get_annotation_for_event(subplot=subplot, different_bars=different_bars, layer_pos=layer_pos,
-                                                  actual_bar=last_bar,text=text_of_annotation, y_pos=90-15*len(SYMMETRY_AXES))
+                                                  actual_bar=last_bar,text=text_of_annotation, y_pos=90-15*len(SYMMETRY_AXES),
+                                                  layer_name=layer_name)
     return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_axys * 100, 1), \
            hidden_annotations
 
-def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12):
+def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
+                           layer_name='default', font_size = 12):
     layer_idx_values = layer_idx[:, -1]
     last_bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx_values, layer_pos, subplot)
@@ -238,12 +245,14 @@ def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars
            hidden_annotation
 
 
-def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10, font_size = 12, figure=None):
+def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
+                     layer_name='default', font_size = 12):
     layer_idx_values = layer_idx['value']
     bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx_values, layer_pos, subplot)
     hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL")
+                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL",
+                                                 layer_name=layer_name)
 
     return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
 
@@ -273,7 +282,7 @@ def plot_bars_in_general_figure(bins, colors, different_bars, font_size, layer_i
 
 
 
-def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text, y_pos=70):
+def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text, y_pos=70, layer_name='default'):
     annotation = subplot.annotate(text, xy=(layer_pos, 0),
                                   xytext=(layer_pos-0.1, y_pos),
                                   bbox=dict(boxstyle="round", fc="w"))
@@ -282,7 +291,8 @@ def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text
     first_bar = different_bars['bar'][different_bars['used']][0][0] #the bottom (0)
     last_bar = different_bars['bar'][different_bars['used']][-1][0] #the top (100)
     rect_x0, rect_x1, rect_y0, rect_y1 = actual_bar._x0, actual_bar._x1, first_bar._y0, last_bar._y1
-    return (annotation,rect_x0,rect_x1,rect_y0,rect_y1)
+    #           layer_name, neuron_idx, annotation,rect_x0,rect_x1,rect_y0,rect_y1
+    return (layer_name, INVALID_NEURON_IDX, annotation,rect_x0,rect_x1,rect_y0,rect_y1)
 
 def check_layer_to_evaluate_validity(network_data,layer_to_evaluate):
     if type(layer_to_evaluate) is str:
@@ -790,7 +800,6 @@ def plot_nf_search(selective_neurons, n_max=150):
         n_images = len(neurons)
 
         titles = [n[1:] for n in neurons]
-
         fig = plt.figure()
         fig.suptitle('Layer: ' + layer_name + ', Index: ' + str(index_name))
 

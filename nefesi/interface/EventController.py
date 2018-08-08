@@ -21,6 +21,7 @@ class EventController():
         for canvas, _,index, special_value in current_plots:
             if index in ALL_INDEX_NAMES:
                 self.interface.plot_general_index(index=index, master_canvas=canvas,
+                                                  layers=self.interface.current_layers_in_view,
                                         special_value=special_value)
 
     def _on_listbox_change_selection(self,event,lstbox):
@@ -39,14 +40,34 @@ class EventController():
     def _on_checkbox_clicked(self,checkbox_value):
         self.interface.network_data.save_changes = checkbox_value.get()
 
-    def _on_neuron_click(self, event, hidden_annotations):
-        if event.inaxes is not None:
-            x, y = event.xdata, event.ydata
+    def _on_in_plot_element_double_click(self, event, hidden_annotations, master_canvas, index, special_value):
+        """
+        When user have double click on bar or neuron, plots the more specific level. A one layer plot if clicks on layer of
+        general chart or opens the single neuron windows, if clicks on a neuron
+        :param event: the event raised by mpl_connect
+        :param hidden_annotations: the hidden annotetions numpy of the chart where user clicked
+        :param master_canvas: the master canvas of the plot where user clicks
+        :param index: the index calculated in the plot where user clicks
+        :param special_value: the special_value of the plot where user clicks
+        """
+        if event.dblclick:
+            if event.inaxes is not None:
+                x, y = event.xdata, event.ydata
+                for layer_name, neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotations:
+                    if x0 < x < x1 and y0 < y < y1:
+                        print("click in " + str(layer_name)+". neuron "+str(neuron_idx))
+                        if neuron_idx==-1:
+                            self.interface.plot_general_index(index=index,master_canvas=master_canvas, layers=layer_name,
+                                                          neuron=neuron_idx,special_value=special_value)
+                        else:
+                            print("MAKE THE F*CKING PLOT OF SINGLE NEURON")
+                        break
 
-    def _on_in_bar_hover(self, event, hidden_annotations):
+
+    def _on_in_plot_element_hover(self, event, hidden_annotations):
         if event.inaxes is not None:
             x, y = event.xdata, event.ydata
-            for annotation, x0, x1, y0, y1 in hidden_annotations:
+            for layer_name,neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotations:
                 if x0 < x < x1 and y0 < y < y1:
                     if not annotation.get_visible():
                         annotation.set_visible(True)
@@ -80,7 +101,8 @@ class EventController():
                                                                                 '(only values in range [1,359] allowed).\n'
                                                                             'NOTE: Lower values will increment processing time')
         self.interface.destroy_canvas_subplot_if_exist(master_canvas=master)
-        self.interface.plot_general_index(index=selected, master_canvas=master, special_value=rotation_degrees)
+        self.interface.plot_general_index(index=selected, master_canvas=master, layers=self.interface.current_layers_in_view,
+                                          special_value=rotation_degrees)
 
 
     def _on_number_of_plots_to_show_changed(self, event):
