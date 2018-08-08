@@ -1,4 +1,6 @@
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
+import warnings
+
 try:
     from tkinter import *
     from tkinter import ttk
@@ -12,7 +14,7 @@ import time
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from nefesi.layer_data import ALL_INDEX_NAMES
-from nefesi.util.interface_plotting import get_plot_net_summary_figure
+from nefesi.util.interface_plotting import get_plot
 from nefesi.interface.popup_window import PopupWindow
 import nefesi.interface.EventController as events
 
@@ -209,10 +211,22 @@ class Interface():
          nefesi.layer_data.ALL_INDEX_NAMES ('color', 'orientation', 'symmetry', 'class' or 'population code')
         :return:
         """
-        figure, hidden_annotations = get_plot_net_summary_figure(index,
-                                                                 layersToEvaluate=self.current_layers_in_view,
-                                                                 degrees_orientation_idx=special_value,
-                                                                 network_data=self.network_data)
+        if type(self.current_layers_in_view) is str:
+            self.current_layers_in_view = self.network_data.get_layers_analyzed_that_match_regEx(self.current_layers_in_view)
+        if type(self.current_layers_in_view) is list:
+            if len(self.current_layers_in_view) == 0:
+                warnings.warn("self.current_layers_in_view is a 0-lenght list. Check why. Value: "+
+                              str(self.current_layers_in_view), RuntimeWarning)
+                figure = hidden_annotations = None
+            else:
+                figure, hidden_annotations = get_plot(index, layers_to_evaluate=self.current_layers_in_view,
+                                                     degrees_orientation_idx=special_value,
+                                                     network_data=self.network_data)
+        else:
+            warnings.warn("self.current_layers_in_view is not a list. Check why. Value: "+
+                              str(self.current_layers_in_view), RuntimeWarning)
+            figure = hidden_annotations = None
+
         self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations,
                                  index=index, special_value=special_value)
 
@@ -241,6 +255,9 @@ class Interface():
         if hidden_annotations is not None:
             plot_canvas.mpl_connect('motion_notify_event',
                                     lambda event: self.event_controller._on_in_bar_hover(event, hidden_annotations))
+
+        plot_canvas.mpl_connect('motion_notify_event',
+                                lambda event: self.event_controller._on_neuron_click(event, hidden_annotations))
         self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
         plot_canvas.get_tk_widget().configure(width=800, height=450)
         # plot_canvas.draw()

@@ -39,6 +39,9 @@ class EventController():
     def _on_checkbox_clicked(self,checkbox_value):
         self.interface.network_data.save_changes = checkbox_value.get()
 
+    def _on_neuron_click(self, event, hidden_annotations):
+        if event.inaxes is not None:
+            x, y = event.xdata, event.ydata
 
     def _on_in_bar_hover(self, event, hidden_annotations):
         if event.inaxes is not None:

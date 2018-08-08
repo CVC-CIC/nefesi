@@ -34,7 +34,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
         m = len(freq_avoid_th)
         c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1))
         # For the most freqüent class freq_avoid_th[0] the: label ([HUMAN_NAME_POS]) and his selectivity index rounded to two decimals
-        return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 2))
+        return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 3))
 
 
 def relative_freq_class(neuron_data, labels = None):

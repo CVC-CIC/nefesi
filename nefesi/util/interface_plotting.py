@@ -2,79 +2,110 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from matplotlib.figure import Figure
 import math
 from PIL import ImageDraw
 from sklearn.manifold import TSNE
 from matplotlib import gridspec
 from nefesi.symmetry_index import SYMMETRY_AXES
-
+from nefesi.util.general_functions import get_n_circles_well_distributed
 FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
 APPENDIX_FONT_SIZE = 8
+NEURON_FONT_SIZE = 11
+
+def get_plot(index, network_data, layers_to_evaluate='.*', degrees_orientation_idx=45,
+                            labels=None, thr_class_idx=1., thr_pc=0.1,bins = 10, color_map='jet'):
+
+    if check_layer_to_evaluate_validity(network_data=network_data,layer_to_evaluate=layers_to_evaluate):
+        return get_one_layer_plot(index, network_data, layers_to_evaluate, degrees_orientation_idx, labels, thr_class_idx,
+                           thr_pc, bins, color_map)
+    else:
+        return get_plot_net_summary_figure(index, network_data, layers_to_evaluate, degrees_orientation_idx, labels, thr_class_idx,
+                           thr_pc, bins, color_map)
+
+def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientation_idx=45,
+                            labels=None, thr_class_idx=1., thr_pc=0.1,bins = 10, color_map='jet'):
+    index = index.lower()
+    font_size = FONTSIZE_BY_LAYERS[1]
+    figure = plt.figure(figsize=(12, 18))
+    subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
+
+    #Initate auxiliar arrays that will be usefull in order to plot more beautiful result
+     #This array will be filled in function as parameter. Used for take count of bars that appears along the chart
+    different_bars = np.zeros(bins+1, dtype=np.dtype([('bar',np.object),('label','U64'),('used',np.bool)]))
+     #The hidden annotations that will appears only when user hover the correspondant bar with the mouse. (Correspondant
+      #bar is the rectangle with edges x0,x1,y0,y1)
+    hidden_annotations = np.zeros(len(layer_to_evaluate),
+            dtype=np.dtype([('annotation',np.object),('x0',np.float),('x1',np.float),('y0',np.float),('y1',np.float)]))
+
+    # -----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
+    sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layer_to_evaluate,
+                                               degrees_orientation_idx=degrees_orientation_idx, labels=labels,
+                                               thr_class_idx=1., thr_pc=0.1)[index][0]
 
 
-def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
-    """Plots a summary over the selectivity indexes from a group of
-    specific layers.
-    If selectivity index is "orientation" or "symmetry", plots the
-    global index.
+    if index == 'class':
+        hidden_annotations = class_neurons_plot(sel_idx, subplot, font_size=font_size + 2)
+    elif index == 'orientation':
+        mean, std, mean_std_between_rotations, hidden_annotations[pos] = \
+            orientation_layer_bars(sel_idx, pos, subplot, colors, different_bars, font_size=font_size + 2)
 
-    :param selectivity_idx: The output from the function
-        `nefesi.network_data.NetworkData.get_selectivty_idx()`.
-    :param bins: Integer, number of bins for bars.
-    :param color_map: String, name of one color maps accepted by Matplotlib.
+    elif index == 'symmetry':
+        mean, std, mean_std_between_axys, hidden_annotations[pos] = \
+            symmetry_layer_bars(sel_idx, pos, subplot, colors, different_bars, font_size=font_size + 2)
 
+
+    print("ONE LAYER PLOT")
+    return figure, hidden_annotations
+
+def class_neurons_plot(sel_idx, subplot, font_size,max=1, min =0, max_number=15, order='descend',color_map='jet'):
+    """
+
+    :param sel_idx:
+    :param subplot:
+    :param colors:
+    :param font_size:
+    :param max:
+    :param min:
+    :param max_number:
+    :param order: 'ascend' or 'descend'
     :return:
     """
-    cmap = plt.cm.get_cmap(color_map)
-    colors = []
-    for i in range(bins):
-        colors.append(cmap(1.*i/bins))
 
-    for k, v in selectivity_idx.items():
+    neurons_in_decision= np.where((sel_idx['value']>=min) & (sel_idx['value']<=max))
+    sel_idx = np.sort(sel_idx[neurons_in_decision],order='value')
+    if order.lower() == 'ascend':
+        sel_idx = sel_idx[::-1]
 
-        N = len(v)
-        pos = 0
-        for l in v:
-            if k == 'symmetry' or k == 'orientation' or k == 'class':
-                n_idx = len(l[0])
-                l = [idx[n_idx - 1] for idx in l]
+    neurons_to_show = np.minimum(len(sel_idx), max_number)
+    sel_idx = sel_idx[:neurons_to_show]
 
-            for i in range(len(l)):
-                if l[i] > 1.0:
-                    l[i] = 1.0
-                if l[i] < 0.0:
-                    l[i] = 0.0
+    hidden_annotations = np.zeros(len(sel_idx),
+                                      dtype=np.dtype([('annotation', np.object), ('x0', np.float), ('x1', np.float),
+                                                      ('y0', np.float), ('y1', np.float)]))
 
-            counts, bins = np.histogram(l, bins=bins, range=(0, 1))
-            print(counts, bins)
-            num_f = sum(counts)
-            prc = np.zeros(len(counts))
+    circles = get_n_circles_well_distributed(sel_idx['value'],color_map)
+    circles = circles[np.argsort(circles['y_center'])]
 
-            for i in range(len(counts)):
-                prc[i] = float(counts[i])/num_f*100.
-            y_offset = 0
+    for i in range(len(circles)):
+        hidden_annotations[i] = set_neuron_annotation(subplot=subplot,text=str(sel_idx[i]['label']),position=circles[i])
+        subplot.text(circles[i]['x0']+6, circles[i]['y_center']-12,str(round(sel_idx[i]['value'],2)),
+                     fontdict={'size': NEURON_FONT_SIZE, 'weight': 'bold'})
+    #adds each patch to plot
+    for circle in circles['circle']:
+        subplot.add_patch(circle)
 
-            bars = []
-            for i in range(len(prc)):
-                p = plt.bar(pos, prc[i], bottom=y_offset, width=0.35, color=colors[i])
-                bars.append(p)
-                y_offset = y_offset+prc[i]
-            pos += 1
+    subplot.axis('equal')
 
-        xticks = []
-        for i in range(N):
-            xticks.append('Layer ' + str(i + 1))
-        plt.xticks(np.arange(N), xticks)
-        plt.yticks(np.arange(0, 101, 10))
+    return hidden_annotations
 
-        labels = [str(bins[i]) + ':' + str(bins[i+1]) for i in range(len(prc))]
+def set_neuron_annotation(subplot, text, position):
 
-        plt.ylabel('% of Neurons')
-        plt.title(k + ' selectivity')
-        plt.legend(bars, labels, bbox_to_anchor=(1.02, 1.02), loc=2)
-        plt.subplots_adjust(right=0.75)
-        plt.show()
+    annotation = subplot.annotate(text, xy=(position['x_center'], position['y_center']),
+                                  xytext=(10, 10), textcoords='offset points',
+                                  bbox=dict(boxstyle="round", fc="w"))
+    annotation.set_visible(False)
+
+    return (annotation,position['x0'],position['x1'],position['y0'],position['y1'])
 
 
 def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degrees_orientation_idx=45,
@@ -252,6 +283,47 @@ def get_annotation_for_event(subplot, different_bars,layer_pos, actual_bar, text
     last_bar = different_bars['bar'][different_bars['used']][-1][0] #the top (100)
     rect_x0, rect_x1, rect_y0, rect_y1 = actual_bar._x0, actual_bar._x1, first_bar._y0, last_bar._y1
     return (annotation,rect_x0,rect_x1,rect_y0,rect_y1)
+
+def check_layer_to_evaluate_validity(network_data,layer_to_evaluate):
+    if type(layer_to_evaluate) is str:
+        layer_to_evaluate = network_data.get_layers_analyzed_that_match_regEx(layer_to_evaluate)
+    if type(layer_to_evaluate) is list:
+        if len(layer_to_evaluate)==0:
+            raise ValueError("Imposible to have a plot of a length-0 layer list")
+        elif len(layer_to_evaluate)>1:
+            return False
+    else:
+        raise ValueError("Non valid layer_to_evaluate value: "+str(layer_to_evaluate))
+    return True
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def plot_symmetry_distribution_summary(selectivity_idx, color_map='jet'):
     """Plots the distribution of index symmetry values among
