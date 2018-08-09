@@ -15,8 +15,9 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from nefesi.layer_data import ALL_INDEX_NAMES
 from nefesi.util.interface_plotting import get_plot
-from nefesi.interface.popup_window import PopupWindow
+from nefesi.interface.popup_window import SpecialValuePopupWindow,OneLayerPopupWindow
 import nefesi.interface.EventController as events
+from nefesi.util.general_functions import clean_widget
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -125,7 +126,7 @@ class Interface():
         state = state.lower()
 
         if state == 'init':
-            self.clean_widget(self.plots_canvas)
+            clean_widget(self.plots_canvas)
 
 
     def set_general_buttons_frame(self):
@@ -183,12 +184,6 @@ class Interface():
         combo.pack(expand=False)
         return combo
 
-    def clean_widget(self, widget):
-        for child in list(widget.children.values()):
-            if list(child.children.values()) == []:
-                child.destroy()
-            else:
-                self.clean_widget(child)
     """
     def thread_show_progress_bar(self, master, seconds_between_updates=1):
         print("PACKED")
@@ -218,6 +213,11 @@ class Interface():
                 warnings.warn("layers is a 0-lenght list. Check why. Value: "+
                               str(layers), RuntimeWarning)
                 figure = hidden_annotations = None
+            elif len(layers) == 1:
+                print(self.get_one_layer_params_popup('TEXTO DE MIERDA','INDEX DE MIERDA'))
+                figure, hidden_annotations = get_plot(index, layers_to_evaluate=layers,
+                                                      degrees_orientation_idx=special_value,
+                                                      network_data=self.network_data)
             else:
                 figure, hidden_annotations = get_plot(index, layers_to_evaluate=layers,
                                                      degrees_orientation_idx=special_value,
@@ -287,13 +287,19 @@ class Interface():
 
 
     def get_value_from_popup(self,text='',index=''):
-        popup_window = PopupWindow(self.window, text=text,index=index)
+        popup_window = SpecialValuePopupWindow(self.window, text=text, index=index)
         self.window.wait_window(popup_window.top)
         return popup_window.value
 
+    def get_one_layer_params_popup(self,text='',index=''):
+        popup_window = OneLayerPopupWindow(self.window, text=text, index=index)
+        self.window.wait_window(popup_window.top)
+        return popup_window.value1,popup_window.condition1,popup_window.value2,popup_window.condition2,\
+               popup_window.neurons_to_show
+
 
     def destroy_plot_canvas(self, plot_canvas):
-        self.clean_widget(plot_canvas)
+        clean_widget(plot_canvas)
         pos = np.where(self.visible_plots_canvas['canvas'] == plot_canvas)[0][0]
         self.visible_plots_canvas[pos] = (None, False, '', None)
         plot_canvas.destroy()
@@ -302,7 +308,7 @@ class Interface():
     def destroy_canvas_subplot_if_exist(self, master_canvas):
         if '!canvas' in master_canvas.children:
             oldplot = master_canvas.children['!canvas']
-            self.clean_widget(widget=oldplot)
+            clean_widget(widget=oldplot)
             oldplot.destroy()
 
 

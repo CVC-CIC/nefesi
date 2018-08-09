@@ -50,3 +50,11 @@ def collisionDetect(x1, x2, y1, y2, margin):
         if y1 > y2 and y1 < y2 + margin or y1 + margin > y2 and y1 + margin < y2 + margin:
             return True
     return False
+
+
+def clean_widget(widget):
+    for child in list(widget.children.values()):
+        if list(child.children.values()) == []:
+            child.destroy()
+        else:
+            clean_widget(child)
