@@ -19,7 +19,6 @@ def get_n_circles_well_distributed(idx_values,color_map='jet', max_radius=100):
     positions = np.zeros(len(idx_values),dtype=np.dtype([('circle',np.object),
                                                      ('x0', np.float),('x1',np.float),('y0',np.float),('y1',np.float),
                                                          ('x_center',np.float), ('y_center',np.float)]))
-    print(regions)
     for i in range(len(regions)):
         for j in range(bins[i]):
             radius = count[i] * (max_radius/2)

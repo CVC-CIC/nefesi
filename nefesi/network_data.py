@@ -646,3 +646,8 @@ class NetworkData(object):
         regEx = re.compile(regEx)
         # Select the layerNames that satisfies RegEx
         return list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
+    def get_len_neurons_of_layer(self, layer):
+        for layer_of_model in self.layers_data:
+            if layer_of_model.layer_id == layer:
+                return len(layer_of_model.neurons_data)
+        return -1

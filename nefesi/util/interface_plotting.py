@@ -8,23 +8,29 @@ from sklearn.manifold import TSNE
 from matplotlib import gridspec
 from nefesi.symmetry_index import SYMMETRY_AXES
 from nefesi.util.general_functions import get_n_circles_well_distributed
+
 FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
 APPENDIX_FONT_SIZE = 8
 NEURON_FONT_SIZE = 11
-
 INVALID_NEURON_IDX = -1
+ORDER = ['tops','bottoms']
+CONDITIONS = {'<': (lambda x, y: x < y), '<=': (lambda x, y: x <= y), '==': (lambda x, y: x == y),
+              '>': (lambda x, y: x > y), '>=': (lambda x, y: x >= y)}
+
 def get_plot(index, network_data, layers_to_evaluate='.*', degrees_orientation_idx=45,
                             labels=None, thr_class_idx=1., thr_pc=0.1,bins = 10, color_map='jet'):
 
     if check_layer_to_evaluate_validity(network_data=network_data,layer_to_evaluate=layers_to_evaluate):
+
         return get_one_layer_plot(index, network_data, layers_to_evaluate, degrees_orientation_idx, labels, thr_class_idx,
-                           thr_pc, bins, color_map)
+                           thr_pc, color_map)
     else:
         return get_plot_net_summary_figure(index, network_data, layers_to_evaluate, degrees_orientation_idx, labels, thr_class_idx,
                            thr_pc, bins, color_map)
 
 def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientation_idx=45,
-                            labels=None, thr_class_idx=1., thr_pc=0.1,bins = 10, color_map='jet'):
+                            labels=None, thr_class_idx=1., thr_pc=0.1, color_map='jet',
+                       min=0.0, condition1 = '>=',max='1.00', condition2='>=', order=ORDER[0],max_neurons=15):
     index = index.lower()
     font_size = FONTSIZE_BY_LAYERS[1]
     figure = plt.figure(figsize=(12, 18))
@@ -37,7 +43,10 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
 
 
     if index == 'class':
-        hidden_annotations = class_neurons_plot(sel_idx, subplot,layer_name=layer_to_evaluate, font_size=font_size + 2)
+        hidden_annotations, neurons_that_pass_filter = \
+            class_neurons_plot(sel_idx, subplot,layer_name=layer_to_evaluate, font_size=font_size + 2,
+                                                min=min, max=max, condition1=condition1, condition2=condition2,
+                                                max_neurons=max_neurons, order=order)
     elif index == 'orientation':
         mean, std, mean_std_between_rotations, hidden_annotations[pos] = \
             orientation_layer_bars(sel_idx, pos, subplot, colors, different_bars, font_size=font_size + 2)
@@ -46,22 +55,45 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
         mean, std, mean_std_between_axys, hidden_annotations[pos] = \
             symmetry_layer_bars(sel_idx, pos, subplot, colors, different_bars, font_size=font_size + 2)
 
-
-    print("ONE LAYER PLOT")
+    set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, index, layer_to_evaluate, max, min,
+                                network_data, neurons_that_pass_filter, order, subplot)
     return figure, hidden_annotations
 
+
+def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, index, layer_to_evaluate, max, min,
+                                network_data, neurons_that_pass_filter, order, subplot):
+    subplot.set_xticklabels([])
+    subplot.set_yticklabels([])
+    if type(layer_to_evaluate) is list:
+        layer_to_evaluate = layer_to_evaluate[0]
+    subplot.set_title(index.title() + " Selectivity of layer " + layer_to_evaluate,
+                      fontdict={'size': 12, 'weight': 'bold'})
+    if condition2 is None:
+        constraint_text = 'Constraint : Sel. Index ' + condition1 + ' ' + str(min) + ''
+    else:
+        constraint_text = 'Constraint : ' + str(min) + ' ' + condition1 + ' Sel. Index ' + condition2 + ' ' + str(max)
+    if neurons_that_pass_filter > len(hidden_annotations):
+        constraint_text += ' *'
+        appendix = '* showing ' + r"$\bf{" +str(len(hidden_annotations)) + "}$ " + order[:-1] + ' neurons (from ' \
+                   + r"$\bf{"+str(neurons_that_pass_filter) + "}$/" \
+                   +  r"$\bf{"+str(network_data.get_len_neurons_of_layer(layer_to_evaluate))+ "}$ " \
+                    " that satisfy the constraint)"
+        subplot.figure.text(x=0.17, y=0.05, s=appendix, fontdict={'size': APPENDIX_FONT_SIZE + 2, 'style': 'italic'})
+    subplot.set_xlabel(constraint_text, fontdict={'size': 10, 'weight': 'bold'})
+
+
 def class_neurons_plot(sel_idx, subplot, font_size, layer_name='default',
-                       max=1, min =0, max_number=15, order='descend',color_map='jet'):
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
     """
 
-    :param sel_idx:
+    :param valids_idx:
     :param subplot:
     :param colors:
     :param font_size:
     :param max:
     :param min:
-    :param max_number:
-    :param order: 'ascend' or 'descend'
+    :param max_neurons:
+    :param order: 'tops' or 'bottoms'
     :return:
     """
     if type(layer_name) is list:
@@ -70,34 +102,50 @@ def class_neurons_plot(sel_idx, subplot, font_size, layer_name='default',
         else:
             raise ValueError("Invalid layer_name"+str(layer_name))
 
-    neurons_in_decision= np.where((sel_idx['value']>=min) & (sel_idx['value']<=max))
+    valids_ids, valids_idx, neurons_that_pass_filter = \
+        get_neurons_from_constraint(sel_idx=sel_idx,min=min,max=max,condition_1=condition1,
+                                                         condition2=condition2,order=order,max_neurons=max_neurons)
 
-    sel_idx_sorted_args = np.argsort(sel_idx[neurons_in_decision]['value'])
-    if order.lower() == 'ascend':
-        sel_idx = sel_idx_sorted_args[::-1]
-    neurons_to_show = np.minimum(len(sel_idx_sorted_args), max_number)
-    sel_idx_sorted_args = sel_idx_sorted_args[:neurons_to_show]
-    sel_idx= sel_idx[sel_idx_sorted_args]
-
-    hidden_annotations = np.zeros(len(sel_idx),
-                                      dtype=np.dtype([('layer_name','U64'), ('neuron_idx',np.int), ('annotation',np.object),
+    hidden_annotations = np.zeros(len(valids_idx),
+                                  dtype=np.dtype([('layer_name','U64'), ('neuron_idx',np.int), ('annotation',np.object),
                             ('x0',np.float), ('x1',np.float), ('y0',np.float), ('y1',np.float)]))
 
-    circles = get_n_circles_well_distributed(sel_idx['value'],color_map)
+    circles = get_n_circles_well_distributed(valids_idx['value'], color_map)
     circles = circles[np.argsort(circles['y_center'])]
 
     for i in range(len(circles)):
-        hidden_annotations[i] = set_neuron_annotation(subplot=subplot,text=str(sel_idx[i]['label']),position=circles[i],
-                                                      layer_name=layer_name, neuron_idx=sel_idx_sorted_args[i])
-        subplot.text(circles[i]['x0']+6, circles[i]['y_center']-12,str(round(sel_idx[i]['value'],2)),
+        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=str(valids_idx[i]['label']), position=circles[i],
+                                                      layer_name=layer_name, neuron_idx=valids_ids[i])
+        subplot.text(circles[i]['x0'] + 6, circles[i]['y_center'] - 12, str(round(valids_idx[i]['value'], 2)),
                      fontdict={'size': NEURON_FONT_SIZE, 'weight': 'bold'})
     #adds each patch to plot
     for circle in circles['circle']:
         subplot.add_patch(circle)
 
     subplot.axis('equal')
+    return hidden_annotations, neurons_that_pass_filter
 
-    return hidden_annotations
+
+def get_neurons_from_constraint(sel_idx, min, max=1.0, condition_1='<=', condition2=None, order=ORDER[0], max_neurons=15):
+    sel_idx['value']=np.round(sel_idx['value'],2)
+    if condition2 is None:
+        neurons_in_decision = np.where(CONDITIONS[condition_1](sel_idx['value'],min))[0]
+    else:
+        valids_neurons_condition_1 = CONDITIONS[condition_1](min, sel_idx['value'])
+        valids_neurons_condition_2 = CONDITIONS[condition2](sel_idx['value'],max)
+        neurons_in_decision = np.where(valids_neurons_condition_1 & valids_neurons_condition_2)[0]
+    valids_idx = sel_idx[neurons_in_decision]
+    args_sorted = np.argsort(valids_idx['value'])
+    if order.lower() == ORDER[0]:
+        args_sorted = args_sorted[::-1]
+    neurons_to_show = np.minimum(len(valids_idx), max_neurons)
+    args_sorted = args_sorted[:neurons_to_show]
+    if order.lower() == ORDER[0]:
+        args_sorted = args_sorted[::-1]
+    valids_idx = valids_idx[args_sorted]
+    valids_ids = neurons_in_decision[args_sorted]
+    return valids_ids, valids_idx, len(neurons_in_decision)
+
 
 def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-1):
 

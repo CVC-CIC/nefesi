@@ -1,4 +1,5 @@
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
+
 try:
     from tkinter import *
     from tkinter import ttk
@@ -7,9 +8,17 @@ except ImportError:
     from tkinter import ttk
 import numpy as np
 from nefesi.util.general_functions import clean_widget
+from nefesi.util.interface_plotting import ORDER
 
 orientation_idx_range = (1,359)
 RED_LIGHTED_COLOR = '#ffcccc'
+ORDER_FRAME_TEXT = "If crop show: "
+CONDITIONS_TEXT = 'Define constraints: *'
+SELECTOR_OPTIONS = ['highers', 'lowers', 'in range', 'value sel.']
+CONDITIONS = ['<','<=','==', '>=', '>']
+NEURONS_TO_SHOW_RANGE = (1,20)
+NEURONS_TO_SHOW_TEXT = "Max. neurons to show: "
+
 
 class SpecialValuePopupWindow(object):
     def __init__(self, master, text='Set the value',index='', default_entry=180 ):
@@ -30,7 +39,6 @@ class SpecialValuePopupWindow(object):
     def cleanup(self):
         self.value=float(self.value_entry.get())
         self.top.destroy()
-
     def _on_entry_updated_check_orientation_index_float(self, action, index, value_if_allowed,
                                                         prior_value, text, validation_type, trigger_type, widget_name):
 
@@ -102,14 +110,8 @@ class SpecialValuePopupWindow(object):
                 self.value_entry.config({"background": 'white'})
             return True
 
-
-SELECTOR_OPTIONS = ['highers', 'lowers', 'in range', 'value sel.']
-CONDITIONS = ['<','<=','==', '>=', '>']
-ORDER = ['descend','ascend']
-NEURONS_TO_SHOW_RANGE = (1,20)
-
 class OneLayerPopupWindow(object):
-    def __init__(self, master, text='Set the value',index='', default_entry=180 ):
+    def __init__(self, master, layer_to_evaluate,index='', default_entry=180):
         self.validate_command_entry_1 = (master.register(self._on_entry_updated_check_range_1_0_entry_1),
                                      '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         self.validate_command_entry_2 = (master.register(self._on_entry_updated_check_range_1_0_entry_2),
@@ -118,8 +120,11 @@ class OneLayerPopupWindow(object):
             self.entry2 = self.order_combo = self.order = self.neurons_to_show_entry = self.neurons_to_show = None
 
         self.top=Toplevel(master)
-        self.top.title(index + ' Selectivity')
-        self.text_label=Label(self.top, text=text)
+        self.top.title(index.title() + ' Selectivity')
+        header_text = index.title()+" selectivity of layer "+layer_to_evaluate+":\n" \
+                    "Define the chart constraints, to filter\n" \
+                        " the neurons that will be showed"
+        self.text_label=Label(self.top, text=header_text,height=5)
         self.ok_button = Button(self.top, text='Ok', command=self.cleanup)
         self.selection_type_selector_frame = Frame(self.top)
         self.set_selection_type_selector(master=self.selection_type_selector_frame)
@@ -135,8 +140,17 @@ class OneLayerPopupWindow(object):
         self.conditions_frame.pack()
         self.order_selector_frame.pack()
         self.max_naurons_to_show_frame.pack()
-        self.ok_button.pack()
+        self.ok_button.pack(pady=(8,5), ipadx=10)
+        self.set_footers(master=self.top)
 
+    def set_footers(self, master):
+        frame = Frame(master=master)
+        label = Label(master=frame, text="* Accepted range [0., 1.]",font=("Times New Roman", 8))
+        label.grid(row=0,padx=(75,0))
+        label = Label(master=frame, text="** Accepted range [" + str(NEURONS_TO_SHOW_RANGE[0]) + ", " + \
+                                          str(NEURONS_TO_SHOW_RANGE[-1]) + "]", font=("Times New Roman", 8))
+        label.grid(row=1,padx=(75,0))
+        frame.pack(side=BOTTOM)
 
     def cleanup(self):
         if self.combo1 is not None:
@@ -147,24 +161,33 @@ class OneLayerPopupWindow(object):
             self.condition2=self.combo2.get()
             if self.entry2 is not None:
                 self.value2 = float(self.entry2.get())
+        self.order = self.order_combo.get()
+        self.neurons_to_show = int(self.neurons_to_show_entry.get())
         self.top.destroy()
 
     def set_max_neurons_to_show_entry(self, master):
+        label = Label(master=master, text=NEURONS_TO_SHOW_TEXT)
         validate_command = (master.register(self._on_entry_updated_check_max_neurons_validity),
                              '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         self.neurons_to_show_entry = Entry(master, validate='key', validatecommand=validate_command,
                            textvariable=StringVar(master=self.top, value=15),justify=CENTER,width = 5)
-        self.neurons_to_show_entry.pack()
+        label.grid(column=0,row=0)
+        self.neurons_to_show_entry.grid(column=1,row=0)
+        label = Label(master=master, text="**")
+        label.grid(column=2,row=0)
 
     def set_order_selector(self, master):
-        self.order_combo = ttk.Combobox(master=master, values=ORDER, state='readonly', width=9)
+        label = Label(master=master, text=ORDER_FRAME_TEXT)
+        self.order_combo = ttk.Combobox(master=master, values=ORDER, state='readonly', width=8)
         self.order_combo.set(ORDER[0])
         self.order_combo.bind("<<ComboboxSelected>>", self._on_order_or_condition_selector_changed)
-        self.order_combo.pack()
+        label.pack(side=LEFT,padx=(2,25))
+        self.order_combo.pack(side=RIGHT)
 
 
     def set_conditions_selector(self, master, default1='>=', default2=None):
         assert((default1 in CONDITIONS) or (default2 in CONDITIONS))
+        values_frame = Frame(master=master)
         if default1 == None or default2 == None:
             if default1 == None:
                 default1 = default2
@@ -180,35 +203,41 @@ class OneLayerPopupWindow(object):
             #Only one
         else:
             #Is range
-            self.combo2 = ttk.Combobox(master=master, values=CONDITIONS, width=3, state='readonly')
+            self.combo2 = ttk.Combobox(master=values_frame, values=CONDITIONS, width=3, state='readonly')
             self.combo2.set(default2)
-            self.entry2 = Entry(master, validate='key', validatecommand=self.validate_command_entry_2,
+            self.entry2 = Entry(values_frame, validate='key', validatecommand=self.validate_command_entry_2,
                            textvariable=StringVar(master=self.top, value=1.0),justify=CENTER,width = 5)
             self.combo2.grid(column=3,row=0,padx=2)
             self.entry2.grid(column=4,row=0,padx=2)
             label_column, combo1_column, entry1_column = 2, 1, 0
 
-        label = Label(master=master, text = 'Sel. idx')
+        label = Label(master=values_frame, text = 'Sel. idx')
         if self.combo1 is not None:
             self.combo1.destroy()
             self.combo1 = None
-        self.combo1 = ttk.Combobox(master=master, values=CONDITIONS, width=3, state='readonly')
+        self.combo1 = ttk.Combobox(master=values_frame, values=CONDITIONS, width=3, state='readonly')
         self.combo1.set(default1)
         self.combo1.bind("<<ComboboxSelected>>", self._on_order_or_condition_selector_changed)
         if self.entry1 is not None:
             self.entry1.destroy()
             self.entry1 = None
-        self.entry1 = Entry(master, validate='key', validatecommand=self.validate_command_entry_1,
+        self.entry1 = Entry(values_frame, validate='key', validatecommand=self.validate_command_entry_1,
                             textvariable=StringVar(master=self.top, value=0.0),justify=CENTER, width = 5)
         label.grid(column=label_column,row=0,padx=2)
         self.combo1.grid(column=combo1_column,row=0,padx=2)
         self.entry1.grid(column=entry1_column,row=0,padx=2)
 
+        label_explication= Label(master=master, text=CONDITIONS_TEXT)
+        label_explication.pack(side=TOP,padx=(0,75))
+        values_frame.pack(side=BOTTOM,padx=5)
+
     def set_selection_type_selector(self, master):
-        self.type_combo = ttk.Combobox(master=master, values=SELECTOR_OPTIONS, state='readonly')
+        label = Label(master=master,text="Select constraints: ")
+        self.type_combo = ttk.Combobox(master=master, values=SELECTOR_OPTIONS, state='readonly',width=9)
         self.type_combo.bind("<<ComboboxSelected>>", self._on_type_selector_changed)
         self.type_combo.set(SELECTOR_OPTIONS[0])
-        self.type_combo.pack()
+        label.pack(side=LEFT)
+        self.type_combo.pack(side=RIGHT)
 
     def _on_type_selector_changed(self,event):
         """
@@ -231,10 +260,8 @@ class OneLayerPopupWindow(object):
                 elif selected == SELECTOR_OPTIONS[1]: #lowers
                     self.order_combo.set(ORDER[1])
                 self.combo1.set('>=')
-                print(self.entry1.get())
                 self.entry1.delete(0,END)
                 self.entry1.insert(0,'0')
-            print("Last "+self._type_selector_last_value+" selected "+selected)
             self._type_selector_last_value = selected
 
 
