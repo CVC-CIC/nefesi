@@ -247,12 +247,13 @@ class Interface():
             master_canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
             self.visible_plots_canvas[first_util_place] = (master_canvas, True, index, special_value)
         if figure is not None:
-            self.put_figure_plot(master=master_canvas, figure=figure, hidden_annotations=hidden_annotations,index=index)
+            self.put_figure_plot(master=master_canvas, figure=figure, hidden_annotations=hidden_annotations,index=index,
+                                 special_value=special_value)
             visible_plot_idx = np.where(self.visible_plots_canvas['canvas'] == master_canvas)[0][0]
             self.visible_plots_canvas[visible_plot_idx]['index'] = index
             self.visible_plots_canvas[visible_plot_idx]['special_value'] = special_value
         selector = self.get_index_button_general(master_canvas,default_index=index)
-        selector.place(relx=0.25,rely=0)#grid(row=0,column=0, columnspan=2)
+        selector.place(relx=0.4,rely=0)#grid(row=0,column=0, columnspan=2)
         erase_button = self.get_erase_plot_button(master=master_canvas)
         erase_button.place(relx=0.85,rely=0)#((row=0,column=3)
 
@@ -281,7 +282,7 @@ class Interface():
         Gets a general button to select wich graphic to plot
         :return: A select button with each index possible, and the event to plot it when called
         """
-        combo = ttk.Combobox(master=master, values=ALL_INDEX_NAMES, state='readonly')
+        combo = ttk.Combobox(master=master, values=ALL_INDEX_NAMES, state='readonly',justify=CENTER,width=15)
         combo.bind("<<ComboboxSelected>>", self.event_controller._on_general_plot_selector_changed)
         if default_index is not None:
             combo.set(default_index)

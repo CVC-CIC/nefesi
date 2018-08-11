@@ -33,7 +33,7 @@ class SpecialValuePopupWindow(object):
                                      '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         self.value_entry = None
         self.value_entry=Entry(self.top, validate ='key', validatecommand=self.validate_command,
-                               textvariable=StringVar(master=self.top,value=default_entry))
+                               textvariable=StringVar(master=self.top,value=default_entry),width=20, justify=CENTER)
         self.value_entry.pack()
         self.ok_button.pack()
     def cleanup(self):
@@ -178,7 +178,7 @@ class OneLayerPopupWindow(object):
 
     def set_order_selector(self, master):
         label = Label(master=master, text=ORDER_FRAME_TEXT)
-        self.order_combo = ttk.Combobox(master=master, values=ORDER, state='readonly', width=8)
+        self.order_combo = ttk.Combobox(master=master, values=ORDER, state='readonly', width=8, justify=CENTER)
         self.order_combo.set(ORDER[0])
         self.order_combo.bind("<<ComboboxSelected>>", self._on_order_or_condition_selector_changed)
         label.pack(side=LEFT,padx=(2,25))
@@ -203,7 +203,7 @@ class OneLayerPopupWindow(object):
             #Only one
         else:
             #Is range
-            self.combo2 = ttk.Combobox(master=values_frame, values=CONDITIONS, width=3, state='readonly')
+            self.combo2 = ttk.Combobox(master=values_frame, values=CONDITIONS, width=3, state='readonly',justify=CENTER)
             self.combo2.set(default2)
             self.entry2 = Entry(values_frame, validate='key', validatecommand=self.validate_command_entry_2,
                            textvariable=StringVar(master=self.top, value=1.0),justify=CENTER,width = 5)
@@ -215,7 +215,7 @@ class OneLayerPopupWindow(object):
         if self.combo1 is not None:
             self.combo1.destroy()
             self.combo1 = None
-        self.combo1 = ttk.Combobox(master=values_frame, values=CONDITIONS, width=3, state='readonly')
+        self.combo1 = ttk.Combobox(master=values_frame, values=CONDITIONS, width=3, state='readonly',justify=CENTER)
         self.combo1.set(default1)
         self.combo1.bind("<<ComboboxSelected>>", self._on_order_or_condition_selector_changed)
         if self.entry1 is not None:
@@ -233,7 +233,7 @@ class OneLayerPopupWindow(object):
 
     def set_selection_type_selector(self, master):
         label = Label(master=master,text="Select constraints: ")
-        self.type_combo = ttk.Combobox(master=master, values=SELECTOR_OPTIONS, state='readonly',width=9)
+        self.type_combo = ttk.Combobox(master=master, values=SELECTOR_OPTIONS, state='readonly',width=9, justify=CENTER)
         self.type_combo.bind("<<ComboboxSelected>>", self._on_type_selector_changed)
         self.type_combo.set(SELECTOR_OPTIONS[0])
         label.pack(side=LEFT)
