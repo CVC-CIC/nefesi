@@ -14,7 +14,7 @@ import time
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from nefesi.layer_data import ALL_INDEX_NAMES
-from nefesi.util.interface_plotting import get_plot, get_one_layer_plot, get_plot_net_summary_figure
+from nefesi.util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
 from nefesi.interface.popup_window import SpecialValuePopupWindow,OneLayerPopupWindow
 import nefesi.interface.EventController as events
 from nefesi.util.general_functions import clean_widget
@@ -216,19 +216,19 @@ class Interface():
             elif len(layers) == 1:
                 if neuron < 0:
                     min, condition1, max, condition2, order, max_neurons = self.get_one_layer_params_popup(index=index,
-                                                                                                layer_to_evaluate=layers)
+                                                                                                layer_to_evaluate=layers,
+                                                                                            special_value=special_value)
                     figure, hidden_annotations = get_one_layer_plot(index, network_data=self.network_data,
                                                                 layer_to_evaluate=layers,
-                                                                degrees_orientation_idx=special_value,min=min, max=max,
+                                                                special_value=special_value,min=min, max=max,
                                                                 condition1=condition1, condition2=condition2,
                                                                 order=order, max_neurons=max_neurons)
                 else:
                     raise ValueError('WHY? Is entering here, when is a neuron specific plot? Neuron: '+str(neuron))
 
             else:
-                figure, hidden_annotations = get_plot_net_summary_figure(index,layersToEvaluate=layers,
-                                                     degrees_orientation_idx=special_value,
-                                                     network_data=self.network_data)
+                figure, hidden_annotations = get_plot_net_summary_figure(index, layersToEvaluate=layers,
+                                                                         special_value=special_value, network_data=self.network_data)
         else:
             warnings.warn("self.current_layers_in_view is not a list. Check why. Value: "+
                               str(layers)+str(type(layers)), RuntimeWarning)
@@ -294,15 +294,16 @@ class Interface():
         return button
 
 
-    def get_value_from_popup(self,text='',index=''):
-        popup_window = SpecialValuePopupWindow(self.window, text=text, index=index)
+    def get_value_from_popup(self,index=''):
+        popup_window = SpecialValuePopupWindow(self.window, index=index)
         self.window.wait_window(popup_window.top)
         return popup_window.value
 
-    def get_one_layer_params_popup(self,index='',layer_to_evaluate='unknow'):
+    def get_one_layer_params_popup(self,index='',layer_to_evaluate='unknow', special_value=0.1):
         if type(layer_to_evaluate) is list:
             layer_to_evaluate = layer_to_evaluate[0]
-        popup_window = OneLayerPopupWindow(self.window, layer_to_evaluate=layer_to_evaluate, index=index)
+        popup_window = OneLayerPopupWindow(self.window, layer_to_evaluate=layer_to_evaluate, index=index,
+                                           special_value=special_value)
         self.window.wait_window(popup_window.top)
         return popup_window.value1,popup_window.condition1,popup_window.value2,popup_window.condition2,\
                popup_window.order, popup_window.neurons_to_show

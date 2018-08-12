@@ -10,6 +10,7 @@ from matplotlib import gridspec
 from nefesi.symmetry_index import SYMMETRY_AXES
 from nefesi.util.general_functions import get_n_circles_well_distributed
 from PIL.ImageFilter import GaussianBlur
+from nefesi.class_index import get_ntop_population_code
 
 FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
 APPENDIX_FONT_SIZE = 8
@@ -19,19 +20,8 @@ ORDER = ['tops','bottoms']
 CONDITIONS = {'<': (lambda x, y: x < y), '<=': (lambda x, y: x <= y), '==': (lambda x, y: x == y),
               '>': (lambda x, y: x > y), '>=': (lambda x, y: x >= y)}
 
-def get_plot(index, network_data, layers_to_evaluate='.*', degrees_orientation_idx=45,
-                            labels=None, thr_class_idx=1., thr_pc=0.1,bins = 10, color_map='jet'):
-
-    if check_layer_to_evaluate_validity(network_data=network_data,layer_to_evaluate=layers_to_evaluate):
-
-        return get_one_layer_plot(index, network_data, layers_to_evaluate, degrees_orientation_idx, labels, thr_class_idx,
-                           thr_pc, color_map)
-    else:
-        return get_plot_net_summary_figure(index, network_data, layers_to_evaluate, degrees_orientation_idx, labels, thr_class_idx,
-                           thr_pc, bins, color_map)
-
-def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientation_idx=45,
-                            labels=None, thr_class_idx=1., thr_pc=0.1, color_map='jet',
+def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
+                            labels=None, color_map='jet',
                        min=0.0, condition1 = '>=',max='1.00', condition2='>=', order=ORDER[0],max_neurons=15):
     index = index.lower()
     font_size = FONTSIZE_BY_LAYERS[1]
@@ -40,8 +30,8 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
 
     # -----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layer_to_evaluate,
-                                               degrees_orientation_idx=degrees_orientation_idx, labels=labels,
-                                               thr_class_idx=1., thr_pc=0.1)[index][0]
+                                               degrees_orientation_idx=special_value,thr_pc=special_value,
+                                               thr_class_idx=special_value, labels=labels)[index][0]
 
 
     if index == 'class':
@@ -57,20 +47,28 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, degrees_orientati
 
     elif index == 'orientation':
         hidden_annotations, neurons_that_pass_filter = \
-            orientation_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx[:,-1],degrees_rotation=degrees_orientation_idx, subplot=subplot,
+            orientation_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx[:,-1],degrees_rotation=special_value, subplot=subplot,
                                      layer_name=layer_to_evaluate, font_size=font_size + 2,
                                min=min, max=max, condition1=condition1, condition2=condition2,
                                max_neurons=max_neurons, order=order)
 
     elif index == 'symmetry':
         hidden_annotations, neurons_that_pass_filter = \
-            symmetry_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx[:,-1],degrees_rotation=degrees_orientation_idx, subplot=subplot,
+            symmetry_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx[:,-1], subplot=subplot,
                                      layer_name=layer_to_evaluate, font_size=font_size + 2,
                                min=min, max=max, condition1=condition1, condition2=condition2,
                                max_neurons=max_neurons, order=order)
+    elif index == 'population code':
+        hidden_annotations, neurons_that_pass_filter = \
+            population_code_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx, network_data=network_data,
+                                         thr_pc=special_value, subplot=subplot,
+                                      layer_name=layer_to_evaluate, font_size=font_size + 2,
+                                      min=min, max=max, condition1=condition1, condition2=condition2,
+                                      max_neurons=max_neurons, order=order)
 
     set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, index, layer_to_evaluate, max, min,
-                                network_data, neurons_that_pass_filter, order, subplot, orientation_degrees=degrees_orientation_idx)
+                                network_data, neurons_that_pass_filter, order, subplot,
+                                special_value=special_value)
     return figure, hidden_annotations
 
 def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
@@ -133,7 +131,34 @@ def orientation_neurons_plot(sel_idx, sel_idx_to_calcs, degrees_rotation,  subpl
 
     return hidden_annotations, neurons_that_pass_filter
 
-def symmetry_neurons_plot(sel_idx, sel_idx_to_calcs, degrees_rotation,  subplot, font_size, layer_name='default',
+def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc, subplot, font_size, layer_name='default',
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+
+    circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot)
+    n=5
+    for i in range(len(circles)):
+        neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=valids_ids[i])
+        top = get_ntop_population_code(neuron_data=neuron,labels=None,threshold_pc=thr_pc)
+        top_len = len(top)
+        ntop = top[:np.minimum(n,top_len)]
+        text = ''
+        if top_len == 0:
+            text = 'No classes with sel. >= '+str(thr_pc)
+        elif top_len>n:
+            text+= 'Top '+str(len(ntop))+' of '+str(top_len)+' classes:'
+        else:
+            text+= 'Selective classes:'
+        for label, rel_freq in ntop:
+            text+= '\n '+label+' '+str(round(rel_freq*100,ndigits=1))+'%'
+
+        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text, position=circles[i],
+                                                  layer_name=layer_name, neuron_idx=valids_ids[i])
+
+    return hidden_annotations, neurons_that_pass_filter
+
+
+def symmetry_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                     min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
     """
 
@@ -236,7 +261,7 @@ def set_neuron_img_annotation(subplot, img, position, layer_name=None, neuron_id
 def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-1):
 
     annotation = subplot.annotate(text, xy=(position['x_center'], position['y_center']),
-                                  xytext=(10, 10), textcoords='offset points',
+                                  xytext=(10, 5), textcoords='offset points',
                                   bbox=dict(boxstyle="round", fc="w"))
 
     annotation.set_visible(False)
@@ -245,19 +270,27 @@ def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-
 
 
 def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, index, layer_to_evaluate, max, min,
-                                network_data, neurons_that_pass_filter, order, subplot, orientation_degrees=None):
+                                network_data, neurons_that_pass_filter, order, subplot, special_value=None):
     subplot.set_xticklabels([])
     subplot.set_yticklabels([])
+    sel_idx_label = 'Sel. Index'
     if type(layer_to_evaluate) is list:
         layer_to_evaluate = layer_to_evaluate[0]
     title = index.title() + " Selectivity of layer " + layer_to_evaluate
     if index == 'orientation':
-        title+= ' ('+str(orientation_degrees)+'º by rot.)'
+        title+= ' ('+str(special_value) + 'º by rot.)'
+    elif index == 'population code':
+        title+= ' (thr: '+str(special_value)+')'
+        min = int(min)
+        if max is not None:
+            max = int(max)
+        sel_idx_label = 'Popul. code'
     subplot.set_title(title, fontdict={'size': 12, 'weight': 'bold'})
     if condition2 is None:
-        constraint_text = 'Constraint : Sel. Index ' + condition1 + ' ' + str(min) + ''
+        constraint_text = 'Constraint : '+sel_idx_label+' '+ condition1 + ' ' + str(min) + ''
     else:
-        constraint_text = 'Constraint : ' + str(min) + ' ' + condition1 + ' Sel. Index ' + condition2 + ' ' + str(max)
+        constraint_text = 'Constraint : ' + str(min) + ' ' + condition1 + ' '+sel_idx_label+' '\
+                          + condition2 + ' ' + str(max)
     if neurons_that_pass_filter > len(hidden_annotations):
         constraint_text += ' *'
         appendix = '* showing ' + r"$\bf{" +str(len(hidden_annotations)) + "}$ " + order[:-1] + ' neurons (from ' \
@@ -270,8 +303,8 @@ def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, inde
 
 
 
-def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degrees_orientation_idx=45,
-                            labels=None, thr_class_idx=1., thr_pc=0.1, bins=10, color_map='jet'):
+def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", special_value=None,
+                                labels=None, bins=10, color_map='jet'):
     #-------------------------------------------INITIALIZATIONS---------------------------------------
     index = index.lower()
     #Set the names of layersToEvaluate (in order to plot it if user used RegEx)
@@ -299,8 +332,8 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degr
 
     #-----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layersToEvaluate,
-                                               degrees_orientation_idx=degrees_orientation_idx, labels=labels,
-                                               thr_class_idx=1., thr_pc=0.1)[index]
+                                               degrees_orientation_idx=special_value, labels=labels,
+                                               thr_class_idx=special_value, thr_pc=special_value)[index]
 
     #------------------------------------------MAKE PLOTS-------------------------------------------------------
     for pos,(layer_name, sel_idx_of_layer) in enumerate(zip(layersToEvaluate,sel_idx)):
@@ -338,16 +371,22 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", degr
                 x_axis_labels[pos] = layer_name + "\n" \
                                 "μ=" + str(mean) + " σ=" + str(std) + " (σ'=" + str(mean_std_between_axys) + ")*"
 
+        elif index == 'population code':
+            mean, std, hidden_annotations[pos] = population_code_layer_bars(sel_idx_of_layer, pos, subplot, colors,
+                                                                  different_bars,
+                                                                  layer_name=layer_name, font_size=font_size + 2)
+            x_axis_labels[pos] = layer_name + " \n" \
+                                              "μ=" + str(mean) + " σ=" + str(std)
     #-------------------------------SET THE PLOT ADDITIONAL INFORMATION--------------------------------------------
 
     set_aditional_general_plot_information(index, bins, different_bars, subplot,
-                                           x_axis_labels, degrees_orientation_idx, font_size)
+                                           x_axis_labels, special_value, font_size)
 
     return figure,hidden_annotations
 
 
 def set_aditional_general_plot_information(index, bins, different_bars, subplot,
-                                           x_axis_labels, degrees_orientation_idx=180, font_size=12):
+                                           x_axis_labels, special_value=None, font_size=12):
     """
     Sets the additional plot information on general plots (Tittles, labels of axis, legend...)
     :param index: Str, the name of the index that represents
@@ -355,7 +394,7 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
     :param different_bars: The different_bars auxiliar array with the bars used
     :param subplot:
     :param x_axis_labels:
-    :param degrees_orientation_idx:
+    :param special_value:
     :param font_size:
     :return:
     """
@@ -368,7 +407,9 @@ def set_aditional_general_plot_information(index, bins, different_bars, subplot,
     subplot.set_ylabel('% of Neurons')
     title = index.title() + ' Selectivity'
     if index == 'orientation':
-        title += ' (' + str(degrees_orientation_idx) + 'º by rotation)'
+        title += ' (' + str(special_value) + 'º by rotation)'
+    elif index == 'population code':
+        title+= ' (thr: '+str(special_value)+')'
     subplot.set_title(title, fontdict={'size': 12, 'weight': 'bold'})
 
     subplot.figure.legend(different_bars['bar'][different_bars['used']][::-1], different_bars['label'][different_bars['used']][::-1],
@@ -419,10 +460,20 @@ def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins
     bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx_values, layer_pos, subplot)
     hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL",
+                                                 actual_bar = bar, text="TEXTIÑU RICO",
                                                  layer_name=layer_name)
 
     return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
+
+def population_code_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
+                     layer_name='default', font_size = 12):
+    bar, mean_selectivity, std_selectivity = plot_population_code_bars_in_general_figure(bins, colors, different_bars, font_size,
+                                                                         layer_idx, layer_pos, subplot)
+    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
+                                                 actual_bar = bar, text="INFORMAZUCIÑA\n ADICIONAL",
+                                                 layer_name=layer_name)
+
+    return round(mean_selectivity,1), round(std_selectivity,1), hidden_annotation
 
 def color_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
                      layer_name='default', font_size = 12):
@@ -455,6 +506,41 @@ def plot_bars_in_general_figure(bins, colors, different_bars, font_size, layer_i
                 different_bars[i][0] = bar
                 different_bars[i][1] = str(int(bins[i] * 100)) + '% - ' + str(int(bins[i + 1] * 100)) + '%'
                 different_bars[i][2] = True
+    mean_selectivity = np.mean(layer_idx_values)
+    std_selectivity = np.std(layer_idx_values)
+    return bar, mean_selectivity, std_selectivity
+
+def plot_population_code_bars_in_general_figure(bins, colors, different_bars, font_size, layer_idx_values, layer_pos, subplot):
+    unique_bins, counts = np.unique(layer_idx_values, return_counts=True)#np.histogram(layer_idx_values, unique_bins=unique_bins, range=(0., 1.001))
+    unique_bins = np.clip(unique_bins, 0, bins-1)
+    first_last = None
+    for i in range(len(unique_bins)):
+        if unique_bins[i]==(bins-1):
+            if first_last is None:
+                first_last = i
+            else:
+                counts[first_last]+= counts[i]
+    if first_last is not None:
+        unique_bins = unique_bins[:first_last+1]
+        counts = counts[:first_last+1]
+    freq_percent = (counts / len(layer_idx_values)) * 100
+    y_offset = 0
+    for i in range(len(freq_percent)):
+        if not np.isclose(freq_percent[i], 0.):
+            bar = subplot.bar(layer_pos, freq_percent[i], bottom=y_offset, width=0.45, color=colors[unique_bins[i]])
+            if freq_percent[i] > 15:
+                digits_to_print = len(str(counts[i]))
+                x_offset = (font_size * (digits_to_print - 1) / (100 * digits_to_print))
+                subplot.text(layer_pos, y_offset + (freq_percent[i] / 2),
+                             str(int((counts[i]/sum(counts))*100))+'%', fontdict={'size': font_size, 'weight': 'bold'}, horizontalalignment='center',
+                     verticalalignment='center')
+            y_offset += freq_percent[i]
+            # if is the first bar of this bin encountered
+            if str(unique_bins[i]) not in different_bars['label']:
+                different_bars[unique_bins[i]][0] = bar
+                label = '>= ' if unique_bins[i]==(bins-1) else ''
+                different_bars[unique_bins[i]][1] = label+str(unique_bins[i])
+                different_bars[unique_bins[i]][2] = True
     mean_selectivity = np.mean(layer_idx_values)
     std_selectivity = np.std(layer_idx_values)
     return bar, mean_selectivity, std_selectivity

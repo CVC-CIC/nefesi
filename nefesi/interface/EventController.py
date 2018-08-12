@@ -95,14 +95,13 @@ class EventController():
         """
         master = event.widget.master
         selected = event.widget.get()
-        rotation_degrees = None
-        if selected == 'orientation':
-            rotation_degrees = self.interface.get_value_from_popup(index='Orientation', text='Set degrees of each rotation\n'
-                                                                                '(only values in range [1,359] allowed).\n'
-                                                                            'NOTE: Lower values will increment processing time')
+        special_value = None
+        if selected in ['orientation','population code'] :
+            special_value = self.interface.get_value_from_popup(index=selected)
+
         self.interface.destroy_canvas_subplot_if_exist(master_canvas=master)
         self.interface.plot_general_index(index=selected, master_canvas=master, layers=self.interface.current_layers_in_view,
-                                          special_value=rotation_degrees)
+                                          special_value=special_value)
 
 
     def _on_number_of_plots_to_show_changed(self, event):

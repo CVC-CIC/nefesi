@@ -97,6 +97,22 @@ def get_population_code_idx(neuron_data, labels=None, threshold_pc=0.1):
         #classes with relative  frequency more than threshold_pc
         return np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
 
+def get_ntop_population_code(neuron_data, labels=None, threshold_pc=0.1, n=5):
+    rel_freq = relative_freq_class(neuron_data, labels)
+    if rel_freq is None:
+        return 0
+    else:
+        ntop = np.zeros(len(rel_freq),dtype=np.dtype([('label','U128'),('rel_freq',np.float)]))
+        for i, (_,label,_,freq) in enumerate(rel_freq):
+            if freq>threshold_pc:
+                ntop[i] = (label,np.round(freq,decimals=3))
+            else:
+                ntop = ntop[:i]
+                break
+        # classes with relative  frequency more than threshold_pc
+        return ntop
+
+
 def _fill_top_labels(neuron_data):
     """
     Fills the 'nefesi.neuron_data.NeuronData.top_labels' attribute
