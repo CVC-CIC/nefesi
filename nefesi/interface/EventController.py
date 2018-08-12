@@ -122,7 +122,7 @@ class EventController():
             plots_in_use_idx = np.where(self.interface.visible_plots_canvas['used'] == True)[0]
         # Readjust the plots in order to put put ordered. (example: if remains plots 1 and 3 and selected is 2, plots
         # 1 and 3 will be plots 0 and 1)
-        if plots_in_use_idx[-1] >= selected:
+        if plots_in_use_idx != [] and plots_in_use_idx[-1] >= selected:
             idx = [i for i in range(len(self.interface.visible_plots_canvas))]
             valids_idx, non_valids = idx[:selected], idx[selected:]
             self.interface.visible_plots_canvas[valids_idx] = self.interface.visible_plots_canvas[plots_in_use_idx]

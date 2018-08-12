@@ -21,7 +21,7 @@ CONDITIONS = {'<': (lambda x, y: x < y), '<=': (lambda x, y: x <= y), '==': (lam
               '>': (lambda x, y: x > y), '>=': (lambda x, y: x >= y)}
 
 def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
-                            labels=None, color_map='jet',
+                            color_map='jet',
                        min=0.0, condition1 = '>=',max='1.00', condition2='>=', order=ORDER[0],max_neurons=15):
     index = index.lower()
     font_size = FONTSIZE_BY_LAYERS[1]
@@ -30,8 +30,7 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
 
     # -----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layer_to_evaluate,
-                                               degrees_orientation_idx=special_value,thr_pc=special_value,
-                                               thr_class_idx=special_value, labels=labels)[index][0]
+                                               degrees_orientation_idx=special_value,thr_pc=special_value)[index][0]
 
 
     if index == 'class':
@@ -139,7 +138,7 @@ def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc
     n=5
     for i in range(len(circles)):
         neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=valids_ids[i])
-        top = get_ntop_population_code(neuron_data=neuron,labels=None,threshold_pc=thr_pc)
+        top = get_ntop_population_code(neuron_data=neuron,threshold_pc=thr_pc)
         top_len = len(top)
         ntop = top[:np.minimum(n,top_len)]
         text = ''
@@ -304,7 +303,7 @@ def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, inde
 
 
 def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", special_value=None,
-                                labels=None, bins=10, color_map='jet'):
+                                bins=10, color_map='jet'):
     #-------------------------------------------INITIALIZATIONS---------------------------------------
     index = index.lower()
     #Set the names of layersToEvaluate (in order to plot it if user used RegEx)
@@ -332,8 +331,7 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", spec
 
     #-----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layersToEvaluate,
-                                               degrees_orientation_idx=special_value, labels=labels,
-                                               thr_class_idx=special_value, thr_pc=special_value)[index]
+                                               degrees_orientation_idx=special_value, thr_pc=special_value)[index]
 
     #------------------------------------------MAKE PLOTS-------------------------------------------------------
     for pos,(layer_name, sel_idx_of_layer) in enumerate(zip(layersToEvaluate,sel_idx)):

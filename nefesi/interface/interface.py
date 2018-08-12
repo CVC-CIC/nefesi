@@ -4,6 +4,7 @@ import warnings
 try:
     from tkinter import *
     from tkinter import ttk
+    from tkinter import filedialog
 except ImportError:
     from Tkinter import *
     from Tkinter import ttk
@@ -11,11 +12,13 @@ except ImportError:
 import threading
 import multiprocessing
 import time
+import pickle
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from nefesi.layer_data import ALL_INDEX_NAMES
 from nefesi.util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
-from nefesi.interface.popup_window import SpecialValuePopupWindow,OneLayerPopupWindow
+from nefesi.interface.popup_windows.special_value_popup_window import SpecialValuePopupWindow
+from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupWindow
 import nefesi.interface.EventController as events
 from nefesi.util.general_functions import clean_widget
 
@@ -45,9 +48,10 @@ class Interface():
         self.general_buttons_frame = Frame(master=self.window, borderwidth=1)
         self.set_general_buttons_frame()
 
+
         tk.Label(self.general_info_frame, text="Place to put texts").pack()
-        self.state = 'init'
-        self.plot_general_index(index='class')
+        self.plot_general_index(index=None)
+        self.set_menu_bar()
         #self.plot_general_index(index='symmetry')
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='class')
@@ -127,7 +131,21 @@ class Interface():
 
         if state == 'init':
             clean_widget(self.plots_canvas)
+    def set_menu_bar(self):
+        menubar = Menu(master=self.window)
+        self.window.config(menu=menubar)
+        fileMenu = Menu(menubar)
+        fileMenu.add_command(label="Set Label traduction", command=self.set_labels_dict)
+        menubar.add_cascade(label="Configuration", menu=fileMenu)
 
+    def ask_for_file(self, title="Select file", type='obj'):
+        filename = filedialog.askopenfilename(initialdir="/", title=title,
+                                   filetypes=((type, '*.'+type), ("all files", "*.*")))
+        return filename
+
+    def set_labels_dict(self):
+        labels_dict_file = self.ask_for_file(title="Select labels traduction (Python dict object)")
+        self.network_data.default_labels_dict = labels_dict_file
 
     def set_general_buttons_frame(self):
         self.set_save_changes_check_box(master=self.general_buttons_frame)
@@ -149,7 +167,7 @@ class Interface():
         self.lstbox_last_selection = (0,)
         lstbox.bind('<<ListboxSelect>>',lambda event: self.event_controller._on_listbox_change_selection(event, lstbox))
         lstbox.selection_set(0)
-        ok_button = ttk.Button(master=master, text="Proceed", style="TButton",
+        ok_button = ttk.Button(master=master, text="Apply on all", style="TButton",
                                command=self.event_controller._on_click_proceed_button)
         lstbox_frame.pack()
         lstbox_tittle.pack(side=TOP)
@@ -206,36 +224,39 @@ class Interface():
          nefesi.layer_data.ALL_INDEX_NAMES ('color', 'orientation', 'symmetry', 'class' or 'population code')
         :return:
         """
-        if type(layers) in [str, np.str_]:
-                layers = self.network_data.get_layers_analyzed_that_match_regEx(layers)
-        if type(layers) is list:
-            if len(layers) == 0:
-                warnings.warn("layers is a 0-lenght list. Check why. Value: "+
-                              str(layers), RuntimeWarning)
-                figure = hidden_annotations = None
-            elif len(layers) == 1:
-                if neuron < 0:
-                    min, condition1, max, condition2, order, max_neurons = self.get_one_layer_params_popup(index=index,
-                                                                                                layer_to_evaluate=layers,
-                                                                                            special_value=special_value)
-                    figure, hidden_annotations = get_one_layer_plot(index, network_data=self.network_data,
-                                                                layer_to_evaluate=layers,
-                                                                special_value=special_value,min=min, max=max,
-                                                                condition1=condition1, condition2=condition2,
-                                                                order=order, max_neurons=max_neurons)
-                else:
-                    raise ValueError('WHY? Is entering here, when is a neuron specific plot? Neuron: '+str(neuron))
-
-            else:
-                figure, hidden_annotations = get_plot_net_summary_figure(index, layersToEvaluate=layers,
-                                                                         special_value=special_value, network_data=self.network_data)
+        if index is None:
+            self.add_figure_to_frame(master_canvas=master_canvas, figure=None)
         else:
-            warnings.warn("self.current_layers_in_view is not a list. Check why. Value: "+
-                              str(layers)+str(type(layers)), RuntimeWarning)
-            figure = hidden_annotations = None
+            if type(layers) in [str, np.str_]:
+                    layers = self.network_data.get_layers_analyzed_that_match_regEx(layers)
+            if type(layers) is list:
+                if len(layers) == 0:
+                    warnings.warn("layers is a 0-lenght list. Check why. Value: "+
+                                  str(layers), RuntimeWarning)
+                    figure = hidden_annotations = None
+                elif len(layers) == 1:
+                    if neuron < 0:
+                        min, condition1, max, condition2, order, max_neurons = self.get_one_layer_params_popup(index=index,
+                                                                                                    layer_to_evaluate=layers,
+                                                                                                special_value=special_value)
+                        figure, hidden_annotations = get_one_layer_plot(index, network_data=self.network_data,
+                                                                    layer_to_evaluate=layers,
+                                                                    special_value=special_value,min=min, max=max,
+                                                                    condition1=condition1, condition2=condition2,
+                                                                    order=order, max_neurons=max_neurons)
+                    else:
+                        raise ValueError('WHY? Is entering here, when is a neuron specific plot? Neuron: '+str(neuron))
 
-        self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations,
-                                 index=index, special_value=special_value)
+                else:
+                    figure, hidden_annotations = get_plot_net_summary_figure(index, layersToEvaluate=layers,
+                                                                             special_value=special_value, network_data=self.network_data)
+            else:
+                warnings.warn("self.current_layers_in_view is not a list. Check why. Value: "+
+                                  str(layers)+str(type(layers)), RuntimeWarning)
+                figure = hidden_annotations = None
+
+            self.add_figure_to_frame(master_canvas=master_canvas, figure=figure, hidden_annotations=hidden_annotations,
+                                     index=index, special_value=special_value)
 
 
     def add_figure_to_frame(self,master_canvas=None, figure=None, hidden_annotations=None, index=None, special_value=None):
@@ -286,6 +307,8 @@ class Interface():
         combo.bind("<<ComboboxSelected>>", self.event_controller._on_general_plot_selector_changed)
         if default_index is not None:
             combo.set(default_index)
+        else:
+            combo.set('Select Index')
         return combo
 
     def get_erase_plot_button(self, master):

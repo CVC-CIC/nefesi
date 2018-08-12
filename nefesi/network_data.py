@@ -34,12 +34,33 @@ class NetworkData(object):
         dataset: The `nefesi.util.image.ImageDataset` instance.
     """
 
-    def __init__(self, model,layer_data = '.*', save_path = None, dataset = None):
+    def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
+                 default_labels_dict = None):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
         self.dataset = dataset
         self.save_changes = False
+        self.default_labels_dict = None
+
+    @property
+    def default_labels_dict(self):
+        return self._default_labels_dict
+    @default_labels_dict.setter
+    def default_labels_dict(self, default_labels_dict):
+        if default_labels_dict is not None:
+            if type(default_labels_dict) is str:
+                default_labels_dict = pickle.load(open(default_labels_dict, "rb"))
+            if type(default_labels_dict) is not dict:
+                warnings.warn("Default labels dict expect a str(path) or dict, '"+type(default_labels_dict)+"' is "
+                            "not valid. Default_labels_dict not modified")
+                try:
+                    default_labels_dict = self._default_labels_dict
+                except:
+                    default_labels_dict = None
+        self._default_labels_dict = default_labels_dict
+        if self.save_changes:
+                self.save_to_disk(file_name=None, save_model=False)
 
     @property
     def layers_data(self):
@@ -281,6 +302,9 @@ class NetworkData(object):
         """
         start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = dict()
+
+        if labels is None:
+            labels=self.default_labels_dict
 
         if type(sel_index) is not list:
             sel_index = [sel_index]
