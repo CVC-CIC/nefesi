@@ -651,3 +651,8 @@ class NetworkData(object):
             if layer_of_model.layer_id == layer:
                 return len(layer_of_model.neurons_data)
         return -1
+    def get_neuron_of_layer(self,layer, neuron_idx):
+        for layer_of_model in self.layers_data:
+            if layer_of_model.layer_id == layer:
+                return layer_of_model.neurons_data[neuron_idx]
+        return -1
