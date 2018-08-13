@@ -1,6 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
 from PIL import ImageDraw
@@ -196,9 +197,8 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
     neuron = layer_data.neurons_data[neuron_idx]
     images = neuron.get_patches(network_data, layer_data)
     activations = neuron.norm_activations
-
     color_map = None
-    if images[0].mode == 'L':
+    if Image.fromarray(images[0].astype('uint8'), 'RGB').mode == 'L':
         color_map = 'gray'
 
     idx_images = np.arange(0, len(images), num_images)
@@ -206,7 +206,7 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
 
     fig = plt.figure()
     for n, img_idx in enumerate(idx_images):
-        img = images[img_idx]
+        img = Image.fromarray(images[img_idx].astype('uint8'), 'RGB')
         t = round(activations[img_idx], 2)
         a = fig.add_subplot(2, cols, n + 1)
         plt.imshow(img, interpolation='bicubic', cmap=color_map)

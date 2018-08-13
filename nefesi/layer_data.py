@@ -83,7 +83,6 @@ class LayerData(object):
             "orientation", "symmetry", "class" or "population code".
         """
 
-        self.neurons_complete=0
         if index_name.lower() == 'color':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
@@ -125,6 +124,22 @@ class LayerData(object):
             raise ValueError("The 'index_name' argument should be one "
                              "of theses: "+str(ALL_INDEX_NAMES))
         return sel_idx
+
+    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_class_idx=1., thr_pc=0.1):
+        assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
+        model = network_data.model
+        dataset = network_data.dataset
+        neuron = self.neurons_data[neuron_idx]
+        index = dict()
+        index['color'] = neuron.color_selectivity_idx(model, self, dataset)
+        index['orientation'] = neuron.orientation_selectivity_idx(model, self, dataset,
+                                                         degrees_to_rotate=orientation_degrees)
+        index['symmetry'] = neuron.symmetry_selectivity_idx(model, self, dataset)
+        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_class_idx)
+        index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
+        return index
+
+
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
         """Returns the similarity index matrix for this layer.

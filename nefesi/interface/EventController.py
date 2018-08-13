@@ -8,6 +8,7 @@ except ImportError:
 
 import numpy as np
 from nefesi.layer_data import ALL_INDEX_NAMES
+from nefesi.util.general_functions import destroy_canvas_subplot_if_exist
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -60,7 +61,7 @@ class EventController():
                             self.interface.plot_general_index(index=index,master_canvas=master_canvas, layers=layer_name,
                                                           neuron=neuron_idx,special_value=special_value)
                         else:
-                            print("MAKE THE F*CKING PLOT OF SINGLE NEURON")
+                            self.interface.raise_neuron_window(layer=layer_name,neuron_idx=neuron_idx)
                         break
 
 
@@ -99,7 +100,7 @@ class EventController():
         if selected in ['orientation','population code'] :
             special_value = self.interface.get_value_from_popup(index=selected)
 
-        self.interface.destroy_canvas_subplot_if_exist(master_canvas=master)
+        destroy_canvas_subplot_if_exist(master_canvas=master)
         self.interface.plot_general_index(index=selected, master_canvas=master, layers=self.interface.current_layers_in_view,
                                           special_value=special_value)
 

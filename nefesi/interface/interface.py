@@ -14,17 +14,20 @@ import multiprocessing
 import time
 import pickle
 import numpy as np
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from nefesi.layer_data import ALL_INDEX_NAMES
 from nefesi.util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
 from nefesi.interface.popup_windows.special_value_popup_window import SpecialValuePopupWindow
 from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupWindow
+from nefesi.interface.popup_windows.neuron_window import NeuronWindow
 import nefesi.interface.EventController as events
-from nefesi.util.general_functions import clean_widget
+from nefesi.util.general_functions import clean_widget, destroy_canvas_subplot_if_exist
+import nefesi.util.plotting as plotting
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
+
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
         self.event_controller = events.EventController(self)
@@ -131,6 +134,11 @@ class Interface():
 
         if state == 'init':
             clean_widget(self.plots_canvas)
+
+    def raise_neuron_window(self, layer, neuron_idx):
+
+        NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
+
     def set_menu_bar(self):
         menubar = Menu(master=self.window)
         self.window.config(menu=menubar)
@@ -279,7 +287,7 @@ class Interface():
         erase_button.place(relx=0.85,rely=0)#((row=0,column=3)
 
     def put_figure_plot(self, master, figure,index, hidden_annotations, special_value = 180):
-        self.destroy_canvas_subplot_if_exist(master_canvas=master)
+        destroy_canvas_subplot_if_exist(master_canvas=master)
         plot_canvas = FigureCanvasTkAgg(figure, master=master)
         if hidden_annotations is not None:
             plot_canvas.mpl_connect('motion_notify_event',
@@ -338,12 +346,6 @@ class Interface():
         self.visible_plots_canvas[pos] = (None, False, '', None)
         plot_canvas.destroy()
 
-
-    def destroy_canvas_subplot_if_exist(self, master_canvas):
-        if '!canvas' in master_canvas.children:
-            oldplot = master_canvas.children['!canvas']
-            clean_widget(widget=oldplot)
-            oldplot.destroy()
 
 
 

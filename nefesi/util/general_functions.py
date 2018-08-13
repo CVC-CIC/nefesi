@@ -57,3 +57,10 @@ def clean_widget(widget):
             child.destroy()
         else:
             clean_widget(child)
+
+
+def destroy_canvas_subplot_if_exist(master_canvas):
+    if '!canvas' in master_canvas.children:
+        oldplot = master_canvas.children['!canvas']
+        clean_widget(widget=oldplot)
+        oldplot.destroy()

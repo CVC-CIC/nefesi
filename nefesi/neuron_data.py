@@ -173,6 +173,17 @@ class NeuronData(object):
             patches[i] = image.img_to_array(patch)
         return patches
 
+    def get_patch_by_idx(self, network_data, layer_data, i):
+        image_dataset = network_data.dataset
+        receptive_field = layer_data.receptive_field_map
+        rf_size = layer_data.receptive_field_size
+        crop_position = receptive_field[self.xy_locations[i,0],self.xy_locations[i,1]]
+        #First iteration of for, maded first in order to set the output array size
+        patch = image_dataset.get_patch(self.images_id[i], crop_position)
+
+        if rf_size != patch.size:
+            patch = self._adjust_patch_size(patch, crop_position, rf_size)
+        return patch
     def _adjust_patch_size(self, patch, crop_position, rf_size):
         w, h = patch.size
         ri, rf, ci, cf = crop_position

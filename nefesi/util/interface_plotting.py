@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
 from PIL import ImageDraw
-from PIL.Image import LANCZOS
+from PIL.Image import ANTIALIAS
 from sklearn.manifold import TSNE
 from matplotlib import gridspec
 from nefesi.symmetry_index import SYMMETRY_AXES
@@ -91,8 +91,7 @@ def color_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, subplot, font_si
 
     for i in range(len(circles)):
         neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=valids_ids[i])
-        neuron_feature = neuron._neuron_feature.resize((25,25), LANCZOS)
-        neuron_feature = neuron_feature.filter(GaussianBlur(radius=1))
+        neuron_feature = neuron._neuron_feature.resize((25,25), ANTIALIAS)
         imagebox = OffsetImage(neuron_feature)
         imagebox.image.axes = subplot
         hidden_annotations[i] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
