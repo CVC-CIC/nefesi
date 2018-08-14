@@ -1,6 +1,14 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import math
+try:
+    from tkinter import *
+    from tkinter import ttk
+    from tkinter import filedialog
+except ImportError:
+    from Tkinter import *
+    from Tkinter import ttk
 
 def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
     cmap = plt.cm.get_cmap(color_map)
@@ -64,3 +72,27 @@ def destroy_canvas_subplot_if_exist(master_canvas):
         oldplot = master_canvas.children['!canvas']
         clean_widget(widget=oldplot)
         oldplot.destroy()
+
+def mosaic_n_images(images):
+    images_per_axis = math.ceil(math.sqrt(len(images)))
+    mosaic = np.zeros((images.shape[-3]*images_per_axis, images.shape[-2]*images_per_axis, images.shape[-1]))
+    #mosaic[:,:,0] = 255 #red
+    for i,image in enumerate(images):
+        y_offset,x_offset = i//images_per_axis, i%images_per_axis
+        mosaic[y_offset*image.shape[0]:(y_offset+1)*image.shape[0],
+        x_offset * image.shape[0]:(x_offset + 1) * image.shape[0],
+                :] = image
+    return mosaic
+
+def add_red_separations(mosaic, images_per_axis):
+    image_y_shape, image_x_shape = math.ceil(mosaic.shape[0]/images_per_axis), math.ceil(mosaic.shape[1]/images_per_axis)
+    for i in range(1,images_per_axis):
+        mosaic[:,(i*(image_x_shape)),:]=[255,0,0]
+        mosaic[(i * (image_y_shape)),:, :] = [255, 0, 0]
+    return mosaic
+
+
+def addapt_widget_for_grid(widget):
+    for i in range(3):
+        Grid.columnconfigure(widget, i, weight=1)
+        Grid.rowconfigure(widget, i, weight=1)

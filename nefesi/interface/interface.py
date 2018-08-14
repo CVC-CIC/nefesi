@@ -21,7 +21,7 @@ from nefesi.interface.popup_windows.special_value_popup_window import SpecialVal
 from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupWindow
 from nefesi.interface.popup_windows.neuron_window import NeuronWindow
 import nefesi.interface.EventController as events
-from nefesi.util.general_functions import clean_widget, destroy_canvas_subplot_if_exist
+from nefesi.util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 import nefesi.util.plotting as plotting
 
 STATES = ['init']
@@ -107,7 +107,7 @@ class Interface():
     def plots_canvas(self, plots_canvas):
         self._plots_canvas = plots_canvas
         #In order to make the plots resizables on resize window
-        self.addapt_widget_for_grid(self._plots_canvas)
+        addapt_widget_for_grid(self._plots_canvas)
         self._plots_canvas.pack(side=RIGHT, expand=True,padx=(150,0))
 
     @property
@@ -271,7 +271,7 @@ class Interface():
         if master_canvas is None:
             first_util_place = np.where(self.visible_plots_canvas['used'] == False)[0][0]
             master_canvas = Canvas(master=self.plots_canvas)
-            self.addapt_widget_for_grid(master_canvas)
+            addapt_widget_for_grid(master_canvas)
             master_canvas.configure(width=800, height=450)
             master_canvas.grid(column=first_util_place%2, row=(first_util_place//2)+1, sticky=SW)
             self.visible_plots_canvas[first_util_place] = (master_canvas, True, index, special_value)
@@ -296,15 +296,11 @@ class Interface():
         plot_canvas.mpl_connect('button_press_event',
                                 lambda event: self.event_controller._on_in_plot_element_double_click(event, hidden_annotations,
                                                                                                      master, index, special_value))
-        self.addapt_widget_for_grid(plot_canvas.get_tk_widget())
+        addapt_widget_for_grid(plot_canvas.get_tk_widget())
         plot_canvas.get_tk_widget().configure(width=800, height=450)
         # plot_canvas.draw()
         plot_canvas.get_tk_widget().grid(row=1, sticky=SW)
 
-    def addapt_widget_for_grid(self, widget):
-        for i in range(3):
-            Grid.columnconfigure(widget, i, weight=1)
-            Grid.rowconfigure(widget, i, weight=1)
 
     def get_index_button_general(self, master, default_index = None):
         """

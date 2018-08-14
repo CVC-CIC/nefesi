@@ -6,9 +6,14 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
-import numpy as np
 from nefesi.layer_data import ALL_INDEX_NAMES
-from nefesi.util.general_functions import destroy_canvas_subplot_if_exist
+
+import numpy as np
+from nefesi.util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist
+from PIL import ImageTk, Image
+from nefesi.interface.popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
+from nefesi.interface.popup_windows.neuron_window import IMAGE_DEFAULT_SIZE
+
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -135,3 +140,68 @@ class EventController():
         # Put new empty places for plot charts
         for i in range(len(plots_in_use_idx), selected):
             self.interface.add_figure_to_frame(figure=None)
+
+
+
+
+
+#---------------NEURON WINDOW EVENTS-------------------------------
+
+    def _on_decrease_click(self, panel, image_num_label, activation_label, norm_activation_label, class_label):
+        self.interface.actual_img_index = (self.interface.actual_img_index - 1) % len(self.interface.neuron.images_id)
+        self.interface.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
+        self.interface.update_decomposition_panel(panel=panel)
+
+
+    def _on_increase_click(self, panel, image_num_label, activation_label, norm_activation_label, class_label):
+        self.interface.actual_img_index = (self.interface.actual_img_index + 1) % len(self.interface.neuron.images_id)
+        self.interface.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
+        self.interface.update_decomposition_panel(panel=panel)
+
+    def _on_image_click(self, event, cropped_image):
+        mosaic_n_images(self.interface.neuron.get_patches(network_data=self.interface.network_data,
+                                                layer_data=self.interface.network_data.get_layer_by_name(
+                                                    self.interface.layer_to_evaluate)))
+        actual_idx = self.interface.actual_img_index
+        complete_image = self.interface.network_data.dataset._load_image(self.interface.neuron.images_id[actual_idx])
+        np_image = np.array(complete_image)
+        layer_data = self.interface.network_data.get_layer_by_name(layer=self.interface.layer_to_evaluate)
+        receptive_field = layer_data.receptive_field_map
+        x0, x1, y0, y1 = receptive_field[self.interface.neuron.xy_locations[self.interface.actual_img_index, 0],
+                                         self.interface.neuron.xy_locations[actual_idx, 1]]
+        x_len, y_len = x1 - x0, y1 - y0
+
+        np_image = self.interface.draw_rectangle_on_image(np_image, x0, x1, y0, y1)
+        complete_image = Image.fromarray(np_image.astype('uint8'), 'RGB')
+        complete_image = complete_image.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)
+        complete_image = ImageTk.PhotoImage(complete_image)
+
+        cropped_image = self.interface.neuron.get_patch_by_idx(self.interface.network_data,
+                                                     self.interface.network_data.get_layer_by_name(self.interface.layer_to_evaluate),
+                                                     self.interface.actual_img_index)
+
+        cropped_image = cropped_image.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)  # resize mantaining aspect ratio
+        np_cropped = np.array(cropped_image)
+        np_cropped = self.interface.draw_rectangle_on_image(np_cropped, 0, np_cropped.shape[0], 0, np_cropped.shape[1],
+                                                  margin=2,
+                                                  draw_lines=False)
+
+        cropped_image = Image.fromarray(np_cropped.astype('uint8'), 'RGB')
+        cropped_image = ImageTk.PhotoImage(cropped_image)
+        ReceptiveFieldPopupWindow(master=self.interface.window, image_complete=complete_image, image_cropped=cropped_image,
+                                  x_len=x_len, y_len=y_len)
+
+    def _on_nf_changed(self, event, combo):
+        selection = combo.get()
+        self.interface.set_nf_panel(option=selection)
+
+    def _on_checkbox_clicked(self, checkbox_value):
+        if checkbox_value.get():
+            self.interface.advanced_plots_frame = Frame(master=self.interface.window)
+            self.interface.advanced_plots_frame.pack(side=BOTTOM)
+            master_canvas = Canvas(master=self.interface.advanced_plots_frame)
+            master_canvas.pack(side=BOTTOM)
+            self.interface.add_figure_to_frame(master_canvas=master_canvas, figure=None)
+        else:
+            clean_widget(self.interface.advanced_plots_frame)
+            self.interface.advanced_plots_frame.destroy()
