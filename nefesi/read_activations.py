@@ -142,4 +142,4 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
     """
     activations = get_one_neuron_activations(model, images,idx_neuron=idx_neuron, layer_name=layer_name)
     # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
-    return activations[range(len(activations)),pos[:,0],pos[:,1]]
+    return activations[range(len(activations)),pos[...,0],pos[...,1]]

@@ -248,7 +248,7 @@ class LayerData(object):
             max_act.append(f.activations[0])
 
         # get the activations of image in this layer.
-        activations = get_activations(model, img, print_shape_only=True, layer_name=self.layer_id)
+        activations = get_activations(model, img,  layer_name=self.layer_id)
 
         activations = activations[0]
 

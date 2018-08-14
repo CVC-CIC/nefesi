@@ -192,7 +192,7 @@ class NeuronData(object):
             if ci == 0:
                 bl = rf_size[0] - w
             else:
-                bl = rf_size[0] - w
+                br = rf_size[0] - w
         if rf_size[1] != h:
             if ri == 0:
                 bu = rf_size[1] - h

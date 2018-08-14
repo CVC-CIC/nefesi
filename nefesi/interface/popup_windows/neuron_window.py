@@ -2,6 +2,9 @@ import tkinter as tk# note that module name has changed from Tkinter in Python 2
 
 from skimage.draw import line_aa
 
+from nefesi.class_index import get_path_sep
+from nefesi.read_activations import get_one_neuron_activations
+
 try:
     from tkinter import *
     from tkinter import ttk
@@ -14,7 +17,7 @@ from nefesi.util.interface_plotting import ORDER
 from PIL import ImageTk, Image
 from nefesi.interface.popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
 
-IMAGE_DEFAULT_SIZE = (250,250)
+IMAGE_DEFAULT_SIZE = (350,350)
 class NeuronWindow(object):
     def __init__(self, master, network_data, layer_to_evaluate, neuron_idx):
         self.network_data = network_data
@@ -39,33 +42,71 @@ class NeuronWindow(object):
         self.index_info.pack(side=RIGHT)
         self.decomposition_frame.pack(side=RIGHT)
 
-        self.neuron.get_patch_by_idx(self.network_data, self.network_data.get_layer_by_name(layer_to_evaluate), 0)
-
     def set_decomposition_frame(self, master):
-        label = Label(master=master, text="Decomposition")
-        label.pack(side=TOP)
+        image_frame = Frame(master=master)
+        image_num_label, activation_label, norm_activation_label, class_label = self.set_decomposition_label(master)
         neuron_feature = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-
         neuron_feature = neuron_feature.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(neuron_feature)
-        panel = Label(master=master, image=img)
+
+        panel = Label(master=image_frame, image=img)
         panel.image = img
         panel.bind("<Double-Button-1>", lambda event:self._on_image_click(event,panel.image))
-        decrease_button = Button(master=master, text='<-', command=lambda: self._on_decrease_click(panel))
-        increase_button = Button(master=master, text='->', command=lambda: self._on_increase_click(panel))
+        decrease_button = Button(master=image_frame, text='<-', command=lambda: self._on_decrease_click(panel,
+                                        image_num_label,activation_label,norm_activation_label,class_label))
+        increase_button = Button(master=image_frame, text='->', command=lambda: self._on_increase_click(panel,
+                                        image_num_label,activation_label,norm_activation_label,class_label))
         increase_button.pack(side=RIGHT, fill='y')
         decrease_button.pack(side=LEFT,fill='y')
         panel.pack(side=RIGHT)
+        image_frame.pack(side=BOTTOM)
 
-    def _on_decrease_click(self,panel):
+    def set_decomposition_label(self, master):
+        text_frame = Frame(master=master)
+        activation = self.neuron.activations[self.actual_img_index]
+        norm_activation = self.neuron.norm_activations[self.actual_img_index]
+        label = self.get_current_image_class()
+        Label(master=text_frame, text="Image", font='Helvetica 10').pack(side=LEFT)
+        image_num_label = Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
+        image_num_label.pack(side=LEFT)
+        Label(master=text_frame, text="Act.:", font='Helvetica 10').pack(side=LEFT)
+        activation_label = Label(master=text_frame, text=str(round(activation, ndigits=2)), font='Helvetica 10 bold')
+        activation_label.pack(side=LEFT)
+        Label(master=text_frame, text="Norm. Act.:", font='Helvetica 10').pack(side=LEFT)
+        norm_activation_label = Label(master=text_frame, text=str(round(norm_activation, ndigits=2)),
+                                 font='Helvetica 10 bold')
+        norm_activation_label.pack(side=LEFT)
+        Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
+        class_label = Label(master=text_frame, text=label,
+                                      font='Helvetica 10 bold')
+        class_label.pack(side=LEFT)
+        text_frame.pack(side=TOP)
+        return image_num_label, activation_label, norm_activation_label,class_label
+
+    def get_current_image_class(self):
+        image_name = self.neuron.images_id[self.actual_img_index]
+        path_sep = get_path_sep(image_name)
+        label = image_name[:image_name.index(path_sep)]
+        return label
+
+    def _on_decrease_click(self,panel,image_num_label,activation_label,norm_activation_label,class_label):
         self.actual_img_index = (self.actual_img_index-1)%len(self.neuron.images_id)
+        self.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
         self.update_decomposition_panel(panel=panel)
 
-    def _on_increase_click(self,panel):
+
+    def _on_increase_click(self,panel,image_num_label,activation_label,norm_activation_label,class_label):
         self.actual_img_index = (self.actual_img_index+1)%len(self.neuron.images_id)
+        self.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
         self.update_decomposition_panel(panel=panel)
+
+    def update_decomposition_label(self, activation_label, class_label, image_num_label, norm_activation_label):
+        image_num_label.configure(text=self.actual_img_index)
+        activation_label.configure(text=str(round(self.neuron.activations[self.actual_img_index], ndigits=2)))
+        norm_activation_label.configure(text=str(round(self.neuron.norm_activations[self.actual_img_index], ndigits=2)))
+        class_label.configure(text=self.get_current_image_class())
 
     def update_decomposition_panel(self, panel):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
@@ -98,6 +139,7 @@ class NeuronWindow(object):
         np_cropped = np.array(cropped_image)
         np_cropped = self.draw_rectangle_on_image(np_cropped, 0, np_cropped.shape[0], 0, np_cropped.shape[1],margin=2,
                                                   draw_lines=False)
+
         cropped_image = Image.fromarray(np_cropped.astype('uint8'), 'RGB')
         cropped_image = ImageTk.PhotoImage(cropped_image)
         ReceptiveFieldPopupWindow(master=self.window, image_complete=complete_image, image_cropped=cropped_image,
@@ -107,9 +149,9 @@ class NeuronWindow(object):
     def draw_rectangle_on_image(self, np_image, x0, x1,y0,y1,margin=3, draw_lines=True):
         red = [255,0,0]
         x0 = max(x0-1,margin)
-        x1 = min(x1 + 1, np_image.shape[1]-1-margin)
+        x1 = min(x1 + 1, np_image.shape[1]-margin)
         y0 = max(y0 - 1, margin)
-        y1 = min(y1 + 1, np_image.shape[0]-1-margin)
+        y1 = min(y1 + 1, np_image.shape[0]-margin)
         for i in range(margin):
             np_image[x0:x1+1,y0-i,:],np_image[x0:x1+1,y1+i,:],np_image[x0-i,y0:y1+1,:],np_image[x1+i,y0:y1+1,:] = red,red,red,red
         if draw_lines:
