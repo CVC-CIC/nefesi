@@ -42,6 +42,9 @@ class NetworkData(object):
         self.dataset = dataset
         self.save_changes = False
         self.default_labels_dict = None
+        self.default_degrees_orientation_idx = 90
+        self.default_thr_pc = 0.1
+        self.default_thr_class_idx = 1.
 
     @property
     def default_labels_dict(self):
@@ -275,9 +278,9 @@ class NetworkData(object):
         for l in self.layers_data:
             l.remove_selectivity_idx(idx)
 
-    def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = 15,
-                            labels=None, thr_class_idx=1.,
-                            thr_pc=0.1):
+    def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = None,
+                            labels=None, thr_class_idx=None,
+                            thr_pc=None):
         """Returns the selectivity indexes in `sel_index` for each layer
         in `layer_name`.
 
@@ -305,6 +308,12 @@ class NetworkData(object):
 
         if labels is None:
             labels=self.default_labels_dict
+        if thr_class_idx is None:
+            thr_class_idx = self.default_thr_class_idx
+        if thr_pc is None:
+            thr_pc = self.default_thr_pc
+        if degrees_orientation_idx is None:
+            degrees_orientation_idx = self.default_degrees_orientation_idx
 
         if type(sel_index) is not list:
             sel_index = [sel_index]

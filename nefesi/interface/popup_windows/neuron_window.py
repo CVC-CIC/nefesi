@@ -1,4 +1,5 @@
 IMAGE_DEFAULT_SIZE = (350,350)
+ADVANCED_CHARTS = ['Activation Curve']
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 
@@ -6,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from skimage.draw import line_aa
 import math
 from nefesi.class_index import get_path_sep
+from nefesi.util.interface_plotting import get_one_neuron_plot
 
 try:
     from tkinter import *
@@ -14,10 +16,12 @@ except ImportError:
     from Tkinter import *
     from tkinter import ttk
 import numpy as np
+
 from nefesi.util.general_functions import clean_widget, mosaic_n_images, add_red_separations, \
     destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from PIL import ImageTk, Image
 from nefesi.interface.EventController import EventController
+import nefesi.util.plotting as plotting
 
 class NeuronWindow(object):
     def __init__(self, master, network_data, layer_to_evaluate, neuron_idx):
@@ -27,6 +31,9 @@ class NeuronWindow(object):
         self.neuron_idx = neuron_idx
         self.actual_img_index = 0
         self.mosaic = None
+        self.advanced_plots_canvas = None
+        self.selector = None
+        self.advanced_plots_frame = None
         self.neuron = self.network_data.get_neuron_of_layer(layer=layer_to_evaluate, neuron_idx=neuron_idx)
         self.window=Toplevel(master)
         self.basic_frame = Frame(master=self.window)
@@ -47,6 +54,7 @@ class NeuronWindow(object):
         self.decomposition_frame.pack(side=RIGHT)
         self.basic_frame.pack(side=TOP)
 
+
     def set_decomposition_frame(self, master):
         image_frame = Frame(master=master)
         image_num_label, activation_label, norm_activation_label, class_label = self.set_decomposition_label(master)
@@ -56,16 +64,16 @@ class NeuronWindow(object):
         neuron_feature = neuron_feature.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(neuron_feature)
 
-        panel = Label(master=image_frame, image=img)
-        panel.image = img
-        panel.bind("<Double-Button-1>", lambda event:self.event_controller._on_image_click(event,panel.image))
-        decrease_button = Button(master=image_frame, text='<-', command=lambda: self.event_controller._on_decrease_click(panel,
+        self.panel_image = Label(master=image_frame, image=img)
+        self.panel_image.image = img
+        self.panel_image.bind("<Double-Button-1>", lambda event:self.event_controller._on_image_click(event,self.panel_image.image))
+        decrease_button = Button(master=image_frame, text='◀', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
-        increase_button = Button(master=image_frame, text='->', command=lambda: self.event_controller._on_increase_click(panel,
+        increase_button = Button(master=image_frame, text='▶', command=lambda: self.event_controller._on_increase_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
         increase_button.pack(side=RIGHT, fill='y')
         decrease_button.pack(side=LEFT,fill='y')
-        panel.pack(side=RIGHT)
+        self.panel_image.pack(side=RIGHT)
         image_frame.pack(side=BOTTOM)
 
     def set_decomposition_label(self, master):
@@ -74,21 +82,21 @@ class NeuronWindow(object):
         norm_activation = self.neuron.norm_activations[self.actual_img_index]
         label = self.get_current_image_class()
         Label(master=text_frame, text="Image", font='Helvetica 10').pack(side=LEFT)
-        image_num_label = Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
-        image_num_label.pack(side=LEFT)
+        self.image_num_label = Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
+        self.image_num_label.pack(side=LEFT)
         Label(master=text_frame, text="Act.:", font='Helvetica 10').pack(side=LEFT)
-        activation_label = Label(master=text_frame, text=str(round(activation, ndigits=2)), font='Helvetica 10 bold')
-        activation_label.pack(side=LEFT)
+        self.activation_label = Label(master=text_frame, text=str(round(activation, ndigits=2)), font='Helvetica 10 bold')
+        self.activation_label.pack(side=LEFT)
         Label(master=text_frame, text="Norm. Act.:", font='Helvetica 10').pack(side=LEFT)
-        norm_activation_label = Label(master=text_frame, text=str(round(norm_activation, ndigits=2)),
+        self.norm_activation_label = Label(master=text_frame, text=str(round(norm_activation, ndigits=2)),
                                  font='Helvetica 10 bold')
-        norm_activation_label.pack(side=LEFT)
+        self.norm_activation_label.pack(side=LEFT)
         Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
-        class_label = Label(master=text_frame, text=label,
+        self.class_label = Label(master=text_frame, text=label,
                                       font='Helvetica 10 bold')
-        class_label.pack(side=LEFT)
+        self.class_label.pack(side=LEFT)
         text_frame.pack(side=TOP)
-        return image_num_label, activation_label, norm_activation_label,class_label
+        return self.image_num_label, self.activation_label, self.norm_activation_label, self.class_label
 
     def get_current_image_class(self):
         image_name = self.neuron.images_id[self.actual_img_index]
@@ -139,7 +147,18 @@ class NeuronWindow(object):
         combo.pack(side=TOP)
         self.panel_nf = Label(master=master)
         self.set_nf_panel()
-        #self.window.bind('<Configure>', lambda event: self._on_resize_image(event, panel, neuron_feature, label))
+
+    def _on_mosaic_click(self, event):
+        images_per_axis = math.ceil(math.sqrt(len(self.neuron.activations)))
+        x = int((((event.x-1)/IMAGE_DEFAULT_SIZE[0])*images_per_axis))
+        y = int((((event.y-1)/IMAGE_DEFAULT_SIZE[-1])*images_per_axis))
+        #to avoid margins
+        if -1<x<images_per_axis or -1<y<images_per_axis:
+            num_image = y*images_per_axis+x
+            self.actual_img_index = num_image
+            self.update_decomposition_label(self.image_num_label, self.activation_label,
+                                                      self.norm_activation_label, self.class_label)
+            self.update_decomposition_panel(panel=self.panel_image)
 
 
     def set_nf_panel(self,option='neuron feature'):
@@ -147,6 +166,7 @@ class NeuronWindow(object):
         if option=='neuron feature':
             img = self.neuron._neuron_feature
             img = img.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)
+            self.panel_nf.unbind('<Double-Button-1>')
         elif option=='images mosaic':
             if self.mosaic != None:
                 img = self.mosaic
@@ -158,11 +178,13 @@ class NeuronWindow(object):
                 img = np.array(img)
                 img = add_red_separations(img, math.ceil(math.sqrt(len(self.neuron.activations))))
                 self.mosaic = img = Image.fromarray(img.astype('uint8'), 'RGB')
+            self.panel_nf.bind('<Double-Button-1>', self._on_mosaic_click)
 
         img = ImageTk.PhotoImage(img)
         self.panel_nf.configure(image=img)
         self.panel_nf.image= img
         self.panel_nf.pack(side=BOTTOM, fill=BOTH, expand=True)
+
 
     def _on_resize_image(self, event, panel,neuron_feature,top_widget):
         panel.update()
@@ -203,10 +225,14 @@ class NeuronWindow(object):
         return indexs
 
     def add_figure_to_frame(self, master_canvas=None, figure=None, default_value=None):
+        self.combo_frame = Frame(master=master_canvas)
+        self.figure_frame = Frame(master=master_canvas)
         if figure is not None:
-            self.put_figure_plot(master=master_canvas, figure=figure)
-        selector = self.get_index_button_general(master_canvas, default_value=default_value)
-        selector.place(relx=0.4, rely=0)  # grid(row=0,column=0, columnspan=2)
+            self.put_figure_plot(master=self.figure_frame, figure=figure)
+        self.selector = self.get_index_button_general(self.combo_frame, default_value=default_value)
+        self.selector.pack()  # grid(row=0,column=0, columnspan=2)
+        self.combo_frame.pack(side=TOP)
+        self.figure_frame.pack(side=BOTTOM)
 
     def put_figure_plot(self, master, figure):
         destroy_canvas_subplot_if_exist(master_canvas=master)
@@ -214,16 +240,22 @@ class NeuronWindow(object):
         addapt_widget_for_grid(plot_canvas.get_tk_widget())
         plot_canvas.get_tk_widget().configure(width=800, height=450)
         plot_canvas.get_tk_widget().grid(row=1, sticky=SW)
-
     def get_index_button_general(self, master, default_value = None):
         """
         Gets a general button to select wich graphic to plot
         :return: A select button with each index possible, and the event to plot it when called
         """
-        combo = ttk.Combobox(master=master, values=['a','b','c'], state='readonly',justify=CENTER,width=15)
-        #combo.bind("<<ComboboxSelected>>", self.event_controller._on_general_plot_selector_changed)
+
+        combo = ttk.Combobox(master=master, values=ADVANCED_CHARTS, state='readonly',justify=CENTER,width=15)
+        combo.bind("<<ComboboxSelected>>",lambda event: self._on_general_plot_selector_changed(event, combo))
         if default_value is not None:
             combo.set(default_value)
         else:
-            combo.set('Select Index')
+            combo.set('Select Chart')
         return combo
+
+    def _on_general_plot_selector_changed(self, event,combo):
+        selected = combo.get()
+        figure = get_one_neuron_plot(network_data=self.network_data,layer=self.layer_to_evaluate,
+                                     neuron_idx=self.neuron_idx, chart=selected)
+        self.put_figure_plot(master=self.figure_frame,figure=figure)

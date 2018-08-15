@@ -26,17 +26,17 @@ POPULATION_CODE_TEXT = 'Set the threshold to consider selective\n'\
 
 
 class SpecialValuePopupWindow(object):
-    def __init__(self, master,index=''):
+    def __init__(self, master,network_data, index=''):
         self.value = -1 #Returned value if user clicks on X
         if index.lower() == 'orientation':
             self.validate_command = (master.register(self._on_entry_updated_check_orientation_index_float),
                                      '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-            default_entry = 180
+            default_entry = network_data.default_degrees_orientation_idx
             text = ORIENTATION_TEXT
         elif index.lower() == 'population code':
             self.validate_command = (master.register(self._on_entry_updated_check_orientation_index_in_range_0_1),
                                      '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-            default_entry = 0.1
+            default_entry = network_data.default_thr_pc
             text = POPULATION_CODE_TEXT
         self.top=Toplevel(master)
         self.top.title(index.title() + ' Selectivity')

@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
-from PIL import ImageDraw
+from PIL import ImageDraw, Image
 from PIL.Image import ANTIALIAS
 from sklearn.manifold import TSNE
 from matplotlib import gridspec
@@ -20,13 +20,77 @@ ORDER = ['tops','bottoms']
 CONDITIONS = {'<': (lambda x, y: x < y), '<=': (lambda x, y: x <= y), '==': (lambda x, y: x == y),
               '>': (lambda x, y: x > y), '>=': (lambda x, y: x >= y)}
 
+
+def get_one_neuron_plot(network_data, layer, neuron_idx, chart='default'):
+    chart = chart.lower()
+    figure = plt.figure(figsize=(12, 18))
+    subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
+    if chart == 'activation curve':
+        figure = activation_curve(network_data, layer, neuron_idx)
+    return figure
+
+
+def activation_curve(network_data, layer, neuron_idx, num_images=10):
+    """Plots the curve of the activations values from the neuron
+	with index `neuron_idx`. Also plots 1 of each `num_images` above
+	the graph.
+
+	:param network_data: The `nefesi.network_data.NetworkData` instance.
+	:param layer: The `nefesi.layer_data.LayerData` instance.
+	:param neuron_idx: Integer, index of the neuron.
+	:param num_images:Integer, number of TOP scoring images plotted.
+
+	:return:
+	"""
+    layer_data = network_data.get_layer_by_name(layer=layer)
+    neuron = layer_data.neurons_data[neuron_idx]
+    images = neuron.get_patches(network_data, layer_data)
+    activations = neuron.norm_activations
+
+    color_map = None
+    if Image.fromarray(images[0].astype('uint8'), 'RGB').mode == 'L':
+        color_map = 'gray'
+    idx_images = np.arange(0, len(images), len(images)//num_images)
+    idx_images[-1] = len(activations)-1
+    cols = len(idx_images)
+
+    fig = plt.figure(figsize=(6, cols))
+    for n, img_idx in enumerate(idx_images):
+        img = Image.fromarray(images[img_idx].astype('uint8'), 'RGB')
+        t = round(activations[img_idx], 2)
+        a = fig.add_subplot(gridspec.GridSpec(6, cols)[:2, n])
+        plt.imshow(img, interpolation='bicubic', cmap=color_map)
+        plt.axis('off')
+        a.set_title(t)
+
+    fig.add_subplot(gridspec.GridSpec(6, 1)[2:,:])
+    plt.plot(activations)
+    plt.ylabel('Neuron activations')
+    plt.xlabel('Ranking of image patches')
+    plt.subplots_adjust(hspace=-0.1)
+
+    # another approach with the images on the curve ploted
+
+    # fig, ax = plt.subplots()
+    # ax.plot(activations)
+    # for n, img_idx in enumerate(idx_images):
+    #     img = images[img_idx]
+    #     im = OffsetImage(img, zoom=1, interpolation='bicubic')
+    #
+    #     ab = AnnotationBbox(im, (img_idx, activations[img_idx]),
+    #                         xycoords='data', frameon=False)
+    #     ax.add_artist(ab)
+
+    return fig
+
+
 def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
                             color_map='jet',
                        min=0.0, condition1 = '>=',max='1.00', condition2='>=', order=ORDER[0],max_neurons=15):
     index = index.lower()
     font_size = FONTSIZE_BY_LAYERS[1]
     figure = plt.figure(figsize=(12, 18))
-    subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
+    subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :])
 
     # -----------------------------------CALCULATE THE SELECTIVITY INDEX----------------------------------------
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layer_to_evaluate,

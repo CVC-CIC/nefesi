@@ -1,4 +1,6 @@
 # note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
+from nefesi.util.interface_plotting import get_one_neuron_plot
+
 try:
     from tkinter import *
     from tkinter import ttk
@@ -13,6 +15,7 @@ from nefesi.util.general_functions import clean_widget, mosaic_n_images, destroy
 from PIL import ImageTk, Image
 from nefesi.interface.popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
 from nefesi.interface.popup_windows.neuron_window import IMAGE_DEFAULT_SIZE
+
 
 
 STATES = ['init']
@@ -191,6 +194,8 @@ class EventController():
         ReceptiveFieldPopupWindow(master=self.interface.window, image_complete=complete_image, image_cropped=cropped_image,
                                   x_len=x_len, y_len=y_len)
 
+    def _on_mosaic_image_click(self):
+        pass
     def _on_nf_changed(self, event, combo):
         selection = combo.get()
         self.interface.set_nf_panel(option=selection)
@@ -199,9 +204,9 @@ class EventController():
         if checkbox_value.get():
             self.interface.advanced_plots_frame = Frame(master=self.interface.window)
             self.interface.advanced_plots_frame.pack(side=BOTTOM)
-            master_canvas = Canvas(master=self.interface.advanced_plots_frame)
-            master_canvas.pack(side=BOTTOM)
-            self.interface.add_figure_to_frame(master_canvas=master_canvas, figure=None)
+            self.interface.add_figure_to_frame(master_canvas=self.interface.advanced_plots_frame, figure=None)
         else:
             clean_widget(self.interface.advanced_plots_frame)
             self.interface.advanced_plots_frame.destroy()
+            self.interface.advanced_plots_frame = None
+            self.interface.advanced_plots_canvas = None

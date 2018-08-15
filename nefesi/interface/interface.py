@@ -1,5 +1,13 @@
+
+STATES = ['init']
+MAX_PLOTS_VISIBLES_IN_WINDOW = 4
+MAX_VALUES_VISIBLES_IN_LISTBOX = 6
+
+
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 import warnings
+
+from nefesi.interface.popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
 
 try:
     from tkinter import *
@@ -23,10 +31,6 @@ from nefesi.interface.popup_windows.neuron_window import NeuronWindow
 import nefesi.interface.EventController as events
 from nefesi.util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 import nefesi.util.plotting as plotting
-
-STATES = ['init']
-MAX_PLOTS_VISIBLES_IN_WINDOW = 4
-MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
@@ -142,9 +146,18 @@ class Interface():
     def set_menu_bar(self):
         menubar = Menu(master=self.window)
         self.window.config(menu=menubar)
-        fileMenu = Menu(menubar)
-        fileMenu.add_command(label="Set Label traduction", command=self.set_labels_dict)
-        menubar.add_cascade(label="Configuration", menu=fileMenu)
+        configMenu = Menu(menubar)
+        configMenu.add_command(label="Set Label traduction", command=self.set_labels_dict)
+        configMenu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
+        configMenu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
+        menubar.add_cascade(label="Configuration", menu=configMenu)
+        plotMenu = Menu(menubar)
+        plotMenu.add_command(label="Set Neuron plot", command=self.plot_specific_neuron)
+        menubar.add_cascade(label="Plot", menu=plotMenu)
+
+    def plot_specific_neuron(self):
+        layer, neuron_idx = self.get_neuron_params_plot_from_popup()
+        NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(initialdir="/", title=title,
@@ -154,6 +167,15 @@ class Interface():
     def set_labels_dict(self):
         labels_dict_file = self.ask_for_file(title="Select labels traduction (Python dict object)")
         self.network_data.default_labels_dict = labels_dict_file
+    def set_orientation_default_degrees(self):
+        orientation_degrees = self.get_value_from_popup('orientation')
+        if orientation_degrees != -1:
+            self.network_data.default_degrees_orientation_idx = orientation_degrees
+
+    def set_default_thr_pc(self):
+        thr_pc = self.get_value_from_popup('population code')
+        if thr_pc != -1:
+            self.network_data.default_thr_pc = thr_pc
 
     def set_general_buttons_frame(self):
         self.set_save_changes_check_box(master=self.general_buttons_frame)
@@ -321,8 +343,8 @@ class Interface():
         return button
 
 
-    def get_value_from_popup(self,index=''):
-        popup_window = SpecialValuePopupWindow(self.window, index=index)
+    def get_value_from_popup(self, index=''):
+        popup_window = SpecialValuePopupWindow(self.window, network_data=self.network_data, index=index)
         self.window.wait_window(popup_window.top)
         return popup_window.value
 
@@ -335,6 +357,10 @@ class Interface():
         return popup_window.value1,popup_window.condition1,popup_window.value2,popup_window.condition2,\
                popup_window.order, popup_window.neurons_to_show
 
+    def get_neuron_params_plot_from_popup(self):
+        popup_window = OpenSelectedNeuronPlot(master=self.window, network_data=self.network_data)
+        self.window.wait_window(popup_window.top)
+        return popup_window.current_layer, popup_window.neuron_selected
 
     def destroy_plot_canvas(self, plot_canvas):
         clean_widget(plot_canvas)

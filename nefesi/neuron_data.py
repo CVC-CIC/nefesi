@@ -139,7 +139,7 @@ class NeuronData(object):
     def neuron_feature(self, neuron_feature):
         self._neuron_feature = neuron_feature
 
-    def get_patches(self, network_data, layer_data):
+    def get_patches(self, network_data, layer_data, as_numpy=True):
         """Returns the patches (receptive fields) from images in
         `images_id` for this neuron.
 
@@ -156,8 +156,11 @@ class NeuronData(object):
         patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
         if rf_size != patch.size:
             patch = self._adjust_patch_size(patch, crop_positions[0], rf_size)
-        patch = image.img_to_array(patch)
-        patches = np.zeros(shape = (self._max_activations,)+patch.shape)
+        if as_numpy:
+            patch = image.img_to_array(patch)
+            patches = np.zeros(shape = (self._max_activations,)+patch.shape)
+        else:
+            patches = np.zeros(shape = (self._max_activations), dtype=np.object)
         patches[0] = patch
         for i in range(1, self._max_activations):
             crop_pos = crop_positions[i]
@@ -170,7 +173,9 @@ class NeuronData(object):
             # that come of the network architecture.
             if rf_size != patch.size:
                 patch = self._adjust_patch_size(patch,crop_pos, rf_size)
-            patches[i] = image.img_to_array(patch)
+            if as_numpy:
+                patch = image.img_to_array(patch)
+            patches[i] = patch
         return patches
 
     def get_patch_by_idx(self, network_data, layer_data, i):
