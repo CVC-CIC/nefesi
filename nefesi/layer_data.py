@@ -3,7 +3,7 @@ from itertools import permutations
 import math
 from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_image_receptive_field, get_each_point_receptive_field,find_layer_idx
-from .similarity_index import get_similarity_index
+from .similarity_index import get_similarity_index, get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 ALL_INDEX_NAMES = ['color', 'orientation', 'symmetry', 'class', 'population code']
 
@@ -141,7 +141,7 @@ class LayerData(object):
 
 
 
-    def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
+    def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None, verbose = True):
         """Returns the similarity index matrix for this layer.
         If `neurons_idx` is not None, returns a subset of the similarity
         matrix where `neurons_idx` is the neuron index of the neurons returned
@@ -156,6 +156,10 @@ class LayerData(object):
             corresponds to the distance between the neuron with index i and neuron
             with index j, in the attribute class `filters`.
         """
+
+
+
+
         if self.similarity_index is not None:
             if neurons_idx is None:
                 return self.similarity_index
@@ -171,13 +175,19 @@ class LayerData(object):
             size = len(self.neurons_data)
             self.similarity_index = np.zeros((size, size))
 
-            idx_a = np.arange(size)
-            print(idx_a)
+            idx = range(size)
+            max_activations = np.zeros(len(self.neurons_data))
+            norm_activations_sum= np.zeros(len(self.neurons_data))
+            for i in range(len(max_activations)):
+                max_activations[i] = self.neurons_data[i].activations[0]
+                norm_activations_sum[i] = sum(self.neurons_data[i].norm_activations)
+            for i in idx:
 
-            for a, b in permutations(idx_a, 2):
-                sim_idx = get_similarity_index(self.neurons_data[a], self.neurons_data[b], a,
+                sim_idx = get_row_of_similarity_index(self.neurons_data[i], max_activations,norm_activations_sum,
                                                model, self.layer_id, dataset)
-                self.similarity_index[a][b] = sim_idx
+                self.similarity_index[:,i] = sim_idx
+                if verbose:
+                    print("Similarity "+self.layer_id+' '+str(i)+'/'+str(size))
             return self.similarity_index
 
     def mapping_rf(self, model):

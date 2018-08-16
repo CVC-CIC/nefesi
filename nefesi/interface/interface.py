@@ -216,8 +216,11 @@ class Interface():
     def set_save_changes_check_box(self,master):
         checkbox_value = tk.BooleanVar(master=master)
         checkbox = ttk.Checkbutton(master=master, text="Save all index updated", variable=checkbox_value,
-                                    command= lambda: self.event_controller._on_checkbox_clicked(checkbox_value))
+                                    command= lambda: self._on_checkbox_clicked(checkbox_value))
         checkbox.pack()
+
+    def _on_checkbox_clicked(self,checkbox_value):
+        self.network_data.save_changes = checkbox_value.get()
 
     def set_grafics_to_show_combobox(self, master):
         # Title just in top of selector

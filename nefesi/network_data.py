@@ -11,7 +11,7 @@ from keras.models import load_model
 from nefesi.layer_data import LayerData
 from nefesi.util.image import ImageDataset
 
-MIN_PROCESS_TIME_TO_OVERWRITE = 20
+MIN_PROCESS_TIME_TO_OVERWRITE = 10
 
 class NetworkData(object):
     """This is the main class of nefesi package.
@@ -372,7 +372,7 @@ class NetworkData(object):
             inside the class property `layers`.
         """
         sim_idx = []
-
+        start_time = time.time()  # in order to update things if something new was be calculated
         if type(layer_name) is not list:
             # Compile the Regular expresion
             regEx = re.compile(layer_name)
@@ -389,6 +389,11 @@ class NetworkData(object):
                                  "argument, is not valid.".format(l))
             else:
                 sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
+        if True:#self.save_changes:
+            end_time = time.time()
+            if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
+                #Update only the modelName.obj
+                self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
 
     def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None,

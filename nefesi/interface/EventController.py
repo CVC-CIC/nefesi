@@ -46,8 +46,6 @@ class EventController():
         self.interface.current_layers_in_view = self.interface.get_listbox_selection(lstbox)
 
 
-    def _on_checkbox_clicked(self,checkbox_value):
-        self.interface.network_data.save_changes = checkbox_value.get()
 
     def _on_in_plot_element_double_click(self, event, hidden_annotations, master_canvas, index, special_value):
         """
