@@ -47,7 +47,7 @@ class EventController():
 
 
 
-    def _on_in_plot_element_double_click(self, event, hidden_annotations, master_canvas, index, special_value):
+    def _on_in_plot_element_double_click(self, event, hidden_annotations, master_canvas, index=None, special_value=None):
         """
         When user have double click on bar or neuron, plots the more specific level. A one layer plot if clicks on layer of
         general chart or opens the single neuron windows, if clicks on a neuron

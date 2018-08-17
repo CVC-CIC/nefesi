@@ -694,7 +694,14 @@ class NetworkData(object):
             if layer_of_model.layer_id == layer:
                 return layer_of_model.neurons_data[neuron_idx]
         raise ValueError("Layer: " + layer + " doesn't exists")
-    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=90, thr_class_idx=1., thr_pc=0.1 ):
+    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=None, thr_class_idx=None, thr_pc=None ):
+        if orientation_degrees is None:
+            orientation_degrees = self.default_degrees_orientation_idx
+        if thr_pc is None:
+            thr_pc = self.default_thr_pc
+        if thr_class_idx is None:
+            thr_class_idx = self.default_thr_class_idx
+
         for layer_of_model in self.layers_data:
             if layer_of_model.layer_id == layer:
                 return layer_of_model.get_all_index_of_a_neuron(network_data=self,neuron_idx=neuron_idx,

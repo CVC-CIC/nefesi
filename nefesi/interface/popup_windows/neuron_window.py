@@ -1,5 +1,8 @@
+from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupWindow
+
 IMAGE_DEFAULT_SIZE = (350,350)
-ADVANCED_CHARTS = ['Activation Curve']
+ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
+#That have with images of A are the column of A
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 
@@ -7,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from skimage.draw import line_aa
 import math
 from nefesi.class_index import get_path_sep
-from nefesi.util.interface_plotting import get_one_neuron_plot
+from nefesi.util.interface_plotting import get_one_neuron_plot, plot_similar_neurons
 
 try:
     from tkinter import *
@@ -234,12 +237,18 @@ class NeuronWindow(object):
         self.combo_frame.pack(side=TOP)
         self.figure_frame.pack(side=BOTTOM)
 
-    def put_figure_plot(self, master, figure):
+    def put_figure_plot(self, master, figure,  hidden_annotations=None):
         destroy_canvas_subplot_if_exist(master_canvas=master)
         plot_canvas = FigureCanvasTkAgg(figure, master=master)
         addapt_widget_for_grid(plot_canvas.get_tk_widget())
         plot_canvas.get_tk_widget().configure(width=800, height=450)
         plot_canvas.get_tk_widget().grid(row=1, sticky=SW)
+        if hidden_annotations is not None:
+            plot_canvas.mpl_connect('motion_notify_event',
+                                    lambda event: self.event_controller._on_in_plot_element_hover(event, hidden_annotations))
+            plot_canvas.mpl_connect('button_press_event',
+                                lambda event: self.event_controller._on_in_plot_element_double_click(event, hidden_annotations,
+                                                                                                     master))
     def get_index_button_general(self, master, default_value = None):
         """
         Gets a general button to select wich graphic to plot
@@ -256,6 +265,26 @@ class NeuronWindow(object):
 
     def _on_general_plot_selector_changed(self, event,combo):
         selected = combo.get()
-        figure = get_one_neuron_plot(network_data=self.network_data,layer=self.layer_to_evaluate,
+        if selected.lower() == 'similar neurons':
+            min, condition1, max, condition2, order, max_neurons = \
+                self.get_similarity_params_from_popup(layer_to_evaluate=self.layer_to_evaluate)
+            figure, hidden_annotations = plot_similar_neurons(network_data=self.network_data, layer=self.layer_to_evaluate,
+                                          neuron_idx=self.neuron_idx,min=min, max=max, condition1=condition1,
+                                          condition2=condition2, order=order, max_neurons=max_neurons)
+        else:
+            figure = get_one_neuron_plot(network_data=self.network_data,layer=self.layer_to_evaluate,
                                      neuron_idx=self.neuron_idx, chart=selected)
-        self.put_figure_plot(master=self.figure_frame,figure=figure)
+            hidden_annotations = None
+        self.put_figure_plot(master=self.figure_frame,figure=figure, hidden_annotations=hidden_annotations)
+
+
+    def get_similarity_params_from_popup(self,index='similarity',layer_to_evaluate='unknow'):
+        if type(layer_to_evaluate) is list:
+            layer_to_evaluate = layer_to_evaluate[0]
+        popup_window = OneLayerPopupWindow(self.window, layer_to_evaluate=layer_to_evaluate, index=index)
+        self.window.wait_window(popup_window.top)
+        return popup_window.value1,popup_window.condition1,popup_window.value2,popup_window.condition2,\
+               popup_window.order, popup_window.neurons_to_show
+
+    def raise_neuron_window(self, layer, neuron_idx):
+        NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)

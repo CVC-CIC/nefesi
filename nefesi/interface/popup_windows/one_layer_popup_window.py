@@ -30,6 +30,7 @@ POPULATION_CODE_TEXT = 'Set the threshold to consider selective\n'\
 
 class OneLayerPopupWindow(object):
     def __init__(self, master, layer_to_evaluate,index='', special_value = 0.1):
+        index = index.lower()
         if index != 'population code':
             self.validate_command_entry_1 = (master.register(self._on_entry_updated_check_range_1_0_entry_1),
                                          '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
@@ -38,7 +39,10 @@ class OneLayerPopupWindow(object):
             self.footer1="* Accepted range [0., 1.]"
             self.entry1_default = 0.0
             self.entry2_default = 1.0
-            self.range_label_text = 'Sel. idx'
+            if index == 'similarity':
+                self.range_label_text = 'Similarity'
+            else:
+                self.range_label_text = 'Sel. idx'
         else:
             self.validate_command_entry_1 = (master.register(self._on_entry_updated_check_non_negative_int_entry_1),
                                              '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')

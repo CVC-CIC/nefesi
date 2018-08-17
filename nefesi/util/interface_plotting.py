@@ -27,7 +27,58 @@ def get_one_neuron_plot(network_data, layer, neuron_idx, chart='default'):
     subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
     if chart == 'activation curve':
         figure = activation_curve(network_data, layer, neuron_idx)
+    elif chart == 'similar neurons':
+        figure = plot_similar_neurons(network_data, layer, neuron_idx)
     return figure
+
+def plot_similar_neurons(network_data, layer, neuron_idx,min=0., max=1., condition1='>=', condition2=None,
+                         order=ORDER[0], max_neurons=15):
+    figure = plt.figure(figsize=(12, 18))
+    subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
+    # Review is this is correct or needs to take the column
+    similarity_row = network_data.similarity_idx(layer_name=layer)[0][neuron_idx,:]
+    font_size = FONTSIZE_BY_LAYERS[1]
+
+    hidden_annotations, neurons_that_pass_filter = \
+        similarity_neuron_plot(network_data=network_data, sel_idx=similarity_row, sel_idx_to_calcs=similarity_row, subplot=subplot,
+                                     font_size=font_size + 2, layer_name=layer,
+                                     min=min, max=max, condition1=condition1, condition2=condition2,
+                                     max_neurons=max_neurons, order=order, neuron_idx=neuron_idx)
+    set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, 'similarity', layer, max, min,
+                                network_data, neurons_that_pass_filter, order, subplot, neuron=neuron_idx)
+    return figure, hidden_annotations
+
+def similarity_neuron_plot(network_data,neuron_idx, sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+
+    circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
+        neuron_to_non_count=neuron_idx)
+    original_neuron_indexs = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=neuron_idx)
+    for i in range(len(circles)):
+        text = 'Neuron '+str(neuron_idx)+' vs Neuron '+str(valids_ids[i])
+        indexs = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=valids_ids[i])
+        for key in original_neuron_indexs.keys():
+            if key == 'color':
+                text += '\n Color: ' + str(round(original_neuron_indexs[key], ndigits=2))+' vs ' \
+                        ''+str(round(indexs[key], ndigits=2))
+            elif key == 'orientation':
+                text += '\n Orientation(' + str(network_data.default_degrees_orientation_idx) + 'º): ' \
+                        ''+str(round(original_neuron_indexs[key][-1], ndigits=2))+' vs ' \
+                        ''+str(round(indexs[key][-1], ndigits=2))
+            elif key == 'symmetry':
+                text += '\n Symmetry: ' + str(round(original_neuron_indexs[key][-1], ndigits=3))+' vs ' \
+                        ''+str(round(indexs[key][-1], ndigits=2))
+            elif key == 'class':
+                text += '\n Class: ' +original_neuron_indexs[key][0]+' vs '+indexs[key][0]
+            elif key == 'population code':
+                text += '\n Pop. code (thr=' + str(network_data.default_thr_pc) + '): ' + str(indexs[key])+' vs ' \
+                    ''+ str(indexs[key])
+
+        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text,
+                                                      position=circles[i],
+                                                      layer_name=layer_name, neuron_idx=valids_ids[i])
+    return hidden_annotations, neurons_that_pass_filter
 
 
 def activation_curve(network_data, layer, neuron_idx, num_images=10):
@@ -250,7 +301,7 @@ def symmetry_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_n
 
 
 def make_one_layer_base_subplot(color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,
-                                sel_idx_to_calcs, subplot):
+                                sel_idx_to_calcs, subplot, neuron_to_non_count = None):
     if type(layer_name) is list:
         if len(layer_name) == 1:
             layer_name = layer_name[0]
@@ -259,7 +310,8 @@ def make_one_layer_base_subplot(color_map, condition1, condition2, layer_name, m
 
     valids_ids, valids_idx, valids_idx_values, neurons_that_pass_filter = \
         get_neurons_from_constraint(sel_idx_complete=sel_idx, sel_idx_to_use=sel_idx_to_calcs, min=min, max=max,
-                                    condition_1=condition1, condition2=condition2, order=order, max_neurons=max_neurons)
+                                    condition_1=condition1, condition2=condition2, order=order, max_neurons=max_neurons,
+                                    neuron_to_non_count = neuron_to_non_count)
 
 
     circles = get_n_circles_well_distributed(valids_idx_values, color_map)
@@ -279,14 +331,22 @@ def make_one_layer_base_subplot(color_map, condition1, condition2, layer_name, m
     return circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx
 
 
-def get_neurons_from_constraint(sel_idx_complete, sel_idx_to_use, min, max=1.0, condition_1='<=', condition2=None, order=ORDER[0], max_neurons=15):
+def get_neurons_from_constraint(sel_idx_complete, sel_idx_to_use, min, max=1.0, condition_1='<=', condition2=None,
+                                order=ORDER[0], max_neurons=15, neuron_to_non_count = None):
 
     sel_idx_to_use=np.round(sel_idx_to_use,2)
     if condition2 is None:
-        neurons_in_decision = np.where(CONDITIONS[condition_1](sel_idx_to_use,min))[0]
+        valids_neurons = CONDITIONS[condition_1](sel_idx_to_use,min)
+        if neuron_to_non_count is not None:
+            valids_neurons[neuron_to_non_count] = False
+        neurons_in_decision = np.where(valids_neurons)[0]
     else:
         valids_neurons_condition_1 = CONDITIONS[condition_1](min, sel_idx_to_use)
+        if neuron_to_non_count is not None:
+            valids_neurons_condition_1[neuron_to_non_count] = False
         valids_neurons_condition_2 = CONDITIONS[condition2](sel_idx_to_use,max)
+        if neuron_to_non_count is not None:
+            valids_neurons_condition_2[neuron_to_non_count] = False
         neurons_in_decision = np.where(valids_neurons_condition_1 & valids_neurons_condition_2)[0]
     valids_idx = sel_idx_complete[neurons_in_decision]
     valids_idx_to_use = sel_idx_to_use[neurons_in_decision]
@@ -332,7 +392,7 @@ def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-
 
 
 def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, index, layer_to_evaluate, max, min,
-                                network_data, neurons_that_pass_filter, order, subplot, special_value=None):
+                                network_data, neurons_that_pass_filter, order, subplot, special_value=None, neuron=None):
     subplot.set_xticklabels([])
     subplot.set_yticklabels([])
     sel_idx_label = 'Sel. Index'
@@ -347,6 +407,9 @@ def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, inde
         if max is not None:
             max = int(max)
         sel_idx_label = 'Popul. code'
+    elif index == 'similarity':
+        title = 'Neurons Similar to '+layer_to_evaluate+' Neuron '+str(neuron)
+        sel_idx_label = 'Similarity'
     subplot.set_title(title, fontdict={'size': 12, 'weight': 'bold'})
     if condition2 is None:
         constraint_text = 'Constraint : '+sel_idx_label+' '+ condition1 + ' ' + str(min) + ''
@@ -355,9 +418,12 @@ def set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, inde
                           + condition2 + ' ' + str(max)
     if neurons_that_pass_filter > len(hidden_annotations):
         constraint_text += ' *'
+        total_neurons = network_data.get_len_neurons_of_layer(layer_to_evaluate)
+        if index == 'similarity':
+            total_neurons-=1
         appendix = '* showing ' + r"$\bf{" +str(len(hidden_annotations)) + "}$ " + order[:-1] + ' neurons (from ' \
                    + r"$\bf{"+str(neurons_that_pass_filter) + "}$/" \
-                   +  r"$\bf{"+str(network_data.get_len_neurons_of_layer(layer_to_evaluate))+ "}$ " \
+                   +  r"$\bf{"+str(total_neurons)+ "}$ " \
                     " that satisfy the constraint)"
         subplot.figure.text(x=0.17, y=0.05, s=appendix, fontdict={'size': APPENDIX_FONT_SIZE + 2, 'style': 'italic'})
     subplot.set_xlabel(constraint_text, fontdict={'size': 10, 'weight': 'bold'})
