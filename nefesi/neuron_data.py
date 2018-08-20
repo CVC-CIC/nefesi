@@ -2,7 +2,7 @@ import numpy as np
 from PIL import ImageOps
 import os
 from keras.preprocessing import image
-from .class_index import get_class_selectivity_idx, get_population_code_idx
+from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
 from .symmetry_index import get_symmetry_index, SYMMETRY_AXES
@@ -283,6 +283,30 @@ class NeuronData(object):
         symmetry_idx = get_symmetry_index(self, model, layer_data, dataset)
         self.selectivity_idx[key] = symmetry_idx
         return symmetry_idx
+
+    def concept_selectivity_idx(self,layer_data, network_data, labels=None, threshold=1.):
+        """Returns the class selectivity index for this neuron.
+
+        :param labels: Dictionary, key: name class, value: label class.
+            This argument is needed for calculate the class index.
+        :param threshold: Float, required for calculate the class index.
+
+        :return: Float, between 0.1 and 1.0.
+
+        :raise:
+            TypeError: If `labels` is None or not a dictionary.
+        """
+        concept_idx = self.selectivity_idx.get('concept')
+        if concept_idx is not None:
+            return concept_idx
+
+        #Labels always must to be a dictionary
+        if type(labels) is not dict and labels is not None:
+            raise TypeError("The 'labels' argument should be a dictionary if is specified")
+
+        concept_idx = get_concept_selectivity_idx(self,network_data=network_data, layer_data=layer_data, labels=labels, threshold=threshold)
+        self.selectivity_idx['concept'] = concept_idx
+        return concept_idx
 
     def class_selectivity_idx(self, labels=None, threshold=1.):
         """Returns the class selectivity index for this neuron.

@@ -64,6 +64,8 @@ class ImageDataset(object):
             raise FileNotFoundError(src_dataset+" not exists or is not a directory")
         elif os.listdir(src_dataset) == []:
             warnings.warn(src_dataset+" is an empty directory",FutureWarning)
+        if not src_dataset.endswith('/'):
+            src_dataset = src_dataset + '/'
         # Sets
         self._src_dataset = src_dataset
 
@@ -160,6 +162,66 @@ class ImageDataset(object):
                               grayscale=grayscale,
                               target_size=self.target_size)
 
+
+
+    def get_concepts_of_region(self, image_name, crop_pos, dataset_name='ADE20K'):
+        if dataset_name == 'ADE20K':
+            labels = []
+            name = image_name[:image_name.index('.')]
+            seg_name = name+'_seg.png'
+            parts_name = name+'_parts_{}.png'
+            atr_name = name+'_atr.txt'
+            original_image = self.get_patch(image_name, crop_pos)
+            level = 0
+            segmentation = self._load_image('../masks/'+seg_name)
+            mask_segment = get_image_segmented(segmentation,crop_pos)
+            tags, counts = np.unique(mask_segment,return_counts=True)
+            f = open(self.src_dataset+'../texts/'+atr_name)
+            data = f.readlines()
+            labels_of_level = dict()
+            if tags[0] == 0:
+                labels_of_level['unknown'] = counts[0]
+            for line in data:
+                splited_line = line.split(sep='#')
+                for tag, count in zip(tags, counts):
+                    if int(splited_line[0]) == tag and int(splited_line[1]) == level:
+                        if splited_line[4] not in labels_of_level:
+                            labels_of_level[splited_line[4]] = count
+                        else:
+                            labels_of_level[splited_line[4]] += count
+            labels_of_level = np.array(list(labels_of_level.items()),dtype=([('class','U64'),('count',np.float)]))
+            labels_of_level['count'] /= np.sum(labels_of_level['count'])
+            labels.append(labels_of_level)
+            while True:
+                level+=1
+                try:
+                    part = self._load_image('../masks/'+parts_name.format(level))
+                except:
+                    break
+                mask_part = get_image_segmented(part, crop_pos)
+                tags, counts = np.unique(mask_part, return_counts=True)
+                labels_of_level = dict()
+                for line in data:
+                    splited_line = line.split(sep='#')
+                    for tag, count in zip(tags, counts):
+                        if int(splited_line[0]) == tag and int(splited_line[1]) == level:
+                            if splited_line[4] not in labels_of_level:
+                                labels_of_level[splited_line[4]] = count
+                            else:
+                                labels_of_level[splited_line[4]] += count
+                labels_of_level = np.array(list(labels_of_level.items()),
+                                           dtype=([('class', 'U64'), ('count', np.float)]))
+                labels_of_level['count'] /= np.sum(counts)
+
+                labels.append(labels_of_level)
+            f.close()
+            return labels
+
+
+
+
+
+
     def __str__(self):
         return str.format("Dataset dir: {}, target_size: {}, color_mode: {}, "
                           "preprocessing_function: {}.", self.src_dataset,
@@ -167,6 +229,21 @@ class ImageDataset(object):
                           self.color_mode,
                           self.preprocessing_function)
 
+def get_correspondences_array_in_ADE20K(image_segmented):
+    image_segmented = np.array(image_segmented)
+    labels_idx = np.unique(image_segmented[:, :, 2])
+    indexs_array = np.zeros(np.max(labels_idx)+1, dtype=np.uint8)
+    indexs_array[labels_idx] = np.arange(0,len(labels_idx))
+    return indexs_array
+
+def get_image_segmented(segmented_image, crop_pos):
+    correspondence_list = get_correspondences_array_in_ADE20K(segmented_image)
+    ri, rf, ci, cf = crop_pos
+    segmented_image = np.array(segmented_image.crop((ci, ri, cf, rf)))[:, :, 2]
+    uniques = np.unique(segmented_image)
+    for i in uniques:
+        segmented_image[segmented_image == i] = correspondence_list[i]
+    return segmented_image
 
 def rgb2opp(img):
     """Converts an image or imageSet from RGB space to OPP (Opponent color space).
@@ -318,3 +395,4 @@ def rotate_rf(img, rot_axis):
         return img.transpose(1, 0, 2)
     else:
         return None
+

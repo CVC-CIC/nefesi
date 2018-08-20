@@ -2,6 +2,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import math
+import os
 try:
     from tkinter import *
     from tkinter import ttk
@@ -9,6 +10,7 @@ try:
 except ImportError:
     from Tkinter import *
     from Tkinter import ttk
+
 
 def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
     cmap = plt.cm.get_cmap(color_map)
@@ -65,7 +67,50 @@ def clean_widget(widget):
             child.destroy()
         else:
             clean_widget(child)
+def addapt_ADE20K_dataset(dataset_base_path):
+    def _addapt_dataset(dataset_base_path, first_base, file_name=None):
+        dirs = os.listdir(dataset_base_path)
+        for file in dirs:
+            if os.path.isdir(dataset_base_path+'/'+file):
+                _addapt_dataset(dataset_base_path+'/'+file,first_base, file_name=file)
+            else:
 
+                if file.endswith('.png'):
+                    dst_dir = first_base + '/masks/' + file_name
+                    if not os.path.exists(dst_dir):
+                        os.mkdir(dst_dir)
+                    os.rename(dataset_base_path+'/'+file, dst_dir+'/'+file)
+                elif file.endswith('.jpg'):
+                    dst_dir = first_base + '/imgs/' + file_name
+                    if not os.path.exists(dst_dir):
+                        os.mkdir(dst_dir)
+                    os.rename(dataset_base_path + '/' + file, dst_dir + '/' + file)
+                elif file.endswith('.txt'):
+                    dst_dir = first_base + '/texts/' + file_name
+                    if not os.path.exists(dst_dir):
+                        os.mkdir(dst_dir)
+                    os.rename(dataset_base_path + '/' + file, dst_dir + '/' + file)
+
+    basic_dirs = os.listdir(dataset_base_path)
+    if not os.path.exists(dataset_base_path+'/imgs'):
+        os.mkdir(dataset_base_path+'/imgs')
+    if not os.path.exists(dataset_base_path + '/masks'):
+        os.mkdir(dataset_base_path + '/masks')
+    if not os.path.exists(dataset_base_path + '/texts'):
+        os.mkdir(dataset_base_path + '/texts')
+    _addapt_dataset(dataset_base_path, dataset_base_path)
+    for dir in basic_dirs:
+        os.remove(dataset_base_path+'/'+dir)
+
+
+def move_to_root_folder(root_path, cur_path):
+    for filename in os.listdir(cur_path):
+        if os.path.isfile(os.path.join(cur_path, filename)):
+            return 1
+        elif os.path.isdir(os.path.join(cur_path, filename)):
+            move_to_root_folder(root_path, os.path.join(cur_path, filename))
+        else:
+            sys.exit("Should never reach here.")
 
 def destroy_canvas_subplot_if_exist(master_canvas):
     if '!canvas' in master_canvas.children:

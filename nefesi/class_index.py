@@ -7,6 +7,47 @@ HUMAN_NAME_POS = 1
 COUNT_POS = 2
 REL_FREQ_POS = 3
 
+def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = None,index_by_level=5):
+    """Returns the class selectivity index value.
+
+    :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
+    :param labels: Dictionary, key: name class, value: label class.
+    :param threshold: Float.
+
+    :return: A tuple with: label class and class index value.
+    """
+    num_max_activations = len(neuron_data.activations)
+    rel_freq = relative_freq_class(neuron_data, labels)
+
+    if rel_freq is None:
+        return None, 0.0
+    else:
+        receptive_field = layer_data.receptive_field_map
+        crop_positions = receptive_field[neuron_data.xy_locations[:, 0], neuron_data.xy_locations[:, 1]]
+        image_dataset = network_data.dataset
+        freq_avoid_th = []
+        sum_fr = 0.0
+        concepts=[]
+        for i in range(len(neuron_data.images_id)):
+            concepts_i = image_dataset.get_concepts_of_region(neuron_data.images_id[i],crop_positions[i])
+            for level, dic in enumerate(concepts_i):
+                for k,v in dic:
+                    if len(concepts)<=level:
+                        concepts.append(dict())
+                    if k in concepts[level]:
+                        concepts[level][k] += v
+                    else:
+                        concepts[level][k] = v
+        for i, level_concept in enumerate(concepts):
+            labels = np.array(list(level_concept.items()), dtype=([('class', 'U64'), ('count', np.float)]))
+            labels = np.sort(labels, order='count')[::-1]
+            labels['count'] /= np.sum(labels['count'])
+            concepts[i] = labels[:min(len(labels), index_by_level)]
+        # For the most freqüent class freq_avoid_th[0] th
+        # e: label ([HUMAN_NAME_POS]) and his selectivity index rounded to two decimals
+        return concepts#(freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 3))
+
+
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
     """Returns the class selectivity index value.
 

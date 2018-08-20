@@ -62,7 +62,8 @@ class LayerData(object):
             n.remove_selectivity_idx(idx)
 
     def selectivity_idx(self, model, index_name, dataset,
-                        labels=None, thr_class_idx=1., thr_pc=0.1,degrees_orientation_idx = 15, verbose=False):
+                        labels=None, thr_class_idx=1., thr_pc=0.1,degrees_orientation_idx = 15, verbose=False,
+                        network_data=None):
         """Returns the selectivity index value for the index in `index_name`.
 
         :param model: The `keras.models.Model` instance.
@@ -114,6 +115,13 @@ class LayerData(object):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
+        elif index_name.lower() == 'concept':
+
+            for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
+                self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels,
+                                                             threshold=thr_class_idx)
         elif index_name.lower() == 'population code':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.int)
             for i in range(len(self.neurons_data)):

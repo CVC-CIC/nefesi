@@ -337,7 +337,7 @@ class NetworkData(object):
                 else:
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
-                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc))
+                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc,network_data=self))
         if self.save_changes:
             end_time = time.time()
             if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
