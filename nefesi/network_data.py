@@ -306,6 +306,10 @@ class NetworkData(object):
         start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = dict()
 
+        if 'concept' in sel_index or 'concept' == sel_index:
+            if not self.addmits_concept_selectivity():
+                raise ValueError("Dataset in -> "+self.dataset._src_dataset+" doesn't addmits concept selectivity")
+
         if labels is None:
             labels=self.default_labels_dict
         if thr_class_idx is None:
@@ -715,3 +719,10 @@ class NetworkData(object):
                 return layer_of_model
 
         raise ValueError("Layer: " + layer + " doesn't exists")
+
+    def addmits_concept_selectivity(self):
+        try:
+            self.layers_data[0].neurons_data[0].concept_selectivity_idx(layer_data=self.layers_data[0],network_data=self)
+            return True
+        except:
+            return False

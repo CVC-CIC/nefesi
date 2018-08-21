@@ -16,36 +16,36 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
 
     :return: A tuple with: label class and class index value.
     """
-    num_max_activations = len(neuron_data.activations)
-    rel_freq = relative_freq_class(neuron_data, labels)
+    if neuron_data.top_labels is None:
+        _fill_top_labels(neuron_data)
 
-    if rel_freq is None:
-        return None, 0.0
-    else:
-        receptive_field = layer_data.receptive_field_map
-        crop_positions = receptive_field[neuron_data.xy_locations[:, 0], neuron_data.xy_locations[:, 1]]
-        image_dataset = network_data.dataset
-        freq_avoid_th = []
-        sum_fr = 0.0
-        concepts=[]
-        for i in range(len(neuron_data.images_id)):
-            concepts_i = image_dataset.get_concepts_of_region(neuron_data.images_id[i],crop_positions[i])
-            for level, dic in enumerate(concepts_i):
-                for k,v in dic:
-                    if len(concepts)<=level:
-                        concepts.append(dict())
-                    if k in concepts[level]:
-                        concepts[level][k] += v
-                    else:
-                        concepts[level][k] = v
-        for i, level_concept in enumerate(concepts):
-            labels = np.array(list(level_concept.items()), dtype=([('class', 'U64'), ('count', np.float)]))
-            labels = np.sort(labels, order='count')[::-1]
-            labels['count'] /= np.sum(labels['count'])
-            concepts[i] = labels[:min(len(labels), index_by_level)]
-        # For the most freqüent class freq_avoid_th[0] th
-        # e: label ([HUMAN_NAME_POS]) and his selectivity index rounded to two decimals
-        return concepts#(freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 3))
+    receptive_field = layer_data.receptive_field_map
+    crop_positions = receptive_field[neuron_data.xy_locations[:, 0], neuron_data.xy_locations[:, 1]]
+    image_dataset = network_data.dataset
+    images_id = neuron_data.images_id
+    concepts=[]
+    for i in range(len(images_id)):
+        concepts_i = image_dataset.get_concepts_of_region(image_name=images_id[i],
+                                                          crop_pos=crop_positions[i], normalized=False)
+        for level, dic in enumerate(concepts_i):
+            for k,v in dic.items():
+                if len(concepts)<=level:
+                    concepts.append(dict())
+                if k in concepts[level]:
+                    concepts[level][k] += v
+                else:
+                    concepts[level][k] = v
+    image_size_sum = \
+        np.sum((crop_positions[:, 1] - crop_positions[:, 0]) * (crop_positions[:, 3] - crop_positions[:, 2]))
+    for i, level_concept in enumerate(concepts):
+        labels = np.array(list(level_concept.items()), dtype=([('class', 'U64'), ('count', np.float)]))
+        labels = np.sort(labels, order='count')[::-1]
+        #Normalization
+        labels['count'] /= image_size_sum
+        labels['class'] = np.char.strip(labels['class'])
+        concepts[i] = labels[:min(len(labels), index_by_level)]
+
+    return concepts
 
 
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):

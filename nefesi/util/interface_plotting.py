@@ -152,7 +152,7 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
         hidden_annotations, neurons_that_pass_filter = \
             class_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
-                                max_neurons=max_neurons, order=order)
+                                max_neurons=max_neurons, order=order, network_data=network_data)
     elif index == 'color':
         hidden_annotations, neurons_that_pass_filter = \
             color_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx, network_data=network_data, subplot=subplot,
@@ -186,13 +186,31 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
     return figure, hidden_annotations
 
 def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
-                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
+                       network_data=None, max_concept_labels=2):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
-
+    concept_selectivity = None
+    if network_data. addmits_concept_selectivity():
+        layer_data = network_data.get_layer_by_name(layer=layer_name)
+        concept_selectivity = [layer_data.neurons_data[id].concept_selectivity_idx(layer_data=layer_data,
+                                                                network_data=network_data,
+                                                                labels=None) for id in valids_ids]
     for i in range(len(circles)):
-        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=str(valids_idx[i]['label']),
+        text = str(valids_idx[i]['label'])
+        if concept_selectivity is not None:
+            for level_idx, level in enumerate(concept_selectivity[i]):
+                text+='\n Level '+str(level_idx)+' concepts:\n'
+                for concept_idx,concept in enumerate(level):
+                    if concept_idx>=max_concept_labels:
+                        break
+                    elif concept_idx>0:
+                        text+= ', '
+                    else:
+                        text+='  '
+                    text+= concept['class']+'('+str(round(concept['count'],ndigits=2))+')'
+        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text,
                                                       position=circles[i],
                                                       layer_name=layer_name, neuron_idx=valids_ids[i])
 

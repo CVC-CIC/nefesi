@@ -164,58 +164,69 @@ class ImageDataset(object):
 
 
 
-    def get_concepts_of_region(self, image_name, crop_pos, dataset_name='ADE20K'):
+    def get_concepts_of_region(self, image_name, crop_pos,  normalized = True, dataset_name='ADE20K'):
         if dataset_name == 'ADE20K':
-            labels = []
+            tags_and_counts = []
             name = image_name[:image_name.index('.')]
             seg_name = name+'_seg.png'
             parts_name = name+'_parts_{}.png'
             atr_name = name+'_atr.txt'
-            original_image = self.get_patch(image_name, crop_pos)
             level = 0
             segmentation = self._load_image('../masks/'+seg_name)
             mask_segment = get_image_segmented(segmentation,crop_pos)
             tags, counts = np.unique(mask_segment,return_counts=True)
-            f = open(self.src_dataset+'../texts/'+atr_name)
-            data = f.readlines()
-            labels_of_level = dict()
-            if tags[0] == 0:
-                labels_of_level['unknown'] = counts[0]
-            for line in data:
-                splited_line = line.split(sep='#')
-                for tag, count in zip(tags, counts):
-                    if int(splited_line[0]) == tag and int(splited_line[1]) == level:
-                        if splited_line[4] not in labels_of_level:
-                            labels_of_level[splited_line[4]] = count
-                        else:
-                            labels_of_level[splited_line[4]] += count
-            labels_of_level = np.array(list(labels_of_level.items()),dtype=([('class','U64'),('count',np.float)]))
-            labels_of_level['count'] /= np.sum(labels_of_level['count'])
-            labels.append(labels_of_level)
+            tags_and_counts.append([tags, counts])
+
             while True:
                 level+=1
-                try:
-                    part = self._load_image('../masks/'+parts_name.format(level))
-                except:
+                mask_name = '../masks/'+parts_name.format(level)
+                if os.path.exists(mask_name):
+                    part = self._load_image(mask_name)
+                else:
                     break
                 mask_part = get_image_segmented(part, crop_pos)
                 tags, counts = np.unique(mask_part, return_counts=True)
-                labels_of_level = dict()
-                for line in data:
-                    splited_line = line.split(sep='#')
-                    for tag, count in zip(tags, counts):
-                        if int(splited_line[0]) == tag and int(splited_line[1]) == level:
-                            if splited_line[4] not in labels_of_level:
-                                labels_of_level[splited_line[4]] = count
-                            else:
-                                labels_of_level[splited_line[4]] += count
-                labels_of_level = np.array(list(labels_of_level.items()),
-                                           dtype=([('class', 'U64'), ('count', np.float)]))
-                labels_of_level['count'] /= np.sum(counts)
+                if tags[0] == 0:
+                    if len(tags)==1:
+                        break
+                    else:
+                        tags,counts = tags[1:],counts[1:]
+                tags_and_counts.append([tags, counts])
 
-                labels.append(labels_of_level)
-            f.close()
-            return labels
+            concepts = [dict() for i in range(len(tags_and_counts))]
+            if tags_and_counts[0][0][0] == 0:
+                concepts[0]['unknown'] = tags_and_counts[0][1][0]
+                if len(tags_and_counts[0][0]) == 1:
+                    return concepts
+                else:
+                    tags_and_counts[0][0], tags_and_counts[0][1] = tags_and_counts[0][0][1:], tags_and_counts[0][1][1:]
+
+            with open(self.src_dataset + '../texts/' + atr_name) as f:
+                data = f.readlines()
+                label = [np.zeros(len(data), dtype='U128') for i in range(level)]
+                for i, line in enumerate(data):
+                    splited_line = line.split(sep='#')
+                    label_level = int(splited_line[1])
+                    if label_level<len(label):
+                        label[label_level][int(splited_line[0])-1] = splited_line[4]
+
+            for actual_level in range(level):
+                tags = tags_and_counts[actual_level][0]
+                counts = tags_and_counts[actual_level][1]
+                for tag, count in zip(tags, counts):
+                    if label[actual_level][tag-1] in concepts[actual_level]:
+                        concepts[actual_level][label[actual_level][tag - 1]] += count
+                    else:
+                        concepts[actual_level][label[actual_level][tag-1]] = count
+
+        if normalized:
+            size = mask_segment.shape[0]*mask_segment.shape[1]
+            for i in range(len(concepts)):
+                concepts[i] = np.array(list(concepts[i].items()),
+                                       dtype=([('class', 'U64'), ('count', np.float)]))
+                concepts[i]['count'] /= size
+
+        return concepts
 
 
 

@@ -25,8 +25,6 @@ def main():
 	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
 	#example7AnalyzingResults()
-	network_data = example6LoadingResults()
-	a = network_data.similarity_idx('block1_conv1')
 	from nefesi.interface import interface
 	interface.Interface(example6LoadingResults())
 """
