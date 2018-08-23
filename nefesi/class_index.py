@@ -23,12 +23,14 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
     crop_positions = receptive_field[neuron_data.xy_locations[:, 0], neuron_data.xy_locations[:, 1]]
     image_dataset = network_data.dataset
     images_id = neuron_data.images_id
+    activations = neuron_data.norm_activations
     concepts=[]
     for i in range(len(images_id)):
         concepts_i = image_dataset.get_concepts_of_region(image_name=images_id[i],
                                                           crop_pos=crop_positions[i], normalized=False)
         for level, dic in enumerate(concepts_i):
             for k,v in dic.items():
+                v *= activations[i]
                 if len(concepts)<=level:
                     concepts.append(dict())
                 if k in concepts[level]:
@@ -41,7 +43,7 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
         labels = np.array(list(level_concept.items()), dtype=([('class', 'U64'), ('count', np.float)]))
         labels = np.sort(labels, order='count')[::-1]
         #Normalization
-        labels['count'] /= image_size_sum
+        labels['count'] /= np.sum(labels['count'])
         labels['class'] = np.char.strip(labels['class'])
         concepts[i] = labels[:min(len(labels), index_by_level)]
 

@@ -3,6 +3,7 @@ import random
 import matplotlib.pyplot as plt
 import math
 import os
+import shutil
 try:
     from tkinter import *
     from tkinter import ttk
@@ -100,7 +101,11 @@ def addapt_ADE20K_dataset(dataset_base_path):
         os.mkdir(dataset_base_path + '/texts')
     _addapt_dataset(dataset_base_path, dataset_base_path)
     for dir in basic_dirs:
-        os.remove(dataset_base_path+'/'+dir)
+        path = dataset_base_path+'/'+dir
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
 
 
 def move_to_root_folder(root_path, cur_path):

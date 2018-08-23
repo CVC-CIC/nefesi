@@ -30,7 +30,7 @@ from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupW
 from nefesi.interface.popup_windows.neuron_window import NeuronWindow
 import nefesi.interface.EventController as events
 from nefesi.util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
-import nefesi.util.plotting as plotting
+from nefesi.network_data import NetworkData
 
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
@@ -54,9 +54,9 @@ class Interface():
         #RIGHT part with general buttons of interface
         self.general_buttons_frame = Frame(master=self.window, borderwidth=1)
         self.set_general_buttons_frame()
-
-
-        tk.Label(self.general_info_frame, text="Place to put texts").pack()
+        self.general_info_label = tk.Label(self.general_info_frame)
+        self.update_general_info_label()
+        self.general_info_label.pack()
         self.plot_general_index(index=None)
         self.set_menu_bar()
         #self.plot_general_index(index='symmetry')
@@ -139,6 +139,19 @@ class Interface():
         if state == 'init':
             clean_widget(self.plots_canvas)
 
+    def update_general_info_label(self, file_name = None):
+        if self.network_data is None:
+            self.general_info_label.configure(text = "No model selected")
+        else:
+            if self.network_data.model is not None:
+                network_name = self.network_data.model.name
+            elif file_name is not None:
+                network_name = file_name[file_name.rfind('/')+1:file_name.rfind('.')]
+            else:
+                network_name = self.network_data.save_path
+            self.general_info_label.configure(text="Network: "+network_name+"   ---   "
+                                            " Dataset: "+self.network_data.dataset.src_dataset)
+
     def raise_neuron_window(self, layer, neuron_idx):
 
         NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
@@ -147,6 +160,7 @@ class Interface():
         menubar = Menu(master=self.window)
         self.window.config(menu=menubar)
         configMenu = Menu(menubar)
+        configMenu.add_command(label='Set Model', command=self.set_model)
         configMenu.add_command(label="Set Label traduction", command=self.set_labels_dict)
         configMenu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
         configMenu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
@@ -160,13 +174,24 @@ class Interface():
         NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
 
     def ask_for_file(self, title="Select file", type='obj'):
-        filename = filedialog.askopenfilename(initialdir="/", title=title,
+        filename = filedialog.askopenfilename(title=title,
                                    filetypes=((type, '*.'+type), ("all files", "*.*")))
         return filename
 
     def set_labels_dict(self):
         labels_dict_file = self.ask_for_file(title="Select labels traduction (Python dict object)")
         self.network_data.default_labels_dict = labels_dict_file
+
+    def set_model(self):
+        network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)")
+        if network_data_file != '':
+            model_file = self.ask_for_file(title="Select model (.h5 file)",type="h5")
+            model_file = model_file if model_file != '' else None
+            self.network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
+            self.update_general_info_label(file_name=network_data_file)
+            self.update_layers_lstbox(lstbox=self.layers_listbox)
+
+
     def set_orientation_default_degrees(self):
         orientation_degrees = self.get_value_from_popup('orientation')
         if orientation_degrees != -1:
@@ -191,9 +216,7 @@ class Interface():
         lstbox = Listbox(master=lstbox_frame, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
                          height=min(len(list_values)+2,MAX_VALUES_VISIBLES_IN_LISTBOX))
         scrollbar.config(command=lstbox.yview)
-        lstbox.insert(END, 'all')
-        for item in list_values:
-            lstbox.insert(END, item)
+        self.update_layers_lstbox(lstbox=lstbox, list_values=list_values)
         self.lstbox_last_selection = (0,)
         lstbox.bind('<<ListboxSelect>>',lambda event: self.event_controller._on_listbox_change_selection(event, lstbox))
         lstbox.selection_set(0)
@@ -206,6 +229,17 @@ class Interface():
         ok_button.pack()
         return lstbox
 
+    def update_layers_lstbox(self, lstbox=None, list_values = None):
+        if lstbox is None:
+            lstbox = self.layers_listbox
+        if list_values is None:
+            list_values = [layer.layer_id for layer in self.network_data.layers_data]
+        lstbox.delete(0,END)
+        lstbox.insert(END, 'all')
+        for item in list_values:
+            lstbox.insert(END, item)
+
+
     def get_listbox_selection(self, lstbox):
         selection = lstbox.curselection()
         layers_selected = [lstbox.get(first=selection[i]) for i in range(len(selection))]
@@ -214,7 +248,7 @@ class Interface():
         return layers_selected
 
     def set_save_changes_check_box(self,master):
-        checkbox_value = tk.BooleanVar(master=master)
+        checkbox_value = tk.BooleanVar(master=master,value=self.network_data.save_changes)
         checkbox = ttk.Checkbutton(master=master, text="Save all index updated", variable=checkbox_value,
                                     command= lambda: self._on_checkbox_clicked(checkbox_value))
         checkbox.pack()

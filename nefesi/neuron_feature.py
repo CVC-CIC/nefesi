@@ -5,7 +5,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import _Pooling2D
 
 
-def compute_nf(network_data, layer_data, maximize_contrast = True):
+def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True):
     """This function build the neuron features (NF) for all neurons
     in `filters`.
 
@@ -16,7 +16,7 @@ def compute_nf(network_data, layer_data, maximize_contrast = True):
     if layer_data.receptive_field_map is None:
         layer_data.mapping_rf(network_data.model)
 
-    for neuron in layer_data.neurons_data:
+    for i, neuron in enumerate(layer_data.neurons_data):
         if neuron.norm_activations is not None:
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron
@@ -36,6 +36,8 @@ def compute_nf(network_data, layer_data, maximize_contrast = True):
             """
             #save as PIL image
             neuron.neuron_feature = image.array_to_img(nf)
+            if verbose and i%50==0:
+                print("NF - "+layer_data.layer_id+". Neurons completed: "+str(i)+"/"+str(len(layer_data.neurons_data)))
         else:
             # if `norm_activations` from a neuron is None, that means this neuron
             # doesn't have activations. NF is setting with None.

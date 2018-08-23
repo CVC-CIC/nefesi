@@ -27,7 +27,7 @@ class ImageDataset(object):
     def __init__(self, src_dataset, target_size=None,
                  preprocessing_function=None, color_mode='rgb'):
 
-        self._src_dataset = src_dataset
+        self.src_dataset = src_dataset
         self._target_size = target_size
         self._preprocessing_function = preprocessing_function
         self._color_mode = color_mode
@@ -65,7 +65,7 @@ class ImageDataset(object):
         elif os.listdir(src_dataset) == []:
             warnings.warn(src_dataset+" is an empty directory",FutureWarning)
         if not src_dataset.endswith('/'):
-            src_dataset = src_dataset + '/'
+            src_dataset += '/'
         # Sets
         self._src_dataset = src_dataset
 
@@ -225,6 +225,7 @@ class ImageDataset(object):
                 concepts[i] = np.array(list(concepts[i].items()),
                                        dtype=([('class', 'U64'), ('count', np.float)]))
                 concepts[i]['count'] /= size
+
 
         return concepts
 
