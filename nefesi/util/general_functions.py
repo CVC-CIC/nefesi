@@ -108,15 +108,6 @@ def addapt_ADE20K_dataset(dataset_base_path):
             os.remove(path)
 
 
-def move_to_root_folder(root_path, cur_path):
-    for filename in os.listdir(cur_path):
-        if os.path.isfile(os.path.join(cur_path, filename)):
-            return 1
-        elif os.path.isdir(os.path.join(cur_path, filename)):
-            move_to_root_folder(root_path, os.path.join(cur_path, filename))
-        else:
-            sys.exit("Should never reach here.")
-
 def destroy_canvas_subplot_if_exist(master_canvas):
     if '!canvas' in master_canvas.children:
         oldplot = master_canvas.children['!canvas']
@@ -146,3 +137,11 @@ def addapt_widget_for_grid(widget):
     for i in range(3):
         Grid.columnconfigure(widget, i, weight=1)
         Grid.rowconfigure(widget, i, weight=1)
+
+
+def get_listbox_selection(lstbox):
+    selection = lstbox.curselection()
+    layers_selected = [lstbox.get(first=selection[i]) for i in range(len(selection))]
+    if len(layers_selected) == 1 and layers_selected[0] == 'all':
+        layers_selected = '.*'
+    return layers_selected

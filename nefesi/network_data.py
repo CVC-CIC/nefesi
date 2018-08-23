@@ -280,7 +280,7 @@ class NetworkData(object):
 
     def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = None,
                             labels=None, thr_class_idx=None,
-                            thr_pc=None):
+                            thr_pc=None, verbose = True):
         """Returns the selectivity indexes in `sel_index` for each layer
         in `layer_name`.
 
@@ -341,13 +341,15 @@ class NetworkData(object):
                 else:
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
-                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc,network_data=self))
-        if self.save_changes:
-            end_time = time.time()
-            if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
-                #Update only the modelName.obj
-                self.save_to_disk(file_name=None, save_model=False)
-
+                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc,verbose=verbose,network_data=self))
+                    if self.save_changes:
+                        end_time = time.time()
+                        if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                            if verbose:
+                                print("Layer: "+l+" saving changes")
+                            # Update only the modelName.obj
+                            self.save_to_disk(file_name=None, save_model=False)
+                        start_time = end_time
 
         return sel_idx_dict
 
@@ -679,8 +681,6 @@ class NetworkData(object):
 
         return my_net
     #--------------------------------HELP FUNCTIONS-------------------------------------------------
-    def show_model_layer_names(self):
-        print([layer.name for layer in self.model.layers])
     def get_layer_names_to_analyze(self):
         return [layer.layer_id for layer in self._layers_data]
     def get_layers_analyzed_that_match_regEx(self, regEx):
@@ -726,3 +726,13 @@ class NetworkData(object):
             return True
         except:
             return False
+
+
+def get_model_layer_names(model, regEx='.*'):
+    if model is None:
+        return []
+    else:
+        # Compile the Regular expresion
+        regEx = re.compile(regEx)
+        # Select the layerNames that satisfies RegEx
+        return list(filter(regEx.match, [layer.name for layer in model.layers]))

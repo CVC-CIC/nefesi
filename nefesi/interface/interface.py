@@ -6,7 +6,7 @@ MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 import warnings
-
+from os.path import relpath
 from nefesi.interface.popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
 
 try:
@@ -176,6 +176,8 @@ class Interface():
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
                                    filetypes=((type, '*.'+type), ("all files", "*.*")))
+        if filename != '':
+            filename = relpath(filename)
         return filename
 
     def set_labels_dict(self):
@@ -238,14 +240,6 @@ class Interface():
         lstbox.insert(END, 'all')
         for item in list_values:
             lstbox.insert(END, item)
-
-
-    def get_listbox_selection(self, lstbox):
-        selection = lstbox.curselection()
-        layers_selected = [lstbox.get(first=selection[i]) for i in range(len(selection))]
-        if len(layers_selected) == 1 and layers_selected[0] == 'all':
-            layers_selected = '.*'
-        return layers_selected
 
     def set_save_changes_check_box(self,master):
         checkbox_value = tk.BooleanVar(master=master,value=self.network_data.save_changes)

@@ -21,14 +21,14 @@ def get_activations(model, model_inputs, layer_name=None):
     # uses .get_output_at() instead of .output. In case a layer is
     # connected to multiple inputs. Assumes the input at node index=0
     # is the input where the model inputs come from.
-    outputs = [layer.get_output_at(0) for layer in model.layers if
+    outputs = [layer.output for layer in model.layers if
                layer.name == layer_name or layer_name is None]
 
     # evaluation functions
-    funcs = [K.function(inp + [K.learning_phase()], [out]) for out in outputs]
+    funcs = K.function(inp+ [K.learning_phase()], outputs )
 
     # K.learning_phase flag = 1 (train mode)
-    layer_outputs = [func([model_inputs, 1])[0] for func in funcs]
+    layer_outputs = funcs([model_inputs, 1])
 
     return layer_outputs
 

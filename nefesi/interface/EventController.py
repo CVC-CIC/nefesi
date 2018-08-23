@@ -11,7 +11,8 @@ except ImportError:
 from nefesi.layer_data import ALL_INDEX_NAMES
 
 import numpy as np
-from nefesi.util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist
+from nefesi.util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
+    get_listbox_selection
 from PIL import ImageTk, Image
 from nefesi.interface.popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
 from nefesi.interface.popup_windows.neuron_window import IMAGE_DEFAULT_SIZE
@@ -43,7 +44,7 @@ class EventController():
         if 0 in selection and len(selection)>1:
             lstbox.select_clear(selection[1],END)
         self.interface.lstbox_last_selection = selection
-        self.interface.current_layers_in_view = self.interface.get_listbox_selection(lstbox)
+        self.interface.current_layers_in_view = get_listbox_selection(lstbox)
 
 
 

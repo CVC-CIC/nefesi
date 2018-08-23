@@ -25,8 +25,9 @@ def main():
 	print("TIME ELAPSED: "+str(time.time()-start))
 	#example6LoadingResults()
 	#example7AnalyzingResults()
-	from nefesi.interface import interface
-	interface.Interface(example6LoadingResults())
+	from nefesi.interface.selection_interface import SelectionInterface
+	SelectionInterface()
+	#interface.Interface(example6LoadingResults())
 """
 Analyze the results of the evaluation
 """

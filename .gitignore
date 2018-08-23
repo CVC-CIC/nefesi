@@ -22,3 +22,4 @@ examples/labelme_bxvctltntrtinjf_atr.txt
 examples/labelme_bxvctltntrtinjf.jpg
 examples/ade20k1.py
 examples/Pruebas ADE20K.py
+*.zip
