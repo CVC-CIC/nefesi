@@ -1,6 +1,10 @@
+from evaluation_scripts.calculate_indexs import CalculateIndexs
+from nefesi.interface.popup_windows.confirm_popup import ConfirmPopup
 from nefesi.util.general_functions import get_listbox_selection
 from os.path import relpath
 
+from nefesi.util.image import ImageDataset
+from evaluation_scripts.evaluate_with_config import EvaluationWithConfig
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
@@ -16,6 +20,7 @@ except ImportError:
 from keras.models import load_model
 from nefesi.network_data import NetworkData
 from nefesi.network_data import get_model_layer_names
+import pickle
 from nefesi.interface.interface import Interface
 import warnings
 
@@ -27,6 +32,7 @@ class MakeAnalysisInterface():
         self.dataset_dir = None
         self.save_path_dir = None
         self.lstbox_last_selection = [0]
+        self.default_labels_dict = None
         #TOP Part with general info of viewing and some setteables
         self.select_model_frame = Frame(master=self.window, borderwidth=1)
         self.set_model_frame(master=self.select_model_frame)
@@ -43,19 +49,69 @@ class MakeAnalysisInterface():
         self.window.mainloop()
 
     def cleanup(self):
-        image_size = (int(self.entry_h.get()), int(self.entry_w.get()))
-        model = self.model
-        dataset_dir = self.dataset_dir
-        color_mode = self.combo_color_mode.get()
-        save_path_dir = self.save_path_dir
-        layers_to_evaluate = get_listbox_selection(self.layers_to_evaluate_lstbox)
-        print(image_size)
-        print(model)
-        print(dataset_dir)
-        print(color_mode)
-        print(save_path_dir)
-        print(layers_to_evaluate)
-        self.window.destroy()
+        if self.user_confirm():
+            image_size = (int(self.entry_h.get()), int(self.entry_w.get()))
+            model = self.model
+            dataset_dir = self.dataset_dir
+            model_file = self.model_file
+            color_mode = self.combo_color_mode.get()
+            save_path_dir = self.save_path_dir
+            layers_to_evaluate = get_listbox_selection(self.layers_to_evaluate_lstbox)
+            default_labels_dict = self.default_labels_dict
+            also_calc_index = self.also_calc_index.get()
+            verbose = self.verbose.get()
+            self.window.destroy()
+            dataset = ImageDataset(src_dataset=dataset_dir, target_size=image_size,preprocessing_function=None,
+                                   color_mode=color_mode)
+            network_data = NetworkData(model=model, layer_data=layers_to_evaluate, save_path=save_path_dir,dataset=dataset,
+                                       save_changes=True, default_labels_dict=default_labels_dict)
+            network_data.model = None
+
+            evaluation = EvaluationWithConfig(network_data=network_data, model_file=model_file,evaluate_index=also_calc_index,
+                                              verbose=verbose)
+            pickle.dump(evaluation, open('../evaluation_scripts/evaluation_config.cfg', 'wb'))
+            #saving the cfg for do it after
+            network_data_file = network_data.save_path+model.name+'.obj'
+            indexs_eval = CalculateIndexs(network_data_file=network_data_file,model_file=model_file, verbose=verbose)
+            pickle.dump(indexs_eval, open('../evaluation_scripts/indexs_config.cfg', 'wb'))
+
+    def user_confirm(self):
+        text = self.get_override_text()
+        if text is not None:
+            popup_window = ConfirmPopup(self.window, text=text)
+            self.window.wait_window(popup_window.top)
+            return popup_window.value
+        else:
+            return True
+
+    def get_override_text(self):
+        try:
+            evaluation = pickle.load(open('../evaluation_scripts/evaluation_config.cfg', 'rb'))
+        except:
+            evaluation = None
+        text = 'This action will override the following files:\n'
+        if evaluation is not None:
+            text+= '\n' \
+                   '../evaluation_scripts/evaluation_config.cfg\n' \
+                   'model = '+evaluation.model_file+'\n' \
+                    'save_path = '+evaluation.network_data.save_path+'\n' \
+                    'dataset = ' + evaluation.network_data.dataset.src_dataset + '\n' \
+                    'verbose = ' + str(evaluation.verbose) + '\n'
+        try:
+            indexs = pickle.load(open('../evaluation_scripts/indexs_config.cfg', 'rb'))
+        except:
+            indexs = None
+        if indexs is not None:
+            text += '\n' \
+                    '../evaluation_scripts/indexs_config.cfg\n' \
+                    'model = ' + indexs.model_file + '\n'\
+                    'network_data = ' + indexs.network_data_file + '\n' \
+                    'verbose = ' + str(indexs.verbose) + '\n'
+
+        if evaluation is None and indexs is None:
+            text = None
+        return text
+
 
     def update_ok_button_state(self):
         if self.model is not None and self.dataset_dir is not None and self.save_path_dir is not None\
@@ -75,9 +131,38 @@ class MakeAnalysisInterface():
         save_path_frame = Frame(master=master)
         self.set_save_path_dir(save_path_frame)
         save_path_frame.pack()
+        default_labels_dict_frame = Frame(master=master)
+        self.set_default_labels_dict_dir(default_labels_dict_frame)
+        default_labels_dict_frame.pack()
         layers_to_evaluate = Frame(master=master)
         self.set_layers_to_evaluate(layers_to_evaluate)
         layers_to_evaluate.pack()
+        also_calc_index = Frame(master=master)
+        self.set_calc_index_check_box(also_calc_index)
+        also_calc_index.pack()
+        verbose = Frame(master=master)
+        self.set_verbose_check_box(verbose)
+        verbose.pack()
+
+    def set_verbose_check_box(self,master):
+        self.verbose = BooleanVar(master=master,value=False)
+        checkbox = ttk.Checkbutton(master=master, text="Verbose", variable=self.verbose)
+        checkbox.pack()
+
+    def set_calc_index_check_box(self,master):
+        self.also_calc_index = BooleanVar(master=master,value=False)
+        checkbox = ttk.Checkbutton(master=master, text="Also calc indexs in same script", variable=self.also_calc_index)
+        checkbox.pack()
+
+
+    def set_default_labels_dict_dir(self, master):
+        label = Label(master=master, text="Select default Labels Dict")
+        label_selection = Label(master=master, text="No translation dict")
+        button = Button(master=master, text="Select file",
+                        command=lambda: self._on_click_select_labels_dict_dir(label_selection))
+        label.pack(side=LEFT)
+        label_selection.pack(side=RIGHT)
+        button.pack(side=RIGHT)
 
     def set_layers_to_evaluate(self, master):
         label = Label(master=master, text="Select layers to evaluate")
@@ -210,6 +295,7 @@ class MakeAnalysisInterface():
             label_selection.configure(text = self.model.name)
             self.update_layers_to_evaluate(model=self.model)
             self.update_image_sizes_entry(model=self.model)
+            self.update_color_mode(model=self.model)
         self.update_ok_button_state()
 
     def _on_click_select_dataset_dir(self, label_selection):
@@ -219,8 +305,16 @@ class MakeAnalysisInterface():
             label_selection.configure(text=dataset_dir)
         self.update_ok_button_state()
 
+    def _on_click_select_labels_dict_dir(self, label_selection):
+        labels_dict = self.ask_for_file(title="Select labels dict", type='obj')
+        if labels_dict != '':
+            self.labels_dict = labels_dict
+            label_selection.configure(text=labels_dict)
+
+
+
     def _on_click_select_save_path_dir(self, label_selection):
-        save_path_dir = self.ask_for_directory(title="Select dataset")
+        save_path_dir = self.ask_for_directory(title="Select save path")
         if save_path_dir != '':
             self.save_path_dir = save_path_dir
             label_selection.configure(text=save_path_dir)

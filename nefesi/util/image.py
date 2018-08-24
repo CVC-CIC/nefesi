@@ -28,9 +28,9 @@ class ImageDataset(object):
                  preprocessing_function=None, color_mode='rgb'):
 
         self.src_dataset = src_dataset
-        self._target_size = target_size
-        self._preprocessing_function = preprocessing_function
-        self._color_mode = color_mode
+        self.target_size = target_size
+        self.preprocessing_function = preprocessing_function
+        self.color_mode = color_mode
 
     #---------------------------------------- SETTERS AND GETTERS -------------------------------------------
 
@@ -43,9 +43,10 @@ class ImageDataset(object):
         #Convert if is list or set to tuple to add flexibility
         if type(target_size) in (list,set):
             target_size = tuple(target_size)
+
         #Verify that is None or a valid formatted tuple
         if type(target_size) is tuple:
-            if len(target_size) != 2 or type(target_size[0]) != int or type(target_size[1] != int):
+            if len(target_size) != 2 or type(target_size[0]) != int or type(target_size[1]) != int:
                 raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
         elif type(target_size) is not None:
             raise ValueError("target_size must be a (height, width) tuple (or None). '"+str(type(target_size))+

@@ -35,15 +35,15 @@ class NetworkData(object):
     """
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
-                 default_labels_dict = None):
+                 default_labels_dict = None, default_degrees_orientation_idx = 90,defautl_thr_pc = 0.1):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
         self.dataset = dataset
-        self.save_changes = False
-        self.default_labels_dict = None
-        self.default_degrees_orientation_idx = 90
-        self.default_thr_pc = 0.1
+        self.save_changes = save_changes
+        self.default_labels_dict = default_labels_dict
+        self.default_degrees_orientation_idx = default_degrees_orientation_idx
+        self.default_thr_pc = defautl_thr_pc
         self.default_thr_class_idx = 1.
 
     @property
@@ -134,7 +134,6 @@ class NetworkData(object):
             #Looks folder exists
             if not os.path.isdir(save_path):
                 warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
-
         self._save_path = save_path
 
     def eval_network(self, layer_names = None,
@@ -395,12 +394,14 @@ class NetworkData(object):
                                  "argument, is not valid.".format(l))
             else:
                 sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
-        if True:#self.save_changes:
+        if self.save_changes:
             end_time = time.time()
             if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
                 #Update only the modelName.obj
                 self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
+
+
 
     def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None,
                               inf_thr=0.0, sup_thr=1.0):

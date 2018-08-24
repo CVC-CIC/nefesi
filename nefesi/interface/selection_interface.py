@@ -1,3 +1,4 @@
+from nefesi.interface.calc_indexs_interface import CalcIndexsInterface
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -23,6 +24,9 @@ class SelectionInterface():
         self.make_analysis_frame = Frame(master=self.window)
         self.set_make_analysis_frame(master=self.make_analysis_frame)
         self.make_analysis_frame.pack()
+        self.calc_indexs_frame = Frame(master=self.window)
+        self.set_make_indexs_calc_frame(master=self.calc_indexs_frame)
+        self.calc_indexs_frame.pack()
         self.select_action_frame = Frame(master=self.window, borderwidth=1)
         self.set_select_action_frame(master=self.select_action_frame)
         self.select_action_frame.pack()
@@ -31,20 +35,6 @@ class SelectionInterface():
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='orientation')
         self.window.mainloop()
-
-    @property
-    def network_data(self):
-        return self._network_data
-    @network_data.setter
-    def network_data(self, network_data):
-        self._network_data = network_data
-
-    @property
-    def window(self):
-        return self._window
-    @window.setter
-    def window(self, window):
-        self._window = window
 
     def set_select_action_frame(self, master):
         label = Label(master=master, text="Visualize an existent analysis")
@@ -55,6 +45,12 @@ class SelectionInterface():
     def set_make_analysis_frame(self, master):
         label = Label(master=master, text="Make script for do an analysis")
         button = Button(master=master, text="Select Parameters", command=self._on_click_make_analysis_button)
+        label.pack(side=LEFT)
+        button.pack(side=RIGHT)
+
+    def set_make_indexs_calc_frame(self, master):
+        label = Label(master=master, text="Make script for calc indexs")
+        button = Button(master=master, text="Select Parameters", command=self._on_click_make_indexs_calcs_button)
         label.pack(side=LEFT)
         button.pack(side=RIGHT)
 
@@ -76,3 +72,8 @@ class SelectionInterface():
     def _on_click_make_analysis_button(self):
         self.window.destroy()
         MakeAnalysisInterface()
+
+
+    def _on_click_make_indexs_calcs_button(self):
+        self.window.destroy()
+        CalcIndexsInterface()
