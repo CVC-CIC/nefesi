@@ -1,4 +1,4 @@
-from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupWindow
+from .one_layer_popup_window import OneLayerPopupWindow
 
 IMAGE_DEFAULT_SIZE = (350,350)
 ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
@@ -9,8 +9,9 @@ import tkinter as tk# note that module name has changed from Tkinter in Python 2
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from skimage.draw import line_aa
 import math
-from nefesi.class_index import get_path_sep
-from nefesi.util.interface_plotting import get_one_neuron_plot, plot_similar_neurons
+
+from ...class_index import get_path_sep
+from ...util.interface_plotting import get_one_neuron_plot, plot_similar_neurons
 
 try:
     from tkinter import *
@@ -20,11 +21,10 @@ except ImportError:
     from tkinter import ttk
 import numpy as np
 
-from nefesi.util.general_functions import clean_widget, mosaic_n_images, add_red_separations, \
-    destroy_canvas_subplot_if_exist, addapt_widget_for_grid
+from ...util.general_functions import mosaic_n_images, add_red_separations, destroy_canvas_subplot_if_exist,\
+    addapt_widget_for_grid
 from PIL import ImageTk, Image
-from nefesi.interface.EventController import EventController
-import nefesi.util.plotting as plotting
+from ..EventController import EventController
 
 class NeuronWindow(object):
     def __init__(self, master, network_data, layer_to_evaluate, neuron_idx):

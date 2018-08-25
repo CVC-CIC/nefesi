@@ -1,10 +1,13 @@
-from evaluation_scripts.calculate_indexs import CalculateIndexs
-from nefesi.interface.popup_windows.confirm_popup import ConfirmPopup
-from nefesi.util.general_functions import get_listbox_selection
+
+from ..interface.popup_windows.confirm_popup import ConfirmPopup
+from ..util.general_functions import get_listbox_selection
+from ..util.image import ImageDataset
+from ..network_data import NetworkData
+from ..network_data import get_model_layer_names
+from ..evaluation_scripts.calculate_indexs import CalculateIndexs
+from ..evaluation_scripts.evaluate_with_config import EvaluationWithConfig
 from os.path import relpath
 
-from nefesi.util.image import ImageDataset
-from evaluation_scripts.evaluate_with_config import EvaluationWithConfig
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
@@ -18,10 +21,7 @@ except ImportError:
     from Tkinter import ttk
 
 from keras.models import load_model
-from nefesi.network_data import NetworkData
-from nefesi.network_data import get_model_layer_names
 import pickle
-from nefesi.interface.interface import Interface
 import warnings
 
 class MakeAnalysisInterface():
@@ -37,15 +37,19 @@ class MakeAnalysisInterface():
         self.select_model_frame = Frame(master=self.window, borderwidth=1)
         self.set_model_frame(master=self.select_model_frame)
         self.select_model_frame.pack()
-        self.select_dataset_frame = Frame(master=self.window, borderwidth=1)
-        self.set_select_dataset_frame(master=self.select_dataset_frame)
-        self.select_dataset_frame.pack()
         self.select_parameters_frame = Frame(master=self.window, borderwidth=1)
         self.set_parameters_frame(master=self.select_parameters_frame)
         self.select_parameters_frame.pack()
+        self.select_dataset_frame = Frame(master=self.window, borderwidth=1)
+        self.set_select_dataset_frame(master=self.select_dataset_frame)
+        self.select_dataset_frame.pack()
+        self.layers_and_options_frame = Frame(master=self.window, borderwidth=1)
+        self.set_layers_and_options_frame(master=self.layers_and_options_frame)
+        self.layers_and_options_frame.pack()
         self.ok_button = Button(self.window, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.ok_button.pack(pady=(8, 5), ipadx=10)
+        self.set_footers(master=self.window)
         self.window.mainloop()
 
     def cleanup(self):
@@ -69,11 +73,23 @@ class MakeAnalysisInterface():
 
             evaluation = EvaluationWithConfig(network_data=network_data, model_file=model_file,evaluate_index=also_calc_index,
                                               verbose=verbose)
-            pickle.dump(evaluation, open('../evaluation_scripts/evaluation_config.cfg', 'wb'))
+            with open('../nefesi/evaluation_scripts/evaluation_config.cfg', 'wb') as f:
+                pickle.dump(evaluation, f)
             #saving the cfg for do it after
             network_data_file = network_data.save_path+model.name+'.obj'
             indexs_eval = CalculateIndexs(network_data_file=network_data_file,model_file=model_file, verbose=verbose)
-            pickle.dump(indexs_eval, open('../evaluation_scripts/indexs_config.cfg', 'wb'))
+            with open('../nefesi/evaluation_scripts/indexs_config.cfg', 'wb') as f:
+                pickle.dump(indexs_eval, f)
+
+    def set_footers(self, master):
+        frame = Frame(master=master)
+        label = Label(master=frame, text='*(eval network) Nefesi/main>> nohup python ./evaluate_with_config.py &',
+                      font=("Times New Roman", 8))
+        label.grid(row=0)
+        label = Label(master=frame, text='**(calculate indexs) Nefesi/main>>'
+                                         ' nohup python ./calculate_indexs.py &', font=("Times New Roman", 8))
+        label.grid(row=1)
+        frame.pack(side=BOTTOM)
 
     def user_confirm(self):
         text = self.get_override_text()
@@ -86,24 +102,28 @@ class MakeAnalysisInterface():
 
     def get_override_text(self):
         try:
-            evaluation = pickle.load(open('../evaluation_scripts/evaluation_config.cfg', 'rb'))
+            f = open('../nefesi/evaluation_scripts/evaluation_config.cfg', 'rb')
+            evaluation = pickle.load(f)
+            f.close()
         except:
             evaluation = None
         text = 'This action will override the following files:\n'
         if evaluation is not None:
             text+= '\n' \
-                   '../evaluation_scripts/evaluation_config.cfg\n' \
+                   '../nefesi/evaluation_scripts/evaluation_config.cfg\n' \
                    'model = '+evaluation.model_file+'\n' \
                     'save_path = '+evaluation.network_data.save_path+'\n' \
                     'dataset = ' + evaluation.network_data.dataset.src_dataset + '\n' \
                     'verbose = ' + str(evaluation.verbose) + '\n'
         try:
-            indexs = pickle.load(open('../evaluation_scripts/indexs_config.cfg', 'rb'))
+            f = open('../nefesi/evaluation_scripts/indexs_config.cfg', 'rb')
+            indexs = pickle.load(f)
+            f.close()
         except:
             indexs = None
         if indexs is not None:
             text += '\n' \
-                    '../evaluation_scripts/indexs_config.cfg\n' \
+                    '../nefesi/evaluation_scripts/indexs_config.cfg\n' \
                     'model = ' + indexs.model_file + '\n'\
                     'network_data = ' + indexs.network_data_file + '\n' \
                     'verbose = ' + str(indexs.verbose) + '\n'
@@ -131,9 +151,9 @@ class MakeAnalysisInterface():
         save_path_frame = Frame(master=master)
         self.set_save_path_dir(save_path_frame)
         save_path_frame.pack()
-        default_labels_dict_frame = Frame(master=master)
-        self.set_default_labels_dict_dir(default_labels_dict_frame)
-        default_labels_dict_frame.pack()
+
+
+    def set_layers_and_options_frame(self, master):
         layers_to_evaluate = Frame(master=master)
         self.set_layers_to_evaluate(layers_to_evaluate)
         layers_to_evaluate.pack()
@@ -210,10 +230,14 @@ class MakeAnalysisInterface():
 
 
 
+
     def set_select_dataset_frame(self, master):
         directory_frame = Frame(master=master)
         self.set_dataset_dir(directory_frame)
         directory_frame.pack()
+        default_labels_dict_frame = Frame(master=master)
+        self.set_default_labels_dict_dir(default_labels_dict_frame)
+        default_labels_dict_frame.pack()
         images_size_frame = Frame(master=master)
         self.set_select_images_size(images_size_frame)
         images_size_frame.pack()

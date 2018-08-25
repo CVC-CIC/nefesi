@@ -1,4 +1,4 @@
-from nefesi.interface.calc_indexs_interface import CalcIndexsInterface
+from ..interface.calc_indexs_interface import CalcIndexsInterface
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -12,9 +12,9 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
-from nefesi.network_data import NetworkData
-from nefesi.interface.interface import Interface
-from nefesi.interface.make_analysis_interface import MakeAnalysisInterface
+from ..network_data import NetworkData
+from ..interface.interface import Interface
+from ..interface.make_analysis_interface import MakeAnalysisInterface
 
 class SelectionInterface():
     def __init__(self):
@@ -23,13 +23,13 @@ class SelectionInterface():
         #TOP Part with general info of viewing and some setteables
         self.make_analysis_frame = Frame(master=self.window)
         self.set_make_analysis_frame(master=self.make_analysis_frame)
-        self.make_analysis_frame.pack()
+        self.make_analysis_frame.pack(pady=3)
         self.calc_indexs_frame = Frame(master=self.window)
         self.set_make_indexs_calc_frame(master=self.calc_indexs_frame)
-        self.calc_indexs_frame.pack()
+        self.calc_indexs_frame.pack(pady=3)
         self.select_action_frame = Frame(master=self.window, borderwidth=1)
         self.set_select_action_frame(master=self.select_action_frame)
-        self.select_action_frame.pack()
+        self.select_action_frame.pack(pady=3)
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='class')

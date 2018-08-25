@@ -1,4 +1,3 @@
-import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 
 try:
     from tkinter import *
@@ -6,12 +5,7 @@ try:
 except ImportError:
     from Tkinter import *
     from tkinter import ttk
-import numpy as np
-from nefesi.util.general_functions import clean_widget
-from nefesi.util.interface_plotting import ORDER
-from PIL import ImageTk, Image
-import os
-from math import ceil
+
 
 
 class ReceptiveFieldPopupWindow(object):

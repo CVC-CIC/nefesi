@@ -8,14 +8,13 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
-from nefesi.layer_data import ALL_INDEX_NAMES
-
-import numpy as np
-from nefesi.util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
+from ..layer_data import ALL_INDEX_NAMES
+from ..util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
     get_listbox_selection
+from .popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
+from .popup_windows.neuron_window import IMAGE_DEFAULT_SIZE
+import numpy as np
 from PIL import ImageTk, Image
-from nefesi.interface.popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
-from nefesi.interface.popup_windows.neuron_window import IMAGE_DEFAULT_SIZE
 
 
 

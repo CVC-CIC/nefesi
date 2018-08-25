@@ -1,4 +1,3 @@
-import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 
 try:
     from tkinter import *
@@ -7,8 +6,8 @@ except ImportError:
     from Tkinter import *
     from tkinter import ttk
 import numpy as np
-from nefesi.util.general_functions import clean_widget
-from nefesi.util.interface_plotting import ORDER
+from ...util.general_functions import clean_widget
+from ...util.interface_plotting import ORDER
 from math import ceil
 
 orientation_idx_range = (1,359)

@@ -1,4 +1,4 @@
-from nefesi import read_activations
+from . import read_activations
 from .util.image import rotate_images_axis
 import numpy as np
 

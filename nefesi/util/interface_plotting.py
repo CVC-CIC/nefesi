@@ -7,10 +7,9 @@ from PIL import ImageDraw, Image
 from PIL.Image import ANTIALIAS
 from sklearn.manifold import TSNE
 from matplotlib import gridspec
-from nefesi.symmetry_index import SYMMETRY_AXES
-from nefesi.util.general_functions import get_n_circles_well_distributed
-from PIL.ImageFilter import GaussianBlur
-from nefesi.class_index import get_ntop_population_code
+from ..symmetry_index import SYMMETRY_AXES
+from .general_functions import get_n_circles_well_distributed
+from ..class_index import get_ntop_population_code
 
 FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
 APPENDIX_FONT_SIZE = 8

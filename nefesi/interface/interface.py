@@ -7,7 +7,7 @@ MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 import warnings
 from os.path import relpath
-from nefesi.interface.popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
+from .popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
 
 try:
     from tkinter import *
@@ -17,20 +17,16 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
-import threading
-import multiprocessing
-import time
-import pickle
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from nefesi.layer_data import ALL_INDEX_NAMES
-from nefesi.util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
-from nefesi.interface.popup_windows.special_value_popup_window import SpecialValuePopupWindow
-from nefesi.interface.popup_windows.one_layer_popup_window import OneLayerPopupWindow
-from nefesi.interface.popup_windows.neuron_window import NeuronWindow
-import nefesi.interface.EventController as events
-from nefesi.util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
-from nefesi.network_data import NetworkData
+from ..layer_data import ALL_INDEX_NAMES
+from ..util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
+from .popup_windows.special_value_popup_window import SpecialValuePopupWindow
+from .popup_windows.one_layer_popup_window import OneLayerPopupWindow
+from .popup_windows.neuron_window import NeuronWindow
+from . import EventController as events
+from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
+from ..network_data import NetworkData
 
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):

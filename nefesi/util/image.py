@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import numbers
 from keras.preprocessing import image
 from scipy.ndimage.interpolation import rotate
 import warnings
@@ -79,7 +78,7 @@ class ImageDataset(object):
         if preprocessing_function is not None:
             #if function don't takes one non-default argument
             if callable(preprocessing_function):
-                if ((preprocessing_function.__code__.co_argcount - preprocessing_function.__defaults__) != 1):
+                if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
                     raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
                                      " (any number of default arguments also admitted) and must return a numpy tensor of same"
                                      "dimension.")

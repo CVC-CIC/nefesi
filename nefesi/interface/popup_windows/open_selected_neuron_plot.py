@@ -6,8 +6,10 @@ try:
 except ImportError:
     from Tkinter import *
     from tkinter import ttk
-from nefesi.interface.interface import MAX_VALUES_VISIBLES_IN_LISTBOX
-from nefesi.layer_data import ALL_INDEX_NAMES
+
+
+from ..interface import MAX_VALUES_VISIBLES_IN_LISTBOX
+from ...layer_data import ALL_INDEX_NAMES
 import numpy as np
 RED_LIGHTED_COLOR = '#ffcccc'
 

@@ -1,4 +1,3 @@
-import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 
 try:
     from tkinter import *

@@ -1,6 +1,5 @@
 import numpy as np
 from PIL import ImageOps
-import os
 from keras.preprocessing import image
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_idx
 from .color_index import get_color_selectivity_index

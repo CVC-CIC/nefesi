@@ -1,5 +1,5 @@
-from evaluation_scripts.calculate_indexs import CalculateIndexs
-from nefesi.interface.popup_windows.confirm_popup import ConfirmPopup
+from ..evaluation_scripts.calculate_indexs import CalculateIndexs
+from .popup_windows.confirm_popup import ConfirmPopup
 from os.path import relpath
 
 try:
@@ -24,6 +24,7 @@ class CalcIndexsInterface():
         self.ok_button = Button(self.window, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.ok_button.pack(pady=(8, 5), ipadx=10)
+        self.set_footers(master=self.window)
         self.window.mainloop()
 
     def cleanup(self):
@@ -33,7 +34,15 @@ class CalcIndexsInterface():
             verbose = self.verbose.get()
             self.window.destroy()
             indexs_eval = CalculateIndexs(network_data_file=network_data_file,model_file=model_file, verbose=verbose)
-            pickle.dump(indexs_eval, open('../evaluation_scripts/indexs_config.cfg', 'wb'))
+            with open('../nefesi/evaluation_scripts/indexs_config.cfg', 'wb') as f:
+	            pickle.dump(indexs_eval, f)
+
+    def set_footers(self, master):
+        frame = Frame(master=master)
+        label = Label(master=frame, text='*(calculate indexs) Nefesi/main>>'
+                                         ' nohup python ./calculate_indexs.py &', font=("Times New Roman", 8))
+        label.grid(row=0)
+        frame.pack(side=BOTTOM)
 
     def user_confirm(self):
         text = self.get_override_text()
@@ -48,11 +57,13 @@ class CalcIndexsInterface():
 
         text = 'This action will override the following files:\n'
         try:
-            indexs = pickle.load(open('../evaluation_scripts/indexs_config.cfg', 'rb'))
+            f = open('../nefesi/evaluation_scripts/indexs_config.cfg', 'rb')
+            indexs = pickle.load(f)
+            f.close()
         except:
-            return None
+            indexs = None
         text += '\n' \
-                '../evaluation_scripts/indexs_config.cfg\n' \
+                '../nefesi/evaluation_scripts/indexs_config.cfg\n' \
                 'model = ' + indexs.model_file + '\n'\
                 'network_data = ' + indexs.network_data_file + '\n' \
                 'verbose = ' + str(indexs.verbose) + '\n'

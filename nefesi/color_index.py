@@ -1,5 +1,6 @@
 import numpy as np
-
+import sys
+sys.path.append('..')
 from nefesi import read_activations
 from nefesi.util.image import rgb2opp, image2max_gray
 

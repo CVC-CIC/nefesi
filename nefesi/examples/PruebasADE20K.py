@@ -5,26 +5,27 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
-from nefesi.network_data import NetworkData
-from nefesi.util.image import ImageDataset
+
+from ..network_data import NetworkData
+from ..util.image import ImageDataset
 import numpy as np
 import time
-#from nefesi.util.plotting import plot_nf_search
+from ..util.general_functions import addapt_ADE20K_dataset
+
 
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
 
 def main():
-	#example1SaveModel() #Charge a standard model and save it locally
-	#example2ChargeModel() #Charge a model locally
-	#example3NefesiInstance()
-	#example4FullFillNefesiInstance()
-	start = time.time()
+	#addapt_ADE20K_dataset('../Datasets/ADE20K_2016_07_26')
 	#example5NetworkEvaluation()
-	print("TIME ELAPSED: "+str(time.time()-start))
-	#example6LoadingResults()
-	example7AnalyzingResults()
+	model = example6LoadingResults()
+	#print(model.get_selectivity_idx('concept','.*'))
+	#dataset=chargeNefesiImageDataset()
+	#print(dataset.get_concepts_of_region('labelme_bxvctltntrtinjf.jpg', (0,50,0,50)))
+
+
 
 """
 Analyze the results of the evaluation
@@ -271,7 +272,7 @@ def example4FullFillNefesiInstance():
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	nefesiModel.layers_data = "block(1)_conv1"#|3|5
+	nefesiModel.layers_data = "block(1)_conv(1|2)"#|3|5
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
@@ -292,7 +293,7 @@ def chargeNefesiImageDataset():
 	ClassAFolder -> Img1, Img2, Img3...
 	ClassBFolder -> Img1, Img2, Img3...
 	"""
-	path = '../Datasets/TinyImagenet/trainSubset/'
+	path = '../Datasets/Tiny/'
 	#target_size is the size of the images will be resized and cropped before to put in the net, in this case the best
 	#option is to set as (224 (height), 224 (width)) cause this is the input size of VGG16.
 	targetSize = (224,224)
@@ -367,9 +368,3 @@ def saveModel(model,path='', name='myModel'):
 		path = path+'/'
 	# Save the model (model) locally
 	model.save(path+name)
-
-if __name__ == '__main__':
-    # print os.path.dirname(os.path.abspath(__file__))
-    # print os.getcwd()
-
-    main()

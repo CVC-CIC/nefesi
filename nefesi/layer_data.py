@@ -1,5 +1,5 @@
 import numpy as np
-from itertools import permutations
+
 import math
 from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_image_receptive_field, get_each_point_receptive_field,find_layer_idx

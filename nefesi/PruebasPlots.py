@@ -5,12 +5,13 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
-from nefesi.network_data import NetworkData
-from nefesi.util.image import ImageDataset
+
+from .util.image import ImageDataset
+from .util import interface_plotting
+from .network_data import NetworkData
+
 import numpy as np
 import time
-from nefesi.util import interface_plotting
-#from nefesi.util.plotting import plot_nf_search
 
 import os
 import pickle
@@ -366,8 +367,3 @@ def saveModel(model,path='', name='myModel'):
 	# Save the model (model) locally
 	model.save(path+name)
 
-if __name__ == '__main__':
-    # print os.path.dirname(os.path.abspath(__file__))
-    # print os.getcwd()
-
-    main()

@@ -8,8 +8,8 @@ import warnings
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
-from nefesi.layer_data import LayerData
-from nefesi.util.image import ImageDataset
+from .layer_data import LayerData
+from .util.image import ImageDataset
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
 
@@ -53,7 +53,8 @@ class NetworkData(object):
     def default_labels_dict(self, default_labels_dict):
         if default_labels_dict is not None:
             if type(default_labels_dict) is str:
-                default_labels_dict = pickle.load(open(default_labels_dict, "rb"))
+                with open(default_labels_dict, "rb") as f:
+                    default_labels_dict = pickle.load(f)
             if type(default_labels_dict) is not dict:
                 warnings.warn("Default labels dict expect a str(path) or dict, '"+type(default_labels_dict)+"' is "
                             "not valid. Default_labels_dict not modified")
@@ -394,11 +395,11 @@ class NetworkData(object):
                                  "argument, is not valid.".format(l))
             else:
                 sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
-        if self.save_changes:
-            end_time = time.time()
-            if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
-                #Update only the modelName.obj
-                self.save_to_disk(file_name=None, save_model=False)
+            if self.save_changes:
+                end_time = time.time()
+                if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
+                    #Update only the modelName.obj
+                    self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
 
 
@@ -657,7 +658,8 @@ class NetworkData(object):
             self.model.save(model_name + '.h5')
         #Save the object without model info
         self.model = None
-        pickle.dump(self, open(file_name + '.obj', 'wb'))
+        with open(file_name + '.obj', 'wb') as f:
+            pickle.dump(self, f)
         self.model = model
 
     @staticmethod
@@ -670,7 +672,8 @@ class NetworkData(object):
 
         :return: The `nefesi.network_data.NetworkData` instance.
         """
-        my_net = pickle.load(open(file_name, 'rb'))
+        with open(file_name, 'rb') as f:
+            my_net = pickle.load(f)
         """
         TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
         obj's with news implementations of network_data that can have more attributes
