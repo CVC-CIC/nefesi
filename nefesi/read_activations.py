@@ -3,6 +3,7 @@ import warnings
 import keras.backend as K
 from .neuron_data import NeuronData
 
+ACTIVATIONS_BATCH_SIZE = 200
 
 def get_activations(model, model_inputs, layer_name=None):
     """Returns the output (activations) from the model.
@@ -49,14 +50,14 @@ def get_one_neuron_activations(model, model_inputs, idx_neuron, layer_name=None)
     # uses .get_output_at() instead of .output. In case a layer is
     # connected to multiple inputs. Assumes the input at node index=0
     # is the input where the model inputs come from.
-    outputs = [layer.get_output_at(0)[...,idx_neuron] for layer in model.layers if
+    outputs = [layer.output[...,idx_neuron] for layer in model.layers if
                layer.name == layer_name or layer_name is None]
 
     # evaluation functions
-    funcs = [K.function(inp + [K.learning_phase()], [out]) for out in outputs]
+    funcs = K.function(inp + [K.learning_phase()], outputs)
 
     # K.learning_phase flag = 1 (train mode)
-    layer_outputs = [func([model_inputs, 1])[0] for func in funcs]
+    layer_outputs = funcs([model_inputs, 1])
     if len(layer_outputs) > 1:
         warnings.warn("Layer outputs is a list of more than one element? REVIEW THIS CODE SECTION!",RuntimeWarning)
     return layer_outputs[0]
@@ -127,7 +128,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
     return neurons_data
 
 
-def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
+def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_size = ACTIVATIONS_BATCH_SIZE):
     """Returns the activations of a neuron, given a location ('pos')
      on the activation map for each input (`images`).
 
@@ -140,10 +141,17 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos):
 
     :return: List of floats, activation values for each input in `images`.
     """
+
+    activations = np.zeros(shape=len(images),dtype=np.float)
+    batches = np.array(np.arange(0,len(images), batch_size).tolist()+[len(images)])
     if idx_neuron is None:
         #Get the activation of all neuron
-        activations = get_activations(model, images, layer_name=layer_name)[0]
+        for i in range(1,len(batches)):
+            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layer_name=layer_name)[0]
+            activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]
     else:
-        activations = get_one_neuron_activations(model, images,idx_neuron=idx_neuron, layer_name=layer_name)
+        for i in range(1,len(batches)):
+            total_activations = get_one_neuron_activations(model, images[batches[i-1]:batches[i]],idx_neuron=idx_neuron, layer_name=layer_name)
+            activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]
     # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
-    return activations[range(len(activations)),pos[...,0],pos[...,1]]
+    return activations

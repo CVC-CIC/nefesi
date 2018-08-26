@@ -35,7 +35,8 @@ class NetworkData(object):
     """
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
-                 default_labels_dict = None, default_degrees_orientation_idx = 90,defautl_thr_pc = 0.1):
+                 default_labels_dict = None, default_degrees_orientation_idx = 15,defautl_thr_pc = 0.1,
+                 default_thr_class_idx = 1.):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
@@ -44,7 +45,7 @@ class NetworkData(object):
         self.default_labels_dict = default_labels_dict
         self.default_degrees_orientation_idx = default_degrees_orientation_idx
         self.default_thr_pc = defautl_thr_pc
-        self.default_thr_class_idx = 1.
+        self.default_thr_class_idx = default_thr_class_idx
 
     @property
     def default_labels_dict(self):

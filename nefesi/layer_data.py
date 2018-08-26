@@ -6,7 +6,7 @@ from .neuron_feature import compute_nf, get_image_receptive_field, get_each_poin
 from .similarity_index import get_similarity_index, get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 #'concept' is special, (non all datasets accept it)
-ALL_INDEX_NAMES = ['color', 'orientation', 'symmetry', 'class', 'population code']
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
 
 
 class LayerData(object):

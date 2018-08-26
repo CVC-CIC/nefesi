@@ -316,47 +316,41 @@ def crop_image(img, crop_x, crop_y):
 def rotate_images(images, degrees, pos, layer_data):
     """Rotates the receptive field for each image in `images`.
 
-    :param images: List of numpy arrays.
-    :param degrees: Float, the rotation angle in degrees.
-    :param pos: List of receptive fields locations on `images`.
-    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param images: List of numpy arrays, the images to rotate.
+    :param degrees: list of Float, the rotation angles in degrees.
+    :param pos: List of receptive fields locations on 'images'.
+    :param layer_data: The 'nefesi.layer_data.LayerData' instance.
 
     :return: Numpy array that contains the images rotated (1+N dimension where N is the dimension of an image).
     Same as the input `images` but rotated.
     """
-    if degrees%360 == 0:
-        return images
-    images_rotated = np.ndarray(shape=images.shape, dtype=images.dtype)
-    for i in range(len(images)):
-        init_image = np.copy(images[i])
-        x, y = pos[i]
+    #The images replicated, one for each rotation to do (at the end will contain the images rotated
+    images_rotated = np.full((len(degrees),)+images.shape,images)
 
+    for i in range(len(images)):
+        x, y = pos[i]
         # get the receptive field from the image
         row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
-        receptive_field = init_image[row_ini:row_fin, col_ini:col_fin]
+        receptive_field = images_rotated[0,i,row_ini:row_fin, col_ini:col_fin]
 
         # adjusts the receptive field for not add black padding on it.
         w, h, d = receptive_field.shape
-        padding_w = int(round(w / 2))
-        padding_h = int(round(h / 2))
-        if padding_w % 2 != 0:
-            padding_w += 1
-        if padding_h % 2 != 0:
-            padding_h += 1
+        padding_w = round(w / 2)
+        padding_h = round(h / 2)
+        padding_w += (padding_w % 2)
+        padding_h += (padding_h % 2)
 
         new_shape = np.pad(receptive_field,
                                           ((padding_w // 2, padding_w // 2),
                                            (padding_h // 2, padding_h // 2),
                                            (0,0)),
                                           mode='edge')
+        for deg_pos, current_degrees in enumerate(degrees):
+            # apply the rotation function
+            img = rotate(new_shape, current_degrees, reshape=False)
+            # build back the origin image with the receptive field rotated
+            images_rotated[deg_pos, i, row_ini:row_fin, col_ini:col_fin] = crop_image(img, h, w)
 
-        # apply the rotation function
-        img = rotate(new_shape, degrees, reshape=False)
-        # build back the origin image with the receptive field rotated
-        img = crop_image(img, h, w)
-        init_image[row_ini:row_fin, col_ini:col_fin] = img
-
-        images_rotated[i] = init_image
     return images_rotated
 
 
@@ -371,26 +365,20 @@ def rotate_images_axis(images, rot_axis, layer_data, pos):
     :return: 1+N-Dimensional numpy array where N is the dimension of the input images (axis 0 refers to an image (image_i
      will be img[i]), same as the input `images` but flipped.
     """
-    rot_images = np.ndarray(shape=images.shape,dtype=images.dtype)
+    rot_images = np.full((len(rot_axis),)+images.shape,images)
 
     for i in range(len(images)):
-        init_image = np.copy(images[i])
         x, y = pos[i]
         # get the receptive field from the image
         row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
-        receptive_field = init_image[row_ini:row_fin, col_ini:col_fin]
-
-        rf_shape = receptive_field.shape
-        rotated_receptive_field = rotate_rf(receptive_field, rot_axis)
-
-        # if receptive field flipped has not same shape that before, resize it
-        rot_rf_shape = rotated_receptive_field.shape
-        if rf_shape != rot_rf_shape:
-            rotated_receptive_field = np.reshape(rotated_receptive_field, rf_shape)
-
-        # build back the origin image with receptive field flipped
-        init_image[row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
-        rot_images[i] = init_image
+        for axis_pos, current_axis in enumerate(rot_axis):
+            receptive_field = rot_images[axis_pos, i, row_ini:row_fin, col_ini:col_fin]
+            rotated_receptive_field = rotate_rf(receptive_field, current_axis)
+            # if receptive field flipped has not same shape that before, resize it
+            if receptive_field.shape != rotated_receptive_field.shape:
+                rotated_receptive_field = np.reshape(rotated_receptive_field, receptive_field.shape)
+            # build back the origin image with receptive field flipped
+            rot_images[axis_pos, i, row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
     return rot_images
 
 

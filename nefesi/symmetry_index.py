@@ -29,15 +29,17 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset, symm_axes=SYMMET
         images = dataset.load_images(image_names)
         #[0][0] because return a tuple of list
         idx_neuron = np.where(layer_data.neurons_data==neuron_data)[0][0]
-        for i in range(len(symm_axes)):
-            # apply the mirroring function over the images
-            images_r = rotate_images_axis(images, symm_axes[i], layer_data, locations)
-            rot_activations = read_activations.get_activation_from_pos(images_r, model,
-                                                                       layer_data.layer_id,
-                                                                       idx_neuron, locations)
-            # normalize activations.
-            norm_rot_act_sum = np.sum(rot_activations) / max_act
-            symmetry_idx = norm_rot_act_sum / norm_activations_sum
-            results[i] = symmetry_idx
-        np.clip(a=results, a_min=0., a_max=1.)
+        images_r = rotate_images_axis(images, symm_axes, layer_data, locations)
+        images_reshaped = images_r.reshape((images_r.shape[0] * images_r.shape[1], images_r.shape[2],
+                                            images_r.shape[3], images_r.shape[4]))
+        replicated_locations = np.full(shape=(len(symm_axes),) + locations.shape, fill_value=locations).reshape(-1, 2)
+        rot_activations = read_activations.get_activation_from_pos(images_reshaped, model,
+                                                                   layer_data.layer_id,
+                                                                   idx_neuron,
+                                                                   replicated_locations)
+        rot_activations = rot_activations.reshape((len(symm_axes),len(images)))
+        norm_rot_act_sum = np.sum(rot_activations, axis=1) / max_act
+        results = norm_rot_act_sum / norm_activations_sum #WARNING: why not 1-results?
+        results = np.clip(a=results, a_min=0., a_max=1.)
+    print(results)
     return results
