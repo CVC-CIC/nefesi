@@ -41,5 +41,4 @@ def get_symmetry_index(neuron_data, model, layer_data, dataset, symm_axes=SYMMET
         norm_rot_act_sum = np.sum(rot_activations, axis=1) / max_act
         results = norm_rot_act_sum / norm_activations_sum #WARNING: why not 1-results?
         results = np.clip(a=results, a_min=0., a_max=1.)
-    print(results)
     return results

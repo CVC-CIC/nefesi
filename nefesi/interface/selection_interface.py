@@ -1,3 +1,6 @@
+import os
+from os.path import relpath
+
 from ..interface.calc_indexs_interface import CalcIndexsInterface
 
 STATES = ['init']
@@ -57,6 +60,7 @@ class SelectionInterface():
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
                                               filetypes=((type, '*.' + type), ("all files", "*.*")))
+        filename = relpath(filename)
         return filename
 
 
@@ -66,6 +70,9 @@ class SelectionInterface():
             model_file = self.ask_for_file(title="Select model (.h5 file)", type="h5")
             model_file = model_file if model_file != '' else None
             network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
+            last_dir_pos = network_data_file.rfind(os.path.sep)
+            network_data.save_path = network_data_file[:last_dir_pos]
+            network_data.default_file_name = network_data_file[last_dir_pos+1:network_data_file.rfind('.')]
             self.window.destroy()
             Interface(network_data=network_data)
 

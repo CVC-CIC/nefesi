@@ -434,3 +434,13 @@ class LayerData(object):
         idx_values = idx_values[sorted_idx]
 
         return list(res_neurons), list(idx_values)
+
+    def get_index_calculated_keys(self):
+        keys = set()
+        for neuron in self.neurons_data:
+            keys |= set(neuron.get_keys_of_indexs())
+        return keys
+
+    def erase_index(self, index_to_erase):
+        for neuron in self.neurons_data:
+            neuron.remove_selectivity_idx(idx=index_to_erase)

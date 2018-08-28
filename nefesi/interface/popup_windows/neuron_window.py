@@ -200,8 +200,14 @@ class NeuronWindow(object):
             panel.image = img
             panel.pack(side=BOTTOM, fill=BOTH, expand=True)
 
-    def set_index_info(self, master, orientation_degrees=90,thr_class_idx=1., thr_pc=0.1):
-        indexs = self.get_index_info()
+    def set_index_info(self, master, orientation_degrees=None,thr_class_idx=None, thr_pc=None):
+        if orientation_degrees is None:
+            orientation_degrees = self.network_data.default_degrees_orientation_idx
+        if thr_class_idx is None:
+            thr_class_idx = self.network_data.default_thr_class_idx
+        if thr_pc is None:
+            thr_pc = self.network_data.default_thr_pc
+        indexs = self.get_index_info(orientation_degrees=orientation_degrees, thr_class_idx=thr_class_idx,thr_pc=thr_pc)
         Label(master=master, text='Selectivity Indexs: ').grid(column=0, row=0)
         for i, (label, idx) in enumerate(indexs.items()):
             if label == 'color':
@@ -221,7 +227,13 @@ class NeuronWindow(object):
                                     command= lambda: self.event_controller._on_checkbox_clicked(checkbox_value))
         checkbox.grid(column=0, row=len(indexs.items())+1)
 
-    def get_index_info(self,orientation_degrees=90, thr_class_idx=1., thr_pc=0.1):
+    def get_index_info(self,orientation_degrees=None, thr_class_idx=None, thr_pc=None):
+        if orientation_degrees is None:
+            orientation_degrees = self.network_data.default_degrees_orientation_idx
+        if thr_class_idx is None:
+            thr_class_idx = self.network_data.default_thr_class_idx
+        if thr_pc is None:
+            thr_pc = self.network_data.default_thr_pc
         indexs = self.network_data.get_all_index_of_neuron(layer=self.layer_to_evaluate, neuron_idx=self.neuron_idx,
                                                            orientation_degrees=orientation_degrees,
                                                            thr_class_idx=thr_class_idx,thr_pc=thr_pc)

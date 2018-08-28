@@ -354,3 +354,6 @@ class NeuronData(object):
 
         self.selectivity_idx[key] = population_code_idx
         return population_code_idx
+
+    def get_keys_of_indexs(self):
+        return self.selectivity_idx.keys()

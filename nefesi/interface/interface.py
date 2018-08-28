@@ -24,9 +24,12 @@ from ..util.interface_plotting import get_one_layer_plot, get_plot_net_summary_f
 from .popup_windows.special_value_popup_window import SpecialValuePopupWindow
 from .popup_windows.one_layer_popup_window import OneLayerPopupWindow
 from .popup_windows.neuron_window import NeuronWindow
+from .popup_windows.erase_calculated_index_popup import EraseCalculatedIndexPopup
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
+
+
 
 class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
@@ -55,11 +58,6 @@ class Interface():
         self.general_info_label.pack()
         self.plot_general_index(index=None)
         self.set_menu_bar()
-        #self.plot_general_index(index='symmetry')
-        #self.plot_general_index(index='class')
-        #self.plot_general_index(index='class')
-        #self.plot_general_index(index='class')
-        #self.plot_general_index(index='orientation')
         self.window.mainloop()
 
     @property
@@ -149,26 +147,30 @@ class Interface():
                                             " Dataset: "+self.network_data.dataset.src_dataset)
 
     def raise_neuron_window(self, layer, neuron_idx):
-
         NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
 
     def set_menu_bar(self):
         menubar = Menu(master=self.window)
         self.window.config(menu=menubar)
-        configMenu = Menu(menubar)
-        configMenu.add_command(label='Set Model', command=self.set_model)
-        configMenu.add_command(label="Set Label traduction", command=self.set_labels_dict)
-        configMenu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
-        configMenu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
-        menubar.add_cascade(label="Configuration", menu=configMenu)
-        plotMenu = Menu(menubar)
-        plotMenu.add_command(label="Set Neuron plot", command=self.plot_specific_neuron)
-        menubar.add_cascade(label="Plot", menu=plotMenu)
+        file_name = Menu(menubar)
+        file_name.add_command(label="Force to save", command=self.force_to_save)
+        file_name.add_command(label='Change analysis object', command=self.set_model)
+        menubar.add_cascade(label="File", menu=file_name)
+        config_menu = Menu(menubar)
+        config_menu.add_command(label="Set Label traduction", command=self.set_labels_dict)
+        config_menu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
+        config_menu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
+        config_menu.add_command(label='Erase calculated index', command=self.erase_calculated_index)
+        menubar.add_cascade(label="Configuration", menu=config_menu)
+        plot_menu = Menu(menubar)
+        plot_menu.add_command(label="Set Neuron plot", command=self.plot_specific_neuron)
+        menubar.add_cascade(label="Plot", menu=plot_menu)
+
 
     def plot_specific_neuron(self):
         layer, neuron_idx = self.get_neuron_params_plot_from_popup()
-        NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
-
+        neuron_window = NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
+        self.window.wait_window(neuron_window.window)
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
                                    filetypes=((type, '*.'+type), ("all files", "*.*")))
@@ -176,9 +178,17 @@ class Interface():
             filename = relpath(filename)
         return filename
 
+    def force_to_save(self):
+        self.network_data.save_to_disk(file_name=None, save_model=False)
+        print("Changes saved")
+
     def set_labels_dict(self):
         labels_dict_file = self.ask_for_file(title="Select labels traduction (Python dict object)")
         self.network_data.default_labels_dict = labels_dict_file
+
+    def erase_calculated_index(self):
+        popup = EraseCalculatedIndexPopup(master = self.window, network_data = self.network_data)
+        self.window.wait_window(popup.top)
 
     def set_model(self):
         network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)")

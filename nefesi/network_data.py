@@ -36,7 +36,7 @@ class NetworkData(object):
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
                  default_labels_dict = None, default_degrees_orientation_idx = 15,defautl_thr_pc = 0.1,
-                 default_thr_class_idx = 1.):
+                 default_thr_class_idx = 1., default_file_name = None):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
@@ -46,6 +46,17 @@ class NetworkData(object):
         self.default_degrees_orientation_idx = default_degrees_orientation_idx
         self.default_thr_pc = defautl_thr_pc
         self.default_thr_class_idx = default_thr_class_idx
+        self.default_file_name = default_file_name
+
+    @property
+    def default_file_name(self):
+        return self._default_file_name
+
+    @default_file_name.setter
+    def default_file_name(self, default_file_name):
+        if default_file_name is None:
+            default_file_name = self.model.name
+        self._default_file_name = default_file_name
 
     @property
     def default_labels_dict(self):
@@ -644,14 +655,16 @@ class NetworkData(object):
             as a HDF5 file.
         """
         if file_name is None:
-            file_name = self.model.name
+            file_name = self.default_file_name
+        if not file_name.endswith('.obj'):
+            file_name+='.obj'
         if save_path is not None:
-            self._save_path = save_path
+            self.save_path = save_path
 
         model_name = self.model.name
-        if self._save_path is not None:
-            file_name = self._save_path + file_name
-            model_name = self._save_path + self.model.name
+        if self.save_path is not None:
+            file_name = self.save_path + file_name
+            model_name = self.save_path + self.model.name
         #If directory not exists create it recursively
         os.makedirs(name=self.save_path, exist_ok=True)
         model = self.model
@@ -659,7 +672,7 @@ class NetworkData(object):
             self.model.save(model_name + '.h5')
         #Save the object without model info
         self.model = None
-        with open(file_name + '.obj', 'wb') as f:
+        with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         self.model = model
 
@@ -720,7 +733,7 @@ class NetworkData(object):
 
     def get_layer_by_name(self, layer):
         for layer_of_model in self.layers_data:
-            if layer_of_model.layer_id == layer:
+            if layer_of_model.layer_id  == layer:
                 return layer_of_model
 
         raise ValueError("Layer: " + layer + " doesn't exists")
@@ -731,6 +744,19 @@ class NetworkData(object):
             return True
         except:
             return False
+
+    def get_calculated_indexs_keys(self):
+        keys = set()
+        for layer in self.layers_data:
+            keys |= layer.get_index_calculated_keys()
+        return keys
+
+    def get_layers_with_index(self, index_selected):
+        return [layer.layer_id for layer in self.layers_data if index_selected in layer.get_index_calculated_keys()]
+
+    def erase_index_from_layers(self, layers, index_to_erase):
+        for layer_name in layers:
+            self.get_layer_by_name(layer_name).erase_index(index_to_erase)
 
 
 def get_model_layer_names(model, regEx='.*'):

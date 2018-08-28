@@ -143,5 +143,5 @@ def get_listbox_selection(lstbox):
     selection = lstbox.curselection()
     layers_selected = [lstbox.get(first=selection[i]) for i in range(len(selection))]
     if len(layers_selected) == 1 and layers_selected[0] == 'all':
-        layers_selected = '.*conv*'
+        layers_selected = list(lstbox.get(1,END))
     return layers_selected
