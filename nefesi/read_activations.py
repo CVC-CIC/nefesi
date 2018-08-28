@@ -141,15 +141,21 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
 
     :return: List of floats, activation values for each input in `images`.
     """
-
-    activations = np.zeros(shape=len(images),dtype=np.float)
     batches = np.array(np.arange(0,len(images), batch_size).tolist()+[len(images)])
     if idx_neuron is None:
+        for layer in model.layers:
+            if layer.name == layer_name:
+                neurons_of_layer = layer.output.shape[-1]
+                break
+        else:
+            raise ValueError('Layer '+layer_name+"don't exist in the model "+model.name)
+        activations = np.zeros(shape=(len(images),neurons_of_layer), dtype=np.float)
         #Get the activation of all neuron
         for i in range(1,len(batches)):
             total_activations = get_activations(model, images[batches[i-1]:batches[i]], layer_name=layer_name)[0]
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]
     else:
+        activations = np.zeros(shape=len(images), dtype=np.float)
         for i in range(1,len(batches)):
             total_activations = get_one_neuron_activations(model, images[batches[i-1]:batches[i]],idx_neuron=idx_neuron, layer_name=layer_name)
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]

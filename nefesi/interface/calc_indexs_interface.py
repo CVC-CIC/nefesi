@@ -40,7 +40,7 @@ class CalcIndexsInterface():
     def set_footers(self, master):
         frame = Frame(master=master)
         label = Label(master=frame, text='*(calculate indexs) Nefesi/main>>'
-                                         ' nohup python ./calculate_indexs.py &', font=("Times New Roman", 8))
+                                         ' nohup python calculate_indexs.py &', font=("Times New Roman", 8))
         label.grid(row=0)
         frame.pack(side=BOTTOM)
 

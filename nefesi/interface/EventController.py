@@ -9,10 +9,10 @@ except ImportError:
     from Tkinter import ttk
 
 from ..layer_data import ALL_INDEX_NAMES
+from .popup_windows.neuron_window import IMAGE_BIG_DEFAULT_SIZE, IMAGE_SMALL_DEFAULT_SIZE
 from ..util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
     get_listbox_selection
 from .popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
-from .popup_windows.neuron_window import IMAGE_DEFAULT_SIZE
 import numpy as np
 from PIL import ImageTk, Image
 
@@ -159,7 +159,7 @@ class EventController():
         self.interface.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
         self.interface.update_decomposition_panel(panel=panel)
 
-    def _on_image_click(self, event, cropped_image):
+    def _on_image_click(self, event):
         mosaic_n_images(self.interface.neuron.get_patches(network_data=self.interface.network_data,
                                                 layer_data=self.interface.network_data.get_layer_by_name(
                                                     self.interface.layer_to_evaluate)))
@@ -174,14 +174,14 @@ class EventController():
 
         np_image = self.interface.draw_rectangle_on_image(np_image, x0, x1, y0, y1)
         complete_image = Image.fromarray(np_image.astype('uint8'), 'RGB')
-        complete_image = complete_image.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)
+        complete_image = complete_image.resize(self.interface.image_actual_size, Image.ANTIALIAS)
         complete_image = ImageTk.PhotoImage(complete_image)
 
         cropped_image = self.interface.neuron.get_patch_by_idx(self.interface.network_data,
                                                      self.interface.network_data.get_layer_by_name(self.interface.layer_to_evaluate),
                                                      self.interface.actual_img_index)
 
-        cropped_image = cropped_image.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)  # resize mantaining aspect ratio
+        cropped_image = cropped_image.resize(self.interface.image_actual_size, Image.ANTIALIAS)  # resize mantaining aspect ratio
         np_cropped = np.array(cropped_image)
         np_cropped = self.interface.draw_rectangle_on_image(np_cropped, 0, np_cropped.shape[0], 0, np_cropped.shape[1],
                                                   margin=2,
@@ -192,13 +192,14 @@ class EventController():
         ReceptiveFieldPopupWindow(master=self.interface.window, image_complete=complete_image, image_cropped=cropped_image,
                                   x_len=x_len, y_len=y_len)
 
-    def _on_mosaic_image_click(self):
-        pass
     def _on_nf_changed(self, event, combo):
         selection = combo.get()
         self.interface.set_nf_panel(option=selection)
 
-    def _on_checkbox_clicked(self, checkbox_value):
+    def _on_checkbox_clicked(self, checkbox_value, checkbox_img_value = None):
+        if checkbox_img_value is not None and checkbox_img_value.get():
+            checkbox_img_value.set(False)
+            self._on_expand_images_checkbox_clicked(checkbox_value=checkbox_img_value)
         if checkbox_value.get():
             self.interface.advanced_plots_frame = Frame(master=self.interface.window)
             self.interface.advanced_plots_frame.pack(side=BOTTOM)
@@ -208,3 +209,11 @@ class EventController():
             self.interface.advanced_plots_frame.destroy()
             self.interface.advanced_plots_frame = None
             self.interface.advanced_plots_canvas = None
+
+    def _on_expand_images_checkbox_clicked(self, checkbox_value, checkbox_advanced_charts = None):
+        if checkbox_advanced_charts is not None and checkbox_advanced_charts.get():
+            checkbox_advanced_charts.set(False)
+            self._on_checkbox_clicked(checkbox_value=checkbox_advanced_charts)
+
+        self.interface.image_actual_size = IMAGE_BIG_DEFAULT_SIZE if checkbox_value.get() else IMAGE_SMALL_DEFAULT_SIZE
+        self.interface.update_images_size()

@@ -1,6 +1,7 @@
 from .one_layer_popup_window import OneLayerPopupWindow
 
-IMAGE_DEFAULT_SIZE = (350,350)
+IMAGE_BIG_DEFAULT_SIZE = (800,800)
+IMAGE_SMALL_DEFAULT_SIZE = (450,450)
 ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
 #That have with images of A are the column of A
 
@@ -27,11 +28,12 @@ from PIL import ImageTk, Image
 from ..EventController import EventController
 
 class NeuronWindow(object):
-    def __init__(self, master, network_data, layer_to_evaluate, neuron_idx):
+    def __init__(self, master, network_data, layer_to_evaluate, neuron_idx, image_actual_size=IMAGE_SMALL_DEFAULT_SIZE):
         self.event_controller = EventController(self)
         self.network_data = network_data
         self.layer_to_evaluate = layer_to_evaluate
         self.neuron_idx = neuron_idx
+        self.image_actual_size = image_actual_size
         self.actual_img_index = 0
         self.mosaic = None
         self.advanced_plots_canvas = None
@@ -46,7 +48,6 @@ class NeuronWindow(object):
         self.images_frame = Frame(master=self.basic_frame)
         self.neuron_feature_frame = Frame(master=self.images_frame)
         self.decomposition_frame = Frame(master=self.images_frame)
-
         self.set_neuron_feature_frame(master=self.neuron_feature_frame)
         self.neuron_feature_frame.pack(side=LEFT, fill=BOTH, expand=True)
         self.decomposition_frame = Frame(self.basic_frame)
@@ -57,19 +58,22 @@ class NeuronWindow(object):
         self.decomposition_frame.pack(side=RIGHT)
         self.basic_frame.pack(side=TOP)
 
+    def update_images_size(self):
+        self.set_nf_panel(option=self.combo_nf_option.get())
+        self.update_decomposition_panel(panel=self.panel_image)
 
     def set_decomposition_frame(self, master):
         image_frame = Frame(master=master)
         image_num_label, activation_label, norm_activation_label, class_label = self.set_decomposition_label(master)
-        neuron_feature = self.neuron.get_patch_by_idx(self.network_data,
+        current_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        neuron_feature = neuron_feature.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)  # resize mantaining aspect ratio
-        img = ImageTk.PhotoImage(neuron_feature)
+        current_image = current_image.resize(self.image_actual_size, Image.ANTIALIAS)  # resize mantaining aspect ratio
+        img = ImageTk.PhotoImage(current_image)
 
         self.panel_image = Label(master=image_frame, image=img)
         self.panel_image.image = img
-        self.panel_image.bind("<Double-Button-1>", lambda event:self.event_controller._on_image_click(event,self.panel_image.image))
+        self.panel_image.bind("<Double-Button-1>",self.event_controller._on_image_click)
         decrease_button = Button(master=image_frame, text='◀', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
         increase_button = Button(master=image_frame, text='▶', command=lambda: self.event_controller._on_increase_click(self.panel_image,
@@ -119,7 +123,7 @@ class NeuronWindow(object):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        new_image = new_image.resize(IMAGE_DEFAULT_SIZE,Image.ANTIALIAS)
+        new_image = new_image.resize(self.image_actual_size,Image.ANTIALIAS)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)
         panel.image = img
@@ -143,18 +147,18 @@ class NeuronWindow(object):
     #TODO: Tracts to resize dinamically
     def set_neuron_feature_frame(self, master):
         options = ['Neuron Feature', 'Images Mosaic']
-        combo = ttk.Combobox(master=master, values=options, state='readonly', width=15, justify=CENTER)
-        combo.set(options[0])
+        self.combo_nf_option = ttk.Combobox(master=master, values=options, state='readonly', width=15, justify=CENTER)
+        self.combo_nf_option.set(options[0])
         # When selection is changed, calls the function _on_number_of_plots_to_show_changed
-        combo.bind("<<ComboboxSelected>>", lambda event: self.event_controller._on_nf_changed(event, combo))
-        combo.pack(side=TOP)
+        self.combo_nf_option.bind("<<ComboboxSelected>>", lambda event: self.event_controller._on_nf_changed(event, self.combo_nf_option))
+        self.combo_nf_option.pack(side=TOP)
         self.panel_nf = Label(master=master)
         self.set_nf_panel()
 
     def _on_mosaic_click(self, event):
         images_per_axis = math.ceil(math.sqrt(len(self.neuron.activations)))
-        x = int((((event.x-1)/IMAGE_DEFAULT_SIZE[0])*images_per_axis))
-        y = int((((event.y-1)/IMAGE_DEFAULT_SIZE[-1])*images_per_axis))
+        x = int((((event.x-1)/self.image_actual_size[0])*images_per_axis))
+        y = int((((event.y-1)/self.image_actual_size[-1])*images_per_axis))
         #to avoid margins
         if -1<x<images_per_axis or -1<y<images_per_axis:
             num_image = y*images_per_axis+x
@@ -168,16 +172,16 @@ class NeuronWindow(object):
         option= option.lower()
         if option=='neuron feature':
             img = self.neuron._neuron_feature
-            img = img.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)
+            img = img.resize(self.image_actual_size, Image.ANTIALIAS)
             self.panel_nf.unbind('<Double-Button-1>')
         elif option=='images mosaic':
             if self.mosaic != None:
-                img = self.mosaic
+                img = self.mosaic.resize(self.image_actual_size, Image.ANTIALIAS)
             else:
                 img = mosaic_n_images(self.neuron.get_patches(network_data=self.network_data,
                                             layer_data=self.network_data.get_layer_by_name(self.layer_to_evaluate)))
                 img = Image.fromarray(img.astype('uint8'),'RGB')
-                img = img.resize(IMAGE_DEFAULT_SIZE, Image.ANTIALIAS)
+                img = img.resize(self.image_actual_size, Image.ANTIALIAS)
                 img = np.array(img)
                 img = add_red_separations(img, math.ceil(math.sqrt(len(self.neuron.activations))))
                 self.mosaic = img = Image.fromarray(img.astype('uint8'), 'RGB')
@@ -222,10 +226,16 @@ class NeuronWindow(object):
             elif label == 'population code':
                 text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)
             Label(master=master, text=text, justify=LEFT).grid(column=0, row=i+1)
-        checkbox_value = tk.BooleanVar(master=master)
-        checkbox = ttk.Checkbutton(master=master, text="Show advanced charts", variable=checkbox_value,
-                                    command= lambda: self.event_controller._on_checkbox_clicked(checkbox_value))
-        checkbox.grid(column=0, row=len(indexs.items())+1)
+        checkbox_img_value = tk.BooleanVar(master=master)
+        checkbox_advanced_charts_value = tk.BooleanVar(master=master)
+        checkbox = ttk.Checkbutton(master=master, text="Expand Images", variable=checkbox_img_value,
+                                   command=lambda: self.event_controller._on_expand_images_checkbox_clicked
+                                   (checkbox_img_value, checkbox_advanced_charts_value))
+        checkbox.grid(column=0, row=len(indexs.items()) + 1)
+        checkbox = ttk.Checkbutton(master=master, text="Show advanced charts", variable=checkbox_advanced_charts_value,
+                                    command= lambda: self.event_controller._on_checkbox_clicked
+                                    (checkbox_advanced_charts_value,checkbox_img_value))
+        checkbox.grid(column=0, row=len(indexs.items())+2)
 
     def get_index_info(self,orientation_degrees=None, thr_class_idx=None, thr_pc=None):
         if orientation_degrees is None:
