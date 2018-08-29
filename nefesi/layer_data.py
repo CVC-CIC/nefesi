@@ -117,12 +117,12 @@ class LayerData(object):
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
         elif index_name.lower() == 'concept':
-            sel_idx = []
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.object)
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
-                sel_idx.append(self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels,
-                                                             threshold=thr_class_idx))
+                sel_idx[i] = self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels,
+                                                             threshold=thr_class_idx)
         elif index_name.lower() == 'population code':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.int)
             for i in range(len(self.neurons_data)):

@@ -37,8 +37,8 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
                     concepts[level][k] += v
                 else:
                     concepts[level][k] = v
-    image_size_sum = \
-        np.sum((crop_positions[:, 1] - crop_positions[:, 0]) * (crop_positions[:, 3] - crop_positions[:, 2]))
+    #image_size_sum = \
+    #    np.sum((crop_positions[:, 1] - crop_positions[:, 0]) * (crop_positions[:, 3] - crop_positions[:, 2]))
     for i, level_concept in enumerate(concepts):
         labels = np.array(list(level_concept.items()), dtype=([('class', 'U64'), ('count', np.float)]))
         labels = np.sort(labels, order='count')[::-1]
@@ -47,7 +47,7 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
         labels['class'] = np.char.strip(labels['class'])
         concepts[i] = labels[:min(len(labels), index_by_level)]
 
-    return concepts
+    return np.array(concepts)
 
 
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):

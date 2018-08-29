@@ -8,7 +8,7 @@ import warnings
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
-from .layer_data import LayerData
+from .layer_data import LayerData,ALL_INDEX_NAMES
 from .util.image import ImageDataset
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
@@ -35,7 +35,7 @@ class NetworkData(object):
     """
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
-                 default_labels_dict = None, default_degrees_orientation_idx = 15,defautl_thr_pc = 0.1,
+                 default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
                  default_thr_class_idx = 1., default_file_name = None):
         self.model = model
         self.layers_data = layer_data
@@ -44,9 +44,11 @@ class NetworkData(object):
         self.save_changes = save_changes
         self.default_labels_dict = default_labels_dict
         self.default_degrees_orientation_idx = default_degrees_orientation_idx
-        self.default_thr_pc = defautl_thr_pc
+        self.default_thr_pc = default_thr_pc
         self.default_thr_class_idx = default_thr_class_idx
         self.default_file_name = default_file_name
+        self.indexs_accepted = self.get_indexs_accepted()
+
 
     @property
     def default_file_name(self):
@@ -75,8 +77,6 @@ class NetworkData(object):
                 except:
                     default_labels_dict = None
         self._default_labels_dict = default_labels_dict
-        if self.save_changes:
-                self.save_to_disk(file_name=None, save_model=False)
 
     @property
     def layers_data(self):
@@ -757,6 +757,8 @@ class NetworkData(object):
     def erase_index_from_layers(self, layers, index_to_erase):
         for layer_name in layers:
             self.get_layer_by_name(layer_name).erase_index(index_to_erase)
+    def get_indexs_accepted(self):
+        return ALL_INDEX_NAMES+['concept'] if self.addmits_concept_selectivity() else ALL_INDEX_NAMES
 
 
 def get_model_layer_names(model, regEx='.*'):

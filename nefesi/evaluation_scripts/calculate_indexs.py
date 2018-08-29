@@ -22,11 +22,9 @@ class CalculateIndexs:
 			run_calculs(network_data,degrees_orientation_idx=self.degrees_orientation_idx,
 									 verbose=self.verbose)
 
-def run_calculs(network_data, degrees_orientation_idx=15, verbose=True):
-	index_to_evaluate = ALL_INDEX_NAMES
-	if network_data.addmits_concept_selectivity():
-		index_to_evaluate+=['concept']
-	network_data.get_selectivity_idx(sel_index=index_to_evaluate,layer_name='.*',
+def run_calculs(network_data, degrees_orientation_idx=None, verbose=True):
+	network_data.save_changes=True
+	network_data.get_selectivity_idx(sel_index=network_data.indexs_accepted,layer_name='.*',
 									 degrees_orientation_idx=degrees_orientation_idx,verbose=verbose)
 	network_data.similarity_idx(layer_name='.*')
 

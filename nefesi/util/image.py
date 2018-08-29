@@ -180,7 +180,7 @@ class ImageDataset(object):
             while True:
                 level+=1
                 mask_name = '../masks/'+parts_name.format(level)
-                if os.path.exists(mask_name):
+                if os.path.exists(self.src_dataset+mask_name):
                     part = self._load_image(mask_name)
                 else:
                     break

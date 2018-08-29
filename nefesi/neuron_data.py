@@ -303,7 +303,7 @@ class NeuronData(object):
         if type(labels) is not dict and labels is not None:
             raise TypeError("The 'labels' argument should be a dictionary if is specified")
 
-        concept_idx = get_concept_selectivity_idx(self,network_data=network_data, layer_data=layer_data, labels=labels,)
+        concept_idx = get_concept_selectivity_idx(self,network_data=network_data, layer_data=layer_data, labels=labels)
                                                   #threshold=threshold)
         self.selectivity_idx['concept'] = concept_idx
         return concept_idx

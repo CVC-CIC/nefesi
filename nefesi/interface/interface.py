@@ -35,6 +35,7 @@ class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
         self.event_controller = events.EventController(self)
         self.network_data = network_data
+        #self.network_data.indexs_accepted = self.network_data.get_indexs_accepted()
         self.visible_plots_canvas = np.zeros(MAX_PLOTS_VISIBLES_IN_WINDOW,
                                 dtype=np.dtype([('canvas', np.object), ('used',np.bool),
                                                 ('index', 'U64'), ('special_value',np.object)]))
@@ -366,7 +367,7 @@ class Interface():
         Gets a general button to select wich graphic to plot
         :return: A select button with each index possible, and the event to plot it when called
         """
-        combo = ttk.Combobox(master=master, values=ALL_INDEX_NAMES, state='readonly',justify=CENTER,width=15)
+        combo = ttk.Combobox(master=master, values=self.network_data.indexs_accepted, state='readonly',justify=CENTER,width=15)
         combo.bind("<<ComboboxSelected>>", self.event_controller._on_general_plot_selector_changed)
         if default_index is not None:
             combo.set(default_index)
