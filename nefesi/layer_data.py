@@ -99,7 +99,7 @@ class LayerData(object):
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i,:-1] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset,
                                                                         degrees_to_rotate=degrees_orientation_idx)
-            sel_idx[:, -1] = np.mean(sel_idx[:,0:-1],axis=1)
+            sel_idx[:, -1] = np.mean(sel_idx[:,:-1],axis=1)
         elif index_name.lower() == 'symmetry':
             #array of size (len(self.neurons_data) x 5), 5 is the size of [0 deg., 45 deg., 90 deg., 135 deg., mean]
             sel_idx = np.zeros((len(self.neurons_data), len(SYMMETRY_AXES)+1), dtype=np.float)
@@ -108,7 +108,7 @@ class LayerData(object):
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i,:-1] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
             #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency
-            sel_idx[:,-1] = np.mean(sel_idx[:,0:-1],axis=1)
+            sel_idx[:,-1] = np.mean(sel_idx[:,:-1],axis=1)
         elif index_name.lower() == 'class':
             #array that contains in each a tuple (HumanReadableLabelName(max 64 characters str), selectivityIndex)
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
@@ -121,8 +121,7 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels,
-                                                             threshold=thr_class_idx)
+                sel_idx[i] = self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels)
         elif index_name.lower() == 'population code':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.int)
             for i in range(len(self.neurons_data)):
@@ -141,11 +140,20 @@ class LayerData(object):
         neuron = self.neurons_data[neuron_idx]
         index = dict()
         index['color'] = neuron.color_selectivity_idx(model, self, dataset)
-        index['orientation'] = neuron.orientation_selectivity_idx(model, self, dataset,
+        orientation = np.zeros(int(math.ceil(360/orientation_degrees)), dtype=np.float)
+        orientation[:-1] = neuron.orientation_selectivity_idx(model, self, dataset,
                                                          degrees_to_rotate=orientation_degrees)
-        index['symmetry'] = neuron.symmetry_selectivity_idx(model, self, dataset)
-        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_class_idx)
+        orientation[-1] = np.mean(orientation[:-1])
+        index['orientation'] = orientation
+        symmetry = np.zeros(len(SYMMETRY_AXES)+1, dtype=np.float)
+        symmetry[:-1] = neuron.symmetry_selectivity_idx(model, self, dataset)
+        symmetry[-1] = np.mean(symmetry[:-1])
+        index['symmetry'] = symmetry
         index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
+        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_class_idx)
+        if network_data.addmits_concept_selectivity():
+            index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
+                                                              labels=network_data.default_labels_dict)
         return index
 
 

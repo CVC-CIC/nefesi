@@ -488,7 +488,7 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", spec
     if type(layersToEvaluate) is not list:
         layersToEvaluate = network_data.get_layers_analyzed_that_match_regEx(layersToEvaluate)
     #Initiate the font_size to looks goods with the quantity of layers to show
-    font_size = FONTSIZE_BY_LAYERS[-1] if len(layersToEvaluate) > len(FONTSIZE_BY_LAYERS) else \
+    font_size = FONTSIZE_BY_LAYERS[-1] if len(layersToEvaluate) >= len(FONTSIZE_BY_LAYERS) else \
                 FONTSIZE_BY_LAYERS[len(layersToEvaluate)]
     #Initiate the figure to plot and de color map
     figure = plt.figure(figsize=(12, 18))

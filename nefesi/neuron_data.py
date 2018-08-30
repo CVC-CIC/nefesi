@@ -283,7 +283,7 @@ class NeuronData(object):
         self.selectivity_idx[key] = symmetry_idx
         return symmetry_idx
 
-    def concept_selectivity_idx(self,layer_data, network_data, labels=None, threshold=1.):
+    def concept_selectivity_idx(self,layer_data, network_data, labels=None):
         """Returns the class selectivity index for this neuron.
 
         :param labels: Dictionary, key: name class, value: label class.

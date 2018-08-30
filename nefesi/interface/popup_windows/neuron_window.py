@@ -91,6 +91,10 @@ class NeuronWindow(object):
         Label(master=text_frame, text="Image", font='Helvetica 10').pack(side=LEFT)
         self.image_num_label = Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
         self.image_num_label.pack(side=LEFT)
+        Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
+        self.class_label = Label(master=text_frame, text=label,
+                                      font='Helvetica 10 bold')
+        self.class_label.pack(side=LEFT)
         Label(master=text_frame, text="Act.:", font='Helvetica 10').pack(side=LEFT)
         self.activation_label = Label(master=text_frame, text=str(round(activation, ndigits=2)), font='Helvetica 10 bold')
         self.activation_label.pack(side=LEFT)
@@ -98,10 +102,6 @@ class NeuronWindow(object):
         self.norm_activation_label = Label(master=text_frame, text=str(round(norm_activation, ndigits=2)),
                                  font='Helvetica 10 bold')
         self.norm_activation_label.pack(side=LEFT)
-        Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
-        self.class_label = Label(master=text_frame, text=label,
-                                      font='Helvetica 10 bold')
-        self.class_label.pack(side=LEFT)
         text_frame.pack(side=TOP)
         return self.image_num_label, self.activation_label, self.norm_activation_label, self.class_label
 
@@ -163,8 +163,9 @@ class NeuronWindow(object):
         if -1<x<images_per_axis or -1<y<images_per_axis:
             num_image = y*images_per_axis+x
             self.actual_img_index = num_image
-            self.update_decomposition_label(self.image_num_label, self.activation_label,
-                                                      self.norm_activation_label, self.class_label)
+            self.update_decomposition_label(activation_label=self.activation_label, class_label=self.class_label,
+                                            image_num_label=self.image_num_label,
+                                            norm_activation_label=self.norm_activation_label)
             self.update_decomposition_panel(panel=self.panel_image)
 
 
@@ -225,6 +226,18 @@ class NeuronWindow(object):
                 text = ' Class: '+ str(round(idx[-1], ndigits=3))+' ('+str(idx[0])+')'
             elif label == 'population code':
                 text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)
+            elif label == 'concept':
+                text = 'Concept: '
+                for level_idx, level in enumerate(idx):
+                    text += '\n Level ' + str(level_idx) + ' concepts:\n'
+                    for concept_idx, concept in enumerate(level):
+                        if concept_idx >= 2:
+                            break
+                        elif concept_idx > 0:
+                            text += ', '
+                        else:
+                            text += '  '
+                        text += concept['class'] + '(' + str(round(concept['count'], ndigits=2)) + ')'
             Label(master=master, text=text, justify=LEFT).grid(column=0, row=i+1)
         checkbox_img_value = tk.BooleanVar(master=master)
         checkbox_advanced_charts_value = tk.BooleanVar(master=master)
