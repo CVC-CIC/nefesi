@@ -9,7 +9,6 @@ except ImportError:
 
 
 from ..interface import MAX_VALUES_VISIBLES_IN_LISTBOX
-from ...layer_data import ALL_INDEX_NAMES
 import numpy as np
 RED_LIGHTED_COLOR = '#ffcccc'
 
@@ -70,7 +69,8 @@ class OpenSelectedNeuronPlot(object):
         combo_title = ttk.Label(title_frame, text="Order by:")
         combo_title.pack(side=LEFT, expand=False)
         # Options will be 1,2,3,4
-        self.order_combo = ttk.Combobox(master=title_frame, values=ALL_INDEX_NAMES, state='readonly', width=15, justify=CENTER)
+        self.order_combo = ttk.Combobox(master=title_frame, values=self.network_data.indexs_accepted,
+                                        state='readonly', width=15, justify=CENTER)
         self.order_combo.set('Select Index')
         # When selection is changed, calls the function _on_number_of_plots_to_show_changed
         self.order_combo.bind("<<ComboboxSelected>>", lambda event: self._on_order_by_selection_changed(event, self.order_combo))
@@ -126,6 +126,8 @@ class OpenSelectedNeuronPlot(object):
             sel_idx = sel_idx[:,-1]
         elif selection == 'class':
             sel_idx = sel_idx['value']
+        elif selection == 'concept':
+            sel_idx = np.array([neuron_concept[0]['count'][0] for neuron_concept in sel_idx])
         self.neuron_lstbox.delete(0,END)
         args_sorted = np.argsort(sel_idx)
         sel_idx = sel_idx[args_sorted]

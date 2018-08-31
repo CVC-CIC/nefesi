@@ -1,10 +1,11 @@
 import numpy as np
 from PIL import ImageOps
 from keras.preprocessing import image
+from .symmetry_index import SYMMETRY_AXES
+from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
-from .symmetry_index import get_symmetry_index, SYMMETRY_AXES
 
 
 class NeuronData(object):
@@ -279,7 +280,7 @@ class NeuronData(object):
         if symmetry_idx is not None:
             return symmetry_idx
 
-        symmetry_idx = get_symmetry_index(self, model, layer_data, dataset)
+        symmetry_idx = sym.get_symmetry_index(self, model, layer_data, dataset)
         self.selectivity_idx[key] = symmetry_idx
         return symmetry_idx
 

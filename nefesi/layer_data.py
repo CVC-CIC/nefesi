@@ -2,12 +2,9 @@ import numpy as np
 
 import math
 from .read_activations import get_sorted_activations, get_activations
-from .neuron_feature import compute_nf, get_image_receptive_field, get_each_point_receptive_field,find_layer_idx
-from .similarity_index import get_similarity_index, get_row_of_similarity_index
+from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
+from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
-#'concept' is special, (non all datasets accept it)
-ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
-
 
 class LayerData(object):
     """This class contains all the information related with the
@@ -130,7 +127,7 @@ class LayerData(object):
                 sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
         else:
             raise ValueError("The 'index_name' argument should be one "
-                             "of theses: "+str(ALL_INDEX_NAMES))
+                             "of theses: "+str(network_data.indexs_accepted))
         return sel_idx
 
     def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_class_idx=1., thr_pc=0.1):
@@ -452,3 +449,9 @@ class LayerData(object):
     def erase_index(self, index_to_erase):
         for neuron in self.neurons_data:
             neuron.remove_selectivity_idx(idx=index_to_erase)
+
+    def is_not_calculated(self, key):
+        for neuron in self.neurons_data:
+            if key not in neuron.get_keys_of_indexs():
+                return True
+        return False

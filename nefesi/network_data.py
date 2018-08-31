@@ -8,10 +8,13 @@ import warnings
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
-from .layer_data import LayerData,ALL_INDEX_NAMES
+from .util.general_functions import get_key_of_index
+from .layer_data import LayerData
 from .util.image import ImageDataset
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
+#'concept' is special, (non all datasets accept it)
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
 
 class NetworkData(object):
     """This is the main class of nefesi package.
@@ -750,7 +753,20 @@ class NetworkData(object):
         for layer in self.layers_data:
             keys |= layer.get_index_calculated_keys()
         return keys
-
+    def is_index_in_layer(self,layers,index, special_value):
+        if special_value is None:
+            if index == 'orientation':
+                special_value = self.default_degrees_orientation_idx
+            elif index == 'population code':
+                special_value = self.default_thr_pc
+        key = get_key_of_index(index, special_value)
+        if layers in [str, np.str_]:
+            layers = self.get_layers_analyzed_that_match_regEx(layers)
+        for layer in layers:
+            layer_data = self.get_layer_by_name(layer=layer)
+            if layer_data.is_not_calculated(key):
+                return False
+            return True
     def get_layers_with_index(self, index_selected):
         return [layer.layer_id for layer in self.layers_data if index_selected in layer.get_index_calculated_keys()]
 

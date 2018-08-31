@@ -1,4 +1,3 @@
-
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
@@ -7,7 +6,6 @@ MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 import warnings
 from os.path import relpath
-from .popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
 
 try:
     from tkinter import *
@@ -19,12 +17,14 @@ except ImportError:
 
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from ..layer_data import ALL_INDEX_NAMES
 from ..util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
+from .popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
 from .popup_windows.special_value_popup_window import SpecialValuePopupWindow
 from .popup_windows.one_layer_popup_window import OneLayerPopupWindow
 from .popup_windows.neuron_window import NeuronWindow
+from .popup_windows.confirm_popup import ConfirmPopup
 from .popup_windows.erase_calculated_index_popup import EraseCalculatedIndexPopup
+#from .popup_windows.loading_popup import LoadingPopup
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
@@ -295,29 +295,36 @@ class Interface():
         if index is None:
             self.add_figure_to_frame(master_canvas=master_canvas, figure=None)
         else:
+            confirmation = True
             if type(layers) in [str, np.str_]:
                     layers = self.network_data.get_layers_analyzed_that_match_regEx(layers)
+            if not self.network_data.is_index_in_layer(layers=layers,index=index,special_value=special_value):
+                confirmation = self.user_confirmation(index=index)
             if type(layers) is list:
-                if len(layers) == 0:
-                    warnings.warn("layers is a 0-lenght list. Check why. Value: "+
-                                  str(layers), RuntimeWarning)
-                    figure = hidden_annotations = None
-                elif len(layers) == 1:
-                    if neuron < 0:
-                        min, condition1, max, condition2, order, max_neurons = self.get_one_layer_params_popup(index=index,
-                                                                                                    layer_to_evaluate=layers,
-                                                                                                special_value=special_value)
-                        figure, hidden_annotations = get_one_layer_plot(index, network_data=self.network_data,
-                                                                    layer_to_evaluate=layers,
-                                                                    special_value=special_value,min=min, max=max,
-                                                                    condition1=condition1, condition2=condition2,
-                                                                    order=order, max_neurons=max_neurons)
-                    else:
-                        raise ValueError('WHY? Is entering here, when is a neuron specific plot? Neuron: '+str(neuron))
+                if confirmation:
+                    if len(layers) == 0:
+                        warnings.warn("layers is a 0-lenght list. Check why. Value: "+
+                                      str(layers), RuntimeWarning)
+                        figure = hidden_annotations = None
+                    elif len(layers) == 1:
+                        if neuron < 0:
 
-                else:
-                    figure, hidden_annotations = get_plot_net_summary_figure(index, layersToEvaluate=layers,
+                            min, condition1, max, condition2, order, max_neurons = self.get_one_layer_params_popup(index=index,
+                                                                                                        layer_to_evaluate=layers,
+                                                                                                    special_value=special_value)
+                            figure, hidden_annotations = get_one_layer_plot(index, network_data=self.network_data,
+                                                                        layer_to_evaluate=layers,
+                                                                        special_value=special_value,min=min, max=max,
+                                                                        condition1=condition1, condition2=condition2,
+                                                                        order=order, max_neurons=max_neurons)
+                        else:
+                            raise ValueError('WHY? Is entering here, when is a neuron specific plot? Neuron: '+str(neuron))
+
+                    else:
+                        figure, hidden_annotations = get_plot_net_summary_figure(index, layersToEvaluate=layers,
                                                                              special_value=special_value, network_data=self.network_data)
+                else:
+                    figure = hidden_annotations = None
             else:
                 warnings.warn("self.current_layers_in_view is not a list. Check why. Value: "+
                                   str(layers)+str(type(layers)), RuntimeWarning)
@@ -405,10 +412,28 @@ class Interface():
         pos = np.where(self.visible_plots_canvas['canvas'] == plot_canvas)[0][0]
         self.visible_plots_canvas[pos] = (None, False, '', None)
         plot_canvas.destroy()
+    def user_confirmation(self, index):
+        text = index.title() +' is not calculated for one or more of selected neurons\n' \
+                              'this operation may take '
+        if index in ['symmetry', 'orientation']:
+            text += 'several hours\n'
+        elif index == 'color':
+            text += 'several minutes\n'
+        elif index == 'concept':
+            text += 'a few minutes\n'
+        else:
+            text += 'a few seconds\n'
+        text+= '\n Are you sure to calculate it?'
+        popup_window = ConfirmPopup(self.window, text=text)
+        self.window.wait_window(popup_window.top)
+        return popup_window.value
 
-
-
-
-if __name__ == '__main__':
-    Interface(None)
+    """
+    def raise_loading_popup(self):
+        self.loading_popup = LoadingPopup(master = self.window)
+    def destroy_loading_popup(self):
+        if self.loading_popup is not None:
+            self.loading_popup.top.destroy()
+            self.loading_popup = None
+    """
 

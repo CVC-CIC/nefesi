@@ -4,7 +4,6 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 """
 
 from ..network_data import NetworkData
-from ..layer_data import ALL_INDEX_NAMES
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle

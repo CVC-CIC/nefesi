@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import math
 import os
 import shutil
+
+from ..symmetry_index import SYMMETRY_AXES
+
 try:
     from tkinter import *
     from tkinter import ttk
@@ -145,3 +148,12 @@ def get_listbox_selection(lstbox):
     if len(layers_selected) == 1 and layers_selected[0] == 'all':
         layers_selected = list(lstbox.get(1,END))
     return layers_selected
+
+def get_key_of_index(key, special_value):
+    if key == 'orientation':
+        key+=str(int(special_value))
+    elif key == 'symmetry':
+        key+=str(SYMMETRY_AXES)
+    elif key == 'population code':
+        key+=str(round(special_value, 2))
+    return key

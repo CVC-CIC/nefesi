@@ -1,6 +1,4 @@
 # note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
-from nefesi.util.interface_plotting import get_one_neuron_plot
-
 try:
     from tkinter import *
     from tkinter import ttk
@@ -8,7 +6,6 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
-from ..layer_data import ALL_INDEX_NAMES
 from .popup_windows.neuron_window import IMAGE_BIG_DEFAULT_SIZE, IMAGE_SMALL_DEFAULT_SIZE
 from ..util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
     get_listbox_selection
@@ -28,7 +25,7 @@ class EventController():
     def _on_click_proceed_button(self):
         current_plots = self.interface.visible_plots_canvas[self.interface.visible_plots_canvas['used']]
         for canvas, _,index, special_value in current_plots:
-            if index in ALL_INDEX_NAMES:
+            if index in self.interface.network_data.indexs_accepted:
                 self.interface.plot_general_index(index=index, master_canvas=canvas,
                                                   layers=self.interface.current_layers_in_view,
                                         special_value=special_value)
@@ -183,7 +180,7 @@ class EventController():
 
         cropped_image = cropped_image.resize(self.interface.image_actual_size, Image.ANTIALIAS)  # resize mantaining aspect ratio
         np_cropped = np.array(cropped_image)
-        np_cropped = self.interface.draw_rectangle_on_image(np_cropped, 0, np_cropped.shape[0], 0, np_cropped.shape[1],
+        np_cropped = self.interface.draw_rectangle_on_image(np_cropped, 2, np_cropped.shape[0]-3, 2, np_cropped.shape[1]-3,
                                                   margin=2,
                                                   draw_lines=False)
 

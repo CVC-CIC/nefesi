@@ -128,14 +128,18 @@ class NeuronWindow(object):
         panel.configure(image=img)
         panel.image = img
 
-    def draw_rectangle_on_image(self, np_image, x0, x1,y0,y1,margin=3, draw_lines=True):
+    def draw_rectangle_on_image(self, np_image, x0, x1,y0,y1,margin=2, draw_lines=True):
         red = [255,0,0]
-        x0 = max(x0-1,margin)
-        x1 = min(x1 + 1, np_image.shape[1]-margin)
-        y0 = max(y0 - 1, margin)
-        y1 = min(y1 + 1, np_image.shape[0]-margin)
+        x0 = max(x0-1,0)
+        x1 = min(x1 + 1, np_image.shape[1]-1)
+        y0 = max(y0 - 1, 0)
+        y1 = min(y1 + 1, np_image.shape[0]-1)
+
         for i in range(margin):
-            np_image[x0:x1+1,y0-i,:],np_image[x0:x1+1,y1+i,:],np_image[x0-i,y0:y1+1,:],np_image[x1+i,y0:y1+1,:] = red,red,red,red
+            np_image[x0:x1+1,max(y0-i,0),:],\
+            np_image[x0:x1+1,min(y1+i, np_image.shape[0]-1),:],\
+            np_image[max(x0-i,0),y0:y1+1,:],\
+            np_image[min(x1+i, np_image.shape[1]-1),y0:y1+1,:] = red,red,red,red
         if draw_lines:
             rr, cc, _ = line_aa(x0, y1, 0, np_image.shape[0]-2)
             np_image[rr, cc,:] = red
