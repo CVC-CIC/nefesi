@@ -307,7 +307,11 @@ class NeuronWindow(object):
         if selected.lower() == 'similar neurons':
             min, condition1, max, condition2, order, max_neurons = \
                 self.get_similarity_params_from_popup(layer_to_evaluate=self.layer_to_evaluate)
-            figure, hidden_annotations = plot_similar_neurons(network_data=self.network_data, layer=self.layer_to_evaluate,
+            if min is None or condition1 is None or order is None or max_neurons is None:
+                hidden_annotations, figure = None, None
+            else:
+                figure, hidden_annotations = plot_similar_neurons(network_data=self.network_data,
+                                                                    layer=self.layer_to_evaluate,
                                           neuron_idx=self.neuron_idx,min=min, max=max, condition1=condition1,
                                           condition2=condition2, order=order, max_neurons=max_neurons)
         else:

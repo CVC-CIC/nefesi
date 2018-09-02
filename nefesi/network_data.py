@@ -233,8 +233,8 @@ class NetworkData(object):
             num_images = data_batch.samples
             idx_start = data_batch.batch_index
             idx_end = idx_start + data_batch.batch_size
-            #the min between full size and 16MB by array
-            buffer_size = min(num_images//batch_size, 16777216//(batch_size*np.dtype(np.float).itemsize))
+            #the min between full size and 0,5MB by array (and 64MB for the img_name)
+            buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
             for n_batches, imgs in enumerate(data_batch):
 
                 images = imgs[0]
