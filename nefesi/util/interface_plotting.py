@@ -55,39 +55,38 @@ def similarity_neuron_plot(network_data,neuron_idx, sel_idx, sel_idx_to_calcs, s
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
         neuron_to_non_count=neuron_idx)
     original_neuron_indexs = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=neuron_idx)
+    hidden_annotations = np.zeros((len(hidden_annotations),2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
-        if annotate_index:
-            text = 'Neuron '+str(neuron_idx)+' vs Neuron '+str(valids_ids[i])
-            indexs = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=valids_ids[i])
-            for key in original_neuron_indexs.keys():
-                if key == 'color':
-                    text += '\n Color: ' + str(round(original_neuron_indexs[key], ndigits=2))+' vs ' \
-                            ''+str(round(indexs[key], ndigits=2))
-                elif key == 'orientation':
-                    text += '\n Orientation(' + str(network_data.default_degrees_orientation_idx) + 'º): ' \
-                            ''+str(round(original_neuron_indexs[key][-1], ndigits=2))+' vs ' \
-                            ''+str(round(indexs[key][-1], ndigits=2))
-                elif key == 'symmetry':
-                    text += '\n Symmetry: ' + str(round(original_neuron_indexs[key][-1], ndigits=3))+' vs ' \
-                            ''+str(round(indexs[key][-1], ndigits=2))
-                elif key == 'class':
-                    text += '\n Class: ' +original_neuron_indexs[key][0]+' vs '+indexs[key][0]
-                elif key == 'population code':
-                    text += '\n Pop. code (thr=' + str(network_data.default_thr_pc) + '): ' + str(indexs[key])+' vs ' \
-                        ''+ str(indexs[key])
+        text = 'Neuron '+str(neuron_idx)+' vs Neuron '+str(valids_ids[i])
+        indexs = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=valids_ids[i])
+        for key in original_neuron_indexs.keys():
+            if key == 'color':
+                text += '\n Color: ' + str(round(original_neuron_indexs[key], ndigits=2))+' vs ' \
+                        ''+str(round(indexs[key], ndigits=2))
+            elif key == 'orientation':
+                text += '\n Orientation(' + str(network_data.default_degrees_orientation_idx) + 'º): ' \
+                        ''+str(round(original_neuron_indexs[key][-1], ndigits=2))+' vs ' \
+                        ''+str(round(indexs[key][-1], ndigits=2))
+            elif key == 'symmetry':
+                text += '\n Symmetry: ' + str(round(original_neuron_indexs[key][-1], ndigits=3))+' vs ' \
+                        ''+str(round(indexs[key][-1], ndigits=2))
+            elif key == 'class':
+                text += '\n Class: ' +original_neuron_indexs[key][0]+' vs '+indexs[key][0]
+            elif key == 'population code':
+                text += '\n Pop. code (thr=' + str(network_data.default_thr_pc) + '): ' + str(indexs[key])+' vs ' \
+                    ''+ str(indexs[key])
 
-            hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text,
+        hidden_annotations[i,0] = set_neuron_annotation(subplot=subplot, text=text,
+                                                      position=circles[i],
+                                                      layer_name=layer_name, neuron_idx=valids_ids[i],xytext_pos=(10, -5))
+        layer = network_data.get_layer_by_name(layer_name)
+        neuron = layer.neurons_data[valids_ids[i]]
+        neuron_feature = neuron._neuron_feature.resize((25, 25), ANTIALIAS)
+        imagebox = OffsetImage(neuron_feature)
+        imagebox.image.axes = subplot
+        hidden_annotations[i,1] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
                                                           position=circles[i],
-                                                          layer_name=layer_name, neuron_idx=valids_ids[i])
-        else:
-            layer = network_data.get_layer_by_name(layer_name)
-            neuron = layer.neurons_data[valids_ids[i]]
-            neuron_feature = neuron._neuron_feature.resize((25, 25), ANTIALIAS)
-            imagebox = OffsetImage(neuron_feature)
-            imagebox.image.axes = subplot
-            hidden_annotations[i] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
-                                                              position=circles[i],
-                                                              layer_name=layer_name, neuron_idx=valids_ids[i])
+                                                          layer_name=layer_name, neuron_idx=valids_ids[i],xybox_pos=(-11,10))
     return hidden_annotations, neurons_that_pass_filter
 
 
@@ -208,11 +207,12 @@ def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
     concept_selectivity = None
-    if network_data. addmits_concept_selectivity():
+    if network_data.addmits_concept_selectivity():
         layer_data = network_data.get_layer_by_name(layer=layer_name)
         concept_selectivity = [layer_data.neurons_data[id].concept_selectivity_idx(layer_data=layer_data,
                                                                 network_data=network_data,
                                                                 labels=None) for id in valids_ids]
+    hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         text = str(valids_idx[i]['label'])
         if concept_selectivity is not None:
@@ -226,9 +226,18 @@ def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name
                     else:
                         text+='  '
                     text+= concept['class']+'('+str(round(concept['count'],ndigits=2))+')'
-        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text,
+        hidden_annotations[i,0] = set_neuron_annotation(subplot=subplot, text=text,
                                                       position=circles[i],
                                                       layer_name=layer_name, neuron_idx=valids_ids[i])
+        layer = network_data.get_layer_by_name(layer_name)
+        neuron = layer.neurons_data[valids_ids[i]]
+        neuron_feature = neuron._neuron_feature.resize((25, 25), ANTIALIAS)
+        imagebox = OffsetImage(neuron_feature)
+        imagebox.image.axes = subplot
+        hidden_annotations[i, 1] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
+                                                             position=circles[i],
+                                                             layer_name=layer_name, neuron_idx=valids_ids[i],
+                                                             xybox_pos=(-11, 10))
 
     return hidden_annotations, neurons_that_pass_filter
 
@@ -239,6 +248,7 @@ def concept_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_na
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
     layer_data = network_data.get_layer_by_name(layer=layer_name)
     class_selectivity = [layer_data.neurons_data[id].class_selectivity_idx() for id in valids_ids]
+    hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         text = class_selectivity[i][0]+'('+str(class_selectivity[i][1])+')'
         for level_idx, level in enumerate(valids_idx[i]):
@@ -251,9 +261,18 @@ def concept_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_na
                 else:
                     text+='  '
                 text+= concept['class']+'('+str(round(concept['count'],ndigits=2))+')'
-        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text,
+        hidden_annotations[i,0] = set_neuron_annotation(subplot=subplot, text=text,
                                                       position=circles[i],
                                                       layer_name=layer_name, neuron_idx=valids_ids[i])
+        layer = network_data.get_layer_by_name(layer_name)
+        neuron = layer.neurons_data[valids_ids[i]]
+        neuron_feature = neuron._neuron_feature.resize((25, 25), ANTIALIAS)
+        imagebox = OffsetImage(neuron_feature)
+        imagebox.image.axes = subplot
+        hidden_annotations[i, 1] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
+                                                             position=circles[i],
+                                                             layer_name=layer_name, neuron_idx=valids_ids[i],
+                                                             xybox_pos=(-11, 10))
 
     return hidden_annotations, neurons_that_pass_filter
 
@@ -310,6 +329,7 @@ def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot)
     n=5
+    hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=valids_ids[i])
         top = get_ntop_population_code(neuron_data=neuron,threshold_pc=thr_pc)
@@ -325,8 +345,17 @@ def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc
         for label, rel_freq in ntop:
             text+= '\n '+label+' '+str(round(rel_freq*100,ndigits=1))+'%'
 
-        hidden_annotations[i] = set_neuron_annotation(subplot=subplot, text=text, position=circles[i],
+        hidden_annotations[i,0] = set_neuron_annotation(subplot=subplot, text=text, position=circles[i],
                                                   layer_name=layer_name, neuron_idx=valids_ids[i])
+        layer = network_data.get_layer_by_name(layer_name)
+        neuron = layer.neurons_data[valids_ids[i]]
+        neuron_feature = neuron._neuron_feature.resize((25, 25), ANTIALIAS)
+        imagebox = OffsetImage(neuron_feature)
+        imagebox.image.axes = subplot
+        hidden_annotations[i, 1] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
+                                                             position=circles[i],
+                                                             layer_name=layer_name, neuron_idx=valids_ids[i],
+                                                             xybox_pos=(-11, 10))
 
     return hidden_annotations, neurons_that_pass_filter
 
@@ -423,12 +452,12 @@ def get_neurons_from_constraint(sel_idx_complete, sel_idx_to_use, min, max=1.0, 
     return valids_ids, valids_idx, valids_idx_values, len(neurons_in_decision)
 
 
-def set_neuron_img_annotation(subplot, img, position, layer_name=None, neuron_idx=-1):
+def set_neuron_img_annotation(subplot, img, position, layer_name=None, neuron_idx=-1, xybox_pos=(10,10)):
 
 
 
     annotation = AnnotationBbox(img, xy=(position['x_center'], position['y_center']),
-                                xybox=(10, 10),
+                                xybox=xybox_pos,
                         xycoords='data',
                         boxcoords="offset points",
                         pad=0.3)
@@ -440,10 +469,10 @@ def set_neuron_img_annotation(subplot, img, position, layer_name=None, neuron_id
 
 
 
-def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-1):
+def set_neuron_annotation(subplot, text, position, layer_name=None, neuron_idx=-1, xytext_pos =(10, 5)):
 
     annotation = subplot.annotate(text, xy=(position['x_center'], position['y_center']),
-                                  xytext=(10, 5), textcoords='offset points',
+                                  xytext=xytext_pos, textcoords='offset points',
                                   bbox=dict(boxstyle="round", fc="w"))
     annotation.set_visible(False)
 

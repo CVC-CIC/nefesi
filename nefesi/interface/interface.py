@@ -164,7 +164,7 @@ class Interface():
         config_menu.add_command(label='Erase calculated index', command=self.erase_calculated_index)
         menubar.add_cascade(label="Configuration", menu=config_menu)
         plot_menu = Menu(menubar)
-        plot_menu.add_command(label="Set Neuron plot", command=self.plot_specific_neuron)
+        plot_menu.add_command(label="Select Neuron plot", command=self.plot_specific_neuron)
         menubar.add_cascade(label="Plot", menu=plot_menu)
 
 

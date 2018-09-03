@@ -280,7 +280,7 @@ class NeuronWindow(object):
         destroy_canvas_subplot_if_exist(master_canvas=master)
         plot_canvas = FigureCanvasTkAgg(figure, master=master)
         addapt_widget_for_grid(plot_canvas.get_tk_widget())
-        plot_canvas.get_tk_widget().configure(width=800, height=450)
+        plot_canvas.get_tk_widget().configure(width=IMAGE_SMALL_DEFAULT_SIZE[1]*2, height=450)
         plot_canvas.get_tk_widget().grid(row=1, sticky=SW)
         if hidden_annotations is not None:
             plot_canvas.mpl_connect('motion_notify_event',

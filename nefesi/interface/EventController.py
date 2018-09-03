@@ -55,36 +55,73 @@ class EventController():
         :param special_value: the special_value of the plot where user clicks
         """
         if event.dblclick:
-            if event.inaxes is not None:
-                x, y = event.xdata, event.ydata
-                for layer_name, neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotations:
-                    if x0 < x < x1 and y0 < y < y1:
-                        print("click in " + str(layer_name)+". neuron "+str(neuron_idx))
-                        if neuron_idx==-1:
-                            self.interface.plot_general_index(index=index,master_canvas=master_canvas, layers=layer_name,
-                                                          neuron=neuron_idx,special_value=special_value)
-                        else:
-                            self.interface.raise_neuron_window(layer=layer_name,neuron_idx=neuron_idx)
-                        break
+            if len(hidden_annotations)>0:
+                if event.inaxes is not None:
+                    x, y = event.xdata, event.ydata
+                    if type(hidden_annotations[0]) is np.void:
+                        for layer_name, neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotations:
+                            if x0 < x < x1 and y0 < y < y1:
+                                print("Going to " + str(layer_name)+". neuron "+str(neuron_idx))
+                                if neuron_idx==-1:
+                                    self.interface.plot_general_index(index=index,master_canvas=master_canvas, layers=layer_name,
+                                                                  neuron=neuron_idx,special_value=special_value)
+                                else:
+                                    self.interface.raise_neuron_window(layer=layer_name,neuron_idx=neuron_idx)
+                                break
+                    elif type(hidden_annotations[0]) is np.ndarray:
+                        for hidden_annotation in hidden_annotations:
+                            layer_name, neuron_idx, annotation, x0, x1, y0, y1 = hidden_annotation[0]
+                            if x0 < x < x1 and y0 < y < y1:
+                                print("click in " + str(layer_name) + ". neuron " + str(neuron_idx))
+                                if neuron_idx == -1:
+                                    self.interface.plot_general_index(index=index, master_canvas=master_canvas,
+                                                                      layers=layer_name,
+                                                                      neuron=neuron_idx, special_value=special_value)
+                                else:
+                                    self.interface.raise_neuron_window(layer=layer_name, neuron_idx=neuron_idx)
+                                break
+
+
 
 
     def _on_in_plot_element_hover(self, event, hidden_annotations):
-        if event.inaxes is not None:
-            x, y = event.xdata, event.ydata
-            for layer_name,neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotations:
-                if x0 < x < x1 and y0 < y < y1:
-                    if not annotation.get_visible():
-                        annotation.set_visible(True)
-                        annotation.figure.canvas.draw()
-                else:
-                    if annotation.get_visible():
-                        annotation.set_visible(False)
-                        annotation.figure.canvas.draw()
-        else:
-            for annotation in hidden_annotations['annotation']:
-                if annotation.get_visible():
-                    annotation.set_visible(False)
-                    annotation.figure.canvas.draw()
+        if len(hidden_annotations) > 0:
+            if event.inaxes is not None:
+                x, y = event.xdata, event.ydata
+                if type(hidden_annotations[0]) is np.void:
+                    for layer_name,neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotations:
+                        if x0 < x < x1 and y0 < y < y1:
+                            if not annotation.get_visible():
+                                annotation.set_visible(True)
+                                annotation.figure.canvas.draw()
+                        else:
+                            if annotation.get_visible():
+                                annotation.set_visible(False)
+                                annotation.figure.canvas.draw()
+                elif type(hidden_annotations[0]) is np.ndarray:
+                    for hidden_annotation in hidden_annotations:
+                        for layer_name, neuron_idx, annotation, x0, x1, y0, y1 in hidden_annotation:
+                            if x0 < x < x1 and y0 < y < y1:
+                                if not annotation.get_visible():
+                                    annotation.set_visible(True)
+                                    annotation.figure.canvas.draw()
+                            else:
+                                if annotation.get_visible():
+                                    annotation.set_visible(False)
+                                    annotation.figure.canvas.draw()
+            else:
+                if type(hidden_annotations[0]) is np.void:
+                    for annotation in hidden_annotations['annotation']:
+                        if annotation.get_visible():
+                            annotation.set_visible(False)
+                            annotation.figure.canvas.draw()
+                elif type(hidden_annotations[0]) is np.ndarray:
+                    for hidden_annotation in hidden_annotations:
+                        for annotation in hidden_annotation['annotation']:
+                            if annotation.get_visible():
+                                annotation.set_visible(False)
+                                annotation.figure.canvas.draw()
+
 
 
     def _on_click_destroy_subplot(self, event):
