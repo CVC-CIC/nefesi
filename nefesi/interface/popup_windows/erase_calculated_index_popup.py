@@ -11,7 +11,9 @@ except ImportError:
     from tkinter import ttk
 
 
+
 from ..interface import MAX_VALUES_VISIBLES_IN_LISTBOX
+import numpy as np
 RED_LIGHTED_COLOR = '#ffcccc'
 
 class EraseCalculatedIndexPopup(object):
@@ -33,9 +35,8 @@ class EraseCalculatedIndexPopup(object):
 
     def cleanup(self):
         index_to_erase = self.lstbox_last_selection  # indexs
-        layers = [self.layers_lstbox.get(i) for i in self.layers_last_selection]  # indexs
-        print(layers)
-        print(index_to_erase)
+        layers = get_listbox_selection(self.layers_lstbox, selection=self.layers_last_selection)
+        print('Erased index: '+index_to_erase+'. From: '+str(layers))
         self.network_data.erase_index_from_layers(layers=layers,index_to_erase=index_to_erase)
         self.update_indexs_lstbox()
 
@@ -46,9 +47,10 @@ class EraseCalculatedIndexPopup(object):
         lstbox_frame = Frame(master=master)
         lstbox_frame.pack(side=BOTTOM)
         scrollbar = tk.Scrollbar(master=lstbox_frame, orient="vertical")
-        self.indexs_lstbox = Listbox(master=lstbox_frame, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
+        self.indexs_lstbox = Listbox(master=lstbox_frame, selectmode=SINGLE, yscrollcommand=scrollbar.set,
                                      height=MAX_VALUES_VISIBLES_IN_LISTBOX, width=25)
-        values = self.network_data.get_calculated_indexs_keys()
+        values = np.array(list(self.network_data.get_calculated_indexs_keys()))
+        values = np.sort(values)
         for item in values:
             self.indexs_lstbox.insert(END, item)
         scrollbar.config(command=self.indexs_lstbox.yview)
@@ -58,7 +60,8 @@ class EraseCalculatedIndexPopup(object):
 
     def update_indexs_lstbox(self):
         self.indexs_lstbox.delete(0,END)
-        values = self.network_data.get_calculated_indexs_keys()
+        values = np.array(list(self.network_data.get_calculated_indexs_keys()))
+        values = np.sort(values)
         for item in values:
             self.indexs_lstbox.insert(END, item)
         self.layers_lstbox.delete(0,END)
@@ -75,12 +78,19 @@ class EraseCalculatedIndexPopup(object):
         self.layers_lstbox.pack(side=LEFT)
         scrollbar.pack(side=RIGHT, fill="y")
         self.layers_lstbox.bind('<<ListboxSelect>>',lambda event: self._on_change_layer_lstbox(event, self.layers_lstbox))
+        self.layers_lstbox.selection_set(0)
         return self.layers_lstbox
 
     def _on_change_layer_lstbox(self, event,lstbox):
         selection = lstbox.curselection()
         if not len(selection) <= 0:
             self.layers_last_selection = selection
+        #If activate it, enters on no-ending bucle...
+        """
+        else:
+            for idx in self.layers_last_selection:
+                lstbox.select_set(idx)
+        """
 
     def _on_change_index_lstbox(self, event):
         selection = self.indexs_lstbox.curselection()
@@ -94,6 +104,7 @@ class EraseCalculatedIndexPopup(object):
     def update_layers_lstbox(self, index_selected):
         self.layers_lstbox.delete(0, END)
         values = self.network_data.get_layers_with_index(index_selected)
+        self.layers_lstbox.insert(END, 'all')
         for item in values:
             self.layers_lstbox.insert(END, item)
 

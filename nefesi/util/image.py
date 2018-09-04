@@ -164,7 +164,8 @@ class ImageDataset(object):
 
 
 
-    def get_concepts_of_region(self, image_name, crop_pos,  normalized = True, dataset_name='ADE20K'):
+    def get_concepts_of_region(self, image_name, crop_pos,  normalized = True, dataset_name='ADE20K',
+                               norm_activations=None):
         if dataset_name == 'ADE20K':
             tags_and_counts = []
             name = image_name[:image_name.index('.')]
@@ -175,6 +176,10 @@ class ImageDataset(object):
             segmentation = self._load_image('../masks/'+seg_name)
             mask_segment = get_image_segmented(segmentation,crop_pos)
             tags, counts = np.unique(mask_segment,return_counts=True)
+            if norm_activations is not None:
+                counts = np.array(counts, dtype=np.float)
+                for idx, id in enumerate(tags):
+                    counts[idx] = np.sum(norm_activations[mask_segment==id])
             tags_and_counts.append([tags, counts])
 
             while True:
@@ -186,6 +191,10 @@ class ImageDataset(object):
                     break
                 mask_part = get_image_segmented(part, crop_pos)
                 tags, counts = np.unique(mask_part, return_counts=True)
+                if norm_activations is not None:
+                    counts = np.array(counts, dtype=np.float)
+                    for idx, id in enumerate(tags):
+                        counts[idx] = np.sum(norm_activations[mask_part == id])
                 if tags[0] == 0:
                     if len(tags)==1:
                         break
@@ -220,11 +229,14 @@ class ImageDataset(object):
                         concepts[actual_level][label[actual_level][tag-1]] = count
 
         if normalized:
-            size = mask_segment.shape[0]*mask_segment.shape[1]
-            for i in range(len(concepts)):
-                concepts[i] = np.array(list(concepts[i].items()),
-                                       dtype=([('class', 'U64'), ('count', np.float)]))
-                concepts[i]['count'] /= size
+            if norm_activations is None:
+                size = mask_segment.shape[0]*mask_segment.shape[1]
+                for i in range(len(concepts)):
+                    concepts[i] = np.array(list(concepts[i].items()),
+                                           dtype=([('class', 'U64'), ('count', np.float)]))
+                    concepts[i]['count'] /= size
+            else:
+                warnings.warn("normalization don't done because is already pondered by activations")
 
 
         return concepts

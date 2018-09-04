@@ -17,6 +17,8 @@ class OpenSelectedNeuronPlot(object):
         self.layer = None #Returned value if user clicks on X
         self.network_data = network_data
         self.current_layer = None
+        self.neuron_selected = None
+        self.neuron = None
         self.top=Toplevel(master)
         self.top.title('Select layer and Neuron')
         lstbox_layer_frame = Frame(master=self.top)
@@ -42,6 +44,11 @@ class OpenSelectedNeuronPlot(object):
         neurons_to_show_label.pack(side=LEFT)
         self.neurons_to_show_entry.pack(side=RIGHT)
         self.ok_button.pack(side=BOTTOM)
+
+    def cleanup(self):
+        self.layer = self.current_layer
+        self.neuron = self.neuron_selected
+        self.top.destroy()
 
     def entry_update(self, new_value):
         self.neurons_to_show_entry.delete(0,END)
@@ -85,9 +92,6 @@ class OpenSelectedNeuronPlot(object):
         self.neuron_lstbox.bind('<<ListboxSelect>>', self._on_change_neuron_lstbox)
         self.neuron_lstbox.pack(side=LEFT)
         scrollbar.pack(side=RIGHT, fill="y")
-
-    def cleanup(self):
-        self.top.destroy()
 
     def _on_change_neuron_lstbox(self,event):
         selection = self.neuron_lstbox.curselection()

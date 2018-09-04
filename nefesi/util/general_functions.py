@@ -142,8 +142,9 @@ def addapt_widget_for_grid(widget):
         Grid.rowconfigure(widget, i, weight=1)
 
 
-def get_listbox_selection(lstbox):
-    selection = lstbox.curselection()
+def get_listbox_selection(lstbox, selection = None):
+    if selection is None:
+        selection = lstbox.curselection()
     layers_selected = [lstbox.get(first=selection[i]) for i in range(len(selection))]
     if len(layers_selected) == 1 and layers_selected[0] == 'all':
         layers_selected = list(lstbox.get(1,END))

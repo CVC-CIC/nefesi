@@ -1,13 +1,14 @@
-
 import numpy as np
 import os
+from . import read_activations as read_act
 
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
 REL_FREQ_POS = 3
 
-def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = None,index_by_level=5):
+def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_level=5,
+                                normalize_by_activations = True):
     """Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
@@ -24,13 +25,27 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
     image_dataset = network_data.dataset
     images_id = neuron_data.images_id
     activations = neuron_data.norm_activations
+    if normalize_by_activations:
+        images = image_dataset.load_images(images_id)
+        neuron_idx = np.where(layer_data.neurons_data == neuron_data)[0][0]
+        image_activations = read_act.get_one_neuron_activations(model = network_data.model, model_inputs=images,
+                                                       idx_neuron=neuron_idx, layer_name=layer_data.layer_id)
     concepts=[]
     for i in range(len(images_id)):
+        if normalize_by_activations:
+            ri, rf, ci, cf = crop_positions[i]
+            activations = image_activations[i][ri:rf, ci:cf]
+            norm_activations = activations/np.sum(activations)
+        else:
+            norm_activations = None
         concepts_i = image_dataset.get_concepts_of_region(image_name=images_id[i],
-                                                          crop_pos=crop_positions[i], normalized=False)
+                                                          crop_pos=crop_positions[i], normalized=False,
+                                                          norm_activations=norm_activations)
+
         for level, dic in enumerate(concepts_i):
             for k,v in dic.items():
-                v *= activations[i]
+                if norm_activations is None:
+                    v *= activations[i]
                 if len(concepts)<=level:
                     concepts.append(dict())
                 if k in concepts[level]:
@@ -43,7 +58,10 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data, labels = 
         labels = np.array(list(level_concept.items()), dtype=([('class', 'U64'), ('count', np.float)]))
         labels = np.sort(labels, order='count')[::-1]
         #Normalization
-        labels['count'] /= np.sum(labels['count'])
+        if norm_activations is None:
+            labels['count'] /= np.sum(labels['count'])
+        else:
+            labels['count'] /= len(images_id)
         labels['class'] = np.char.strip(labels['class'])
         concepts[i] = labels[:min(len(labels), index_by_level)]
 

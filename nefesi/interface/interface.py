@@ -170,8 +170,9 @@ class Interface():
 
     def plot_specific_neuron(self):
         layer, neuron_idx = self.get_neuron_params_plot_from_popup()
-        neuron_window = NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
-        self.window.wait_window(neuron_window.window)
+        if layer is not None and neuron_idx is not None:
+            neuron_window = NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
+            self.window.wait_window(neuron_window.window)
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
                                    filetypes=((type, '*.'+type), ("all files", "*.*")))
@@ -405,7 +406,7 @@ class Interface():
     def get_neuron_params_plot_from_popup(self):
         popup_window = OpenSelectedNeuronPlot(master=self.window, network_data=self.network_data)
         self.window.wait_window(popup_window.top)
-        return popup_window.current_layer, popup_window.neuron_selected
+        return popup_window.layer, popup_window.neuron
 
     def destroy_plot_canvas(self, plot_canvas):
         clean_widget(plot_canvas)
