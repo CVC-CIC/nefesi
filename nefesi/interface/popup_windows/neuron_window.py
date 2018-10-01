@@ -26,14 +26,17 @@ from ...util.general_functions import mosaic_n_images, add_red_separations, dest
     addapt_widget_for_grid
 from PIL import ImageTk, Image
 from ..EventController import EventController
+from ...read_activations import get_activation_from_pos,get_one_neuron_activations,get_for_pixel_activation
 
 class NeuronWindow(object):
     def __init__(self, master, network_data, layer_to_evaluate, neuron_idx, image_actual_size=IMAGE_SMALL_DEFAULT_SIZE):
         self.event_controller = EventController(self)
         self.network_data = network_data
         self.layer_to_evaluate = layer_to_evaluate
+        self.layer_data = self.network_data.get_layer_by_name(layer=layer_to_evaluate)
         self.neuron_idx = neuron_idx
         self.image_actual_size = image_actual_size
+        self.with_activations = True
         self.actual_img_index = 0
         self.mosaic = None
         self.advanced_plots_canvas = None
@@ -123,6 +126,21 @@ class NeuronWindow(object):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
+        """
+        #ERASE THIS SHIT
+        if self.with_activations:
+            location = self.neuron.xy_locations[self.actual_img_index]
+            input = self.network_data.dataset._load_image(self.neuron.images_id[self.actual_img_index],as_numpy=True)[np.newaxis,...]
+            activations = get_for_pixel_activation(model=self.network_data.model, layer_name=self.layer_to_evaluate,
+                                       idx_neuron=self.neuron_idx, images=input,
+                                     correct_location=location, rmap= self.layer_data.receptive_field_map, shape = new_image.size)
+            norm_activations = activations/np.max(activations)
+            #norm_activations = np.interp(norm_activations, (norm_activations.min(), norm_activations.max()), (0.2, 1))
+            norm_activations[norm_activations>=0.25] = 1
+            norm_activations[norm_activations <= 0.15] = 0.05
+            new_image = np.array(new_image)*norm_activations[...,np.newaxis]
+            new_image = Image.fromarray(new_image.astype('uint8'), 'RGB')
+        """
         new_image = new_image.resize(self.image_actual_size,Image.ANTIALIAS)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)

@@ -87,6 +87,7 @@ class NetworkData(object):
 
     @layers_data.setter
     def layers_data(self, layer_data):
+
         if layer_data is None:
             self._layers_data = None
         #If is a regular expresion
@@ -221,7 +222,7 @@ class NetworkData(object):
 
         for layer in self.layers_data:
             #if layer.layer_id in layer_names: #if is not, exception was raised
-            datagen = ImageDataGenerator()
+            datagen = ImageDataGenerator(preprocessing_function=preprocessing_function)
             data_batch = datagen.flow_from_directory(
                 self.dataset.src_dataset,
                 target_size=self.dataset.target_size,
@@ -239,9 +240,6 @@ class NetworkData(object):
 
                 images = imgs[0]
                 # Apply the preprocessing function to the inputs
-                if self.dataset.preprocessing_function is not None:
-                    images = self.dataset.preprocessing_function(images)
-
                 file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
                 # Search the maximum activations
                 layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size,

@@ -8,7 +8,7 @@ COUNT_POS = 2
 REL_FREQ_POS = 3
 
 def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_level=5,
-                                normalize_by_activations = True):
+                                normalize_by_activations = False):
     """Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.

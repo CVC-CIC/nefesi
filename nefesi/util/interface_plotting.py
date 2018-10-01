@@ -10,6 +10,7 @@ from matplotlib import gridspec
 from ..symmetry_index import SYMMETRY_AXES
 from .general_functions import get_n_circles_well_distributed
 from ..class_index import get_ntop_population_code
+import matplotlib.cbook as cbook
 
 FONTSIZE_BY_LAYERS = [None, 17, 15, 12, 10, 8]
 APPENDIX_FONT_SIZE = 8
@@ -163,7 +164,7 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
                                 max_neurons=max_neurons, order=order, network_data=network_data)
     elif index == 'color':
         hidden_annotations, neurons_that_pass_filter = \
-            color_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx, network_data=network_data, subplot=subplot,
+            color_neurons_plot(sel_idx,sel_idx_to_calcs=sel_idx, network_data=network_data, subplot=subplot,
                                layer_name=layer_to_evaluate, font_size=font_size + 2, min=min, max=max,
                                condition1=condition1, condition2=condition2, max_neurons=max_neurons, order=order)
 

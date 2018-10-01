@@ -21,10 +21,16 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True)
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron
             patches = neuron.get_patches(network_data, layer_data)
-            #NeuronFeature (nf) is the weighted mean of all n-top images (weighted each image by his normalized activation)
+            non_black_pixels_count = np.count_nonzero(np.sum(patches, axis=-1) > 0, axis=0)
+            assignment_multiplier = np.repeat(len(patches) / non_black_pixels_count, 3).reshape(
+                non_black_pixels_count.shape + (3,))
+            # Set the neuron feature but not having in count pixels with value full black
+            nf = np.sum((patches * assignment_multiplier).reshape(patches.shape[0], -1) * (norm_activations / np.sum(
+                norm_activations))[:, np.newaxis], axis=0).reshape(patches.shape[1:])
+            """
             nf = np.sum(patches.reshape(patches.shape[0],-1)*(norm_activations/np.sum(norm_activations))[:,np.newaxis],axis=0).\
                 reshape(patches.shape[1:])
-            """ #Better to maximize contrast after evaluation, in order to save a more fidedign NF.
+            #Better to maximize contrast after evaluation, in order to save a more fidedign NF.
             if nf.shape[2] == 3 and maximize_contrast:  # RGB images
                 # maximize the contrast of the NF
                 min_v = np.min(nf.ravel())

@@ -53,6 +53,22 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
                                         color=cmap(i/float(len(regions))), linewidth=3)
                     positions[np.sum(bins[:i])+j] = (circle,x0,x1,y0,y1,x_place,y_place)
                     flag=False
+                    """
+                     #image_file = PIL.Image.open('../nefesi/util/bg_image.jpg')#cbook.get_sample_data('bg_image.jpg')
+                    if i%2 ==0:
+                        image = plt.imread('../nefesi/util/bg_image.jpg')
+                    else:
+                        image = plt.imread('../nefesi/util/bg_image2.jpg')
+                    ax = plt.gca()#plt.axes((x_place-radius,y_place-radius,radius*2,radius*2))
+                    im = ax.imshow(image)
+                    x1 = x_place+radius
+                    y1 = y_place + radius
+                    circle = plt.Circle((x_place, y_place), radius=radius, alpha=0.6,
+                                         linewidth=3, transform=ax.transData)
+                    im.set_clip_path(circle)
+                    positions[np.sum(bins[:i])+j] = (circle,x0,x1,y0,y1,x_place,y_place)
+                    flag=False
+                    """
 
     return positions
 

@@ -150,7 +150,7 @@ class ImageDataset(object):
         im_crop = img.crop((ci, ri, cf, rf))
         return im_crop
 
-    def _load_image(self, img_name):
+    def _load_image(self, img_name, as_numpy = False):
         """Loads an image into PIL format.
 
         :param img_name: String, name of the image.
@@ -158,9 +158,14 @@ class ImageDataset(object):
         :return: PIL image instance
         """
         grayscale = self.color_mode == 'grayscale'
-        return image.load_img(self.src_dataset + img_name,
+        if not as_numpy:
+            return image.load_img(self.src_dataset + img_name,
                               grayscale=grayscale,
                               target_size=self.target_size)
+        else:
+            return np.array(image.load_img(self.src_dataset + img_name,
+                              grayscale=grayscale,
+                              target_size=self.target_size))
 
 
 
@@ -367,7 +372,7 @@ def rotate_images(images, degrees, pos, layer_data):
 
 
 def rotate_images_axis(images, rot_axis, layer_data, pos):
-    """Rotates (flips) the receptive field for each image in `images`.
+    """Rotates (flips) the receptive field for each image in `images` (without the paddings).
 
     :param images: List of numpy arrays.
     :param rot_axis: Integer, the rotation axis to flip the image.
