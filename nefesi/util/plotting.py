@@ -166,6 +166,13 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
     if images[0].mode == 'L':
         color_map = 'gray'
 
+    sumim = np.array(images[0])*0
+    for i in images:
+        sumim = sumim +np.array(i)
+    sumim = sumim/len(images)
+    fig = plt.figure()
+    plt.imshow(sumim/255.0, cmap='gray')
+
     cols = int(math.sqrt(len(images)))
     n_images = len(images)
     titles = [round(act, 2) for act in activations]
@@ -175,10 +182,10 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
         a = fig.add_subplot(cols, np.ceil(n_images / float(cols)), n + 1)
         plt.imshow(img, interpolation='bicubic', cmap=color_map)
         plt.axis('off')
-        # a.set_title(title)
+        a.set_title(title)
     # fig.set_size_inches(n_max*3,n_max*3)
     plt.show()
-    fig.clear()
+    #fig.clear()
 
 
 def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
