@@ -7,9 +7,23 @@ docs/sources/*
 
 dist/*
 build/*
+nefesi/__pycache__/*
 nefesi.egg-info
 
 #Dataset path
 Datasets/*
 *.h5
 *.pyc
+nefesi/Pruebas.py
+examples/mscoco1.py
+examples/labelme_bxvctltntrtinjf_seg.png
+examples/labelme_bxvctltntrtinjf_parts_1.png
+examples/labelme_bxvctltntrtinjf_atr.txt
+examples/labelme_bxvctltntrtinjf.jpg
+examples/ade20k1.py
+examples/Pruebas ADE20K.py
+*.zip
+*.cfg
+nefesi/util/bg_image2.jpg
+nefesi/util/bg_image.png
+nefesi/util/bg_image.jpg

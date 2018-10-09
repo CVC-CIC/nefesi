@@ -8,9 +8,13 @@ import warnings
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
-from nefesi.layer_data import LayerData
-from nefesi.util.image import ImageDataset
+from .util.general_functions import get_key_of_index
+from .layer_data import LayerData
+from .util.image import ImageDataset
 
+MIN_PROCESS_TIME_TO_OVERWRITE = 10
+#'concept' is special, (non all datasets accept it)
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
 
 class NetworkData(object):
     """This is the main class of nefesi package.
@@ -33,11 +37,49 @@ class NetworkData(object):
         dataset: The `nefesi.util.image.ImageDataset` instance.
     """
 
-    def __init__(self, model,layer_data = '.*', save_path = None, dataset = None):
+    def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
+                 default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
+                 default_thr_class_idx = 1., default_file_name = None):
         self.model = model
         self.layers_data = layer_data
-        self._save_path = save_path
-        self._dataset = dataset
+        self.save_path = save_path
+        self.dataset = dataset
+        self.save_changes = save_changes
+        self.default_labels_dict = default_labels_dict
+        self.default_degrees_orientation_idx = default_degrees_orientation_idx
+        self.default_thr_pc = default_thr_pc
+        self.default_thr_class_idx = default_thr_class_idx
+        self.default_file_name = default_file_name
+        self.indexs_accepted = self.get_indexs_accepted()
+
+
+    @property
+    def default_file_name(self):
+        return self._default_file_name
+
+    @default_file_name.setter
+    def default_file_name(self, default_file_name):
+        if default_file_name is None:
+            default_file_name = self.model.name
+        self._default_file_name = default_file_name
+
+    @property
+    def default_labels_dict(self):
+        return self._default_labels_dict
+    @default_labels_dict.setter
+    def default_labels_dict(self, default_labels_dict):
+        if default_labels_dict is not None:
+            if type(default_labels_dict) is str:
+                with open(default_labels_dict, "rb") as f:
+                    default_labels_dict = pickle.load(f)
+            if type(default_labels_dict) is not dict:
+                warnings.warn("Default labels dict expect a str(path) or dict, '"+type(default_labels_dict)+"' is "
+                            "not valid. Default_labels_dict not modified")
+                try:
+                    default_labels_dict = self._default_labels_dict
+                except:
+                    default_labels_dict = None
+        self._default_labels_dict = default_labels_dict
 
     @property
     def layers_data(self):
@@ -45,6 +87,7 @@ class NetworkData(object):
 
     @layers_data.setter
     def layers_data(self, layer_data):
+
         if layer_data is None:
             self._layers_data = None
         #If is a regular expresion
@@ -87,9 +130,10 @@ class NetworkData(object):
 
     @dataset.setter
     def dataset(self, dataset):
-        if type(dataset) is not ImageDataset:
+        if type(dataset) is not ImageDataset and dataset is not None:
             raise TypeError("Dataset must be an nefesi.util.Image.ImageDataset object "
                             "(https://github.com/CVC-CIC/nefesi/blob/master/nefesi/util/image.py)")
+
         self._dataset = dataset
 
     @property
@@ -98,17 +142,16 @@ class NetworkData(object):
 
     @save_path.setter
     def save_path(self, save_path):
-        #Ensures that path ends with '/' (To save confusions to user)
-        if not save_path.endswith('/'):
-            save_path = save_path + '/'
-        #Ensures that folder exists
-        if not os.path.isdir(save_path):
-            warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
+        if save_path is not None:
+            if type(save_path) is not str:
+                raise ValueError("save_path must be a str.")
+            #Ensures that path ends with '/' (To save confusions to user)
+            elif not save_path.endswith('/'):
+                save_path = save_path + '/'
+            #Looks folder exists
+            if not os.path.isdir(save_path):
+                warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
         self._save_path = save_path
-
-    def _build_layers(self, layers):
-        for l in layers:
-            self.layers_data.append(LayerData(l))
 
     def eval_network(self, layer_names = None,
                      directory=None,
@@ -154,24 +197,32 @@ class NetworkData(object):
             ValueError: If some name in `layer_names` doesn't exist in
             the model `self.model`.
         """
-        if layer_names != None:
+        #Assign layer_names if is specified and control that self.layers_data are setted consistently
+        if layer_names is not None:
             self.layers_data = layer_names
-        if save_path != None:
-            self._save_path = save_path
+        elif type(self.layers_data) is not list:
+            raise ValueError("layers_data attribute not setted. It must be setted on network_data object, before call"
+                             " eval_network(...) or setted as argument (layer_names) in eval_network function")
 
-        times_ex = []
+        #Assign save_path if is specified and control that self.save_path is setted consistently
+        if save_path is not None:
+            self.save_path = save_path
+        elif type(self.save_path) is not str:
+            raise ValueError("Save_path attribute not setted. It must be setted on network_data object, before call"
+                             " eval_network(...) or setted as argument (save_path) in eval_network function")
 
-        # Creates an ImageDataset object
-        if self.dataset is None:
-            self.dataset = ImageDataset(directory, target_size,
+        #Creates an ImageDataset object if it not exists and control that self.dataset is setted consistenly
+        if directory is not None:
+                self.dataset = ImageDataset(directory, target_size,
                                         preprocessing_function, color_mode)
-
-        if self.dataset.src_dataset is None:
-            raise ValueError("The argument `directory` should be a String.")
+        elif type(self.dataset) is not ImageDataset:
+            raise ValueError("Dataset attribute not setted. It must be setted on network_data object, before call"
+                             " eval_network(...) or setted as argument(s) (directory,[target_size, preprocessing_function,"
+                             " color_mode]) in eval_network function ")
 
         for layer in self.layers_data:
             #if layer.layer_id in layer_names: #if is not, exception was raised
-            datagen = ImageDataGenerator()
+            datagen = ImageDataGenerator(preprocessing_function=preprocessing_function)
             data_batch = datagen.flow_from_directory(
                 self.dataset.src_dataset,
                 target_size=self.dataset.target_size,
@@ -181,32 +232,33 @@ class NetworkData(object):
             )
 
             num_images = data_batch.samples
-            n_batches = 0
-            idx = data_batch.batch_index
+            idx_start = data_batch.batch_index
+            idx_end = idx_start + data_batch.batch_size
+            #the min between full size and 0,5MB by array (and 64MB for the img_name)
+            buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
+            for n_batches, imgs in enumerate(data_batch):
 
-            for i in data_batch:
-                images = i[0]
-
+                images = imgs[0]
                 # Apply the preprocessing function to the inputs
-                if self.dataset.preprocessing_function is not None:
-                    images = self.dataset.preprocessing_function(images)
-
-                file_names = data_batch.filenames[idx: idx + data_batch.batch_size]
+                file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
                 # Search the maximum activations
-                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size)
+                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size,
+                                           batches_to_buffer=buffer_size)
 
                 if verbose:
-                    print("Layer: {}, Num batch: {},"
-                          " Num images processed: {}/{}".format(
-                            layer.layer_id,
-                            n_batches,
-                            idx + data_batch.batch_size,
-                            num_images))
+                    print("Layer: {layer}, Num batch: {batch},"
+                          " Num images processed: {processed}/{total}".format(
+                            layer=layer.layer_id,
+                            batch=n_batches,
+                            processed=idx_end,
+                            total=num_images))
 
-                idx = data_batch.batch_index * data_batch.batch_size
-                n_batches += 1
-                if n_batches >= num_images / data_batch.batch_size:
+                idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
+                #If the idx of the next last image will overpass the total num of images, ends the analysis
+                if idx_end > num_images:
                     break
+            for neuron in layer.neurons_data:
+                neuron.sortResults()
 
             # Set the number of maximum activations stored in each neuron
             layer.set_max_activations()
@@ -239,9 +291,9 @@ class NetworkData(object):
         for l in self.layers_data:
             l.remove_selectivity_idx(idx)
 
-    def get_selectivity_idx(self, sel_index, layer_name,
-                            labels=None, thr_class_idx=1.,
-                            thr_pc=0.1):
+    def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = None,
+                            labels=None, thr_class_idx=None,
+                            thr_pc=None, verbose = True):
         """Returns the selectivity indexes in `sel_index` for each layer
         in `layer_name`.
 
@@ -264,7 +316,21 @@ class NetworkData(object):
             ValueError: If layer name in `layer_name` doesn't match with any layer
             inside the class property `layers`.
         """
+        start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = dict()
+
+        if 'concept' in sel_index or 'concept' == sel_index:
+            if not self.addmits_concept_selectivity():
+                raise ValueError("Dataset in -> "+self.dataset._src_dataset+" doesn't addmits concept selectivity")
+
+        if labels is None:
+            labels=self.default_labels_dict
+        if thr_class_idx is None:
+            thr_class_idx = self.default_thr_class_idx
+        if thr_pc is None:
+            thr_pc = self.default_thr_pc
+        if degrees_orientation_idx is None:
+            degrees_orientation_idx = self.default_degrees_orientation_idx
 
         if type(sel_index) is not list:
             sel_index = [sel_index]
@@ -286,18 +352,33 @@ class NetworkData(object):
                     raise ValueError("The layer_id '{}' `layer_name` "
                                      "argument, is not valid.".format(l))
                 else:
-                    #This makes a dictionary with RealName:RealName of each class, in order no force to user to have a
-                    #traduction dictionary if is not needed (admit labels == None)
-                    #[This rare dic is not the more elegant way to solve the problem, change the class_selectivity class
-                    #could be better. But... this makes the code of the class_selectivity class more easy and readable
-                    if index_name == 'class' and labels is None:
-                        labels = {key:key for key in os.listdir(self.dataset.src_dataset)}
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
-                        self.model, index_name, self.dataset, labels=labels,
-                        thr_class_idx=thr_class_idx, thr_pc=thr_pc))
+                        self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
+                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc,verbose=verbose,network_data=self))
+                    if self.save_changes:
+                        end_time = time.time()
+                        if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                            if verbose:
+                                print("Layer: "+l+" saving changes")
+                            # Update only the modelName.obj
+                            self.save_to_disk(file_name=None, save_model=False)
+                        start_time = end_time
 
         return sel_idx_dict
 
+    """
+    def get_progress(self):
+        if not hasattr(self, 'layers_in_analysis') or not hasattr(self, 'last_layers_to_analyze')\
+                or self.last_layers_analyzed != self.last_layers_to_analyze:
+            self.layers_in_analysis = [layer_data for layer_data in
+                                       self.layers_data if layer_data.layer_id in self.last_layers_to_analyze]
+            for layer in self.layers_in_analysis:
+                layer.neurons_complete = 0
+        self.last_layers_analyzed = self.last_layers_to_analyze
+        total_neurons = sum([len(l.neurons_data) for l in self.layers_in_analysis])
+        neurons_completed = sum([l.neurons_complete for l in self.layers_in_analysis])
+        return neurons_completed/total_neurons
+    """
     def similarity_idx(self, layer_name):
         """Returns the similarity index for each layer in `layer_name`.
 
@@ -310,7 +391,7 @@ class NetworkData(object):
             inside the class property `layers`.
         """
         sim_idx = []
-
+        start_time = time.time()  # in order to update things if something new was be calculated
         if type(layer_name) is not list:
             # Compile the Regular expresion
             regEx = re.compile(layer_name)
@@ -327,7 +408,14 @@ class NetworkData(object):
                                  "argument, is not valid.".format(l))
             else:
                 sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
+            if self.save_changes:
+                end_time = time.time()
+                if end_time-start_time>=MIN_PROCESS_TIME_TO_OVERWRITE:
+                    #Update only the modelName.obj
+                    self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
+
+
 
     def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None,
                               inf_thr=0.0, sup_thr=1.0):
@@ -568,14 +656,16 @@ class NetworkData(object):
             as a HDF5 file.
         """
         if file_name is None:
-            file_name = self.model.name
+            file_name = self.default_file_name
+        if not file_name.endswith('.obj'):
+            file_name+='.obj'
         if save_path is not None:
-            self._save_path = save_path
+            self.save_path = save_path
 
         model_name = self.model.name
-        if self._save_path is not None:
-            file_name = self._save_path + file_name
-            model_name = self._save_path + self.model.name
+        if self.save_path is not None:
+            file_name = self.save_path + file_name
+            model_name = self.save_path + self.model.name
         #If directory not exists create it recursively
         os.makedirs(name=self.save_path, exist_ok=True)
         model = self.model
@@ -583,7 +673,8 @@ class NetworkData(object):
             self.model.save(model_name + '.h5')
         #Save the object without model info
         self.model = None
-        pickle.dump(self, open(file_name + '.obj', 'wb'))
+        with open(file_name, 'wb') as f:
+            pickle.dump(self, f)
         self.model = model
 
     @staticmethod
@@ -596,8 +687,12 @@ class NetworkData(object):
 
         :return: The `nefesi.network_data.NetworkData` instance.
         """
-        my_net = pickle.load(open(file_name, 'rb'))
-
+        with open(file_name, 'rb') as f:
+            my_net = pickle.load(f)
+        """
+        TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
+        obj's with news implementations of network_data that can have more attributes
+        """
         if model_file is not None:
             my_net.model = load_model(model_file)
         if my_net.model is None:
@@ -605,7 +700,86 @@ class NetworkData(object):
 
         return my_net
     #--------------------------------HELP FUNCTIONS-------------------------------------------------
-    def show_model_layer_names(self):
-        print([layer.name for layer in self.model.layers])
     def get_layer_names_to_analyze(self):
         return [layer.layer_id for layer in self._layers_data]
+    def get_layers_analyzed_that_match_regEx(self, regEx):
+        # Compile the Regular expresion
+        regEx = re.compile(regEx)
+        # Select the layerNames that satisfies RegEx
+        return list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
+    def get_len_neurons_of_layer(self, layer):
+        for layer_of_model in self.layers_data:
+            if layer_of_model.layer_id == layer:
+                return len(layer_of_model.neurons_data)
+        raise ValueError("Layer: "+layer+" doesn't exists")
+    def get_neuron_of_layer(self,layer, neuron_idx):
+        for layer_of_model in self.layers_data:
+            if layer_of_model.layer_id == layer:
+                return layer_of_model.neurons_data[neuron_idx]
+        raise ValueError("Layer: " + layer + " doesn't exists")
+    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=None, thr_class_idx=None, thr_pc=None ):
+        if orientation_degrees is None:
+            orientation_degrees = self.default_degrees_orientation_idx
+        if thr_pc is None:
+            thr_pc = self.default_thr_pc
+        if thr_class_idx is None:
+            thr_class_idx = self.default_thr_class_idx
+
+        for layer_of_model in self.layers_data:
+            if layer_of_model.layer_id == layer:
+                return layer_of_model.get_all_index_of_a_neuron(network_data=self,neuron_idx=neuron_idx,
+                                                                orientation_degrees=orientation_degrees,
+                                                                thr_class_idx=thr_class_idx,thr_pc=thr_pc)
+        raise ValueError("Layer: " + layer + " doesn't exists")
+
+    def get_layer_by_name(self, layer):
+        for layer_of_model in self.layers_data:
+            if layer_of_model.layer_id  == layer:
+                return layer_of_model
+
+        raise ValueError("Layer: " + layer + " doesn't exists")
+
+    def addmits_concept_selectivity(self):
+        try:
+            self.layers_data[0].neurons_data[0].concept_selectivity_idx(layer_data=self.layers_data[0],network_data=self)
+            return True
+        except:
+            return False
+
+    def get_calculated_indexs_keys(self):
+        keys = set()
+        for layer in self.layers_data:
+            keys |= layer.get_index_calculated_keys()
+        return keys
+    def is_index_in_layer(self,layers,index, special_value):
+        if special_value is None:
+            if index == 'orientation':
+                special_value = self.default_degrees_orientation_idx
+            elif index == 'population code':
+                special_value = self.default_thr_pc
+        key = get_key_of_index(index, special_value)
+        if layers in [str, np.str_]:
+            layers = self.get_layers_analyzed_that_match_regEx(layers)
+        for layer in layers:
+            layer_data = self.get_layer_by_name(layer=layer)
+            if layer_data.is_not_calculated(key):
+                return False
+            return True
+    def get_layers_with_index(self, index_selected):
+        return [layer.layer_id for layer in self.layers_data if index_selected in layer.get_index_calculated_keys()]
+
+    def erase_index_from_layers(self, layers, index_to_erase):
+        for layer_name in layers:
+            self.get_layer_by_name(layer_name).erase_index(index_to_erase)
+    def get_indexs_accepted(self):
+        return ALL_INDEX_NAMES+['concept'] if self.addmits_concept_selectivity() else ALL_INDEX_NAMES
+
+
+def get_model_layer_names(model, regEx='.*'):
+    if model is None:
+        return []
+    else:
+        # Compile the Regular expresion
+        regEx = re.compile(regEx)
+        # Select the layerNames that satisfies RegEx
+        return list(filter(regEx.match, [layer.name for layer in model.layers]))

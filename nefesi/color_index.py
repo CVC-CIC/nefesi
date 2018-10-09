@@ -1,17 +1,23 @@
 import numpy as np
-
+import sys
+sys.path.append('..')
 from nefesi import read_activations
 from nefesi.util.image import rgb2opp, image2max_gray
 
 
+<<<<<<< HEAD
 def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='ivet'):
+=======
+def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='no-ivet'):
+>>>>>>> fb6a3ecb602fd54815a9e4c3832d001c37bdfbd6
     """Returns the color selectivity index for a neuron (`neuron_data`).
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param model: The `keras.models.Model` instance.
     :param layer_data: The `nefesi.layer_data.LayerData` instance.
     :param dataset: The `nefesi.util.image.ImageDataset` instance.
-    :param type: How to calculate color index: Ivet thesis style or contolling idex between [0,1]
+    :param type: How to calculate color index: Index defined in Ivet Rafegas thesis ('ivet') or
+    controlling index between [0,1] (else)
 
     :return: Float, the color selectivity index value.
     """
@@ -23,8 +29,7 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='i
 
     if max_rgb_activation != 0.0:
         images = dataset.load_images(image_names, prep_function=False)
-        idx_neuron = layer_data.neurons_data.index(neuron_data)
-
+        idx_neuron = np.where(layer_data.neurons_data == neuron_data)[0][0]
         images_gray = np.ndarray(shape=images.shape, dtype=images.dtype)
         for i in range(len(images)):
             # get the receptive field from the origin image.
@@ -50,9 +55,15 @@ def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='i
         new_activations = new_activations / np.abs(max_rgb_activation)
 
         if type=='ivet':
+<<<<<<< HEAD
             norm_gray_activations = new_activations / max_rgb_activation
             return 1 - (np.sum(norm_gray_activations) / np.sum(norm_activations))
         elif type=='opcio1':
+=======
+            norm_gray_activations_sum = np.sum(new_activations) / max_rgb_activation
+            return 1 - (norm_gray_activations_sum / np.sum(norm_activations))
+        else:
+>>>>>>> fb6a3ecb602fd54815a9e4c3832d001c37bdfbd6
             gray_activations = np.minimum(1, new_activations / activations)
             return np.mean(1 - np.maximum(0, gray_activations))
         else:

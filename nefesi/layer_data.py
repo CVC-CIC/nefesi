@@ -1,10 +1,10 @@
 import numpy as np
-from itertools import permutations
 
+import math
 from .read_activations import get_sorted_activations, get_activations
-from .neuron_feature import compute_nf, get_image_receptive_field
-from .similarity_index import get_similarity_index
-
+from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
+from .similarity_index import get_row_of_similarity_index
+from .symmetry_index import SYMMETRY_AXES
 
 class LayerData(object):
     """This class contains all the information related with the
@@ -36,17 +36,18 @@ class LayerData(object):
         self.receptive_field_map = None
         self.receptive_field_size = None
 
+
     def set_max_activations(self):
         for f in self.neurons_data:
             f.set_max_activations()
 
-    def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size):
+    def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size,batches_to_buffer = 20):
         self.neurons_data = get_sorted_activations(file_names, images, model,
                                                    self.layer_id, self.neurons_data,
-                                                   num_max_activations, batch_size)
+                                                   num_max_activations, batch_size,batches_to_buffer=batches_to_buffer)
 
     def build_neuron_feature(self, network_data):
-        compute_nf(network_data, self, self.neurons_data)
+        compute_nf(network_data, self)
 
     def remove_selectivity_idx(self, idx):
         """Removes de idx selectivity index from the neurons of the layer.
@@ -59,7 +60,8 @@ class LayerData(object):
             n.remove_selectivity_idx(idx)
 
     def selectivity_idx(self, model, index_name, dataset,
-                        labels=None, thr_class_idx=1., thr_pc=0.1):
+                        labels=None, thr_class_idx=1., thr_pc=0.1,degrees_orientation_idx = 15, verbose=True,
+                        network_data=None):
         """Returns the selectivity index value for the index in `index_name`.
 
         :param model: The `keras.models.Model` instance.
@@ -80,37 +82,80 @@ class LayerData(object):
             "orientation", "symmetry", "class" or "population code".
         """
 
-        if index_name == 'color':
+        if index_name.lower() == 'color':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
-        elif index_name == 'orientation':
-            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
+        elif index_name.lower() == 'orientation':
+            #Size is (number of neurons, number of rotations with not 0 + mean)
+            sel_idx = np.zeros((len(self.neurons_data), int(math.ceil(360/degrees_orientation_idx))), dtype=np.float)
             for i in range(len(self.neurons_data)):
-                sel_idx[i,:] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset)
-        elif index_name == 'symmetry':
+                if verbose:
+                    print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
+                sel_idx[i,:-1] = self.neurons_data[i].orientation_selectivity_idx(model, self, dataset,
+                                                                        degrees_to_rotate=degrees_orientation_idx)
+            sel_idx[:, -1] = np.mean(sel_idx[:,:-1],axis=1)
+        elif index_name.lower() == 'symmetry':
             #array of size (len(self.neurons_data) x 5), 5 is the size of [0 deg., 45 deg., 90 deg., 135 deg., mean]
-            sel_idx = np.zeros((len(self.neurons_data), 5), dtype=np.float)
+            sel_idx = np.zeros((len(self.neurons_data), len(SYMMETRY_AXES)+1), dtype=np.float)
             for i in range(len(self.neurons_data)):
-                sel_idx[i,:4] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
+                if verbose:
+                    print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
+                sel_idx[i,:-1] = self.neurons_data[i].symmetry_selectivity_idx(model, self, dataset)
             #makes the last columns as mean of each neuron. Makes out of function symmetry_selectivity_idx() for efficiency
-            sel_idx[:,4] = np.mean(sel_idx[:,0:4],axis=1)
-        elif index_name == 'class':
-            #array that contains in each a tuple (HumanReadableLabelName(max 75 characters str), selectivityIndex)
-            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label_name','U75'), ('index_value',np.float)]))
+            sel_idx[:,-1] = np.mean(sel_idx[:,:-1],axis=1)
+        elif index_name.lower() == 'class':
+            #array that contains in each a tuple (HumanReadableLabelName(max 64 characters str), selectivityIndex)
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
             for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
-        elif index_name == 'population code':
-            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
+        elif index_name.lower() == 'concept':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.object)
             for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
+                sel_idx[i] = self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels)
+        elif index_name.lower() == 'population code':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.int)
+            for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
         else:
-            raise ValueError("The `index_name` argument should be one "
-                             "of theses: color, orientation, symmetry, "
-                             "class or population code.")
+            raise ValueError("The 'index_name' argument should be one "
+                             "of theses: "+str(network_data.indexs_accepted))
         return sel_idx
 
-    def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None):
+    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_class_idx=1., thr_pc=0.1):
+        assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
+        model = network_data.model
+        dataset = network_data.dataset
+        neuron = self.neurons_data[neuron_idx]
+        index = dict()
+        index['color'] = neuron.color_selectivity_idx(model, self, dataset)
+        orientation = np.zeros(int(math.ceil(360/orientation_degrees)), dtype=np.float)
+        orientation[:-1] = neuron.orientation_selectivity_idx(model, self, dataset,
+                                                         degrees_to_rotate=orientation_degrees)
+        orientation[-1] = np.mean(orientation[:-1])
+        index['orientation'] = orientation
+        symmetry = np.zeros(len(SYMMETRY_AXES)+1, dtype=np.float)
+        symmetry[:-1] = neuron.symmetry_selectivity_idx(model, self, dataset)
+        symmetry[-1] = np.mean(symmetry[:-1])
+        index['symmetry'] = symmetry
+        index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
+        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_class_idx)
+        if network_data.addmits_concept_selectivity():
+            index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
+                                                              labels=network_data.default_labels_dict)
+        return index
+
+
+
+    def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None, verbose = True):
         """Returns the similarity index matrix for this layer.
         If `neurons_idx` is not None, returns a subset of the similarity
         matrix where `neurons_idx` is the neuron index of the neurons returned
@@ -125,6 +170,10 @@ class LayerData(object):
             corresponds to the distance between the neuron with index i and neuron
             with index j, in the attribute class `filters`.
         """
+
+
+
+
         if self.similarity_index is not None:
             if neurons_idx is None:
                 return self.similarity_index
@@ -140,44 +189,45 @@ class LayerData(object):
             size = len(self.neurons_data)
             self.similarity_index = np.zeros((size, size))
 
-            idx_a = np.arange(size)
-            print(idx_a)
+            idx = range(size)
+            max_activations = np.zeros(len(self.neurons_data))
+            norm_activations_sum= np.zeros(len(self.neurons_data))
+            for i in range(len(max_activations)):
+                max_activations[i] = self.neurons_data[i].activations[0]
+                norm_activations_sum[i] = sum(self.neurons_data[i].norm_activations)
+            for i in idx:
 
-            for a, b in permutations(idx_a, 2):
-                sim_idx = get_similarity_index(self.neurons_data[a], self.neurons_data[b], a,
+                sim_idx = get_row_of_similarity_index(self.neurons_data[i], max_activations,norm_activations_sum,
                                                model, self.layer_id, dataset)
-                self.similarity_index[a][b] = sim_idx
+                self.similarity_index[:,i] = sim_idx
+                if verbose:
+                    print("Similarity "+self.layer_id+' '+str(i)+'/'+str(size))
             return self.similarity_index
 
-    def mapping_rf(self, model, w, h):
+    def mapping_rf(self, model):
         """Maps each position in the map activation with the corresponding
         window from the input image (receptive field window).
         Also calculates the size of this receptive field.
 
         :param model: The `keras.models.Model` instance.
-        :param w: Integer, row position in the map activation.
-        :param h: Integer, column position in the map activation.
+        :raise ValueError: If this layer is apparently non convolutional
         """
+
         if self.receptive_field_map is None:
-            self.receptive_field_map = np.zeros(shape=(w, h),
-                                                dtype=[('x1', 'i4'),
-                                                       ('x2', 'i4'),
-                                                       ('y1', 'i4'),
-                                                       ('y2', 'i4')])
-            for i in range(w):
-                for j in range(h):
-                    ri, rf, ci, cf = get_image_receptive_field(i, j, model, self.layer_id)
-                    # we have to add 1 in row_fin and col_fin due to behaviour
-                    # of Numpy arrays.
-                    self.receptive_field_map[i, j] = (ri, rf + 1, ci, cf + 1)
+            self.receptive_field_map = get_each_point_receptive_field(model, self.layer_id)
 
         # calculate the size of receptive field
         if self.receptive_field_size is None:
-            r = int(w / 2)
-            c = int(h / 2)
-            ri, rf, ci, cf = self.receptive_field_map[r, c]
-            height = rf - ri
-            width = cf - ci
+            layer_idx = find_layer_idx(model, self.layer_id)
+            if len(model.layers[layer_idx].output_shape) == 4:
+                _, w, h, _ = model.layers[layer_idx].output_shape
+            else:
+                raise ValueError("You're trying to get the receptive field of a NON Convolutional layer? --> "+self.layer_id)
+            row = int(w // 2)
+            col = int(h // 2)
+            row_ini, row_fin, col_ini, col_fin = self.receptive_field_map[row, col]
+            height = row_fin - row_ini
+            width = col_fin - col_ini
             self.receptive_field_size = (width, height)
 
     def get_location_from_rf(self, location):
@@ -222,7 +272,7 @@ class LayerData(object):
             max_act.append(f.activations[0])
 
         # get the activations of image in this layer.
-        activations = get_activations(model, img, print_shape_only=True, layer_name=self.layer_id)
+        activations = get_activations(model, img,  layer_name=self.layer_id)
 
         activations = activations[0]
 
@@ -389,3 +439,19 @@ class LayerData(object):
         idx_values = idx_values[sorted_idx]
 
         return list(res_neurons), list(idx_values)
+
+    def get_index_calculated_keys(self):
+        keys = set()
+        for neuron in self.neurons_data:
+            keys |= set(neuron.get_keys_of_indexs())
+        return keys
+
+    def erase_index(self, index_to_erase):
+        for neuron in self.neurons_data:
+            neuron.remove_selectivity_idx(idx=index_to_erase)
+
+    def is_not_calculated(self, key):
+        for neuron in self.neurons_data:
+            if key not in neuron.get_keys_of_indexs():
+                return True
+        return False

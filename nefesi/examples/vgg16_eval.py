@@ -1,6 +1,6 @@
 
 from keras.applications.vgg16 import VGG16, preprocess_input
-from nefesi.network_data import NetworkData
+from ..network_data import NetworkData
 
 import os
 import pickle

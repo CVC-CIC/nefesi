@@ -4,6 +4,7 @@ from keras.preprocessing import image
 from scipy.ndimage.interpolation import rotate
 import warnings
 
+ACCEPTED_COLOR_MODES = ['rgb','grayscale']
 
 class ImageDataset(object):
     """This class stores the whole information about a dataset and provides
@@ -19,18 +20,93 @@ class ImageDataset(object):
         color_mode: One of `"rgb"`, `"grayscale"`. Color mode to read images.
     """
 
+    # ------------------------------------------- CONSTRUCTOR -----------------------------------------------
+
+
     def __init__(self, src_dataset, target_size=None,
                  preprocessing_function=None, color_mode='rgb'):
-        #----------------CHECKING CONSISTENCY OF PARAMS------------------
-        if not os.path.isdir(src_dataset):
-            raise FileNotFoundError(src_dataset+" not exists or is not a directory")
-        elif os.listdir(src_dataset) == []:
-            warnings.warn(src_dataset+" is an empty directory",RuntimeWarning)
-        #----------------------INICIALIZATION----------------------------
+
         self.src_dataset = src_dataset
         self.target_size = target_size
         self.preprocessing_function = preprocessing_function
         self.color_mode = color_mode
+
+    #---------------------------------------- SETTERS AND GETTERS -------------------------------------------
+
+    @property
+    def target_size(self):
+        return self._target_size
+
+    @target_size.setter
+    def target_size(self, target_size):
+        #Convert if is list or set to tuple to add flexibility
+        if type(target_size) in (list,set):
+            target_size = tuple(target_size)
+
+        #Verify that is None or a valid formatted tuple
+        if type(target_size) is tuple:
+            if len(target_size) != 2 or type(target_size[0]) != int or type(target_size[1]) != int:
+                raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
+        elif type(target_size) is not None:
+            raise ValueError("target_size must be a (height, width) tuple (or None). '"+str(type(target_size))+
+                             "' type not admitted ")
+        # Sets
+        self._target_size = target_size
+
+    @property
+    def src_dataset(self):
+        return self._src_dataset
+    @src_dataset.setter
+    def src_dataset(self,src_dataset):
+        if type(src_dataset) is not str:
+            raise ValueError("src_dataset attribute must be str")
+        elif not os.path.isdir(src_dataset):
+            raise FileNotFoundError(src_dataset+" not exists or is not a directory")
+        elif os.listdir(src_dataset) == []:
+            warnings.warn(src_dataset+" is an empty directory",FutureWarning)
+        if not src_dataset.endswith('/'):
+            src_dataset += '/'
+        # Sets
+        self._src_dataset = src_dataset
+
+    @property
+    def preprocessing_function(self):
+        return self._preprocessing_function
+    @preprocessing_function.setter
+    def preprocessing_function(self, preprocessing_function):
+        #Verify if preprocessing function is None or a function that takes only 1 non-default argument
+        if preprocessing_function is not None:
+            #if function don't takes one non-default argument
+            if callable(preprocessing_function):
+                if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
+                    raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
+                                     " (any number of default arguments also admitted) and must return a numpy tensor of same"
+                                     "dimension.")
+            #if not is None or a function
+            else:
+                raise ValueError("preprocessing_function must be None or a function (that takes a numpy tensor 4D"
+                             "(with a batch of images) as argument and returns a numpy tensor of same dimension")
+        # Sets
+        self._preprocessing_function = preprocessing_function
+
+
+    @property
+    def color_mode(self):
+        return self._color_mode
+    @color_mode.setter
+    def color_mode(self,color_mode):
+        #Verify if is an admitted color_mode and put it in lower case before assign it
+        if type(color_mode) is not str:
+            raise ValueError("color_mode attribute must be str. With one of these values: "+str(ACCEPTED_COLOR_MODES))
+        color_mode = color_mode.lower()
+        if color_mode not in ACCEPTED_COLOR_MODES:
+            raise ValueError("color_mode attribute must be one of these values: " + str(ACCEPTED_COLOR_MODES)+". '"+color_mode+
+                             "' not accepted.")
+        #Sets
+        self._color_mode = color_mode
+
+# ------------------------------------------- FUNCTIONS -----------------------------------------------
+
 
     #TO COMMENT.
     def load_images(self, image_names, prep_function=True):
@@ -74,7 +150,7 @@ class ImageDataset(object):
         im_crop = img.crop((ci, ri, cf, rf))
         return im_crop
 
-    def _load_image(self, img_name):
+    def _load_image(self, img_name, as_numpy = False):
         """Loads an image into PIL format.
 
         :param img_name: String, name of the image.
@@ -82,9 +158,98 @@ class ImageDataset(object):
         :return: PIL image instance
         """
         grayscale = self.color_mode == 'grayscale'
-        return image.load_img(self.src_dataset + img_name,
+        if not as_numpy:
+            return image.load_img(self.src_dataset + img_name,
                               grayscale=grayscale,
                               target_size=self.target_size)
+        else:
+            return np.array(image.load_img(self.src_dataset + img_name,
+                              grayscale=grayscale,
+                              target_size=self.target_size))
+
+
+
+    def get_concepts_of_region(self, image_name, crop_pos,  normalized = True, dataset_name='ADE20K',
+                               norm_activations=None):
+        if dataset_name == 'ADE20K':
+            tags_and_counts = []
+            name = image_name[:image_name.index('.')]
+            seg_name = name+'_seg.png'
+            parts_name = name+'_parts_{}.png'
+            atr_name = name+'_atr.txt'
+            level = 0
+            segmentation = self._load_image('../masks/'+seg_name)
+            mask_segment = get_image_segmented(segmentation,crop_pos)
+            tags, counts = np.unique(mask_segment,return_counts=True)
+            if norm_activations is not None:
+                counts = np.array(counts, dtype=np.float)
+                for idx, id in enumerate(tags):
+                    counts[idx] = np.sum(norm_activations[mask_segment==id])
+            tags_and_counts.append([tags, counts])
+
+            while True:
+                level+=1
+                mask_name = '../masks/'+parts_name.format(level)
+                if os.path.exists(self.src_dataset+mask_name):
+                    part = self._load_image(mask_name)
+                else:
+                    break
+                mask_part = get_image_segmented(part, crop_pos)
+                tags, counts = np.unique(mask_part, return_counts=True)
+                if norm_activations is not None:
+                    counts = np.array(counts, dtype=np.float)
+                    for idx, id in enumerate(tags):
+                        counts[idx] = np.sum(norm_activations[mask_part == id])
+                if tags[0] == 0:
+                    if len(tags)==1:
+                        break
+                    else:
+                        tags,counts = tags[1:],counts[1:]
+                tags_and_counts.append([tags, counts])
+
+            concepts = [dict() for i in range(len(tags_and_counts))]
+            if tags_and_counts[0][0][0] == 0:
+                concepts[0]['unknown'] = tags_and_counts[0][1][0]
+                if len(tags_and_counts[0][0]) == 1:
+                    return concepts
+                else:
+                    tags_and_counts[0][0], tags_and_counts[0][1] = tags_and_counts[0][0][1:], tags_and_counts[0][1][1:]
+
+            with open(self.src_dataset + '../texts/' + atr_name) as f:
+                data = f.readlines()
+                label = [np.zeros(len(data), dtype='U128') for i in range(level)]
+                for i, line in enumerate(data):
+                    splited_line = line.split(sep='#')
+                    label_level = int(splited_line[1])
+                    if label_level<len(label):
+                        label[label_level][int(splited_line[0])-1] = splited_line[4]
+
+            for actual_level in range(level):
+                tags = tags_and_counts[actual_level][0]
+                counts = tags_and_counts[actual_level][1]
+                for tag, count in zip(tags, counts):
+                    if label[actual_level][tag-1] in concepts[actual_level]:
+                        concepts[actual_level][label[actual_level][tag - 1]] += count
+                    else:
+                        concepts[actual_level][label[actual_level][tag-1]] = count
+
+        if normalized:
+            if norm_activations is None:
+                size = mask_segment.shape[0]*mask_segment.shape[1]
+                for i in range(len(concepts)):
+                    concepts[i] = np.array(list(concepts[i].items()),
+                                           dtype=([('class', 'U64'), ('count', np.float)]))
+                    concepts[i]['count'] /= size
+            else:
+                warnings.warn("normalization don't done because is already pondered by activations")
+
+
+        return concepts
+
+
+
+
+
 
     def __str__(self):
         return str.format("Dataset dir: {}, target_size: {}, color_mode: {}, "
@@ -93,6 +258,21 @@ class ImageDataset(object):
                           self.color_mode,
                           self.preprocessing_function)
 
+def get_correspondences_array_in_ADE20K(image_segmented):
+    image_segmented = np.array(image_segmented)
+    labels_idx = np.unique(image_segmented[:, :, 2])
+    indexs_array = np.zeros(np.max(labels_idx)+1, dtype=np.uint8)
+    indexs_array[labels_idx] = np.arange(0,len(labels_idx))
+    return indexs_array
+
+def get_image_segmented(segmented_image, crop_pos):
+    correspondence_list = get_correspondences_array_in_ADE20K(segmented_image)
+    ri, rf, ci, cf = crop_pos
+    segmented_image = np.array(segmented_image.crop((ci, ri, cf, rf)))[:, :, 2]
+    uniques = np.unique(segmented_image)
+    for i in uniques:
+        segmented_image[segmented_image == i] = correspondence_list[i]
+    return segmented_image
 
 def rgb2opp(img):
     """Converts an image or imageSet from RGB space to OPP (Opponent color space).
@@ -105,27 +285,19 @@ def rgb2opp(img):
     :raise:
         ValueError: If invalid `img` is passed.
     """
+    if len(img.shape) not in [3,4]:
+        raise ValueError("Unsupported image object shape: {}. Only 3 or 4 dimensions images accepted", img.shape)
     if img.shape[-1] != 3:
         raise ValueError("Unsupported image shape: {}.", img.shape)
 
     opp = np.zeros(shape=img.shape, dtype=np.float)
     x = img / 255.
-    if len(img.shape) == 3:
-        R = x[:, :, 0]
-        G = x[:, :, 1]
-        B = x[:, :, 2]
-        opp[:, :, 0] = (R + G + B - 1.5) / 1.5
-        opp[:, :, 1] = (R - G)
-        opp[:, :, 2] = (R + G - 2 * B) / 2
-    elif len(img.shape) == 4:
-        R = x[:, :, :, 0]
-        G = x[:, :, :, 1]
-        B = x[:, :, :, 2]
-        opp[:, :, :, 0] = (R + G + B - 1.5) / 1.5
-        opp[:, :, :, 1] = (R - G)
-        opp[:, :, :, 2] = (R + G - 2 * B) / 2
-    else:
-        raise ValueError("Unsupported image object shape: {}. Only 3 or 4 dimensions images accepted", img.shape)
+    R = x[..., 0]
+    G = x[..., 1]
+    B = x[..., 2]
+    opp[..., 0] = (R + G + B - 1.5) / 1.5
+    opp[..., 1] = (R - G)
+    opp[..., 2] = (R + G - 2 * B) / 2
     return opp
 
 
@@ -161,51 +333,46 @@ def crop_image(img, crop_x, crop_y):
 def rotate_images(images, degrees, pos, layer_data):
     """Rotates the receptive field for each image in `images`.
 
-    :param images: List of numpy arrays.
-    :param degrees: Float, the rotation angle in degrees.
-    :param pos: List of receptive fields locations on `images`.
-    :param layer_data: The `nefesi.layer_data.LayerData` instance.
+    :param images: List of numpy arrays, the images to rotate.
+    :param degrees: list of Float, the rotation angles in degrees.
+    :param pos: List of receptive fields locations on 'images'.
+    :param layer_data: The 'nefesi.layer_data.LayerData' instance.
 
     :return: Numpy array that contains the images rotated (1+N dimension where N is the dimension of an image).
     Same as the input `images` but rotated.
     """
-    images_rotated = np.ndarray(shape=images.shape, dtype=images.dtype)
-    for i in range(len(images)):
-        init_image = np.copy(images[i])
-        x, y = pos[i]
+    #The images replicated, one for each rotation to do (at the end will contain the images rotated
+    images_rotated = np.full((len(degrees),)+images.shape,images)
 
+    for i in range(len(images)):
+        x, y = pos[i]
         # get the receptive field from the image
         row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
-        receptive_field = init_image[row_ini:row_fin, col_ini:col_fin]
+        receptive_field = images_rotated[0,i,row_ini:row_fin, col_ini:col_fin]
 
         # adjusts the receptive field for not add black padding on it.
         w, h, d = receptive_field.shape
-        padding_w = int(round(w / 2))
-        padding_h = int(round(h / 2))
-        if padding_w % 2 != 0:
-            padding_w += 1
-        if padding_h % 2 != 0:
-            padding_h += 1
-        new_shape = np.zeros((w + padding_w, h + padding_h, d),
-                             dtype=receptive_field.dtype)
-        for dim in range(d):
-            new_shape[:, :, dim] = np.pad(receptive_field[:, :, dim],
-                                          ((padding_w / 2, padding_w / 2),
-                                           (padding_h / 2, padding_h / 2)),
+        padding_w = round(w / 2)
+        padding_h = round(h / 2)
+        padding_w += (padding_w % 2)
+        padding_h += (padding_h % 2)
+
+        new_shape = np.pad(receptive_field,
+                                          ((padding_w // 2, padding_w // 2),
+                                           (padding_h // 2, padding_h // 2),
+                                           (0,0)),
                                           mode='edge')
+        for deg_pos, current_degrees in enumerate(degrees):
+            # apply the rotation function
+            img = rotate(new_shape, current_degrees, reshape=False)
+            # build back the origin image with the receptive field rotated
+            images_rotated[deg_pos, i, row_ini:row_fin, col_ini:col_fin] = crop_image(img, h, w)
 
-        # apply the rotation function
-        img = rotate(new_shape, degrees, reshape=False)
-        # build back the origin image with the receptive field rotated
-        img = crop_image(img, h, w)
-        init_image[row_ini:row_fin, col_ini:col_fin] = img
-
-        images_rotated[i] = init_image
     return images_rotated
 
 
 def rotate_images_axis(images, rot_axis, layer_data, pos):
-    """Rotates (flips) the receptive field for each image in `images`.
+    """Rotates (flips) the receptive field for each image in `images` (without the paddings).
 
     :param images: List of numpy arrays.
     :param rot_axis: Integer, the rotation axis to flip the image.
@@ -215,26 +382,20 @@ def rotate_images_axis(images, rot_axis, layer_data, pos):
     :return: 1+N-Dimensional numpy array where N is the dimension of the input images (axis 0 refers to an image (image_i
      will be img[i]), same as the input `images` but flipped.
     """
-    rot_images = np.ndarray(shape=images.shape,dtype=images.dtype)
+    rot_images = np.full((len(rot_axis),)+images.shape,images)
 
     for i in range(len(images)):
-        init_image = np.copy(images[i])
         x, y = pos[i]
         # get the receptive field from the image
         row_ini, row_fin, col_ini, col_fin = layer_data.receptive_field_map[x, y]
-        receptive_field = init_image[row_ini:row_fin, col_ini:col_fin]
-
-        rf_shape = receptive_field.shape
-        rotated_receptive_field = rotate_rf(receptive_field, rot_axis)
-
-        # if receptive field flipped has not same shape that before, resize it
-        rot_rf_shape = rotated_receptive_field.shape
-        if rf_shape != rot_rf_shape:
-            rotated_receptive_field = np.reshape(rotated_receptive_field, rf_shape)
-
-        # build back the origin image with receptive field flipped
-        init_image[row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
-        rot_images[i] = init_image
+        for axis_pos, current_axis in enumerate(rot_axis):
+            receptive_field = rot_images[axis_pos, i, row_ini:row_fin, col_ini:col_fin]
+            rotated_receptive_field = rotate_rf(receptive_field, current_axis)
+            # if receptive field flipped has not same shape that before, resize it
+            if receptive_field.shape != rotated_receptive_field.shape:
+                rotated_receptive_field = np.reshape(rotated_receptive_field, receptive_field.shape)
+            # build back the origin image with receptive field flipped
+            rot_images[axis_pos, i, row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
     return rot_images
 
 
@@ -251,3 +412,4 @@ def rotate_rf(img, rot_axis):
         return img.transpose(1, 0, 2)
     else:
         return None
+

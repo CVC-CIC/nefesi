@@ -1,10 +1,11 @@
 import numpy as np
 from PIL import ImageOps
-
-from .class_index import get_class_selectivity_idx, get_population_code_idx
+from keras.preprocessing import image
+from .symmetry_index import SYMMETRY_AXES
+from . import symmetry_index as sym
+from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_idx
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
-from .symmetry_index import get_symmetry_index
 
 
 class NeuronData(object):
@@ -17,11 +18,13 @@ class NeuronData(object):
     Arguments:
         max_activations: Integer, number of maximum activations stored.
         batch_size: Integer, size of batch.
-
+        buffered_iterations: name of iterations that are saved in buffer until sort.
     Attributes:
         activations: Numpy array of floats, activation values
         images_id: Numpy array of strings, name of the images that provokes
             the maximum activations.
+        top_labels_count: dict with keys: labels of images that provokes the maximum activations,
+         value: count of images with this label in top-scoring images
         xy_locations: Numpy array of integer tuples, location of the activation
             in the map activation.
         norm_activations: Numpy array of floats, normalized activation
@@ -36,20 +39,55 @@ class NeuronData(object):
         neuron_feature: PIL image instance.
     """
 
-    def __init__(self, max_activations, batch_size):
+    def __init__(self, max_activations, batch_size,buffered_iterations = 20):
         self._max_activations = max_activations
         self._batch_size = batch_size
-
-        self.activations = np.ndarray(shape=(self._max_activations + self._batch_size))
-        self.images_id = np.ndarray(shape=self._max_activations + self._batch_size,dtype='U150')
-        self.xy_locations = np.ndarray(shape=self._max_activations + self._batch_size, dtype=[('x', 'i4'), ('y', 'i4')])
+        self._buffer_size = self._max_activations + (self._batch_size*buffered_iterations)
+        # If is the final iteration reduce the size of activations, images_id and xy_locations to max_activations
+        self._reduce_data = True
+        self.activations = np.zeros(shape=self._buffer_size)
+        self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
+        self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
         self.norm_activations = None
 
         self.selectivity_idx = dict()
         self._neuron_feature = None
-
+        self.top_labels = None
         # index used for ordering activations.
         self._index = 0
+
+    def add_activations(self,activations, image_ids, xy_locations):
+        """Set the information of n activation. When the assigned
+				 activations reach a certain size, they are ordered.
+
+				:param activations: numpy of Floats, activation values
+				:param image_ids: numpy of Strings, image names
+				:param xy_locations: numpy of tuples of integers, location of the activations
+					in the map activation.
+				"""
+        end_idx = self._index+len(activations)
+        self.activations[self._index:end_idx] = activations
+        self.images_id[self._index:end_idx] = image_ids
+        self.xy_locations[self._index:end_idx,:] = xy_locations
+        self._index += len(activations)
+        if self._index >= self._buffer_size:
+            self._reduce_data = False
+            self.sortResults()
+            self._reduce_data = True
+            #self._index = self._max_activations #Is maded on function (in order to make more consistent on last iteration
+    def sortResults(self):
+        idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
+        self._index = self._max_activations
+        if self._reduce_data:
+            self.activations = self.activations[idx]
+            self.images_id = self.images_id[idx]
+            self.xy_locations = self.xy_locations[idx,:]
+        else:
+            self.activations[:self._index] = self.activations[idx]
+            self.images_id[:self._index] = self.images_id[idx]
+            self.xy_locations[:self._index,:] = self.xy_locations[idx, :]
+
+
 
     def add_activation(self, activation, image_id, xy_location):
         """Set the information of one activation. When the assigned
@@ -82,7 +120,7 @@ class NeuronData(object):
     def _normalize_activations(self):
         """Normalize the activations inside `activations`.
         """
-        max_activation = max(self.activations)
+        max_activation = np.max(self.activations)
         if max_activation == 0:
             return -1
         self.norm_activations = self.activations / abs(max_activation)
@@ -101,49 +139,71 @@ class NeuronData(object):
     def neuron_feature(self, neuron_feature):
         self._neuron_feature = neuron_feature
 
-    def get_patches(self, network_data, layer_data):
+    def get_patches(self, network_data, layer_data, as_numpy=True):
         """Returns the patches (receptive fields) from images in
         `images_id` for this neuron.
 
         :param network_data: The `nefesi.network_data.NetworkData` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :return: List of PIL image instances.
+        :return: Images as numpy .
         """
-        patches = []
         image_dataset = network_data.dataset
         receptive_field = layer_data.receptive_field_map
         rf_size = layer_data.receptive_field_size
+        crop_positions = receptive_field[self.xy_locations[:,0],self.xy_locations[:,1]]
 
-        for i in range(self._max_activations):
-            img = self.images_id[i]
-            loc = self.xy_locations[i]
-
-            # get the location of the receptive field
-            crop_pos = receptive_field[loc[0], loc[1]]
+        #First iteration of for, maded first in order to set the output array size
+        patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
+        if rf_size != patch.size:
+            patch = self._adjust_patch_size(patch, crop_positions[0], rf_size)
+        if as_numpy:
+            patch = image.img_to_array(patch)
+            patches = np.zeros(shape = (self._max_activations,)+patch.shape)
+        else:
+            patches = np.zeros(shape = (self._max_activations), dtype=np.object)
+        patches[0] = patch
+        for i in range(1, self._max_activations):
+            crop_pos = crop_positions[i]
             # crop the origin image with previous location
-            p = image_dataset.get_patch(img, crop_pos)
+            patch = image_dataset.get_patch(self.images_id[i], crop_pos)
 
             # add a black padding to a patch that not match with the receptive
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
-            if rf_size != p.size:
-                w, h = p.size
-                ri, rf, ci, cf = crop_pos
-                bl, bu, br, bd = (0, 0, 0, 0)
-                if rf_size[0] != w:
-                    if ci == 0:
-                        bl = rf_size[0] - w
-                    else:
-                        bl = rf_size[0] - w
-                if rf_size[1] != h:
-                    if ri == 0:
-                        bu = rf_size[1] - h
-                    else:
-                        bd = rf_size[1] - h
-                p = ImageOps.expand(p, (bl, bu, br, bd))
-            patches.append(p)
+            if rf_size != patch.size:
+                patch = self._adjust_patch_size(patch,crop_pos, rf_size)
+            if as_numpy:
+                patch = image.img_to_array(patch)
+            patches[i] = patch
         return patches
+
+    def get_patch_by_idx(self, network_data, layer_data, i):
+        image_dataset = network_data.dataset
+        receptive_field = layer_data.receptive_field_map
+        rf_size = layer_data.receptive_field_size
+        crop_position = receptive_field[self.xy_locations[i,0],self.xy_locations[i,1]]
+        #First iteration of for, maded first in order to set the output array size
+        patch = image_dataset.get_patch(self.images_id[i], crop_position)
+
+        if rf_size != patch.size:
+            patch = self._adjust_patch_size(patch, crop_position, rf_size)
+        return patch
+    def _adjust_patch_size(self, patch, crop_position, rf_size):
+        w, h = patch.size
+        ri, rf, ci, cf = crop_position
+        bl, bu, br, bd = (0, 0, 0, 0)
+        if rf_size[0] != w:
+            if ci == 0:
+                bl = rf_size[0] - w
+            else:
+                br = rf_size[0] - w
+        if rf_size[1] != h:
+            if ri == 0:
+                bu = rf_size[1] - h
+            else:
+                bd = rf_size[1] - h
+        return ImageOps.expand(patch, (bl, bu, br, bd))
 
     def print_params(self):
         """Returns a string with some information about this neuron.
@@ -186,22 +246,24 @@ class NeuronData(object):
         self.selectivity_idx['color'] = color_idx
         return color_idx
 
-    def orientation_selectivity_idx(self, model, layer_data, dataset):
+    def orientation_selectivity_idx(self, model, layer_data, dataset, degrees_to_rotate = 15):
         """Returns the orientation selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
         :param layer_data: The `nefesi.layer_data.LayerData` instance.
         :param dataset: The `nefesi.util.image.ImageDataset` instance.
+        :param degrees_to_rotate: degrees of each rotation step
 
         :return: List of floats, values of orientation selectivity index.
         """
-        orientation_idx = self.selectivity_idx.get('orientation')
+        key = 'orientation'+str(int(degrees_to_rotate))
+        orientation_idx = self.selectivity_idx.get(key)
         if orientation_idx is not None:
             return orientation_idx
 
         orientation_idx = get_orientation_index(self, model,
-                                                layer_data, dataset)
-        self.selectivity_idx['orientation'] = orientation_idx
+                                                layer_data, dataset,degrees_to_rotate = degrees_to_rotate)
+        self.selectivity_idx[key] = orientation_idx
         return orientation_idx
 
     def symmetry_selectivity_idx(self, model, layer_data, dataset):
@@ -213,13 +275,39 @@ class NeuronData(object):
 
         :return: List of floats, values of symmetry selectivity index.
         """
-        symmetry_idx = self.selectivity_idx.get('symmetry')
+        key= 'symmetry'+str(SYMMETRY_AXES)
+        symmetry_idx = self.selectivity_idx.get(key)
         if symmetry_idx is not None:
             return symmetry_idx
 
-        symmetry_idx = get_symmetry_index(self, model, layer_data, dataset)
-        self.selectivity_idx['symmetry'] = symmetry_idx
+        symmetry_idx = sym.get_symmetry_index(self, model, layer_data, dataset)
+        self.selectivity_idx[key] = symmetry_idx
         return symmetry_idx
+
+    def concept_selectivity_idx(self,layer_data, network_data, labels=None):
+        """Returns the class selectivity index for this neuron.
+
+        :param labels: Dictionary, key: name class, value: label class.
+            This argument is needed for calculate the class index.
+        :param threshold: Float, required for calculate the class index.
+
+        :return: Float, between 0.1 and 1.0.
+
+        :raise:
+            TypeError: If `labels` is None or not a dictionary.
+        """
+        concept_idx = self.selectivity_idx.get('concept')
+        if concept_idx is not None:
+            return concept_idx
+
+        #Labels always must to be a dictionary
+        if type(labels) is not dict and labels is not None:
+            raise TypeError("The 'labels' argument should be a dictionary if is specified")
+
+        concept_idx = get_concept_selectivity_idx(self,network_data=network_data, layer_data=layer_data,
+                                                  normalize_by_activations=True)
+        self.selectivity_idx['concept'] = concept_idx
+        return concept_idx
 
     def class_selectivity_idx(self, labels=None, threshold=1.):
         """Returns the class selectivity index for this neuron.
@@ -238,8 +326,8 @@ class NeuronData(object):
             return class_idx
 
         #Labels always must to be a dictionary
-        if type(labels) is not dict:
-            raise TypeError("The 'labels' argument should be a dictionary")
+        if type(labels) is not dict and labels is not None:
+            raise TypeError("The 'labels' argument should be a dictionary if is specified")
 
         class_idx = get_class_selectivity_idx(self, labels, threshold)
         self.selectivity_idx['class'] = class_idx
@@ -258,14 +346,15 @@ class NeuronData(object):
         :raise:
             TypeError: If `labels` is None or not a dictionary.
         """
-        population_code_idx = self.selectivity_idx.get('population code')
+        key = 'population code'+str(round(threshold,2))
+        population_code_idx = self.selectivity_idx.get(key)
         if population_code_idx is not None:
             return population_code_idx
 
-        if labels is None or type(labels) is not dict:
-            raise TypeError("The `labels` argument should be "
-                            "a dictionary")
-
         population_code_idx = get_population_code_idx(self, labels, threshold)
-        self.selectivity_idx['population code'] = population_code_idx
+
+        self.selectivity_idx[key] = population_code_idx
         return population_code_idx
+
+    def get_keys_of_indexs(self):
+        return self.selectivity_idx.keys()

@@ -3,25 +3,29 @@ This file contains a toy examples to have a first contact with Nefesi, and Keras
 This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2.0, and python 3.6 (with anaconda3 interpreter)
 """
 
-from keras.applications.vgg16 import VGG16
+from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
-from nefesi.network_data import NetworkData
-from nefesi.util.image import ImageDataset
+
+from ..network_data import NetworkData
+from ..util.image import ImageDataset
 import numpy as np
 import time
-#from nefesi.util.plotting import plot_nf_search
+from ..util.general_functions import addapt_ADE20K_dataset
+
 
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
 
 def main():
-	#example1SaveModel() #Charge a standard model and save it locally
-	#example2ChargeModel() #Charge a model locally
-	#example3NefesiInstance()
-	#example4FullFillNefesiInstance()
+	#addapt_ADE20K_dataset('../Datasets/ADE20K_2016_07_26')
 	#example5NetworkEvaluation()
-	#example6LoadingResults()
-	example7AnalyzingResults()
+	model = example6LoadingResults()
+	#print(model.get_selectivity_idx('concept','.*'))
+	#dataset=chargeNefesiImageDataset()
+	#print(dataset.get_concepts_of_region('labelme_bxvctltntrtinjf.jpg', (0,50,0,50)))
+
+
 
 """
 Analyze the results of the evaluation
@@ -36,10 +40,45 @@ def example7AnalyzingResults():
 	start = time.time()
 	#colorSelectivity(nefesiModel)
 	#symmetrySelectivity(nefesiModel)
-	classSelectivity(nefesiModel)
+	#classSelectivity(nefesiModel)
+	orientationSelectivity(nefesiModel)
+	#populationCode(nefesiModel)
 	end = time.time()
 	print("TIME ELAPSED: ")
 	print(end - start)
+
+def populationCode(nefesiModel):
+	layersToEvaluate = 'block1_conv1'
+	# degrees_orientation_idx 180 will be only one rotation
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="population code", layer_name=layersToEvaluate)
+	print("a")
+def orientationSelectivity(nefesiModel):
+	"""
+	Orientation selectivity is an index that specifies, how much the neuron is resistent to image rotations.
+	(experimentally we determined that is so usefull to detect, neurons that are selectives to circular things).
+	In order to evaluate it, this neuron takes his N-Top images (the N images that more activation produced to it)
+	and rotate each image degrees_orientation_idx degrees (15 by default) n times, until complete the 360 degrees.
+	This index will be in range [0.0,1.0] and an 1.0 idx will indicate that the activitation was the same for no-rotated
+	image, and rotated image. The return of orientation selectivity index will be a numpy for each neuron with m positions.
+	Where m is ceil(360/degrees_orientation_idx). (A position for each rotation tried (with his the index obtained) and the
+	last position won't be the 360 degrees rotation, will be the mean of all rotations tried (on this neuron)). For example
+	for degrees orientation 90 and block1_conv1 layer will be:
+	selIdx['orientation']--->[list of orientation_idx values] --> idx for 90 degrees
+															  --> idx for 180 degrees
+															  --> idx for 270 degrees
+															  --> mean of last 3 values
+	"""
+	#Let's evaluate first layer (64 neurons)
+	layersToEvaluate = 'block1_conv1'
+	print("Let's Evaluate the orientation selectivity index of layers: "+
+		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate))+ " (This operation will take minutes).")
+	#degrees_orientation_idx 180 will be only one rotation
+	selIdx = nefesiModel.get_selectivity_idx(sel_index="orientation", layer_name=layersToEvaluate, degrees_orientation_idx=180)
+	print("Orientation selectivity index calculated for each neuron of layer 'block1_conv1'\n"
+		  "Max value of color selectivity encountered in first layer analyzed"+ str(np.max(selIdx['orientation'][0][:,-1]))+
+		  " in neuron: " +str(np.argmax(selIdx['orientation'][0][:,-1]))+". \n"
+		  "Neurons with more than 60% of mean orientation selectivity: "+str(len(np.where(selIdx['orientation'][0][:,-1]>0.6)[0]))+
+		  ".\n Mean of Color Selectivity in first layer: "+str(np.mean(selIdx['orientation'][0][:,-1]))+".")
 
 def classSelectivity(nefesiModel):
 	"""
@@ -50,7 +89,7 @@ def classSelectivity(nefesiModel):
 		selectivity index will be a tuple for each neuron that contains: (humanLabelNameOfClass(String),
 		SelectivityIndexForThisClass(float)). This index only take a seconds to calculate.
 	"""
-	#Let's to evaluate all layers charged
+	#Let's to evaluate layers 1 and 3
 	layersToEvaluate = 'block(1|3)_conv1'
 	"""
 	This selectivity index accepts a dictionary, that translate from real label names (often not human readable as n03794056)
@@ -59,9 +98,33 @@ def classSelectivity(nefesiModel):
 	"""
 	#Charge a pyhton dict that translate from imageNet labels (like n03794056) to human readable labels (like 'mousetrap')
 	labelsDict = pickle.load(open("../nefesi/external/labels_imagenet.obj", "rb"))
-	print("Let's Evaluate the symmetry selectivity index of all layers (This operation will take seconds)")
+	print("Let's Evaluate the class selectivity index of layers:"+
+		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)) +" (This operation will take seconds)")
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="class", layer_name=layersToEvaluate, labels=labelsDict)
-	print(selIdx)
+	"""
+	The selIdx that is returned for index 'class' has a little different property. It's an heterogeneus array, that contains
+	a for each position a tuple ('label','value'). Cause his content is a tuple you can access in the next forms:
+	selIdx = {'class': [list of tuples for layer 1] --> ('goldfish',0.25)
+													--> ('mousetrap',0.41)
+													--> ('goldfish', 0.009)
+					   [list of tuples for layer 2] --> ('chair',0.72)
+													--> ('cherry',0.08)
+													--> ('goldfish', 0.95)
+	print(selIdx['class'][0][1]) ----> ('mousetrap',0.41)
+	print(selIdx['class'][0][1][1]) ----> 0.41
+	print(selIdx['class'][0]['label']) ----> ['goldfish','mousetrap','goldfish]
+	print(selIdx['class'][0]['value']) ----> [0.25,0.41,0.009]
+
+	NOTE: 'label', and 'value' are the important names to remember. (Working like pandas)
+	"""
+	print("Class selectivity index contains an structured tuples ('label','value') you can acces to all only labels or all"
+		  "only value attributes. Keys: "+str(selIdx['class'][0].dtype.names))
+
+	for layer_idx, layer_name in enumerate(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate)):
+		print("---------------- LAYER "+layer_name.upper()+" ----------------\n"
+			  "Class with higher selectivity index and his index: "+
+			  str(selIdx['class'][layer_idx][np.argmax(selIdx['class'][layer_idx]['value'])])+
+			  "\n Mean idx of class selecitivity: "+ str(np.mean(selIdx['class'][layer_idx]['value'])))
 
 """
 Looks each neuron symmetry selectivity on the network
@@ -167,10 +230,13 @@ def example5NetworkEvaluation():
 	#This function will have the evaluation. All parameters setted in example4 are also parameters of this function. If
 	#user don't set it in .evalNetwork(...) takes by default the values of nefesiModel object
 	print("Let's start to evaluate network. This process is based on dataset and the time that spent is depenent of the "
-		  "size of it. Is recommended to use have a visible GPU for this process "
-		  "(os.environment[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
+		  "size of it. Is recommended to have a visible GPU for this process "
+		  "(os.environ[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
 		  "GO TO EVALUATE! :)")
+	start = time.time()
 	nefesiModel.eval_network(verbose=True)
+	print("TIME ELAPSED: "+str(time.time()-start))
+
 	print("Evaluation finished, nefesiObject have now the info of analysis and results can be reloaded with files (.obj)"
 		  "in dir --> "+nefesiModel.save_path)
 
@@ -206,7 +272,7 @@ def example4FullFillNefesiInstance():
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	nefesiModel.layers_data = "block(1)_conv1"#|3|5
+	nefesiModel.layers_data = "block(1)_conv(1|2)"#|3|5
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
@@ -219,7 +285,7 @@ def chargeNefesiImageDataset():
 	Nefesi uses a ImageDataset to evaluate the features of the network. This Dataset is specified as an object, and have
 	 the preproces of each image (resize, crop... or specific function), in order to give to an heterogeneus dataset a list
 	 of well known caractheristics (As size, color space...).
-	Imports needed: from nefesi.util.image import ImageDataset
+	Imports needed: from nefesi.util.image import ImageDataset, preprocess_input
 	:return: ImageDataset instance, that represents de Dataset that will be used to evaluate the network
 	"""
 	#the path from where images will be taken must to have the next architecture:
@@ -227,15 +293,15 @@ def chargeNefesiImageDataset():
 	ClassAFolder -> Img1, Img2, Img3...
 	ClassBFolder -> Img1, Img2, Img3...
 	"""
-	path = '../Datasets/TinyImagenet/trainSubset/'
+	path = '../Datasets/Tiny/'
 	#target_size is the size of the images will be resized and cropped before to put in the net, in this case the best
 	#option is to set as (224 (height), 224 (width)) cause this is the input size of VGG16.
 	targetSize = (224,224)
 	#the color mode selected ('rgb' or 'grayscale') is the color mode to READ the images, not the internal treatment colorMode.
 	#In the most cases it will be 'rgb', cause is the common input of the nets and have more info than 'grayscale'.
 	colorMode = 'rgb'
-	#Calls to constructor
-	dataset = ImageDataset(src_dataset=path, target_size=targetSize,preprocessing_function=None, color_mode=colorMode)
+	#Calls to constructor. Preprocess_input is the function that applies the preprocess with the VGG16 was trained.
+	dataset = ImageDataset(src_dataset=path, target_size=targetSize,preprocessing_function=preprocess_input, color_mode=colorMode)
 
 	return dataset
 
@@ -302,9 +368,3 @@ def saveModel(model,path='', name='myModel'):
 		path = path+'/'
 	# Save the model (model) locally
 	model.save(path+name)
-
-if __name__ == '__main__':
-    # print os.path.dirname(os.path.abspath(__file__))
-    # print os.getcwd()
-
-    main()
