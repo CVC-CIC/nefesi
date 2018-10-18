@@ -112,6 +112,8 @@ class NeuronWindow(object):
         image_name = self.neuron.images_id[self.actual_img_index]
         path_sep = get_path_sep(image_name)
         label = image_name[:image_name.index(path_sep)]
+        if self.network_data.default_labels_dict is not None:
+            label = self.network_data.default_labels_dict[label]
         return label
 
 
