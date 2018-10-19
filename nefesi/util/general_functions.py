@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import math
 import os
 import shutil
-
+import PIL
 from ..symmetry_index import SYMMETRY_AXES
+from ..read_activations import get_one_neuron_activations
 
 try:
     from tkinter import *
@@ -71,6 +72,33 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
                     """
 
     return positions
+
+
+def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False):
+    """
+    Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
+    neuron_idx of layer layer_name
+    :param network_data: Network_data object representing the nefesi network
+    :param image_name: the name of the image to analyze
+    :param layer_name: the name of the layer of the network where is the neuron to analyze
+    :param neuron_idx: the index of the neuron to analyze
+    :param as_numpy: get the result as a numpy array
+    :return: An image that is the original image with a mask of the activation camp superposed
+    """
+    input = network_data.dataset._load_image(image_name, as_numpy=True,
+                                                  prep_function=True)[np.newaxis, ...]
+    activations = get_one_neuron_activations(model=network_data.model, layer_name=layer_name,
+                                             idx_neuron=neuron_idx, model_inputs=input)[0]
+
+    norm_activations = activations / np.max(activations)
+    norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).resize((224, 224), PIL.Image.BILINEAR))
+
+    img = network_data.dataset._load_image(image_name, as_numpy=True).astype(np.float)
+    img[norm_activations_upsampled < 0.005] *= 0.25
+    if as_numpy:
+        return img
+    else:
+        return PIL.Image.fromarray(img.astype('uint8'), 'RGB')
 
 
 

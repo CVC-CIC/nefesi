@@ -76,10 +76,10 @@ class NeuronWindow(object):
 
         self.panel_image = Label(master=image_frame, image=img)
         self.panel_image.image = img
-        self.panel_image.bind("<Double-Button-1>",self.event_controller._on_image_click)
-        decrease_button = Button(master=image_frame, text='◀', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
+        self.panel_image.bind("<Double-Button-1>",lambda event: self.event_controller._on_image_click(event, self.layer_to_evaluate, self.neuron_idx))
+        decrease_button = Button(master=image_frame, text='<', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
-        increase_button = Button(master=image_frame, text='▶', command=lambda: self.event_controller._on_increase_click(self.panel_image,
+        increase_button = Button(master=image_frame, text='>', command=lambda: self.event_controller._on_increase_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
         increase_button.pack(side=RIGHT, fill='y')
         decrease_button.pack(side=LEFT,fill='y')
@@ -128,21 +128,6 @@ class NeuronWindow(object):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        """
-        #ERASE THIS SHIT
-        if self.with_activations:
-            location = self.neuron.xy_locations[self.actual_img_index]
-            input = self.network_data.dataset._load_image(self.neuron.images_id[self.actual_img_index],as_numpy=True)[np.newaxis,...]
-            activations = get_for_pixel_activation(model=self.network_data.model, layer_name=self.layer_to_evaluate,
-                                       idx_neuron=self.neuron_idx, images=input,
-                                     correct_location=location, rmap= self.layer_data.receptive_field_map, shape = new_image.size)
-            norm_activations = activations/np.max(activations)
-            #norm_activations = np.interp(norm_activations, (norm_activations.min(), norm_activations.max()), (0.2, 1))
-            norm_activations[norm_activations>=0.25] = 1
-            norm_activations[norm_activations <= 0.15] = 0.05
-            new_image = np.array(new_image)*norm_activations[...,np.newaxis]
-            new_image = Image.fromarray(new_image.astype('uint8'), 'RGB')
-        """
         new_image = new_image.resize(self.image_actual_size,Image.ANTIALIAS)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)

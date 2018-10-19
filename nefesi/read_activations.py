@@ -163,18 +163,3 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]
     # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
     return activations
-#TODO: REPAIR IT
-def get_for_pixel_activation(images, model, layer_name, idx_neuron, correct_location,rmap,shape):
-    x,y = correct_location
-    ri,_,_,_ = rmap[x,y]
-    size = shape[0]
-    hop=max(ri-rmap[x-1,y][0],rmap[x+1,y][0]-ri)
-    range_size = int(size/hop)
-    first_x,first_y = x-range_size, y-range_size
-    range_x, range_y = np.arange(first_x, first_x+size),  np.arange(first_y, first_y+size)
-    range_x = np.clip(range_x, a_min=0, a_max=len(rmap)-1)
-    range_y = np.clip(range_y, a_min=0, a_max=len(rmap)-1)
-    x_range,y_range = np.meshgrid(range_x,range_y)
-    total_activations = get_one_neuron_activations(model, images,
-                                                       idx_neuron=idx_neuron, layer_name=layer_name)[0]
-    return total_activations[x_range,y_range]
