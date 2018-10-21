@@ -1,8 +1,11 @@
+from anytree import RenderTree
+
 from .one_layer_popup_window import OneLayerPopupWindow
 
 IMAGE_BIG_DEFAULT_SIZE = (800,800)
 IMAGE_SMALL_DEFAULT_SIZE = (450,450)
 ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
+TREE_THRESHOLD = 50
 #That have with images of A are the column of A
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
@@ -11,7 +14,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from skimage.draw import line_aa
 import math
 
-from ...class_index import get_path_sep
+from ...class_index import get_path_sep,get_hierarchical_population_code_idx
 from ...util.interface_plotting import get_one_neuron_plot, plot_similar_neurons
 
 try:
@@ -234,7 +237,22 @@ class NeuronWindow(object):
             elif label == 'class':
                 text = ' Class: '+ str(round(idx[-1], ndigits=3))+' ('+str(idx[0])+')'
             elif label == 'population code':
-                text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)
+                text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)+'\n' \
+                        ' Semantical Hierarchy: \n'
+                try:
+                    tree = get_hierarchical_population_code_idx(self.network_data.get_neuron_of_layer(layer=self.layer_to_evaluate,
+                                                                                                neuron_idx=self.neuron_idx),
+                                                                                                threshold_pc=thr_pc,
+                                                                                                population_code = idx,
+                                                                                                class_sel = 1.)
+                    for pre, _, node in RenderTree(tree):
+                        name = node.name if type(node.name) is str else node.name[0]
+                        treestr = u"%s%s" % (pre, name)
+                        if len(treestr)>TREE_THRESHOLD:
+                            treestr = treestr[:TREE_THRESHOLD-3]+'...'
+                        text += treestr.ljust(TREE_THRESHOLD) +' '+ str(node.rep)+' ('+str(round(node.freq,2)) + ')\n'
+                except:
+                    pass
             elif label == 'concept':
                 text = 'Concept: '
                 for level_idx, level in enumerate(idx):

@@ -5,6 +5,8 @@ import math
 import os
 import shutil
 import PIL
+from anytree import Node, RenderTree
+import xml.etree.ElementTree as ET
 from ..symmetry_index import SYMMETRY_AXES
 from ..read_activations import get_one_neuron_activations
 
@@ -73,6 +75,38 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
 
     return positions
 
+def get_hierarchy_of_label(labels, freqs, xml, population_code=0, class_sel=0):
+    if type(xml) is str:
+        xml = ET.parse(xml)
+    humanLists = []
+    for label, freq in zip(labels, freqs):
+        xPath = './/synset[@wnid="'+label+'"]'
+        result = xml.find(xPath)
+        humanList = []
+        while len(result.attrib) is not 0:
+
+            humanList.append((result.attrib['words'],freq))
+            xPath+='/..'
+            result = xml.find(xPath)
+        humanLists.append(humanList)
+
+    hierarchy = {'root': Node('root', freq=class_sel, rep=population_code)}
+    for humanList in humanLists:
+        parent = humanList[-1][0]
+        if parent not in hierarchy:
+            hierarchy[parent] = Node(parent,parent=hierarchy['root'], freq = humanList[-1][1], rep=1)
+        else:
+            hierarchy[parent].freq += humanList[-1][1]
+            hierarchy[parent].rep += 1
+        for i in range(len(humanList)-2,-1,-1):
+            if humanList[i][0] not in hierarchy:
+                hierarchy[humanList[i][0]] = Node(humanList[i],parent=hierarchy[parent], freq = humanList[-1][1], rep=1)
+            else:
+                hierarchy[humanList[i][0]].freq += humanList[-1][1]
+                hierarchy[humanList[i][0]].rep += 1
+            parent = humanList[i][0]
+
+    return hierarchy['root']
 
 def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False):
     """

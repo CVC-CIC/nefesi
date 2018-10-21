@@ -163,3 +163,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]
     # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
     return activations
+
+def get_activation_mask(image, model, layer_name, idx_neuron):
+    total_activations = get_one_neuron_activations(model, image,
+                                                   idx_neuron=idx_neuron, layer_name=layer_name)[0]
