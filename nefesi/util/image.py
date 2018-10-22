@@ -136,7 +136,7 @@ class ImageDataset(object):
                                                             #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
         return images
 
-    def get_patch(self, img_name, crop_pos):
+    def get_patch(self, img_name, crop_pos=None):
         """Returns a region patch from an image.
 
         :param img_name: String, name of the image.
@@ -146,6 +146,9 @@ class ImageDataset(object):
         :return: PIL image instance.
         """
         img = self._load_image(img_name)
+        if crop_pos is None:
+            return img
+
         ri, rf, ci, cf = crop_pos
         im_crop = img.crop((ci, ri, cf, rf))
         return im_crop

@@ -150,11 +150,14 @@ class NeuronData(object):
         image_dataset = network_data.dataset
         receptive_field = layer_data.receptive_field_map
         rf_size = layer_data.receptive_field_size
-        crop_positions = receptive_field[self.xy_locations[:,0],self.xy_locations[:,1]]
+        if layer_data.receptive_field_map is not None:
+            crop_positions = receptive_field[self.xy_locations[:,0],self.xy_locations[:,1]]
+        else:
+            crop_positions = [None]*self.xy_locations.shape[0]
 
         #First iteration of for, maded first in order to set the output array size
         patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
-        if rf_size != patch.size:
+        if rf_size is not None and rf_size != patch.size:
             patch = self._adjust_patch_size(patch, crop_positions[0], rf_size)
         if as_numpy:
             patch = image.img_to_array(patch)
@@ -171,7 +174,7 @@ class NeuronData(object):
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
-            if rf_size != patch.size:
+            if  rf_size is not None and rf_size != patch.size:
                 patch = self._adjust_patch_size(patch,crop_pos, rf_size)
             if as_numpy:
                 patch = image.img_to_array(patch)
@@ -190,19 +193,20 @@ class NeuronData(object):
             patch = self._adjust_patch_size(patch, crop_position, rf_size)
         return patch
     def _adjust_patch_size(self, patch, crop_position, rf_size):
-        w, h = patch.size
-        ri, rf, ci, cf = crop_position
         bl, bu, br, bd = (0, 0, 0, 0)
-        if rf_size[0] != w:
-            if ci == 0:
-                bl = rf_size[0] - w
-            else:
-                br = rf_size[0] - w
-        if rf_size[1] != h:
-            if ri == 0:
-                bu = rf_size[1] - h
-            else:
-                bd = rf_size[1] - h
+        if crop_position is not None:
+            w, h = patch.size
+            ri, rf, ci, cf = crop_position
+            if rf_size[0] != w:
+                if ci == 0:
+                    bl = rf_size[0] - w
+                else:
+                    br = rf_size[0] - w
+            if rf_size[1] != h:
+                if ri == 0:
+                    bu = rf_size[1] - h
+                else:
+                    bd = rf_size[1] - h
         return ImageOps.expand(patch, (bl, bu, br, bd))
 
     def print_params(self):

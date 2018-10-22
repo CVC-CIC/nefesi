@@ -24,6 +24,7 @@ examples/ade20k1.py
 examples/Pruebas ADE20K.py
 *.zip
 *.cfg
+*.obj
 nefesi/util/bg_image2.jpg
 nefesi/util/bg_image.png
 nefesi/util/bg_image.jpg

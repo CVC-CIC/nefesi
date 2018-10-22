@@ -14,7 +14,9 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True)
     """
 
     if layer_data.receptive_field_map is None:
-        layer_data.mapping_rf(network_data.model)
+        oshape = network_data.model.layers[find_layer_idx(network_data.model, layer_data.layer_id)].output_shape
+        if len(oshape)==3:
+            layer_data.mapping_rf(network_data.model)
 
     for i, neuron in enumerate(layer_data.neurons_data):
         if neuron.norm_activations is not None:
@@ -63,7 +65,11 @@ def get_each_point_receptive_field(model, layer_name):
         on the input image. The exact position of the receptive field from an image.
     """
     current_layer_idx = find_layer_idx(model, layer_name=layer_name)
-    _, w, h, _ = model.layers[current_layer_idx].output_shape
+    if len(model.layers[current_layer_idx].output_shape)>2:
+        _, w, h, _ = model.layers[current_layer_idx].output_shape
+    else:
+        h = 1
+        _, w = model.layers[current_layer_idx].output_shape
     w_mesh, h_mesh = np.meshgrid(range(h), range(w))
     # array order --> row_ini, row_fin, col_ini, col_fin
     image_points = np.array([h_mesh.flatten(),h_mesh.flatten(), w_mesh.flatten(),w_mesh.flatten()],dtype=np.int32).\
@@ -77,6 +83,8 @@ def get_each_point_receptive_field(model, layer_name):
         #REVIEW IF W AND H ARE CORRECT!!!!!!!!!!!
         if len(current_layer.input_shape) == 4:
             _, current_size_w, current_size_h, _ = current_layer.input_shape
+        else:
+            current_size_w, current_size_h = (float('Inf'), float('Inf'))
         #Checks to boundaries of the current layer shape.
         image_points[:,:,[0,2]] = np.maximum(image_points[:,:,[0,2]],0)
         image_points[:,:,1] = np.minimum(image_points[:,:,1], current_size_w - 1)
