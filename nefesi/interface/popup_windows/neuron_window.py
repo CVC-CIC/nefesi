@@ -29,7 +29,6 @@ from ...util.general_functions import mosaic_n_images, add_red_separations, dest
     addapt_widget_for_grid
 from PIL import ImageTk, Image
 from ..EventController import EventController
-from ...read_activations import get_activation_from_pos,get_one_neuron_activations,get_for_pixel_activation
 
 class NeuronWindow(object):
     def __init__(self, master, network_data, layer_to_evaluate, neuron_idx, image_actual_size=IMAGE_SMALL_DEFAULT_SIZE):
