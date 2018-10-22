@@ -1,8 +1,11 @@
+from anytree import RenderTree
+
 from .one_layer_popup_window import OneLayerPopupWindow
 
 IMAGE_BIG_DEFAULT_SIZE = (800,800)
 IMAGE_SMALL_DEFAULT_SIZE = (450,450)
 ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
+TREE_THRESHOLD = 50
 #That have with images of A are the column of A
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
@@ -11,7 +14,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from skimage.draw import line_aa
 import math
 
-from ...class_index import get_path_sep
+from ...class_index import get_path_sep,get_hierarchical_population_code_idx
 from ...util.interface_plotting import get_one_neuron_plot, plot_similar_neurons
 
 try:
@@ -26,7 +29,6 @@ from ...util.general_functions import mosaic_n_images, add_red_separations, dest
     addapt_widget_for_grid
 from PIL import ImageTk, Image
 from ..EventController import EventController
-from ...read_activations import get_activation_from_pos,get_one_neuron_activations,get_for_pixel_activation
 
 class NeuronWindow(object):
     def __init__(self, master, network_data, layer_to_evaluate, neuron_idx, image_actual_size=IMAGE_SMALL_DEFAULT_SIZE):
@@ -76,10 +78,10 @@ class NeuronWindow(object):
 
         self.panel_image = Label(master=image_frame, image=img)
         self.panel_image.image = img
-        self.panel_image.bind("<Double-Button-1>",self.event_controller._on_image_click)
-        decrease_button = Button(master=image_frame, text='◀', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
+        self.panel_image.bind("<Double-Button-1>",lambda event: self.event_controller._on_image_click(event, self.layer_to_evaluate, self.neuron_idx))
+        decrease_button = Button(master=image_frame, text='<', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
-        increase_button = Button(master=image_frame, text='▶', command=lambda: self.event_controller._on_increase_click(self.panel_image,
+        increase_button = Button(master=image_frame, text='>', command=lambda: self.event_controller._on_increase_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
         increase_button.pack(side=RIGHT, fill='y')
         decrease_button.pack(side=LEFT,fill='y')
@@ -112,6 +114,8 @@ class NeuronWindow(object):
         image_name = self.neuron.images_id[self.actual_img_index]
         path_sep = get_path_sep(image_name)
         label = image_name[:image_name.index(path_sep)]
+        if self.network_data.default_labels_dict is not None:
+            label = self.network_data.default_labels_dict[label]
         return label
 
 
@@ -126,21 +130,6 @@ class NeuronWindow(object):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        """
-        #ERASE THIS SHIT
-        if self.with_activations:
-            location = self.neuron.xy_locations[self.actual_img_index]
-            input = self.network_data.dataset._load_image(self.neuron.images_id[self.actual_img_index],as_numpy=True)[np.newaxis,...]
-            activations = get_for_pixel_activation(model=self.network_data.model, layer_name=self.layer_to_evaluate,
-                                       idx_neuron=self.neuron_idx, images=input,
-                                     correct_location=location, rmap= self.layer_data.receptive_field_map, shape = new_image.size)
-            norm_activations = activations/np.max(activations)
-            #norm_activations = np.interp(norm_activations, (norm_activations.min(), norm_activations.max()), (0.2, 1))
-            norm_activations[norm_activations>=0.25] = 1
-            norm_activations[norm_activations <= 0.15] = 0.05
-            new_image = np.array(new_image)*norm_activations[...,np.newaxis]
-            new_image = Image.fromarray(new_image.astype('uint8'), 'RGB')
-        """
         new_image = new_image.resize(self.image_actual_size,Image.ANTIALIAS)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)
@@ -247,7 +236,22 @@ class NeuronWindow(object):
             elif label == 'class':
                 text = ' Class: '+ str(round(idx[-1], ndigits=3))+' ('+str(idx[0])+')'
             elif label == 'population code':
-                text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)
+                text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)+'\n' \
+                        ' Semantical Hierarchy: \n'
+                try:
+                    tree = get_hierarchical_population_code_idx(self.network_data.get_neuron_of_layer(layer=self.layer_to_evaluate,
+                                                                                                neuron_idx=self.neuron_idx),
+                                                                                                threshold_pc=thr_pc,
+                                                                                                population_code = idx,
+                                                                                                class_sel = 1.)
+                    for pre, _, node in RenderTree(tree):
+                        name = node.name if type(node.name) is str else node.name[0]
+                        treestr = u"%s%s" % (pre, name)
+                        if len(treestr)>TREE_THRESHOLD:
+                            treestr = treestr[:TREE_THRESHOLD-3]+'...'
+                        text += treestr.ljust(TREE_THRESHOLD) +' '+ str(node.rep)+' ('+str(round(node.freq,2)) + ')\n'
+                except:
+                    pass
             elif label == 'concept':
                 text = 'Concept: '
                 for level_idx, level in enumerate(idx):

@@ -333,7 +333,7 @@ def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc
     hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=valids_ids[i])
-        top = get_ntop_population_code(neuron_data=neuron,threshold_pc=thr_pc)
+        top = get_ntop_population_code(neuron_data=neuron,threshold_pc=thr_pc,labels=network_data.default_labels_dict)
         top_len = len(top)
         ntop = top[:np.minimum(n,top_len)]
         text = ''

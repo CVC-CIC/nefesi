@@ -1,7 +1,7 @@
 import numpy as np
 import os
+from .util import general_functions as gf
 from . import read_activations as read_act
-
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
@@ -157,6 +157,22 @@ def get_population_code_idx(neuron_data, labels=None, threshold_pc=0.1):
     else:
         #classes with relative  frequency more than threshold_pc
         return np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
+
+def get_hierarchical_population_code_idx(neuron_data, xml='../nefesi/imagenet_structure.xml', threshold_pc=0.1,
+                                         population_code=0, class_sel=0):
+    """Returns the population code index value
+
+    :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
+    :param labels: Dictionary, key: name class, value: label class.
+    :param threshold_pc: Float. Threshold to consider that neuron is well selective to a class
+
+    :return: Integer, population code value. (Number of classes with frequency higher to threshold_pc in N-top activations
+    """
+    rel_freq = relative_freq_class(neuron_data, None)
+    rel_freq = rel_freq[rel_freq['rel_freq'] >= threshold_pc]
+    tree = gf.get_hierarchy_of_label(rel_freq['label_name'], rel_freq['rel_freq'], xml,population_code,class_sel)
+    return tree
+
 
 def get_ntop_population_code(neuron_data, labels=None, threshold_pc=0.1, n=5):
     rel_freq = relative_freq_class(neuron_data, labels)

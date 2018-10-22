@@ -8,7 +8,7 @@ except ImportError:
 
 from .popup_windows.neuron_window import IMAGE_BIG_DEFAULT_SIZE, IMAGE_SMALL_DEFAULT_SIZE
 from ..util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
-    get_listbox_selection
+    get_listbox_selection, get_image_masked
 from .popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
 import numpy as np
 from PIL import ImageTk, Image
@@ -193,12 +193,17 @@ class EventController():
         self.interface.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
         self.interface.update_decomposition_panel(panel=panel)
 
-    def _on_image_click(self, event):
+    def _on_image_click(self, event,layer_name, idx_neuron):
         mosaic_n_images(self.interface.neuron.get_patches(network_data=self.interface.network_data,
                                                 layer_data=self.interface.network_data.get_layer_by_name(
                                                     self.interface.layer_to_evaluate)))
         actual_idx = self.interface.actual_img_index
-        complete_image = self.interface.network_data.dataset._load_image(self.interface.neuron.images_id[actual_idx])
+        image_name = self.interface.neuron.images_id[actual_idx]
+        #complete_image = self.interface.network_data.dataset._load_image(self.interface.neuron.images_id[actual_idx])
+        complete_image = get_image_masked(network_data=self.interface.network_data,
+                         image_name=image_name,
+                                          layer_name=layer_name, neuron_idx=idx_neuron)
+
         np_image = np.array(complete_image)
         layer_data = self.interface.network_data.get_layer_by_name(layer=self.interface.layer_to_evaluate)
         receptive_field = layer_data.receptive_field_map
@@ -224,7 +229,9 @@ class EventController():
         cropped_image = Image.fromarray(np_cropped.astype('uint8'), 'RGB')
         cropped_image = ImageTk.PhotoImage(cropped_image)
         ReceptiveFieldPopupWindow(master=self.interface.window, image_complete=complete_image, image_cropped=cropped_image,
-                                  x_len=x_len, y_len=y_len)
+                                  x_len=x_len, y_len=y_len,
+                                  image_name=image_name, layer_name=layer_name,neuron_idx=idx_neuron,
+                                interface = self.interface,x0=x0,x1=x1,y0=y0,y1=y1)
 
     def _on_nf_changed(self, event, combo):
         selection = combo.get()

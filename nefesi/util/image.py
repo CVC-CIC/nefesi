@@ -150,7 +150,7 @@ class ImageDataset(object):
         im_crop = img.crop((ci, ri, cf, rf))
         return im_crop
 
-    def _load_image(self, img_name, as_numpy = False):
+    def _load_image(self, img_name, as_numpy = False,prep_function=False):
         """Loads an image into PIL format.
 
         :param img_name: String, name of the image.
@@ -158,15 +158,21 @@ class ImageDataset(object):
         :return: PIL image instance
         """
         grayscale = self.color_mode == 'grayscale'
-        if not as_numpy:
-            return image.load_img(self.src_dataset + img_name,
-                              grayscale=grayscale,
-                              target_size=self.target_size)
-        else:
-            return np.array(image.load_img(self.src_dataset + img_name,
-                              grayscale=grayscale,
-                              target_size=self.target_size))
 
+        img = image.load_img(self.src_dataset + img_name,
+                       grayscale=grayscale,
+                       target_size=self.target_size)
+
+        if self.preprocessing_function is not None and prep_function:
+            img = np.array(img)
+            img = self.preprocessing_function(img)
+            if as_numpy:
+                return img
+            else:
+                img = image.fromarray(img)
+        if as_numpy:
+            img = np.array(img)
+        return img
 
 
     def get_concepts_of_region(self, image_name, crop_pos,  normalized = True, dataset_name='ADE20K',
