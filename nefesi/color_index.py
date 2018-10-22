@@ -5,11 +5,7 @@ from nefesi import read_activations
 from nefesi.util.image import rgb2opp, image2max_gray
 
 
-<<<<<<< HEAD
 def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='ivet'):
-=======
-def get_color_selectivity_index(neuron_data, model, layer_data, dataset, type='no-ivet'):
->>>>>>> fb6a3ecb602fd54815a9e4c3832d001c37bdfbd6
     """Returns the color selectivity index for a neuron (`neuron_data`).
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
