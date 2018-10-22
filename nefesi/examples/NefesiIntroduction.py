@@ -6,8 +6,8 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
 
-from ..network_data import NetworkData
-from ..util.image import ImageDataset
+from nefesi.network_data import NetworkData
+from nefesi.util.image import ImageDataset
 import numpy as np
 import time
 
@@ -16,15 +16,15 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
 
 def main():
-	#example1SaveModel() #Charge a standard model and save it locally
-	#example2ChargeModel() #Charge a model locally
-	#example3NefesiInstance()
-	#example4FullFillNefesiInstance()
 	start = time.time()
-	#example5NetworkEvaluation()
-	print("TIME ELAPSED: "+str(time.time()-start))
+	#example1SaveModel(VGG16) #Charge a standard model and save it locally
+	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
+	#example3NefesiInstance('../Data/VGG16.h5')
+	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '~/work/nefesi/Data2/')
+	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/Tiny/', '~/work/nefesi/Data2/')
 	#example6LoadingResults()
-	example7AnalyzingResults()
+	#example7AnalyzingResults()
+	print("TIME ELAPSED: "+str(time.time()-start))
 
 """
 Analyze the results of the evaluation
@@ -51,6 +51,7 @@ def populationCode(nefesiModel):
 	# degrees_orientation_idx 180 will be only one rotation
 	selIdx = nefesiModel.get_selectivity_idx(sel_index="population code", layer_name=layersToEvaluate)
 	print("a")
+
 def orientationSelectivity(nefesiModel):
 	"""
 	Orientation selectivity is an index that specifies, how much the neuron is resistent to image rotations.
@@ -217,7 +218,7 @@ def example6LoadingResults():
 Makes the network evaluation. This is a kernel part of Nefesi package, and will generate the files that after will be
 used to analyze the network.
 """
-def example5NetworkEvaluation():
+def example5NetworkEvaluation(model_file_name, dataset_folder, save_folder):
 	"""
 	Nefesi will eval the network, and save results in a directory nefesiModel.save_path (setted at last example as
 	"../Data/" . In this directory will appears a list of '.obj' files. One per layer evaluated and all with the name
@@ -226,7 +227,7 @@ def example5NetworkEvaluation():
 	one with the content of block1_conv1.obj and his own content (block2_conv2). The reason of it is because when you
 	will charge a .obj in order to analyze results, you will only charge one file to analyze all layers).
 	"""
-	nefesiModel = example4FullFillNefesiInstance()
+	nefesiModel = example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 	#This function will have the evaluation. All parameters setted in example4 are also parameters of this function. If
 	#user don't set it in .evalNetwork(...) takes by default the values of nefesiModel object
 	print("Let's start to evaluate network. This process is based on dataset and the time that spent is depenent of the "
@@ -245,21 +246,23 @@ Full fills the NetworkData object. By the nature of the analisi, this will be ba
 the specification of layers to be analyzed (beacause not all layers will have sense to analyze (like input layer), and
 the path to save the results. In this example is explained how to set this parameters correctly.
 """
-def example4FullFillNefesiInstance():
+def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder):
 	"""
 	Nefesi analisys is based on neuron activations produced by a dataset of example images. This analisis produces a results
 	based in the input images (Mean of activations, N-Top Images...) for this reason the NetworkData object needs to be
 	associated with a dataset, that is from where Nefesi take this images
 	"""
 	#Take the instance (of previous example)
-	nefesiModel = example3NefesiInstance()
+	nefesiModel = example3NefesiInstance(model_file_name)
 	#Set the dataset that will be use in analisis
-	nefesiModel.dataset = chargeNefesiImageDataset()
+	nefesiModel.dataset = chargeNefesiImageDataset(dataset_folder)
 	print("Dataset saved correctly and assigned to Nefesi object (NetworkData) correctly")
 	#save_path atttribute save the path where results will be saved. This attribute (same as dataset) is optional, because
 	#can be initialized in function nefesiModel.eval_network(...) that will see in next example
-	nefesiModel.save_path = "../Data/"
+	nefesiModel.save_path = save_folder
 	print("Path to save results saved correctly --> "+nefesiModel.save_path)
+	layer_names = [l.name for l in nefesiModel.model.layers]
+	print (layer_names)
 	"""
 	Nefesi analysis is selected by layers. The param layer_data indicates the layers that will be analyzed.
 	For example in VGG16 this are the list of layers that contains:
@@ -272,7 +275,8 @@ def example4FullFillNefesiInstance():
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	nefesiModel.layers_data = "block(1)_conv1"#|3|5
+	#nefesiModel.layers_data = "block(1)_conv1"#|3|5
+	nefesiModel.layers_data = "fc1"
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
@@ -280,7 +284,7 @@ def example4FullFillNefesiInstance():
 """
 Instantiate a NefesiImageDataset instance.
 """
-def chargeNefesiImageDataset():
+def chargeNefesiImageDataset(dataset_folder):
 	"""
 	Nefesi uses a ImageDataset to evaluate the features of the network. This Dataset is specified as an object, and have
 	 the preproces of each image (resize, crop... or specific function), in order to give to an heterogeneus dataset a list
@@ -294,6 +298,7 @@ def chargeNefesiImageDataset():
 	ClassBFolder -> Img1, Img2, Img3...
 	"""
 	path = '../Datasets/TinyImagenet/trainSubset/'
+
 	#target_size is the size of the images will be resized and cropped before to put in the net, in this case the best
 	#option is to set as (224 (height), 224 (width)) cause this is the input size of VGG16.
 	targetSize = (224,224)
@@ -301,35 +306,35 @@ def chargeNefesiImageDataset():
 	#In the most cases it will be 'rgb', cause is the common input of the nets and have more info than 'grayscale'.
 	colorMode = 'rgb'
 	#Calls to constructor. Preprocess_input is the function that applies the preprocess with the VGG16 was trained.
-	dataset = ImageDataset(src_dataset=path, target_size=targetSize,preprocessing_function=preprocess_input, color_mode=colorMode)
+	dataset = ImageDataset(src_dataset=dataset_folder, target_size=targetSize, preprocessing_function=preprocess_input, color_mode=colorMode)
 
 	return dataset
 
 """
 Charges a model locally and instance a NetworkData object (The main class of Nefesi package)
 """
-def example3NefesiInstance():
+def example3NefesiInstance(file_name):
 	"""
 	Nefesi is an useful library for analize a CNN. The main Nefesi class is NetworkData that receives as a constructor
 	 parameter only the model (keras.models.Model instance).
 	Imports needed: from nefesi.network_data import NetworkData
 	"""
-	model = example2ChargeModel() #Charges the model from a local file
+	model = example2ChargeModel(file_name) #Charges the model from a local file
 	nefesiModel = NetworkData(model=model) #Instantiate the NetworkData object
 	print("Nefesi object (NetworkData) instantiated")
 	return nefesiModel
 """
 Charge a model (keras.models.Model instace) from a local .h5 file
 """
-def example2ChargeModel():
+def example2ChargeModel(file_name):
 	"""
 		If you have a model (saved in a .h5 file) Keras allows you to recharge it with a simple load_model('filepath')
 		 one instruction. It is usefull to combine with example1, to open, modify, save and charge your own models.
 		Imports needed: from keras.models import load_model
 	"""
-	print("Loading VGG16.h5 model")
+	print(f"Loading {file_name} model")
 
-	model = load_model('../Data/VGG16.h5')
+	model = load_model(file_name)
 
 	print("Model loaded. \n Many times, when model is loaded, 'UserWarning: No training configuration found in save file' can be raised. "
 		  "This is because the model saved was not compiled (model.compile(...)). This warning is not rellevant if you "
@@ -339,7 +344,7 @@ def example2ChargeModel():
 """
 Charge a standard model (keras.models.Model instance) from Keras library and save it locally
 """
-def example1SaveModel():
+def example1SaveModel(model_function, path_name):
 	"""
 	Keras have some famous models in the library that can be charged. NOTE: This models will be downloaded from
 	his GitHub source when constructor is called. That call needs an Internet connection. Another way to charge
@@ -348,24 +353,22 @@ def example1SaveModel():
 	"""
 	# Charge VGG16 model (downloads from github Source -->
 	# https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5)
-	print("Charging VGG16 model")
+	print(f"Charging model {model_function.__name__}")
 
-	model = VGG16()
+	model = model_function()
 
-	print("Model charge, saving model at ../Data/VGG16.h5")
+
 	# Save the model locally on path+name.h5 file.
-	saveModel(model=model, path='../Data/', name='VGG16')  # Save it locally
-
-"""
-Save model in Keras is so easy one instruction. A model object type has the method "save('fileName.h5')" that
-saves all the model in a local file
-"""
-def saveModel(model,path='', name='myModel'):
-	#The file format of keras models is '.h5'
-	if not name.endswith('.h5'):
-		name = name+'.h5'
-	if not path.endswith('/'):
-		path = path+'/'
+	import os
+	file_name = os.path.join(path_name, model_function.__name__)
+	if not file_name.endswith('.h5'):
+		file_name = file_name+'.h5'
+	print(f"Model charged, saving model at {file_name}")
+	"""
+	Save model in Keras is so easy one instruction. A model object type has the method "save('fileName.h5')" that
+	saves all the model in a local file
+	"""
 	# Save the model (model) locally
-	model.save(path+name)
+	model.save(file_name)
 
+main()
