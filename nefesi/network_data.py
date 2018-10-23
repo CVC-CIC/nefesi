@@ -12,6 +12,10 @@ from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
 from .util.image import ImageDataset
 
+import nefesi.util.GPUtil as gpu
+gpu.assignGPU()
+
+
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
 #'concept' is special, (non all datasets accept it)
 ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
