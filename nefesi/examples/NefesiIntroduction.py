@@ -12,7 +12,7 @@ import numpy as np
 import time
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import pickle
 
 def main():
@@ -20,8 +20,8 @@ def main():
 	#example1SaveModel(VGG16) #Charge a standard model and save it locally
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
 	#example3NefesiInstance('../Data/VGG16.h5')
-	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '~/work/nefesi/Data2/')
-	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/Tiny/', '~/work/nefesi/Data2/')
+	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
+	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5',  '/data/local/datasets/ImageNet/train/', '/home/ramon/work/nefesi/Data2/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	print("TIME ELAPSED: "+str(time.time()-start))
@@ -235,7 +235,7 @@ def example5NetworkEvaluation(model_file_name, dataset_folder, save_folder):
 		  "(os.environ[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
 		  "GO TO EVALUATE! :)")
 	start = time.time()
-	nefesiModel.eval_network(verbose=True)
+	nefesiModel.eval_network(verbose=True, batch_size=250)
 	print("TIME ELAPSED: "+str(time.time()-start))
 
 	print("Evaluation finished, nefesiObject have now the info of analysis and results can be reloaded with files (.obj)"
@@ -276,7 +276,7 @@ def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
 	#nefesiModel.layers_data = "block(1)_conv1"#|3|5
-	nefesiModel.layers_data = "fc1"
+	nefesiModel.layers_data = "predictions"
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel

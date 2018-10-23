@@ -14,9 +14,7 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True)
     """
 
     if layer_data.receptive_field_map is None:
-        oshape = network_data.model.layers[find_layer_idx(network_data.model, layer_data.layer_id)].output_shape
-        if len(oshape)==3:
-            layer_data.mapping_rf(network_data.model)
+        layer_data.mapping_rf(network_data.model)
 
     for i, neuron in enumerate(layer_data.neurons_data):
         if neuron.norm_activations is not None:

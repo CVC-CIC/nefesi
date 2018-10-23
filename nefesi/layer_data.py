@@ -212,13 +212,15 @@ class LayerData(object):
         :param model: The `keras.models.Model` instance.
         :raise ValueError: If this layer is apparently non convolutional
         """
+        layer_idx = find_layer_idx(model, self.layer_id)
+        if len(model.layers[layer_idx].output_shape) != 4:
+            return
 
         if self.receptive_field_map is None:
             self.receptive_field_map = get_each_point_receptive_field(model, self.layer_id)
 
         # calculate the size of receptive field
         if self.receptive_field_size is None:
-            layer_idx = find_layer_idx(model, self.layer_id)
             if len(model.layers[layer_idx].output_shape) == 4:
                 _, w, h, _ = model.layers[layer_idx].output_shape
             else:
