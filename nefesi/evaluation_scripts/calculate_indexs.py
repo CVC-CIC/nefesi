@@ -5,8 +5,10 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 
 from ..network_data import NetworkData
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
+
+import nefesi.util.GPUtil as gpu
+gpu.assignGPU()
 
 
 class CalculateIndexs:

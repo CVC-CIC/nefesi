@@ -5,6 +5,8 @@ import numpy as np
 
 from nefesi.network_data import NetworkData
 from keras.applications.vgg16 import VGG16
+import nefesi.util.GPUtil as gpu
+gpu.assignGPU()
 
 def main():
 
@@ -60,6 +62,4 @@ def main():
 
 
 if __name__ == '__main__':
-    import os
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     main()

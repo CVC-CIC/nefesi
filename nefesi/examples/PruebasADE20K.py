@@ -14,8 +14,10 @@ from ..util.general_functions import addapt_ADE20K_dataset
 
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
+
+import nefesi.util.GPUtil as gpu
+gpu.assignGPU()
 
 def main():
 	#addapt_ADE20K_dataset('../Datasets/ADE20K_2016_07_26')

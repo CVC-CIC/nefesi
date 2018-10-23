@@ -10,10 +10,10 @@ from nefesi.network_data import NetworkData
 from nefesi.util.image import ImageDataset
 import numpy as np
 import time
-
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import pickle
+
+import nefesi.util.GPUtil as gpu
+gpu.assignGPU()
 
 def main():
 	start = time.time()

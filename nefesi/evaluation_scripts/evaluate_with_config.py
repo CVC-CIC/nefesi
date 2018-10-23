@@ -8,8 +8,10 @@ from keras.models import load_model
 from .calculate_indexs import run_calculs
 import warnings
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import pickle
+
+import nefesi.util.GPUtil as gpu
+gpu.assignGPU()
 
 
 class EvaluationWithConfig:

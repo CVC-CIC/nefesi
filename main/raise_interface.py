@@ -1,5 +1,9 @@
-import sys
-sys.path.append('..')
-from nefesi.PruebasPlots import main
+import nefesi.util.GPUtil as gpu
+print ("***********************************")
+print(gpu.assignGPU())
+import os
+print(os.environ['CUDA_VISIBLE_DEVICES'])
+
 if __name__ == '__main__':
-    main()
+    from nefesi.interface.selection_interface import SelectionInterface
+    SelectionInterface()
