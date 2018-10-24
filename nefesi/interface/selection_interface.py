@@ -24,38 +24,37 @@ class SelectionInterface():
         self.window = Tk()
         self.window.title("Nefesi")
         #TOP Part with general info of viewing and some setteables
-        self.make_analysis_frame = Frame(master=self.window)
-        self.set_make_analysis_frame(master=self.make_analysis_frame)
-        self.make_analysis_frame.pack(pady=3)
-        self.calc_indexs_frame = Frame(master=self.window)
-        self.set_make_indexs_calc_frame(master=self.calc_indexs_frame)
-        self.calc_indexs_frame.pack(pady=3)
-        self.select_action_frame = Frame(master=self.window, borderwidth=1)
-        self.set_select_action_frame(master=self.select_action_frame)
-        self.select_action_frame.pack(pady=3)
+        self.set_make_analysis_frame()
+        self.set_make_indexs_calc_frame()
+        self.set_select_action_frame()
+
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='class')
         #self.plot_general_index(index='orientation')
         self.window.mainloop()
 
-    def set_select_action_frame(self, master):
-        label = Label(master=master, text="Visualize an existent analysis")
-        button = Button(master=master, text="Select file", command=self._on_click_visualize_analysis_button)
-        label.pack(side=LEFT)
-        button.pack(side=RIGHT)
 
-    def set_make_analysis_frame(self, master):
-        label = Label(master=master, text="Make script for do an analysis")
-        button = Button(master=master, text="Select Parameters", command=self._on_click_make_analysis_button)
-        label.pack(side=LEFT)
-        button.pack(side=RIGHT)
+    def set_make_analysis_frame(self):
+        label = Label(master=self.window, text="Make script for do an analysis")
+        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_analysis_button)
+        label.grid (row=0, column=0, sticky=E, pady=(6,3), padx=(6,1))
+        button.grid(row=0, column=1, sticky=W, pady=(6,3), padx=(1,6))
 
-    def set_make_indexs_calc_frame(self, master):
-        label = Label(master=master, text="Make script for calc indexs")
-        button = Button(master=master, text="Select Parameters", command=self._on_click_make_indexs_calcs_button)
-        label.pack(side=LEFT)
-        button.pack(side=RIGHT)
+    def set_make_indexs_calc_frame(self):
+        label = Label(master=self.window, text="Make script for calc indexs")
+        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexs_calcs_button)
+        label.grid (row=1, column=0, sticky=E, pady=(3,3), padx=(6,1))
+        button.grid(row=1, column=1, sticky=W, pady=(3,3), padx=(1,6))
+
+    def set_select_action_frame(self):
+        label = Label(master=self.window, text="Visualize an existent analysis")
+        button = Button(master=self.window, text="Select file", command=self._on_click_visualize_analysis_button)
+        label.grid (row=2, column=0, sticky=E, pady=(3,6), padx=(6,1))
+        button.grid(row=2, column=1, sticky=W, pady=(3,6), padx=(1,6))
+
+
+
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,

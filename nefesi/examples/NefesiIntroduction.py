@@ -21,7 +21,7 @@ def main():
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
-	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5',  '/home/eric/Nefesi/Datasets/Tiny', '/home/ramon/work/nefesi/Data3/')
+	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5', '/datatmp/datasets/ImageNetFused/', '/home/ramon/work/nefesi/Data2/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	print("TIME ELAPSED: "+str(time.time()-start))

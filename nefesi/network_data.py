@@ -1,6 +1,7 @@
 import pickle
 import os
 import time
+import datetime
 import re #Regular Expresions
 import numpy as np
 import warnings
@@ -240,7 +241,9 @@ class NetworkData(object):
             idx_end = idx_start + data_batch.batch_size
             #the min between full size and 0,5MB by array (and 64MB for the img_name)
             buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-            buffer_size = 1
+            buffer_size = 10
+
+            start = time.time()
             for n_batches, imgs in enumerate(data_batch):
 
                 images = imgs[0]
@@ -251,12 +254,14 @@ class NetworkData(object):
                                            batches_to_buffer=buffer_size)
 
                 if verbose:
+                    img_sec = idx_end / (time.time() - start)
                     print("Layer: {layer}, Num batch: {batch},"
-                          " Num images processed: {processed}/{total}".format(
+                          " Num images processed: {processed}/{total}. Remaining: {secs}".format(
                             layer=layer.layer_id,
                             batch=n_batches,
                             processed=idx_end,
-                            total=num_images))
+                            total=num_images,
+                            secs=str(datetime.timedelta(seconds=(num_images-idx_end)/img_sec))))
 
                 idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
                 #If the idx of the next last image will overpass the total num of images, ends the analysis
