@@ -70,11 +70,13 @@ class NeuronData(object):
         self.images_id[self._index:end_idx] = image_ids
         self.xy_locations[self._index:end_idx,:] = xy_locations
         self._index += len(activations)
-        if self._index >= self._buffer_size:
+        if self._index+len(activations) > self._buffer_size:
             self._reduce_data = False
             self.sortResults()
             self._reduce_data = True
             #self._index = self._max_activations #Is maded on function (in order to make more consistent on last iteration
+
+
     def sortResults(self):
         idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
         self._index = self._max_activations
@@ -87,24 +89,6 @@ class NeuronData(object):
             self.images_id[:self._index] = self.images_id[idx]
             self.xy_locations[:self._index,:] = self.xy_locations[idx, :]
 
-
-
-    def add_activation(self, activation, image_id, xy_location):
-        """Set the information of one activation. When the assigned
-         activations reach a certain size, they are ordered.
-
-        :param activation: Float, activation value
-        :param image_id: String, image name
-        :param xy_location: Tuple of integers, location of the activation
-            in the map activation.
-        """
-        self.activations[self._index] = activation
-        self.images_id[self._index] = image_id
-        self.xy_locations[self._index] = xy_location
-        self._index += 1
-        if self._index >= self._max_activations + self._batch_size:
-            self.sort()
-            self._index = self._max_activations
 
     def sort(self):
         """Sorting method of activations. Attributes `images_id`

@@ -1,5 +1,4 @@
 import nefesi.util.GPUtil as gpu
-print ("***********************************")
 print(gpu.assignGPU())
 import os
 print(os.environ['CUDA_VISIBLE_DEVICES'])

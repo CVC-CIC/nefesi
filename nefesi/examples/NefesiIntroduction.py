@@ -21,7 +21,7 @@ def main():
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
-	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5',  '/data/local/datasets/ImageNet/train/', '/home/ramon/work/nefesi/Data2/')
+	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5',  '/home/eric/Nefesi/Datasets/Tiny', '/home/ramon/work/nefesi/Data3/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	print("TIME ELAPSED: "+str(time.time()-start))
@@ -276,7 +276,7 @@ def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
 	#nefesiModel.layers_data = "block(1)_conv1"#|3|5
-	nefesiModel.layers_data = "predictions"
+	nefesiModel.layers_data = "fc2"
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel
