@@ -210,7 +210,7 @@ class EventController():
 
         cropped_image = self.interface.neuron.get_patch_by_idx(self.interface.network_data,
                                                      self.interface.network_data.get_layer_by_name(self.interface.layer_to_evaluate),
-                                                     self.interface.actual_img_index)
+                                                     actual_idx)
 
         cropped_image = cropped_image.resize(self.interface.image_actual_size, Image.ANTIALIAS)  # resize mantaining aspect ratio
         np_cropped = np.array(cropped_image)
