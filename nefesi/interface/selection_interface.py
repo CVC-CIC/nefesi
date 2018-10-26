@@ -56,17 +56,18 @@ class SelectionInterface():
 
 
 
-    def ask_for_file(self, title="Select file", type='obj'):
+    def ask_for_file(self, title="Select file", type='obj', initialdir=None, initialfile=None):
         filename = filedialog.askopenfilename(title=title,
-                                              filetypes=((type, '*.' + type), ("all files", "*.*")))
+                                              filetypes=((type, '*.' + type), ("all files", "*.*")),
+                                              initialdir=initialdir, initialfile=initialfile)
         filename = relpath(filename)
         return filename
 
 
     def _on_click_visualize_analysis_button(self):
-        network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)")
+        network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)", initialdir = '/home/eric/Nefesi/Data/WithImageNet', initialfile='vgg16Copy.obj')
         if network_data_file != '':
-            model_file = self.ask_for_file(title="Select model (.h5 file)", type="h5")
+            model_file = self.ask_for_file(title="Select model (.h5 file)", type="h5", initialfile='vgg16.h5')
             model_file = model_file if model_file != '' else None
             network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
             last_dir_pos = network_data_file.rfind(os.path.sep)

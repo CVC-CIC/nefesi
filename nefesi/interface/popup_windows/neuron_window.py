@@ -45,7 +45,7 @@ class NeuronWindow(object):
         self.selector = None
         self.advanced_plots_frame = None
         self.neuron = self.network_data.get_neuron_of_layer(layer=layer_to_evaluate, neuron_idx=neuron_idx)
-        self.window=Toplevel(master)
+        self.window = Toplevel(master)
         self.basic_frame = Frame(master=self.window)
         self.window.title(str(layer_to_evaluate) + ' Neuron: '+str(neuron_idx))
         self.index_info = Frame(master=self.basic_frame)

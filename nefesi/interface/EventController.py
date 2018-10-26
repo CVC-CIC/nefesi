@@ -194,27 +194,19 @@ class EventController():
         self.interface.update_decomposition_panel(panel=panel)
 
     def _on_image_click(self, event,layer_name, idx_neuron):
-        mosaic_n_images(self.interface.neuron.get_patches(network_data=self.interface.network_data,
-                                                layer_data=self.interface.network_data.get_layer_by_name(
-                                                    self.interface.layer_to_evaluate)))
+        # layer_data = self.interface.network_data.get_layer_by_name(layer=self.interface.layer_to_evaluate)
+        layer_data = self.interface.network_data.get_layer_by_name(layer=layer_name)
         actual_idx = self.interface.actual_img_index
-        image_name = self.interface.neuron.images_id[actual_idx]
-        #complete_image = self.interface.network_data.dataset._load_image(self.interface.neuron.images_id[actual_idx])
-        complete_image = get_image_masked(network_data=self.interface.network_data,
-                         image_name=image_name,
-                                          layer_name=layer_name, neuron_idx=idx_neuron)
-
-        np_image = np.array(complete_image)
-        layer_data = self.interface.network_data.get_layer_by_name(layer=self.interface.layer_to_evaluate)
         receptive_field = layer_data.receptive_field_map
-        x0, x1, y0, y1 = receptive_field[self.interface.neuron.xy_locations[self.interface.actual_img_index, 0],
+        y0, y1, x0, x1 = receptive_field[self.interface.neuron.xy_locations[actual_idx, 0],
                                          self.interface.neuron.xy_locations[actual_idx, 1]]
         x_len, y_len = x1 - x0, y1 - y0
 
-        np_image = self.interface.draw_rectangle_on_image(np_image, x0, x1, y0, y1)
-        complete_image = Image.fromarray(np_image.astype('uint8'), 'RGB')
-        complete_image = complete_image.resize(self.interface.image_actual_size, Image.ANTIALIAS)
-        complete_image = ImageTk.PhotoImage(complete_image)
+
+        mosaic_n_images(self.interface.neuron.get_patches(network_data=self.interface.network_data,
+                                                layer_data=self.interface.network_data.get_layer_by_name(
+                                                    self.interface.layer_to_evaluate)))
+        image_name = self.interface.neuron.images_id[actual_idx]
 
         cropped_image = self.interface.neuron.get_patch_by_idx(self.interface.network_data,
                                                      self.interface.network_data.get_layer_by_name(self.interface.layer_to_evaluate),
@@ -228,7 +220,7 @@ class EventController():
 
         cropped_image = Image.fromarray(np_cropped.astype('uint8'), 'RGB')
         cropped_image = ImageTk.PhotoImage(cropped_image)
-        ReceptiveFieldPopupWindow(master=self.interface.window, image_complete=complete_image, image_cropped=cropped_image,
+        ReceptiveFieldPopupWindow(master=self.interface.window, image_cropped=cropped_image,
                                   x_len=x_len, y_len=y_len,
                                   image_name=image_name, layer_name=layer_name,neuron_idx=idx_neuron,
                                 interface = self.interface,x0=x0,x1=x1,y0=y0,y1=y1)

@@ -108,7 +108,8 @@ def get_hierarchy_of_label(labels, freqs, xml, population_code=0, class_sel=0):
 
     return hierarchy['root']
 
-def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False):
+
+def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, type=1, thr_mth = 1, thr = 0.005):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
     neuron_idx of layer layer_name
@@ -117,6 +118,8 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
     :param layer_name: the name of the layer of the network where is the neuron to analyze
     :param neuron_idx: the index of the neuron to analyze
     :param as_numpy: get the result as a numpy array
+    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies)
+    :param thr_mth = take max from the image (1), take max from all activatiosn (0)
     :return: An image that is the original image with a mask of the activation camp superposed
     """
     input = network_data.dataset._load_image(image_name, as_numpy=True,
@@ -124,11 +127,103 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
     activations = get_one_neuron_activations(model=network_data.model, layer_name=layer_name,
                                              idx_neuron=neuron_idx, model_inputs=input)[0]
 
-    norm_activations = activations / np.max(activations)
-    norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).resize((224, 224), PIL.Image.BILINEAR))
+    if thr_mth==0:
+        max_act = np.max(network_data.get_layer_by_name(layer_name).neurons_data[neuron_idx].activations)
+    else:
+        max_act = np.max(activations)
+    norm_activations = activations / max_act
+
+    sz_img = np.array((224, 224))
+    if type == 2:
+        norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).resize(tuple(sz_img), PIL.Image.BILINEAR))
+    else:
+        vertex = lambda a, b, c, d: [a, b, a, d, c, d, c, b]
+
+        #     1 | 4
+        #   ----------
+        #     2 | 3
+
+        # ci1=[0,0]
+        # ci2=[0,0]
+        # ci3=[0,0]
+        # ci4=[0,0]
+        # if sz_img[0] % 2:  #senar
+        #     ci1[0],ci2[0],ci3[0],ci4[0] = sz_img[0]//2
+        # else: # parell
+        #     ci1[0] = sz_img[0]//2-1
+        #     ci4[0] = sz_img[0]//2-1
+        #     ci2[0] = sz_img[0]//2
+        #     ci3[0] = sz_img[0]//2
+        # if sz_img[1] % 2:  #senar
+        #     ci1[1],ci2[1],ci3[1],ci4[1] = sz_img[1]//2
+        # else: # parell
+        #     ci1[1] = sz_img[1]//2-1
+        #     ci2[1] = sz_img[1]//2-1
+        #     ci3[1] = sz_img[1]//2
+        #     ci4[1] = sz_img[1]//2
+        #
+        # sz_act = np.array(norm_activations.shape)
+        # ca1=[0,0]
+        # ca2=[0,0]
+        # ca3=[0,0]
+        # ca4=[0,0]
+        # if sz_act[0] % 2:  #senar
+        #     ca1[0],ca2[0],ca3[0],ca4[0] = sz_act[0]//2
+        # else: # parell
+        #     ca1[0] = sz_act[0]//2-1
+        #     ca4[0] = sz_act[0]//2-1
+        #     ca2[0] = sz_act[0]//2
+        #     ca3[0] = sz_act[0]//2
+        # if sz_img[1] % 2:  #senar
+        #     ca1[1],ca2[1],ca3[1],ca4[1] = sz_act[1]//2
+        # else: # parell
+        #     ca1[1] = sz_act[1]//2-1
+        #     ca2[1] = sz_act[1]//2-1
+        #     ca3[1] = sz_act[1]//2
+        #     ca4[1] = sz_act[1]//2
+        #
+        # a = [[     0,     0,       ci1[1],      ci1[0]]]
+        # b = [[     0, ci2[0],      ci2[1], sz_img[0]-1]]
+        # c = [[ci3[1], ci3[0], sz_img[1]-1, sz_img[0]-1]]
+        # d = [[ci4[1],      0, sz_img[1]-1,      ci4[0]]]
+        # a.append(vertex(     0,      0,      ca1[1],      ca1[0]))
+        # b.append(vertex(     0, ca2[0],      ca2[1], sz_act[0]-1))
+        # c.append(vertex(ca3[1], ca3[0], sz_act[1]-1, sz_act[0]-1))
+        # d.append(vertex(ca4[1],      0, sz_act[1]-1,      ca4[0]))
+        #
+        # sz_act = np.array(norm_activations.shape)
+        # layer = network_data.get_layer_by_name(layer_name)
+        # sz_act = np.array(layer.receptive_field_map.shape[:-1])
+        # ct_act = sz_act //2
+        # ct_img = np.array(layer.receptive_field_map[ct_act[0], ct_act[1], :])
+        # ct_img = np.array([ct_img[1]-ct_img[0],ct_img[3]-ct_img[2]])//2
+        # ct_img = sz_img // 2
+        #
+        # a = ((        0,         0,   ct_img[1],   ct_img[0]), (        0,         0,         0,   ct_act[0],   ct_act[1],   ct_act[0],   ct_act[1],         0))
+        # b = ((        0, ct_img[0],   ct_img[1], sz_img[0]-1), (        0, ct_act[0],         0, sz_act[0]-1,   ct_act[1], sz_act[0]-1,   ct_act[1], ct_act[0]))
+        # c = ((ct_img[1], ct_img[0], sz_img[1]-1, sz_img[0]-1), (ct_act[1], ct_act[0], ct_act[1], sz_act[0]-1, sz_act[1]-1, sz_act[0]-1, sz_act[1]-1, ct_act[0]))
+        # d = ((ct_img[1],         0, sz_img[1]-1,   ct_img[0]), (ct_act[1],         0, ct_act[1],   ct_act[0], sz_act[1]-1,   ct_act[0], sz_act[1]-1,         0))
+
+        rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
+        rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
+        mesh = []
+        for y in range(rec_field_map.shape[0]):
+            for x in range(rec_field_map.shape[1]):
+                r = rec_field_map[y, x][[2, 0, 3, 1]]
+                if r[0] == 0:
+                    r[0] = r[2]-rec_field_sz[1]
+                if r[1] == 0:
+                    r[1] = r[3] - rec_field_sz[0]
+                if r[2] == sz_img[1]:
+                    r[2] = r[0] + rec_field_sz[1]-1
+                if r[3] == sz_img[0]:
+                    r[3] = r[1] + rec_field_sz[0] - 1
+                mesh.append([list(r)] + [vertex(x, y, x, y)])
+
+        norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).transform(tuple(sz_img), PIL.Image.MESH, mesh, PIL.Image.BILINEAR))
 
     img = network_data.dataset._load_image(image_name, as_numpy=True).astype(np.float)
-    img[norm_activations_upsampled < 0.005] *= 0.25
+    img[norm_activations_upsampled < thr] *= 0.25
     if as_numpy:
         return img
     else:
