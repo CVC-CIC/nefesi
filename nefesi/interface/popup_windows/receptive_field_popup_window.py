@@ -49,7 +49,7 @@ class ReceptiveFieldPopupWindow(object):
             self.panel_complete_img = panel
 
     def set_receptive_camp_frame(self, master):
-        self.method_value = IntVar(master=master, value=2)
+        self.method_value = DoubleVar(master=master, value=2)
         master = LabelFrame(master, text="Overlap", padx=2, pady=2)
         master.pack(side=TOP, fill=X, expand="yes")
         ttk.Radiobutton(master, text="Original", variable=self.method_value, value=0,
