@@ -10,9 +10,9 @@ import warnings
 import os
 import pickle
 
-import nefesi.util.GPUtil as gpu
-gpu.assignGPU()
-
+# import nefesi.util.GPUtil as gpu
+# gpu.assignGPU()
+#
 
 class EvaluationWithConfig:
 	def __init__(self, network_data, model_file, evaluate_index=False, verbose=True):

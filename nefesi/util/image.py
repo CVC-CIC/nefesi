@@ -131,8 +131,8 @@ class ImageDataset(object):
             img = self._load_image(image_names[i])
             images[i] = image.img_to_array(img)
 
-        if self.preprocessing_function is not None and prep_function is True:
-            images = self.preprocessing_function(images) #np.asarray(images)) #Now are array right since the beginning
+        # if self.preprocessing_function is not None and prep_function is True:
+            # images = self.preprocessing_function(images) #np.asarray(images)) #Now are array right since the beginning
                                                             #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
         return images
 

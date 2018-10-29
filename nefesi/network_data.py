@@ -13,7 +13,7 @@ from .layer_data import LayerData
 from .util.image import ImageDataset
 
 import nefesi.util.GPUtil as gpu
-gpu.assignGPU()
+# gpu.assignGPU()
 
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
@@ -562,7 +562,174 @@ class NetworkData(object):
 
         return list(activations), neurons, layer.receptive_field_map[loc[0], loc[1]]
 
-    def decomposition(self, input_image, target_layer, overlapping=0.0):
+    def tree_decomposition(self, input_image,neurons_per_layer):
+        """ Given a neuron, returns the tree of relevant neurons.
+
+        :param input_image: List or string.
+            List with two elements: layer name, integer index of a neuron (layer
+            and neuron where takes the neuron feature we want decompose).
+            String, image name."""
+
+
+        all_layers=self.get_layers_name()
+        i = 0
+        activations=[]
+        neurons=[]
+        locations=[]
+        while i < len(all_layers)-1:
+            target_layer=all_layers[len(all_layers)-2-i]
+            d1,d2,d3= self.decomposition(input_image,target_layer)
+            activations.append(d1[0:neurons_per_layer])
+            neurons.append(d2[0:neurons_per_layer])
+            locations.append(d3[0:neurons_per_layer])
+            i += 1
+
+        return activations,neurons,locations
+
+
+
+    def decomposition_top_loc(self, input_image, target_layer):
+        """ Given an image or a neuron feature, returns a list with
+        the maximum activations for each location in the image or neuron feature,
+        with a certain percent of overlapping.
+
+        :param input_image: List or string.
+            List with two elements: layer name, integer index of a neuron (layer
+            and neuron where takes the neuron feature we want decompose).
+            String, image name.
+        :param target_layer: String, layer name (layer where decompose).
+
+
+        :return: List of floats, activation values.
+            List of `nefesi.neuron_data.NeuronData` instances.
+            List of integer tuples, activation locations for each
+            receptive field in the input image or input neuron feature.
+
+        """
+
+        if isinstance(input_image, list):  # Decomposition of neuron feature
+            src_layer = input_image[0]
+            neuron_idx = input_image[1]
+
+            for l in self.layers_data:
+                if src_layer == l.layer_id:
+                    src_layer = l
+                elif target_layer == l.layer_id:
+                    target_layer = l
+
+            hc_activations, hc_idx = src_layer.decomposition_nf(
+                neuron_idx, target_layer, self.model, self.dataset)
+
+            neuron_data = src_layer.neurons_data[neuron_idx]
+            src_image = neuron_data.neuron_feature
+        else:  # Decomposition of image
+            for l in self.layers_data:
+                if target_layer == l.layer_id:
+                    target_layer = l
+
+            img = self.dataset.load_images([input_image])
+            hc_activations, hc_idx = target_layer.decomposition_image(self.model, img)
+            src_image = self.dataset.load_image(input_image)
+
+        hc_activations = hc_activations[:, :, 0]
+        hc_idx = hc_idx[:, :, 0]
+
+        res_neurons = []
+        res_loc = []
+        res_act = []
+
+        i = 0
+        end_cond = src_image.size[0] * src_image.size[1]
+
+        while i < end_cond:
+            # Search for the maximum activations along the input image or
+            # neuron feature.
+            i += 1
+            max_act = np.amax(hc_activations)
+            pos = np.unravel_index(hc_activations.argmax(), hc_activations.shape)
+            hc_activations[pos] = 0.0
+            neuron_idx = hc_idx[pos]
+
+            loc = target_layer.receptive_field_map[pos]
+
+            # Check overlapping
+
+            res_neurons.append(int(neuron_idx))
+            res_loc.append(loc)
+            res_act.append(max_act)
+
+        return res_act, res_neurons, res_loc
+
+    def decomposition(self, input_image, target_layer):
+        """ Given an image or a neuron feature, returns a list with
+        the maximum activations for each location in the image or neuron feature,
+        with a certain percent of overlapping.
+
+        :param input_image: List or string.
+            List with two elements: layer name, integer index of a neuron (layer
+            and neuron where takes the neuron feature we want decompose).
+            String, image name.
+        :param target_layer: String, layer name (layer where decompose).
+
+
+        :return: List of floats, activation values.
+            List of `nefesi.neuron_data.NeuronData` instances.
+            List of integer tuples, activation locations for each
+            receptive field in the input image or input neuron feature.
+
+        """
+
+
+        src_layer = input_image[0]
+        neuron_idx = input_image[1]
+
+        for l in self.layers_data:
+            if src_layer == l.layer_id:
+                src_layer = l
+            elif target_layer == l.layer_id:
+                target_layer = l
+
+        hc_activations, hc_idx = src_layer.decomposition_nf(
+            neuron_idx , target_layer, self.model, self.dataset)
+
+        neuron_data = src_layer.neurons_data[neuron_idx]
+        src_image = neuron_data.neuron_feature
+
+
+        # hc_activations = hc_activations[:, :, 0]
+        # hc_idx = hc_idx[:, :, 0]
+
+        res_neurons = []
+        res_loc = []
+        res_act = []
+
+        i = 0
+        end_cond = src_image.size[0] * src_image.size[1]
+
+        #
+        # while i < end_cond:
+        #     # Search for the maximum activations along the input image or
+        #     # neuron feature.
+        #     i += 1
+        #     max_act = np.amax(hc_activations)
+        #     pos = np.unravel_index(hc_activations.argmax(), hc_activations.shape)
+        #     hc_activations[pos] = 0.0
+        #     neuron_idx = hc_idx[pos]
+        #
+        #     loc = target_layer.receptive_field_map[pos]
+        #
+        #     # Check overlapping
+        #
+        #     res_neurons.append(int(neuron_idx))
+        #     res_loc.append(loc)
+        #     res_act.append(max_act)
+
+        # return res_act, res_neurons, res_loc
+        return (hc_idx, hc_activations)
+
+
+
+    def decomposition_with_overlapping(self, input_image, target_layer, overlapping=1.0):
         """ Given an image or a neuron feature, returns a list with
         the maximum activations for each location in the image or neuron feature,
         with a certain percent of overlapping.

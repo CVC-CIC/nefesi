@@ -643,6 +643,40 @@ def plot_neuron_features(layer_data, neuron_list=None):
     fig.clear()
 
 
+def plot_histogram_decomp(Neurons, Act,Marges):
+    Neurons = Neurons[Marges:-(Marges+1),Marges:-(Marges+1),:]
+    Act = Act[Marges:-(Marges+1),Marges:-(Marges+1), :]
+
+    x, y ,z = Neurons.shape
+    Histo = np.zeros(z)
+    a =0
+
+
+    while a < x:
+        b = 0
+        while b < y:
+            c = 0
+            while c<z:
+                Histo[Neurons[a,b,c]] += Act[a,b,c]
+
+                c +=1
+
+            b+=1
+
+        a+=1
+    Histo = Histo/np.amax(Histo)
+    Sortneurons = np.argsort(Histo)[::-1]
+    Histo = np.sort(Histo)[::-1]
+    plt.bar(range(len(Histo)),Histo)
+    plt.show()
+
+
+
+
+
+    return Histo, Sortneurons
+
+
 def main():
 
     from nefesi.network_data import NetworkData

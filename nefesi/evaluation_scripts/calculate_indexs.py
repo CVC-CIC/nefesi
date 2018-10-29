@@ -8,7 +8,7 @@ import os
 import pickle
 
 import nefesi.util.GPUtil as gpu
-gpu.assignGPU()
+# gpu.assignGPU()
 
 
 class CalculateIndexs:

@@ -357,7 +357,6 @@ class LayerData(object):
 
         # get the activations for the patches
         activations = get_activations(model, neuron_images,
-                                      print_shape_only=True,
                                       layer_name=target_layer.layer_id)
 
         activations = activations[0]
@@ -366,6 +365,7 @@ class LayerData(object):
         # w, h = size of map activation,
         # k = number of neurons
         n_patches, w, h, k = activations.shape
+
 
         # normalize each map activation from each patch for each neuron and multiply
         # each map activation from each patch with the normalized activation
@@ -390,6 +390,7 @@ class LayerData(object):
         hc_activations = np.zeros((w, h, k))
         hc_idx = np.zeros((w, h, k))
 
+
         # sort the activations for each neuron
         for i in range(w):
             for j in range(h):
@@ -400,6 +401,11 @@ class LayerData(object):
                 hc_idx[i, j, :] = idx
 
         return hc_activations, hc_idx
+
+
+
+
+
 
     def similar_neurons(self, neuron_idx, inf_thr=0.0, sup_thr=1.0):
         """Given a neuron index, returns a sorted list of the neurons
