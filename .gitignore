@@ -14,7 +14,6 @@ nefesi.egg-info
 Datasets/*
 *.h5
 *.pyc
-nefesi/Pruebas.py
 examples/mscoco1.py
 examples/labelme_bxvctltntrtinjf_seg.png
 examples/labelme_bxvctltntrtinjf_parts_1.png
