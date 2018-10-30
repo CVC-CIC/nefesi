@@ -58,6 +58,10 @@ class ReceptiveFieldPopupWindow(object):
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         ttk.Radiobutton(master, text="Vedaldi", variable=self.method_value, value=2,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
+        ttk.Radiobutton(master, text="Act Torr", variable=self.method_value, value=3,
+                        command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
+        ttk.Radiobutton(master, text="Act Ved", variable=self.method_value, value=4,
+                        command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         # checkbox_value = BooleanVar(master=master, value=True)
         # ttk.Checkbutton(master=master, text="Receptive camp",
         #                            variable=checkbox_value,
