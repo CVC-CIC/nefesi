@@ -79,32 +79,36 @@ def get_hierarchy_of_label(labels, freqs, xml, population_code=0, class_sel=0):
     if type(xml) is str:
         xml = ET.parse(xml)
     humanLists = []
+    synsetLists = []
     for label, freq in zip(labels, freqs):
         xPath = './/synset[@wnid="'+label+'"]'
         result = xml.find(xPath)
         humanList = []
+        synsetList = []
         while len(result.attrib) is not 0:
 
             humanList.append((result.attrib['words'],freq))
+            synsetList.append(result.attrib['wnid'])
             xPath+='/..'
             result = xml.find(xPath)
         humanLists.append(humanList)
+        synsetLists.append(synsetList)
 
     hierarchy = {'root': Node('root', freq=class_sel, rep=population_code)}
-    for humanList in humanLists:
-        parent = humanList[-1][0]
+    for list_count in range(len(humanLists)):
+        parent = synsetLists[list_count][-1]
         if parent not in hierarchy:
-            hierarchy[parent] = Node(parent,parent=hierarchy['root'], freq = humanList[-1][1], rep=1)
+            hierarchy[parent] = Node(humanLists[list_count][-1][0],parent=hierarchy['root'], freq = humanLists[list_count][-1][1], rep=1)
         else:
-            hierarchy[parent].freq += humanList[-1][1]
+            hierarchy[parent].freq += humanLists[list_count][-1][1]
             hierarchy[parent].rep += 1
-        for i in range(len(humanList)-2,-1,-1):
-            if humanList[i][0] not in hierarchy:
-                hierarchy[humanList[i][0]] = Node(humanList[i],parent=hierarchy[parent], freq = humanList[-1][1], rep=1)
+        for i in range(len(humanLists[list_count])-2,-1,-1):
+            if synsetLists[list_count][i] not in hierarchy:
+                hierarchy[synsetLists[list_count][i]] = Node(humanLists[list_count][i],parent=hierarchy[parent], freq = humanLists[list_count][-1][1], rep=1)
             else:
-                hierarchy[humanList[i][0]].freq += humanList[-1][1]
-                hierarchy[humanList[i][0]].rep += 1
-            parent = humanList[i][0]
+                hierarchy[synsetLists[list_count][i]].freq += humanLists[list_count][-1][1]
+                hierarchy[synsetLists[list_count][i]].rep += 1
+            parent = synsetLists[list_count][i]
 
     return hierarchy['root']
 

@@ -1,0 +1,1772 @@
+,label,frequency,level,is_leaf,leafs_contained
+0,root,1.0,0,False,1000
+1,"animal, animate being, beast, brute, creature, fauna",0.39834455104808625,1,False,398
+2,"artifact, artefact",0.520918351015452,1,False,522
+3,Misc,0.04216929081297659,1,False,42
+4,natural object,0.016239076683574556,1,False,16
+5,"geological formation, formation",0.0101494229272341,1,False,10
+6,"person, individual, someone, somebody, mortal, soul",0.0030448268781702306,1,False,3
+7,fungus,0.007104596049063871,1,False,7
+8,"plant, flora, plant life",0.0020298845854468204,1,False,2
+9,invertebrate,0.061911479856128084,2,False,61
+10,chordate,0.2088579478959861,2,False,207
+11,"domestic animal, domesticated animal",0.12047052724690638,2,False,123
+12,game,0.007104596049063871,2,False,7
+13,"structure, construction",0.05707098584467795,2,False,57
+14,"instrumentality, instrumentation",0.3571410168628776,2,False,358
+15,"decoration, ornament, ornamentation",0.0010149422927234102,2,False,1
+16,covering,0.08481872740289535,2,False,85
+17,"fabric, cloth, material, textile",0.006918783537011431,2,False,7
+18,"commodity, trade good, good",0.010909068197095546,2,False,11
+19,"padding, cushioning",0.0010149422927234102,2,False,1
+20,"plaything, toy",0.0010149422927234102,2,False,1
+21,surface,0.0010149422927234102,2,False,1
+22,"food, nutrient",0.025099522899049924,2,False,25
+23,cauliflower,0.0010149422927234102,2,True,1
+24,butternut squash,0.0010149422927234102,2,True,1
+25,mushroom,0.0010149422927234102,2,True,1
+26,mashed potato,0.0010149422927234102,2,True,1
+27,head cabbage,0.0010149422927234102,2,True,1
+28,spaghetti squash,0.0009673180774494657,2,True,1
+29,"zucchini, courgette",0.0010149422927234102,2,True,1
+30,"artichoke, globe artichoke",0.0010149422927234102,2,True,1
+31,acorn squash,0.0010149422927234102,2,True,1
+32,round shape,0.0010149422927234102,2,False,1
+33,bell pepper,0.0010149422927234102,2,True,1
+34,"traffic light, traffic signal, stoplight",0.0010149422927234102,2,True,1
+35,"cucumber, cuke",0.0010149422927234102,2,True,1
+36,broccoli,0.0010149422927234102,2,True,1
+37,cardoon,0.0008783154456260281,2,True,1
+38,paper,0.0010149422927234102,2,False,1
+39,sign,0.0010149422927234102,2,False,1
+40,"plant part, plant structure",0.016239076683574556,2,False,16
+41,"natural elevation, elevation",0.005074711463617051,2,False,5
+42,shore,0.0020298845854468204,2,False,2
+43,"natural depression, depression",0.0010149422927234102,2,False,1
+44,"cliff, drop, drop-off",0.0010149422927234102,2,True,1
+45,"spring, fountain, outflow, outpouring, natural spring",0.0010149422927234102,2,False,1
+46,contestant,0.0010149422927234102,2,False,1
+47,"explorer, adventurer",0.0010149422927234102,2,False,1
+48,"peer, equal, match, compeer",0.0010149422927234102,2,False,1
+49,earthstar,0.0010149422927234102,2,True,1
+50,"hen-of-the-woods, hen of the woods, Polyporus frondosus, Grifola frondosa",0.0010149422927234102,2,True,1
+51,"basidiomycete, basidiomycetous fungi",0.0010149422927234102,2,False,1
+52,gyromitra,0.0010149422927234102,2,True,1
+53,coral fungus,0.0010149422927234102,2,True,1
+54,bolete,0.0010149422927234102,2,True,1
+55,"stinkhorn, carrion fungus",0.0010149422927234102,2,True,1
+56,"vascular plant, tracheophyte",0.0020298845854468204,2,False,2
+57,arthropod,0.047702287758000304,3,False,47
+58,"mollusk, mollusc, shellfish",0.006089653756340461,3,False,6
+59,"coelenterate, cnidarian",0.0030448268781702306,3,False,3
+60,echinoderm,0.0030448268781702306,3,False,3
+61,worm,0.0020298845854468204,3,False,2
+62,"vertebrate, craniate",0.2088579478959861,3,False,207
+63,"dog, domestic dog, Canis familiaris",0.11539581578328936,3,False,118
+64,"domestic cat, house cat, Felis domesticus, Felis catus",0.005074711463617051,3,False,5
+65,game bird,0.007104596049063871,3,False,7
+66,establishment,0.010110386685206278,3,False,10
+67,"building, edifice",0.014072565251030358,3,False,14
+68,"obstruction, obstructor, obstructer, impediment, impedimenta",0.0101494229272341,3,False,10
+69,"signboard, sign",0.0010149422927234102,3,False,1
+70,"bridge, span",0.0029300603266084295,3,False,3
+71,"landing, landing place",0.0009454577819138845,3,False,1
+72,"column, pillar",0.0020298845854468204,3,False,2
+73,tower,0.0010149422927234102,3,False,1
+74,"housing, lodging, living accommodations",0.0020298845854468204,3,False,2
+75,supporting structure,0.002739563465512651,3,False,3
+76,"memorial, monument",0.0020298845854468204,3,False,2
+77,shelter,0.0010149422927234102,3,False,1
+78,arch,0.0010149422927234102,3,False,1
+79,fountain,0.0010149422927234102,3,True,1
+80,"coil, spiral, volute, whorl, helix",0.0010149422927234102,3,True,1
+81,altar,0.0010149422927234102,3,True,1
+82,area,0.0008993950163210528,3,False,1
+83,"building complex, complex",0.0010149422927234102,3,False,1
+84,"defensive structure, defense, defence",0.0010149422927234102,3,False,1
+85,furnishing,0.024077554082761507,3,False,24
+86,container,0.09713075813847083,3,False,97
+87,"conveyance, transport",0.026173019554815068,3,False,26
+88,device,0.12940280014771297,3,False,130
+89,implement,0.03434252428639796,3,False,35
+90,equipment,0.03530125439060131,3,False,35
+91,"toiletry, toilet articles",0.005638394798498822,3,False,6
+92,system,0.0030448268781702306,3,False,3
+93,"connection, connexion, connector, connecter, connective",0.0010149422927234102,3,False,1
+94,medium,0.0010149422927234102,3,False,1
+95,adornment,0.0010149422927234102,3,False,1
+96,cloak,0.000803365860932607,3,True,1
+97,"protective covering, protective cover, protection",0.02334367273263842,3,False,23
+98,"clothing, article of clothing, vesture, wear, wearable, habiliment",0.04674355765379696,3,False,47
+99,"footwear, footgear",0.004947453314606346,3,False,5
+100,cloth covering,0.0020298845854468204,3,False,2
+101,"top, cover",0.0030448268781702306,3,False,3
+102,mask,0.0010149422927234102,3,True,1
+103,"floor cover, floor covering",0.0010149422927234102,3,False,1
+104,"screen, cover, covert, concealment",0.0009751253258550303,3,False,1
+105,"wrapping, wrap, wrapper",0.0009009564660021657,3,False,1
+106,"piece of cloth, piece of material",0.005074711463617051,3,False,5
+107,velvet,0.0008291297806709705,3,True,1
+108,"wool, woolen, woollen",0.0010149422927234102,3,True,1
+109,consumer goods,0.010909068197095546,3,False,11
+110,cushion,0.0010149422927234102,3,False,1
+111,"teddy, teddy bear",0.0010149422927234102,3,True,1
+112,"horizontal surface, level",0.0010149422927234102,3,False,1
+113,"foodstuff, food product",0.008119538341787282,3,False,8
+114,"beverage, drink, drinkable, potable",0.003976231612954099,3,False,4
+115,"nutriment, nourishment, nutrition, sustenance, aliment, alimentation, victuals",0.010973868358861733,3,False,11
+116,fare,0.0010149422927234102,3,False,1
+117,"feed, provender",0.0010149422927234102,3,False,1
+118,sphere,0.0010149422927234102,3,False,1
+119,"tissue, tissue paper",0.0010149422927234102,3,False,1
+120,street sign,0.0010149422927234102,3,True,1
+121,plant organ,0.016239076683574556,3,False,16
+122,ridge,0.0020298845854468204,3,False,2
+123,"promontory, headland, head, foreland",0.0010149422927234102,3,True,1
+124,"mountain, mount",0.0020298845854468204,3,False,2
+125,"lakeside, lakeshore",0.0010149422927234102,3,True,1
+126,"seashore, coast, seacoast, sea-coast",0.0010149422927234102,3,True,1
+127,"valley, vale",0.0010149422927234102,3,True,1
+128,geyser,0.0010149422927234102,3,True,1
+129,"player, participant",0.0010149422927234102,3,False,1
+130,"diver, frogman, underwater diver",0.0010149422927234102,3,False,1
+131,associate,0.0010149422927234102,3,False,1
+132,agaric,0.0010149422927234102,3,True,1
+133,"spermatophyte, phanerogam, seed plant",0.0020298845854468204,3,False,2
+134,insect,0.02740344190353206,4,False,27
+135,"arachnid, arachnoid",0.009134480634510691,4,False,9
+136,crustacean,0.009134480634510691,4,False,9
+137,centipede,0.0010149422927234102,4,True,1
+138,trilobite,0.0010149422927234102,4,True,1
+139,"gastropod, univalve",0.004059769170893641,4,False,4
+140,"chiton, coat-of-mail shell, sea cradle, polyplacophore",0.0010149422927234102,4,True,1
+141,"cephalopod, cephalopod mollusk",0.0010149422927234102,4,False,1
+142,"anthozoan, actinozoan",0.0020298845854468204,4,False,2
+143,jellyfish,0.0010149422927234102,4,True,1
+144,sea urchin,0.0010149422927234102,4,True,1
+145,"starfish, sea star",0.0010149422927234102,4,True,1
+146,"sea cucumber, holothurian",0.0010149422927234102,4,True,1
+147,"nematode, nematode worm, roundworm",0.0010149422927234102,4,True,1
+148,"flatworm, platyhelminth",0.0010149422927234102,4,True,1
+149,"mammal, mammalian",0.09620716065209253,4,False,95
+150,bird,0.05246627073507589,4,False,52
+151,aquatic vertebrate,0.015875258907875243,4,False,16
+152,amphibian,0.008119538341787282,4,False,8
+153,"reptile, reptilian",0.036189719259154575,4,False,36
+154,hunting dog,0.06125723243974175,4,False,63
+155,working dog,0.03017813798686975,4,False,30
+156,"dalmatian, coach dog, carriage dog",0.0010149422927234102,4,True,1
+157,spitz,0.004007460606576358,4,False,4
+158,"corgi, Welsh corgi",0.0020298845854468204,4,False,2
+159,Great Pyrenees,0.0010149422927234102,4,True,1
+160,"toy dog, toy",0.007363796696128619,4,False,8
+161,"pug, pug-dog",0.0010149422927234102,4,True,1
+162,basenji,0.0010149422927234102,4,True,1
+163,"poodle, poodle dog",0.0030448268781702306,4,False,3
+164,Leonberg,0.0010149422927234102,4,True,1
+165,"griffon, Brussels griffon, Belgian griffon",0.0008353755793954223,4,False,1
+166,Mexican hairless,0.0005894472546201344,4,True,1
+167,"Newfoundland, Newfoundland dog",0.0010149422927234102,4,True,1
+168,Egyptian cat,0.0010149422927234102,4,True,1
+169,Persian cat,0.0010149422927234102,4,True,1
+170,tiger cat,0.0010149422927234102,4,True,1
+171,"tabby, tabby cat",0.0010149422927234102,4,True,1
+172,"Siamese cat, Siamese",0.0010149422927234102,4,True,1
+173,phasianid,0.0030448268781702306,4,False,3
+174,grouse,0.004059769170893641,4,False,4
+175,"place of business, business establishment",0.009095444392482869,4,False,9
+176,institution,0.0010149422927234102,4,False,1
+177,"place of worship, house of prayer, house of God, house of worship",0.0030448268781702306,4,False,3
+178,house,0.0019166794835661324,4,False,2
+179,"greenhouse, nursery, glasshouse",0.0010149422927234102,4,True,1
+180,"theater, theatre, house",0.0020298845854468204,4,False,2
+181,outbuilding,0.0020298845854468204,4,False,2
+182,library,0.0010149422927234102,4,True,1
+183,"restaurant, eating house, eating place, eatery",0.0010149422927234102,4,True,1
+184,planetarium,0.0009915205475067163,4,True,1
+185,farm building,0.0010149422927234102,4,False,1
+186,barrier,0.0101494229272341,4,False,10
+187,scoreboard,0.0010149422927234102,4,True,1
+188,suspension bridge,0.0010149422927234102,4,True,1
+189,steel arch bridge,0.0009001757411616092,4,True,1
+190,viaduct,0.0010149422927234102,4,True,1
+191,"dock, dockage, docking facility",0.0009454577819138845,4,True,1
+192,obelisk,0.0010149422927234102,4,True,1
+193,totem pole,0.0010149422927234102,4,True,1
+194,"beacon, lighthouse, beacon light, pharos",0.0010149422927234102,4,True,1
+195,"dwelling, home, domicile, abode, habitation, dwelling house",0.0020298845854468204,4,False,2
+196,framework,0.0018370455498293724,4,False,2
+197,support,0.0009025179156832787,4,False,1
+198,"megalith, megalithic structure",0.0010149422927234102,4,True,1
+199,"brass, memorial tablet, plaque",0.0010149422927234102,4,True,1
+200,"tent, collapsible shelter",0.0010149422927234102,4,False,1
+201,triumphal arch,0.0010149422927234102,4,True,1
+202,"patio, terrace",0.0008993950163210528,4,True,1
+203,"plant, works, industrial plant",0.0010149422927234102,4,False,1
+204,"fortification, munition",0.0010149422927234102,4,False,1
+205,"furniture, piece of furniture, article of furniture",0.021060833298851306,4,False,21
+206,"rug, carpet, carpeting",0.0010149422927234102,4,False,1
+207,"curtain, drape, drapery, mantle, pall",0.0020017784911867875,4,False,2
+208,wheeled vehicle,0.0445473786773116,4,False,44
+209,vessel,0.02010756826853186,4,False,20
+210,dish,0.002780941882062144,4,False,3
+211,box,0.005878077324549658,4,False,6
+212,"package, parcel",0.0010149422927234102,4,False,1
+213,dispenser,0.0010149422927234102,4,False,1
+214,bag,0.004894364025448506,4,False,5
+215,spoon,0.0010149422927234102,4,False,1
+216,"glass, drinking glass",0.0020298845854468204,4,False,2
+217,receptacle,0.0010149422927234102,4,False,1
+218,shaker,0.001915898758725576,4,False,2
+219,thimble,0.0010149422927234102,4,True,1
+220,bin,0.0010149422927234102,4,False,1
+221,cassette,0.0009259396608999727,4,True,1
+222,"savings bank, coin bank, money box, bank",0.0010149422927234102,4,False,1
+223,"basket, handbasket",0.0020298845854468204,4,False,2
+224,envelope,0.0010149422927234102,4,True,1
+225,case,0.0010149422927234102,4,False,1
+226,"can, tin, tin can",0.000856455150090447,4,False,1
+227,measure,0.0010149422927234102,4,False,1
+228,"pot, flowerpot",0.0010149422927234102,4,True,1
+229,vehicle,0.021098308091198018,4,False,21
+230,public transport,0.004059769170893641,4,False,4
+231,litter,0.0010149422927234102,4,False,1
+232,mechanism,0.013014683092076342,4,False,13
+233,machine,0.015534862877392624,4,False,16
+234,instrument,0.02771651256459521,4,False,28
+235,"musical instrument, instrument",0.026374446563678634,4,False,26
+236,"restraint, constraint",0.010936393566515025,4,False,11
+237,"applicator, applier",0.0010149422927234102,4,False,1
+238,electronic device,0.002004120665708457,4,False,2
+239,runner,0.0010149422927234102,4,False,1
+240,support,0.002935525400492325,4,False,3
+241,source of illumination,0.004059769170893641,4,False,4
+242,"heater, warmer",0.0017987900326421054,4,False,2
+243,"airfoil, aerofoil, control surface, surface",0.0010149422927234102,4,False,1
+244,filter,0.0018893541141466559,4,False,2
+245,"breathing device, breathing apparatus, breathing machine, ventilator",0.0020298845854468204,4,False,2
+246,reflector,0.0020298845854468204,4,False,2
+247,blower,0.0010149422927234102,4,False,1
+248,optical device,0.0010149422927234102,4,False,1
+249,"lighter, light, igniter, ignitor",0.0010149422927234102,4,True,1
+250,"strengthener, reinforcement",0.0009212553118566339,4,False,1
+251,lifting device,0.0010149422927234102,4,False,1
+252,trap,0.0020298845854468204,4,False,2
+253,keyboard,0.0020298845854468204,4,False,2
+254,"remote control, remote",0.0010149422927234102,4,True,1
+255,acoustic device,0.0010149422927234102,4,False,1
+256,electrical device,0.0020298845854468204,4,False,2
+257,"memory device, storage device",0.0010149422927234102,4,False,1
+258,fan,0.0010149422927234102,4,False,1
+259,"pick, plectrum, plectron",0.0009032986405238351,4,True,1
+260,stick,0.005074711463617051,4,False,5
+261,utensil,0.006955477604517586,4,False,7
+262,writing implement,0.0029948604883746166,4,False,3
+263,tool,0.011397021222443338,4,False,12
+264,"cleaning implement, cleaning device, cleaning equipment",0.0020298845854468204,4,False,2
+265,oar,0.0010149422927234102,4,False,1
+266,sports implement,0.0010149422927234102,4,False,1
+267,eraser,0.0010149422927234102,4,False,1
+268,rod,0.0010149422927234102,4,False,1
+269,sharpener,0.0010149422927234102,4,False,1
+270,bar,0.0008158574583815106,4,False,1
+271,electronic equipment,0.010031533476310073,4,False,10
+272,"apparatus, setup",0.0010149422927234102,4,False,1
+273,game equipment,0.009079049170831181,4,False,9
+274,sports equipment,0.009134480634510691,4,False,9
+275,photographic equipment,0.0020298845854468204,4,False,2
+276,"gear, paraphernalia, appurtenance",0.0020298845854468204,4,False,2
+277,rescue equipment,0.0010149422927234102,4,False,1
+278,"satellite, artificial satellite, orbiter",0.0009665373526089091,4,False,1
+279,powder,0.0009001757411616092,4,False,1
+280,lotion,0.000993081997187829,4,True,1
+281,hair spray,0.0007651103437453401,4,True,1
+282,cosmetic,0.0010149422927234102,4,False,1
+283,"cream, ointment, emollient",0.0009501421309572233,4,False,1
+284,"perfume, essence",0.0010149422927234102,4,True,1
+285,communication system,0.0020298845854468204,4,False,2
+286,"maze, labyrinth",0.0010149422927234102,4,True,1
+287,"attachment, bond",0.0010149422927234102,4,False,1
+288,print media,0.0010149422927234102,4,False,1
+289,"jewelry, jewellery",0.0010149422927234102,4,False,1
+290,screen,0.0030448268781702306,4,False,3
+291,roof,0.004059769170893641,4,False,4
+292,shield,0.0020298845854468204,4,False,2
+293,shelter,0.0030448268781702306,4,False,3
+294,cap,0.0010149422927234102,4,False,1
+295,"blind, screen",0.0010149422927234102,4,False,1
+296,sheath,0.0020298845854468204,4,False,2
+297,mask,0.0020298845854468204,4,False,2
+298,"armor, armour",0.0030448268781702306,4,False,3
+299,shade,0.0010149422927234102,4,False,1
+300,"binder, ring-binder",0.0010149422927234102,4,True,1
+301,garment,0.02550081546709595,4,False,26
+302,footwear,0.0030448268781702306,4,False,3
+303,protective garment,0.0020298845854468204,4,False,2
+304,"headdress, headgear",0.009063434674020054,4,False,9
+305,"outerwear, overclothes",0.0020298845854468204,4,False,2
+306,"handwear, hand wear",0.0010149422927234102,4,False,1
+307,"nightwear, sleepwear, nightclothes",0.0010149422927234102,4,False,1
+308,woman's clothing,0.0010149422927234102,4,False,1
+309,"attire, garb, dress",0.0010149422927234102,4,False,1
+310,uniform,0.0010149422927234102,4,False,1
+311,boot,0.0010149422927234102,4,False,1
+312,shoe,0.002917568729159526,4,False,3
+313,"clog, geta, patten, sabot",0.0010149422927234102,4,True,1
+314,"bedclothes, bed clothing, bedding",0.0010149422927234102,4,False,1
+315,"dressing, medical dressing",0.0010149422927234102,4,False,1
+316,manhole cover,0.0010149422927234102,4,True,1
+317,cap,0.0020298845854468204,4,False,2
+318,mat,0.0010149422927234102,4,False,1
+319,shoji,0.0009751253258550303,4,True,1
+320,jacket,0.0009009564660021657,4,False,1
+321,"handkerchief, hankie, hanky, hankey",0.0010149422927234102,4,True,1
+322,bib,0.0010149422927234102,4,True,1
+323,towel,0.0020298845854468204,4,False,2
+324,"dishrag, dishcloth",0.0010149422927234102,4,True,1
+325,"durables, durable goods, consumer durables",0.010909068197095546,4,False,11
+326,pillow,0.0010149422927234102,4,True,1
+327,platform,0.0010149422927234102,4,False,1
+328,"ingredient, fixings",0.0030448268781702306,4,False,3
+329,starches,0.004059769170893641,4,False,4
+330,"concoction, mixture, intermixture",0.0010149422927234102,4,False,1
+331,"alcohol, alcoholic drink, alcoholic beverage, intoxicant, inebriant",0.0029612893202306885,4,False,3
+332,"coffee, java",0.0010149422927234102,4,False,1
+333,course,0.004059769170893641,4,False,4
+334,dish,0.006914099187968093,4,False,7
+335,menu,0.0010149422927234102,4,True,1
+336,fodder,0.0010149422927234102,4,False,1
+337,"ball, globe, orb",0.0010149422927234102,4,False,1
+338,"toilet tissue, toilet paper, bathroom tissue",0.0010149422927234102,4,True,1
+339,reproductive structure,0.016239076683574556,4,False,16
+340,reef,0.0010149422927234102,4,False,1
+341,bar,0.0010149422927234102,4,False,1
+342,alp,0.0010149422927234102,4,True,1
+343,volcano,0.0010149422927234102,4,True,1
+344,"ballplayer, baseball player",0.0010149422927234102,4,True,1
+345,scuba diver,0.0010149422927234102,4,True,1
+346,participant,0.0010149422927234102,4,False,1
+347,"angiosperm, flowering plant",0.0020298845854468204,4,False,2
+348,beetle,0.008119538341787282,5,False,8
+349,odonate,0.0020298845854468204,5,False,2
+350,"orthopterous insect, orthopteron, orthopteran",0.0020298845854468204,5,False,2
+351,"phasmid, phasmid insect",0.0010149422927234102,5,False,1
+352,"hymenopterous insect, hymenopteran, hymenopteron, hymenopter",0.0020298845854468204,5,False,2
+353,"neuropteron, neuropteran, neuropterous insect",0.0010149422927234102,5,False,1
+354,dictyopterous insect,0.0020298845854468204,5,False,2
+355,"homopterous insect, homopteran",0.0020298845854468204,5,False,2
+356,"lepidopterous insect, lepidopteron, lepidopteran",0.006089653756340461,5,False,6
+357,"dipterous insect, two-winged insects, dipteran, dipteron",0.0010149422927234102,5,False,1
+358,spider,0.006089653756340461,5,False,6
+359,"harvestman, daddy longlegs, Phalangium opilio",0.0010149422927234102,5,True,1
+360,acarine,0.0010149422927234102,5,False,1
+361,scorpion,0.0010149422927234102,5,True,1
+362,malacostracan crustacean,0.0010149422927234102,5,False,1
+363,"decapod crustacean, decapod",0.008119538341787282,5,False,8
+364,"sea slug, nudibranch",0.0010149422927234102,5,True,1
+365,slug,0.0010149422927234102,5,True,1
+366,conch,0.0010149422927234102,5,True,1
+367,snail,0.0010149422927234102,5,True,1
+368,"chambered nautilus, pearly nautilus, nautilus",0.0010149422927234102,5,True,1
+369,coral,0.0010149422927234102,5,False,1
+370,"sea anemone, anemone",0.0010149422927234102,5,True,1
+371,"placental, placental mammal, eutherian, eutherian mammal",0.09013936719128766,5,False,89
+372,metatherian,0.0030448268781702306,5,False,3
+373,prototherian,0.0020080242899112393,5,False,2
+374,tusker,0.0010149422927234102,5,True,1
+375,aquatic bird,0.024234479775713354,5,False,24
+376,parrot,0.004059769170893641,5,False,4
+377,"bird of prey, raptor, raptorial bird",0.004059769170893641,5,False,4
+378,"passerine, passeriform bird",0.01116436521995751,5,False,11
+379,piciform bird,0.0020298845854468204,5,False,2
+380,hen,0.0010149422927234102,5,True,1
+381,apodiform bird,0.0010149422927234102,5,False,1
+382,coraciiform bird,0.0020298845854468204,5,False,2
+383,cock,0.0010149422927234102,5,True,1
+384,cuculiform bird,0.0008283490558304141,5,False,1
+385,"ratite, ratite bird, flightless bird",0.0010149422927234102,5,False,1
+386,fish,0.015875258907875243,5,False,16
+387,salamander,0.005074711463617051,5,False,5
+388,"frog, toad, toad frog, anuran, batrachian, salientian",0.0030448268781702306,5,False,3
+389,"diapsid, diapsid reptile",0.031115007795537518,5,False,31
+390,"anapsid, anapsid reptile",0.005074711463617051,5,False,5
+391,"hound, hound dog",0.017624863275562296,5,False,19
+392,"sporting dog, gun dog",0.016931579617148144,5,False,17
+393,terrier,0.02568584725430783,5,False,26
+394,Rhodesian ridgeback,0.0010149422927234102,5,True,1
+395,bull mastiff,0.0010149422927234102,5,True,1
+396,"Saint Bernard, St Bernard",0.0010149422927234102,5,True,1
+397,Sennenhunde,0.004059769170893641,5,False,4
+398,"shepherd dog, sheepdog, sheep dog",0.012179307512680919,5,False,12
+399,"watchdog, guard dog",0.004804580668784512,5,False,5
+400,"Eskimo dog, husky",0.0010149422927234102,5,True,1
+401,"bulldog, English bulldog",0.0010149422927234102,5,False,1
+402,mastiff,0.0010149422927234102,5,False,1
+403,"sled dog, sledge dog",0.0020298845854468204,5,False,2
+404,boxer,0.0010149422927234102,5,True,1
+405,Great Dane,0.0010149422927234102,5,True,1
+406,"chow, chow chow",0.0009626337284061268,5,True,1
+407,"Samoyed, Samoyede",0.0010149422927234102,5,True,1
+408,keeshond,0.0010149422927234102,5,True,1
+409,Pomeranian,0.0010149422927234102,5,True,1
+410,"Cardigan, Cardigan Welsh corgi",0.0010149422927234102,5,True,1
+411,"Pembroke, Pembroke Welsh corgi",0.0010149422927234102,5,True,1
+412,"Maltese dog, Maltese terrier, Maltese",0.0010149422927234102,5,True,1
+413,toy terrier,0.0006714233628785637,5,True,1
+414,Japanese spaniel,0.0006027195769095944,5,True,1
+415,Shih-Tzu,0.0010149422927234102,5,True,1
+416,"Pekinese, Pekingese, Peke",0.0010149422927234102,5,True,1
+417,toy spaniel,0.0020298845854468204,5,False,2
+418,Chihuahua,0.0010149422927234102,5,True,1
+419,miniature poodle,0.0010149422927234102,5,True,1
+420,standard poodle,0.0010149422927234102,5,True,1
+421,toy poodle,0.0010149422927234102,5,True,1
+422,Brabancon griffon,0.0008353755793954223,5,True,1
+423,quail,0.0010149422927234102,5,True,1
+424,partridge,0.0010149422927234102,5,True,1
+425,pheasant,0.0010149422927234102,5,False,1
+426,"ruffed grouse, partridge, Bonasa umbellus",0.0010149422927234102,5,True,1
+427,black grouse,0.0010149422927234102,5,True,1
+428,"prairie chicken, prairie grouse, prairie fowl",0.0010149422927234102,5,True,1
+429,ptarmigan,0.0010149422927234102,5,True,1
+430,"mercantile establishment, retail store, sales outlet, outlet",0.009095444392482869,5,False,9
+431,"penal institution, penal facility",0.0010149422927234102,5,False,1
+432,"church, church building",0.0010149422927234102,5,True,1
+433,shrine,0.0010149422927234102,5,False,1
+434,mosque,0.0010149422927234102,5,True,1
+435,residence,0.0019166794835661324,5,False,2
+436,"home theater, home theatre",0.0010149422927234102,5,True,1
+437,"cinema, movie theater, movie theatre, movie house, picture palace",0.0010149422927234102,5,True,1
+438,shed,0.0020298845854468204,5,False,2
+439,barn,0.0010149422927234102,5,True,1
+440,"fence, fencing",0.004059769170893641,5,False,4
+441,"bannister, banister, balustrade, balusters, handrail",0.0010149422927234102,5,True,1
+442,"breakwater, groin, groyne, mole, bulwark, seawall, jetty",0.0010149422927234102,5,True,1
+443,"dam, dike, dyke",0.0010149422927234102,5,True,1
+444,movable barrier,0.0020298845854468204,5,False,2
+445,"grate, grating",0.0010149422927234102,5,False,1
+446,cliff dwelling,0.0010149422927234102,5,True,1
+447,yurt,0.0010149422927234102,5,True,1
+448,rack,0.0008221032571059623,5,False,1
+449,honeycomb,0.0010149422927234102,5,True,1
+450,"pedestal, plinth, footstall",0.0009025179156832787,5,True,1
+451,mountain tent,0.0010149422927234102,5,True,1
+452,"factory, mill, manufacturing plant, manufactory",0.0010149422927234102,5,False,1
+453,castle,0.0010149422927234102,5,True,1
+454,"baby bed, baby's bed",0.0030448268781702306,5,False,3
+455,seat,0.006851641200723575,5,False,7
+456,bedroom furniture,0.0010149422927234102,5,False,1
+457,cabinet,0.0020298845854468204,5,False,2
+458,table,0.0010149422927234102,5,False,1
+459,"wardrobe, closet, press",0.0010149422927234102,5,True,1
+460,lamp,0.0010149422927234102,5,False,1
+461,office furniture,0.0010149422927234102,5,False,1
+462,"chest of drawers, chest, bureau, dresser",0.0010149422927234102,5,False,1
+463,wall unit,0.0010149422927234102,5,False,1
+464,bookcase,0.0010149422927234102,5,True,1
+465,table,0.0010149422927234102,5,False,1
+466,"prayer rug, prayer mat",0.0010149422927234102,5,True,1
+467,"theater curtain, theatre curtain",0.0009868361984633773,5,True,1
+468,shower curtain,0.0010149422927234102,5,True,1
+469,self-propelled vehicle,0.031353128871907235,5,False,31
+470,"wagon, waggon",0.0030448268781702306,5,False,3
+471,"car, railcar, railway car, railroad car",0.0020298845854468204,5,False,2
+472,"bicycle, bike, wheel, cycle",0.0020298845854468204,5,False,2
+473,"unicycle, monocycle",0.0010149422927234102,5,True,1
+474,"trailer, house trailer",0.0010149422927234102,5,False,1
+475,"tricycle, trike, velocipede",0.0010149422927234102,5,True,1
+476,"motor scooter, scooter",0.0010149422927234102,5,True,1
+477,"handcart, pushcart, cart, go-cart",0.0020298845854468204,5,False,2
+478,bottle,0.006913318463127536,5,False,7
+479,jar,0.0020298845854468204,5,False,2
+480,mortar,0.0010149422927234102,5,True,1
+481,drinking vessel,0.0010149422927234102,5,False,1
+482,"tank, storage tank",0.0020298845854468204,5,False,2
+483,"tub, vat",0.0010149422927234102,5,True,1
+484,"barrel, cask",0.0010149422927234102,5,True,1
+485,"bathtub, bathing tub, bath, tub",0.0010149422927234102,5,True,1
+486,"pitcher, ewer",0.0010149422927234102,5,True,1
+487,basin,0.0010149422927234102,5,False,1
+488,"bucket, pail",0.0010149422927234102,5,True,1
+489,ladle,0.0010149422927234102,5,True,1
+490,bowl,0.0020298845854468204,5,False,2
+491,Petri dish,0.0007510572966153236,5,True,1
+492,"strongbox, deedbox",0.000803365860932607,5,False,1
+493,"mailbox, letter box",0.0010149422927234102,5,True,1
+494,crate,0.0010149422927234102,5,True,1
+495,chest,0.0010149422927234102,5,True,1
+496,"pencil box, pencil case",0.0010149422927234102,5,True,1
+497,carton,0.0010149422927234102,5,True,1
+498,packet,0.0010149422927234102,5,True,1
+499,soap dispenser,0.0010149422927234102,5,True,1
+500,plastic bag,0.0008345948545548658,5,True,1
+501,purse,0.0010149422927234102,5,True,1
+502,"backpack, back pack, knapsack, packsack, rucksack, haversack",0.0010149422927234102,5,True,1
+503,sleeping bag,0.0010149422927234102,5,True,1
+504,"mailbag, postbag",0.0010149422927234102,5,True,1
+505,wooden spoon,0.0010149422927234102,5,True,1
+506,beer glass,0.0010149422927234102,5,True,1
+507,goblet,0.0010149422927234102,5,True,1
+508,tray,0.0010149422927234102,5,True,1
+509,cocktail shaker,0.0009009564660021657,5,True,1
+510,"saltshaker, salt shaker",0.0010149422927234102,5,True,1
+511,"ashcan, trash can, garbage can, wastebin, ash bin, ash-bin, ashbin, dustbin, trash barrel, trash bin",0.0010149422927234102,5,True,1
+512,"piggy bank, penny bank",0.0010149422927234102,5,True,1
+513,shopping basket,0.0010149422927234102,5,True,1
+514,hamper,0.0010149422927234102,5,True,1
+515,"wallet, billfold, notecase, pocketbook",0.0010149422927234102,5,True,1
+516,milk can,0.000856455150090447,5,True,1
+517,measuring cup,0.0010149422927234102,5,True,1
+518,"sled, sledge, sleigh",0.0020298845854468204,5,False,2
+519,craft,0.0190684235057512,5,False,19
+520,"bus, autobus, coach, charabanc, double-decker, jitney, motorbus, motorcoach, omnibus, passenger vehicle",0.0030448268781702306,5,False,3
+521,"train, railroad train",0.0010149422927234102,5,False,1
+522,stretcher,0.0010149422927234102,5,True,1
+523,mechanical device,0.008991607988688859,5,False,9
+524,"control, controller",0.0020298845854468204,5,False,2
+525,rotating mechanism,0.0010149422927234102,5,False,1
+526,radiator,0.0009782482252172562,5,True,1
+527,"computer, computing machine, computing device, data processor, electronic computer, information processing system",0.005774240920755648,5,False,6
+528,textile machine,0.0010149422927234102,5,False,1
+529,"cash machine, cash dispenser, automated teller machine, automatic teller machine, automated teller, automatic teller, ATM",0.0010149422927234102,5,True,1
+530,power tool,0.0016410836148496987,5,False,2
+531,"printer, printing machine",0.0010149422927234102,5,False,1
+532,"slot machine, coin machine",0.0020298845854468204,5,False,2
+533,"calculator, calculating machine",0.0010149422927234102,5,False,1
+534,farm machine,0.0020298845854468204,5,False,2
+535,scientific instrument,0.0020298845854468204,5,False,2
+536,"measuring instrument, measuring system, measuring device",0.011603913305190804,5,False,12
+537,"weapon, arm, weapon system",0.007104596049063871,5,False,7
+538,instrument of execution,0.0010016699704339504,5,False,1
+539,navigational instrument,0.0009017371908427222,5,False,1
+540,medical instrument,0.0020298845854468204,5,False,2
+541,optical instrument,0.0030448268781702306,5,False,3
+542,"wind instrument, wind",0.0101494229272341,5,False,10
+543,"percussion instrument, percussive instrument",0.006075600709210444,5,False,6
+544,keyboard instrument,0.004059769170893641,5,False,4
+545,stringed instrument,0.006089653756340461,5,False,6
+546,"safety belt, life belt, safety harness",0.0010149422927234102,5,False,1
+547,"fastener, fastening, holdfast, fixing",0.008021947736717723,5,False,8
+548,muzzle,0.0008845612443504799,5,True,1
+549,brake,0.0010149422927234102,5,False,1
+550,paintbrush,0.0010149422927234102,5,True,1
+551,"display, video display",0.0009891783729850468,5,False,1
+552,"mouse, computer mouse",0.0010149422927234102,5,True,1
+553,ski,0.0010149422927234102,5,True,1
+554,pier,0.0010149422927234102,5,True,1
+555,structural member,0.0010149422927234102,5,False,1
+556,"rack, stand",0.0009056408150455046,5,False,1
+557,"light, light source",0.0010149422927234102,5,False,1
+558,lamp,0.0030448268781702306,5,False,3
+559,space heater,0.0007838477399186953,5,True,1
+560,stove,0.0010149422927234102,5,True,1
+561,wing,0.0010149422927234102,5,True,1
+562,oil filter,0.0008744118214232458,5,True,1
+563,strainer,0.0010149422927234102,5,True,1
+564,snorkel,0.0010149422927234102,5,True,1
+565,oxygen mask,0.0010149422927234102,5,True,1
+566,mirror,0.0010149422927234102,5,False,1
+567,"solar dish, solar collector, solar furnace",0.0010149422927234102,5,True,1
+568,"hand blower, blow dryer, blow drier, hair dryer, hair drier",0.0010149422927234102,5,True,1
+569,"lens, lense, lens system",0.0010149422927234102,5,False,1
+570,brace,0.0009212553118566339,5,False,1
+571,crane,0.0010149422927234102,5,True,1
+572,mousetrap,0.0010149422927234102,5,True,1
+573,"web, entanglement",0.0010149422927234102,5,False,1
+574,typewriter keyboard,0.0010149422927234102,5,True,1
+575,"computer keyboard, keypad",0.0010149422927234102,5,True,1
+576,whistle,0.0010149422927234102,5,True,1
+577,transducer,0.0020298845854468204,5,False,2
+578,"magnetic disk, magnetic disc, disk, disc",0.0010149422927234102,5,False,1
+579,"electric fan, blower",0.0010149422927234102,5,True,1
+580,staff,0.0020298845854468204,5,False,2
+581,matchstick,0.0010149422927234102,5,True,1
+582,spindle,0.0010149422927234102,5,True,1
+583,drumstick,0.0010149422927234102,5,True,1
+584,kitchen utensil,0.006955477604517586,5,False,7
+585,pen,0.0029948604883746166,5,False,3
+586,hand tool,0.006053740413674864,5,False,6
+587,cutting implement,0.003313396223321656,5,False,4
+588,"plow, plough",0.0010149422927234102,5,True,1
+589,"garden tool, lawn tool",0.0010149422927234102,5,False,1
+590,"swab, swob, mop",0.0010149422927234102,5,True,1
+591,broom,0.0010149422927234102,5,True,1
+592,"paddle, boat paddle",0.0010149422927234102,5,True,1
+593,"racket, racquet",0.0010149422927234102,5,True,1
+594,"rubber eraser, rubber, pencil eraser",0.0010149422927234102,5,True,1
+595,pole,0.0010149422927234102,5,True,1
+596,pencil sharpener,0.0010149422927234102,5,True,1
+597,lever,0.0008158574583815106,5,False,1
+598,modem,0.0008970528417993834,5,True,1
+599,"oscilloscope, scope, cathode-ray oscilloscope, CRO",0.0010149422927234102,5,True,1
+600,"telephone, phone, telephone set",0.0030448268781702306,5,False,3
+601,monitor,0.0010149422927234102,5,True,1
+602,CD player,0.0010149422927234102,5,True,1
+603,tape player,0.0010149422927234102,5,True,1
+604,"audio system, sound system",0.0010149422927234102,5,False,1
+605,cassette player,0.0010149422927234102,5,True,1
+606,"duplicator, copier",0.0010149422927234102,5,False,1
+607,game,0.0020298845854468204,5,False,2
+608,ball,0.0060342222926609524,5,False,6
+609,"pool table, billiard table, snooker table",0.0010149422927234102,5,True,1
+610,"weight, free weight, exercising weight",0.0020298845854468204,5,False,2
+611,baseball equipment,0.0010149422927234102,5,False,1
+612,golf equipment,0.0010149422927234102,5,False,1
+613,basketball equipment,0.0010149422927234102,5,False,1
+614,"gymnastic apparatus, exerciser",0.0030448268781702306,5,False,3
+615,croquet equipment,0.0010149422927234102,5,False,1
+616,"camera, photographic camera",0.0020298845854468204,5,False,2
+617,"kit, outfit",0.0010149422927234102,5,False,1
+618,rig,0.0010149422927234102,5,False,1
+619,"parachute, chute",0.0010149422927234102,5,True,1
+620,"spacecraft, ballistic capsule, space vehicle",0.0009665373526089091,5,False,1
+621,face powder,0.0009001757411616092,5,True,1
+622,"makeup, make-up, war paint",0.0010149422927234102,5,False,1
+623,"sunscreen, sunblock, sun blocker",0.0009501421309572233,5,True,1
+624,"telecommunication system, telecom system, telecommunication equipment, telecom equipment",0.0010149422927234102,5,False,1
+625,"radio, wireless",0.0010149422927234102,5,True,1
+626,ligament,0.0010149422927234102,5,False,1
+627,"press, public press",0.0010149422927234102,5,False,1
+628,necklace,0.0010149422927234102,5,True,1
+629,"fire screen, fireguard",0.0010149422927234102,5,True,1
+630,mosquito net,0.0010149422927234102,5,True,1
+631,window screen,0.0010149422927234102,5,True,1
+632,tile roof,0.0010149422927234102,5,True,1
+633,dome,0.0010149422927234102,5,True,1
+634,vault,0.0010149422927234102,5,True,1
+635,"thatch, thatched roof",0.0010149422927234102,5,True,1
+636,"plate, scale, shell",0.0020298845854468204,5,False,2
+637,"bell cote, bell cot",0.0010149422927234102,5,True,1
+638,canopy,0.0010149422927234102,5,False,1
+639,birdhouse,0.0010149422927234102,5,True,1
+640,"lens cap, lens cover",0.0010149422927234102,5,True,1
+641,window blind,0.0010149422927234102,5,False,1
+642,scabbard,0.0010149422927234102,5,True,1
+643,holster,0.0010149422927234102,5,True,1
+644,face mask,0.0010149422927234102,5,False,1
+645,"gasmask, respirator, gas helmet",0.0010149422927234102,5,True,1
+646,"body armor, body armour, suit of armor, suit of armour, coat of mail, cataphract",0.0020298845854468204,5,False,2
+647,"shield, buckler",0.0010149422927234102,5,True,1
+648,"lampshade, lamp shade",0.0010149422927234102,5,True,1
+649,"sweater, jumper",0.0017417971192814834,5,False,2
+650,"swimsuit, swimwear, bathing suit, swimming costume, bathing costume",0.0030448268781702306,5,False,3
+651,"overgarment, outer garment",0.003866930135276193,5,False,4
+652,neckwear,0.002976903817041818,5,False,3
+653,scarf,0.0020298845854468204,5,False,2
+654,skirt,0.0038294553429294824,5,False,4
+655,"vest, waistcoat",0.0009181324124944081,5,False,1
+656,"suit, suit of clothes",0.0010149422927234102,5,True,1
+657,"diaper, nappy, napkin",0.0010149422927234102,5,True,1
+658,shirt,0.0010032314201150632,5,False,1
+659,robe,0.0020298845854468204,5,False,2
+660,"trouser, pant",0.0010149422927234102,5,False,1
+661,"undergarment, unmentionable",0.0010149422927234102,5,False,1
+662,"hosiery, hose",0.0030448268781702306,5,False,3
+663,apron,0.0010149422927234102,5,True,1
+664,knee pad,0.0010149422927234102,5,True,1
+665,cap,0.0030448268781702306,5,False,3
+666,"hat, chapeau, lid",0.003988723210403002,5,False,4
+667,helmet,0.0020298845854468204,5,False,2
+668,"gown, robe",0.0020298845854468204,5,False,2
+669,glove,0.0010149422927234102,5,False,1
+670,"pajama, pyjama, pj's, jammies",0.0010149422927234102,5,True,1
+671,"dress, frock",0.0010149422927234102,5,False,1
+672,"hairpiece, false hair, postiche",0.0010149422927234102,5,False,1
+673,military uniform,0.0010149422927234102,5,True,1
+674,cowboy boot,0.0010149422927234102,5,True,1
+675,sandal,0.0010149422927234102,5,True,1
+676,Loafer,0.0008876841437127057,5,True,1
+677,running shoe,0.0010149422927234102,5,True,1
+678,"quilt, comforter, comfort, puff",0.0010149422927234102,5,True,1
+679,"bandage, patch",0.0010149422927234102,5,False,1
+680,bottlecap,0.0010149422927234102,5,True,1
+681,nipple,0.0010149422927234102,5,True,1
+682,"doormat, welcome mat",0.0010149422927234102,5,True,1
+683,"book jacket, dust cover, dust jacket, dust wrapper",0.0009009564660021657,5,True,1
+684,paper towel,0.0010149422927234102,5,True,1
+685,bath towel,0.0010149422927234102,5,True,1
+686,appliance,0.010909068197095546,5,False,11
+687,stage,0.0010149422927234102,5,True,1
+688,"flavorer, flavourer, flavoring, flavouring, seasoner, seasoning",0.0030448268781702306,5,False,3
+689,"bread, breadstuff, staff of life",0.004059769170893641,5,False,4
+690,dough,0.0010149422927234102,5,True,1
+691,mixed drink,0.0019463470275072783,5,False,2
+692,"wine, vino",0.0010149422927234102,5,False,1
+693,espresso,0.0010149422927234102,5,True,1
+694,"dessert, sweet, afters",0.0030448268781702306,5,False,3
+695,"entree, main course",0.0010149422927234102,5,False,1
+696,potpie,0.0010149422927234102,5,True,1
+697,burrito,0.0010149422927234102,5,True,1
+698,snack food,0.0020298845854468204,5,False,2
+699,"pizza, pizza pie",0.0010149422927234102,5,True,1
+700,soup,0.0009423348825516586,5,False,1
+701,stew,0.0008970528417993834,5,False,1
+702,hay,0.0010149422927234102,5,True,1
+703,globule,0.0010149422927234102,5,False,1
+704,fruit,0.016239076683574556,5,False,16
+705,coral reef,0.0010149422927234102,5,True,1
+706,"sandbar, sand bar",0.0010149422927234102,5,True,1
+707,"groom, bridegroom",0.0010149422927234102,5,True,1
+708,flower,0.0020298845854468204,5,False,2
+709,"ground beetle, carabid beetle",0.0010149422927234102,6,True,1
+710,"ladybug, ladybeetle, lady beetle, ladybird, ladybird beetle",0.0010149422927234102,6,True,1
+711,tiger beetle,0.0010149422927234102,6,True,1
+712,lamellicorn beetle,0.0020298845854468204,6,False,2
+713,weevil,0.0010149422927234102,6,True,1
+714,"leaf beetle, chrysomelid",0.0010149422927234102,6,True,1
+715,"long-horned beetle, longicorn, longicorn beetle",0.0010149422927234102,6,True,1
+716,"dragonfly, darning needle, devil's darning needle, sewing needle, snake feeder, snake doctor, mosquito hawk, skeeter hawk",0.0010149422927234102,6,True,1
+717,damselfly,0.0010149422927234102,6,True,1
+718,cricket,0.0010149422927234102,6,True,1
+719,"grasshopper, hopper",0.0010149422927234102,6,True,1
+720,"walking stick, walkingstick, stick insect",0.0010149422927234102,6,True,1
+721,"ant, emmet, pismire",0.0010149422927234102,6,True,1
+722,bee,0.0010149422927234102,6,True,1
+723,"lacewing, lacewing fly",0.0010149422927234102,6,True,1
+724,"cockroach, roach",0.0010149422927234102,6,True,1
+725,"mantis, mantid",0.0010149422927234102,6,True,1
+726,leafhopper,0.0010149422927234102,6,True,1
+727,"cicada, cicala",0.0010149422927234102,6,True,1
+728,butterfly,0.006089653756340461,6,False,6
+729,fly,0.0010149422927234102,6,True,1
+730,"garden spider, Aranea diademata",0.0010149422927234102,6,True,1
+731,"barn spider, Araneus cavaticus",0.0010149422927234102,6,True,1
+732,"black and gold garden spider, Argiope aurantia",0.0010149422927234102,6,True,1
+733,"wolf spider, hunting spider",0.0010149422927234102,6,True,1
+734,"black widow, Latrodectus mactans",0.0010149422927234102,6,True,1
+735,tarantula,0.0010149422927234102,6,True,1
+736,tick,0.0010149422927234102,6,True,1
+737,isopod,0.0010149422927234102,6,True,1
+738,crab,0.004059769170893641,6,False,4
+739,hermit crab,0.0010149422927234102,6,True,1
+740,lobster,0.0020298845854468204,6,False,2
+741,"crayfish, crawfish, crawdad, crawdaddy",0.0010149422927234102,6,True,1
+742,"stony coral, madrepore, madriporian coral",0.0010149422927234102,6,False,1
+743,"ungulate, hoofed mammal",0.017254018976297966,6,False,17
+744,primate,0.020298845854468194,6,False,20
+745,carnivore,0.03552298024531935,6,False,35
+746,"lagomorph, gnawing mammal",0.0030448268781702306,6,False,3
+747,"rodent, gnawer",0.006016265621328154,6,False,6
+748,aquatic mammal,0.00394266044481017,6,False,4
+749,"proboscidean, proboscidian",0.0020298845854468204,6,False,2
+750,edentate,0.0020298845854468204,6,False,2
+751,"marsupial, pouched mammal",0.0030448268781702306,6,False,3
+752,"monotreme, egg-laying mammal",0.0020080242899112393,6,False,2
+753,"wading bird, wader",0.016239076683574556,6,False,16
+754,"waterfowl, water bird, waterbird",0.002920691628521752,6,False,3
+755,"seabird, sea bird, seafowl",0.0030448268781702306,6,False,3
+756,swan,0.0010149422927234102,6,False,1
+757,"gallinule, marsh hen, water hen, swamphen",0.0010149422927234102,6,False,1
+758,lory,0.0010149422927234102,6,False,1
+759,macaw,0.0010149422927234102,6,True,1
+760,cockatoo,0.0010149422927234102,6,False,1
+761,"African grey, African gray, Psittacus erithacus",0.0010149422927234102,6,True,1
+762,"owl, bird of Minerva, bird of night, hooter",0.0010149422927234102,6,False,1
+763,hawk,0.0010149422927234102,6,False,1
+764,vulture,0.0010149422927234102,6,True,1
+765,"eagle, bird of Jove",0.0010149422927234102,6,False,1
+766,"oscine, oscine bird",0.01116436521995751,6,False,11
+767,jacamar,0.0010149422927234102,6,True,1
+768,toucan,0.0010149422927234102,6,True,1
+769,hummingbird,0.0010149422927234102,6,True,1
+770,bee eater,0.0010149422927234102,6,True,1
+771,hornbill,0.0010149422927234102,6,True,1
+772,cuckoo,0.0008283490558304141,6,False,1
+773,"ostrich, Struthio camelus",0.0010149422927234102,6,True,1
+774,bony fish,0.008770662858811378,6,False,9
+775,"cartilaginous fish, chondrichthian",0.005074711463617051,6,False,5
+776,food fish,0.0020298845854468204,6,False,2
+777,"newt, triton",0.0020298845854468204,6,False,2
+778,"ambystomid, ambystomid salamander",0.0020298845854468204,6,False,2
+779,"European fire salamander, Salamandra salamandra",0.0010149422927234102,6,True,1
+780,"tree frog, tree-frog",0.0010149422927234102,6,True,1
+781,"true frog, ranid",0.0010149422927234102,6,False,1
+782,"tailed frog, bell toad, ribbed toad, tailed toad, Ascaphus trui",0.0010149422927234102,6,True,1
+783,"snake, serpent, ophidian",0.017075232987810534,6,False,17
+784,"crocodilian reptile, crocodilian",0.0020298845854468204,6,False,2
+785,saurian,0.011021492574135677,6,False,11
+786,"archosaur, archosaurian, archosaurian reptile",0.0009883976481444904,6,False,1
+787,"chelonian, chelonian reptile",0.005074711463617051,6,False,5
+788,"bloodhound, sleuthhound",0.0010149422927234102,6,True,1
+789,"Afghan hound, Afghan",0.0010149422927234102,6,True,1
+790,beagle,0.0010149422927234102,6,True,1
+791,"Norwegian elkhound, elkhound",0.0010149422927234102,6,True,1
+792,greyhound,0.0020298845854468204,6,False,2
+793,"Saluki, gazelle hound",0.0010149422927234102,6,True,1
+794,wolfhound,0.0020298845854468204,6,False,2
+795,coonhound,0.0005714905832873357,6,False,1
+796,foxhound,0.0013889094913499592,6,False,2
+797,redbone,0.0010071350443178455,6,True,1
+798,bluetick,0.0008869034188721493,6,True,1
+799,"basset, basset hound",0.0010149422927234102,6,True,1
+800,"otterhound, otter hound",0.0005761749323306744,6,True,1
+801,"Scottish deerhound, deerhound",0.0010149422927234102,6,True,1
+802,Weimaraner,0.0010149422927234102,6,True,1
+803,"Ibizan hound, Ibizan Podenco",0.0010149422927234102,6,True,1
+804,retriever,0.0050106920266914205,6,False,5
+805,setter,0.0030448268781702306,6,False,3
+806,"pointer, Spanish pointer",0.0020298845854468204,6,False,2
+807,spaniel,0.00684617612683968,6,False,7
+808,Yorkshire terrier,0.0010149422927234102,6,True,1
+809,"wirehair, wirehaired terrier, wire-haired terrier",0.0017457007434842657,6,False,2
+810,Bedlington terrier,0.0009821518494200385,6,True,1
+811,Norwich terrier,0.0010149422927234102,6,True,1
+812,Border terrier,0.0010149422927234102,6,True,1
+813,"bullterrier, bull terrier",0.0020298845854468204,6,False,2
+814,"Tibetan terrier, chrysanthemum dog",0.0010149422927234102,6,True,1
+815,West Highland white terrier,0.0010149422927234102,6,True,1
+816,Norfolk terrier,0.0010149422927234102,6,True,1
+817,"Dandie Dinmont, Dandie Dinmont terrier",0.0009025179156832787,6,True,1
+818,Kerry blue terrier,0.0009938627220283855,6,True,1
+819,fox terrier,0.0007627681692236706,6,False,1
+820,"Airedale, Airedale terrier",0.0010149422927234102,6,True,1
+821,"silky terrier, Sydney silky",0.0010149422927234102,6,True,1
+822,"Boston bull, Boston terrier",0.0010149422927234102,6,True,1
+823,soft-coated wheaten terrier,0.0010149422927234102,6,True,1
+824,"cairn, cairn terrier",0.0010149422927234102,6,True,1
+825,Irish terrier,0.0010149422927234102,6,True,1
+826,"Lhasa, Lhasa apso",0.0010149422927234102,6,True,1
+827,schnauzer,0.0030448268781702306,6,False,3
+828,"Scotch terrier, Scottish terrier, Scottie",0.0010149422927234102,6,True,1
+829,Australian terrier,0.0010149422927234102,6,True,1
+830,Appenzeller,0.0010149422927234102,6,True,1
+831,Greater Swiss Mountain dog,0.0010149422927234102,6,True,1
+832,Bernese mountain dog,0.0010149422927234102,6,True,1
+833,EntleBucher,0.0010149422927234102,6,True,1
+834,Border collie,0.0010149422927234102,6,True,1
+835,"German shepherd, German shepherd dog, German police dog, alsatian",0.0010149422927234102,6,True,1
+836,"Belgian sheepdog, Belgian shepherd",0.0020298845854468204,6,False,2
+837,kelpie,0.0010149422927234102,6,True,1
+838,collie,0.0010149422927234102,6,True,1
+839,"Old English sheepdog, bobtail",0.0010149422927234102,6,True,1
+840,komondor,0.0010149422927234102,6,True,1
+841,"Shetland sheepdog, Shetland sheep dog, Shetland",0.0010149422927234102,6,True,1
+842,Rottweiler,0.0010149422927234102,6,True,1
+843,briard,0.0010149422927234102,6,True,1
+844,"Bouvier des Flandres, Bouviers des Flandres",0.0010149422927234102,6,True,1
+845,pinscher,0.0027746960833376923,6,False,3
+846,schipperke,0.0010149422927234102,6,True,1
+847,kuvasz,0.0010149422927234102,6,True,1
+848,French bulldog,0.0010149422927234102,6,True,1
+849,Tibetan mastiff,0.0010149422927234102,6,True,1
+850,Siberian husky,0.0010149422927234102,6,True,1
+851,"malamute, malemute, Alaskan malamute",0.0010149422927234102,6,True,1
+852,English toy spaniel,0.0010149422927234102,6,False,1
+853,papillon,0.0010149422927234102,6,True,1
+854,"peafowl, bird of Juno",0.0010149422927234102,6,False,1
+855,"shop, store",0.008080502099759457,6,False,8
+856,"marketplace, market place, mart, market",0.0010149422927234102,6,False,1
+857,correctional institution,0.0010149422927234102,6,False,1
+858,"stupa, tope",0.0010149422927234102,6,True,1
+859,palace,0.0010149422927234102,6,True,1
+860,"religious residence, cloister",0.0009017371908427222,6,False,1
+861,"apiary, bee house",0.0010149422927234102,6,True,1
+862,boathouse,0.0010149422927234102,6,True,1
+863,stone wall,0.0010149422927234102,6,True,1
+864,"picket fence, paling",0.0010149422927234102,6,True,1
+865,chainlink fence,0.0010149422927234102,6,True,1
+866,rail fence,0.0010149422927234102,6,False,1
+867,door,0.0010149422927234102,6,False,1
+868,gate,0.0010149422927234102,6,False,1
+869,"grille, radiator grille",0.0010149422927234102,6,True,1
+870,plate rack,0.0008221032571059623,6,True,1
+871,"lumbermill, sawmill",0.0010149422927234102,6,True,1
+872,cradle,0.0010149422927234102,6,True,1
+873,bassinet,0.0010149422927234102,6,True,1
+874,"crib, cot",0.0010149422927234102,6,True,1
+875,toilet seat,0.0010149422927234102,6,True,1
+876,chair,0.0038068143225533447,6,False,4
+877,"sofa, couch, lounge",0.0010149422927234102,6,False,1
+878,bench,0.0010149422927234102,6,False,1
+879,bed,0.0010149422927234102,6,False,1
+880,"medicine chest, medicine cabinet",0.0010149422927234102,6,True,1
+881,"china cabinet, china closet",0.0010149422927234102,6,True,1
+882,"dining table, board",0.0010149422927234102,6,True,1
+883,table lamp,0.0010149422927234102,6,True,1
+884,"file, file cabinet, filing cabinet",0.0010149422927234102,6,True,1
+885,"chiffonier, commode",0.0010149422927234102,6,True,1
+886,entertainment center,0.0010149422927234102,6,True,1
+887,desk,0.0010149422927234102,6,True,1
+888,"motor vehicle, automotive vehicle",0.02221864823739655,6,False,22
+889,"streetcar, tram, tramcar, trolley, trolley car",0.0010149422927234102,6,True,1
+890,"locomotive, engine, locomotive engine, railway locomotive",0.0020298845854468204,6,False,2
+891,"armored vehicle, armoured vehicle",0.0010149422927234102,6,False,1
+892,tractor,0.0010149422927234102,6,True,1
+893,tracked vehicle,0.0020298845854468204,6,False,2
+894,forklift,0.0010149422927234102,6,True,1
+895,"recreational vehicle, RV, R.V.",0.0010149422927234102,6,True,1
+896,cart,0.0030448268781702306,6,False,3
+897,freight car,0.0010149422927234102,6,True,1
+898,"passenger car, coach, carriage",0.0010149422927234102,6,True,1
+899,"mountain bike, all-terrain bike, off-roader",0.0010149422927234102,6,True,1
+900,"bicycle-built-for-two, tandem bicycle, tandem",0.0010149422927234102,6,True,1
+901,"mobile home, manufactured home",0.0010149422927234102,6,True,1
+902,"barrow, garden cart, lawn cart, wheelbarrow",0.0010149422927234102,6,True,1
+903,shopping cart,0.0010149422927234102,6,True,1
+904,"pop bottle, soda bottle",0.0010149422927234102,6,True,1
+905,wine bottle,0.0010149422927234102,6,True,1
+906,pill bottle,0.0010149422927234102,6,True,1
+907,jug,0.0018386069995104855,6,False,2
+908,beer bottle,0.0010149422927234102,6,True,1
+909,water bottle,0.0010149422927234102,6,True,1
+910,vase,0.0010149422927234102,6,True,1
+911,beaker,0.0010149422927234102,6,True,1
+912,mug,0.0010149422927234102,6,False,1
+913,reservoir,0.0020298845854468204,6,False,2
+914,"washbasin, handbasin, washbowl, lavabo, wash-hand basin",0.0010149422927234102,6,True,1
+915,mixing bowl,0.0010149422927234102,6,True,1
+916,soup bowl,0.0010149422927234102,6,True,1
+917,safe,0.000803365860932607,6,True,1
+918,"dogsled, dog sled, dog sleigh",0.0010149422927234102,6,True,1
+919,"bobsled, bobsleigh, bob",0.0010149422927234102,6,True,1
+920,"vessel, watercraft",0.015008654334857562,6,False,15
+921,aircraft,0.004059769170893641,6,False,4
+922,school bus,0.0010149422927234102,6,True,1
+923,"trolleybus, trolley coach, trackless trolley",0.0010149422927234102,6,True,1
+924,minibus,0.0010149422927234102,6,True,1
+925,passenger train,0.0010149422927234102,6,False,1
+926,"machine, simple machine",0.003916896525071807,6,False,4
+927,ride,0.0010149422927234102,6,False,1
+928,winder,0.0010149422927234102,6,False,1
+929,"hook, claw",0.0010149422927234102,6,True,1
+930,pump,0.0010149422927234102,6,False,1
+931,swing,0.0010149422927234102,6,True,1
+932,joystick,0.0010149422927234102,6,True,1
+933,"switch, electric switch, electrical switch",0.0010149422927234102,6,True,1
+934,"circle, round",0.0010149422927234102,6,False,1
+935,digital computer,0.00385209636330562,6,False,4
+936,"analog computer, analogue computer",0.0009072022647266174,6,False,1
+937,"web site, website, internet site, site",0.0010149422927234102,6,True,1
+938,sewing machine,0.0010149422927234102,6,True,1
+939,power drill,0.0007088981552252743,6,True,1
+940,"power saw, saw, sawing machine",0.0009321854596244245,6,False,1
+941,printer,0.0010149422927234102,6,True,1
+942,"slot, one-armed bandit",0.0010149422927234102,6,True,1
+943,vending machine,0.0010149422927234102,6,True,1
+944,abacus,0.0010149422927234102,6,True,1
+945,"thresher, thrasher, threshing machine",0.0010149422927234102,6,True,1
+946,"harvester, reaper",0.0010149422927234102,6,True,1
+947,magnifier,0.0020298845854468204,6,False,2
+948,"timepiece, timekeeper, horologe",0.007622997343193367,6,False,8
+949,barometer,0.0009360890838272069,6,True,1
+950,"scale, weighing machine",0.0010149422927234102,6,True,1
+951,"measuring stick, measure, measuring rod",0.0010149422927234102,6,False,1
+952,meter,0.0010149422927234102,6,False,1
+953,gun,0.004059769170893641,6,False,4
+954,missile,0.0010149422927234102,6,True,1
+955,"projectile, missile",0.0010149422927234102,6,True,1
+956,bow,0.0010149422927234102,6,True,1
+957,guillotine,0.0010016699704339504,6,True,1
+958,compass,0.0009017371908427222,6,False,1
+959,syringe,0.0010149422927234102,6,True,1
+960,stethoscope,0.0010149422927234102,6,True,1
+961,projector,0.0010149422927234102,6,True,1
+962,"spectacles, specs, eyeglasses, glasses",0.0010149422927234102,6,False,1
+963,"binoculars, field glasses, opera glasses",0.0010149422927234102,6,True,1
+964,pipe,0.0010149422927234102,6,False,1
+965,"woodwind, woodwind instrument, wood",0.004059769170893641,6,False,4
+966,"brass, brass instrument",0.0030448268781702306,6,False,3
+967,free-reed instrument,0.0010149422927234102,6,False,1
+968,"ocarina, sweet potato",0.0010149422927234102,6,True,1
+969,"chime, bell, gong",0.0010149422927234102,6,True,1
+970,"drum, membranophone, tympan",0.0010149422927234102,6,True,1
+971,"gong, tam-tam",0.0010008892455933937,6,True,1
+972,steel drum,0.0010149422927234102,6,True,1
+973,maraca,0.0010149422927234102,6,True,1
+974,"marimba, xylophone",0.0010149422927234102,6,True,1
+975,"piano, pianoforte, forte-piano",0.0020298845854468204,6,False,2
+976,"organ, pipe organ",0.0010149422927234102,6,True,1
+977,"accordion, piano accordion, squeeze box",0.0010149422927234102,6,True,1
+978,banjo,0.0010149422927234102,6,True,1
+979,"bowed stringed instrument, string",0.0020298845854468204,6,False,2
+980,guitar,0.0020298845854468204,6,False,2
+981,chordophone,0.0010149422927234102,6,False,1
+982,"seat belt, seatbelt",0.0010149422927234102,6,True,1
+983,screw,0.0010149422927234102,6,True,1
+984,lock,0.001964303698840077,6,False,2
+985,nail,0.0010149422927234102,6,True,1
+986,buckle,0.0010149422927234102,6,True,1
+987,clip,0.0010149422927234102,6,False,1
+988,knot,0.0010149422927234102,6,True,1
+989,pin,0.000982932574260595,6,False,1
+990,"brake system, brakes",0.0010149422927234102,6,False,1
+991,"screen, CRT screen",0.0009891783729850468,6,True,1
+992,"upright, vertical",0.0010149422927234102,6,False,1
+993,tripod,0.0009056408150455046,6,True,1
+994,torch,0.0010149422927234102,6,True,1
+995,lantern,0.0010149422927234102,6,False,1
+996,"spotlight, spot",0.0010149422927234102,6,True,1
+997,"candle, taper, wax light",0.0010149422927234102,6,True,1
+998,car mirror,0.0010149422927234102,6,True,1
+999,"converging lens, convex lens",0.0010149422927234102,6,False,1
+1000,neck brace,0.0009212553118566339,6,True,1
+1001,"spider web, spider's web",0.0010149422927234102,6,True,1
+1002,electro-acoustic transducer,0.0020298845854468204,6,False,2
+1003,"hard disc, hard disk, fixed disk",0.0010149422927234102,6,True,1
+1004,"flagpole, flagstaff",0.0010149422927234102,6,True,1
+1005,crutch,0.0010149422927234102,6,True,1
+1006,"cooking utensil, cookware",0.006955477604517586,6,False,7
+1007,"quill, quill pen",0.0010149422927234102,6,True,1
+1008,fountain pen,0.0010149422927234102,6,True,1
+1009,"ballpoint, ballpoint pen, ballpen, Biro",0.0009649759029277962,6,True,1
+1010,opener,0.0020298845854468204,6,False,2
+1011,hammer,0.0010149422927234102,6,True,1
+1012,shovel,0.0010149422927234102,6,True,1
+1013,screwdriver,0.0010149422927234102,6,True,1
+1014,"plunger, plumber's helper",0.0009790289500578126,6,True,1
+1015,"cutter, cutlery, cutting tool",0.003313396223321656,6,False,4
+1016,"lawn mower, mower",0.0010149422927234102,6,True,1
+1017,key,0.0008158574583815106,6,False,1
+1018,"radiotelephone, radiophone, wireless telephone",0.0010149422927234102,6,False,1
+1019,"dial telephone, dial phone",0.0010149422927234102,6,True,1
+1020,"pay-phone, pay-station",0.0010149422927234102,6,True,1
+1021,reproducer,0.0010149422927234102,6,False,1
+1022,photocopier,0.0010149422927234102,6,True,1
+1023,puzzle,0.0020298845854468204,6,False,2
+1024,soccer ball,0.0010149422927234102,6,True,1
+1025,rugby ball,0.0010149422927234102,6,True,1
+1026,volleyball,0.0010149422927234102,6,True,1
+1027,tennis ball,0.0010149422927234102,6,True,1
+1028,ping-pong ball,0.0010008892455933937,6,True,1
+1029,"punching bag, punch bag, punching ball, punchball",0.0009735638761739174,6,True,1
+1030,dumbbell,0.0010149422927234102,6,True,1
+1031,barbell,0.0010149422927234102,6,True,1
+1032,baseball,0.0010149422927234102,6,True,1
+1033,golf ball,0.0010149422927234102,6,True,1
+1034,basketball,0.0010149422927234102,6,True,1
+1035,"balance beam, beam",0.0010149422927234102,6,True,1
+1036,"horizontal bar, high bar",0.0010149422927234102,6,True,1
+1037,"parallel bars, bars",0.0010149422927234102,6,True,1
+1038,croquet ball,0.0010149422927234102,6,True,1
+1039,"Polaroid camera, Polaroid Land camera",0.0010149422927234102,6,True,1
+1040,reflex camera,0.0010149422927234102,6,True,1
+1041,"carpenter's kit, tool kit",0.0010149422927234102,6,True,1
+1042,"drill rig, drilling rig, oilrig, oil rig",0.0010149422927234102,6,False,1
+1043,space shuttle,0.0009665373526089091,6,True,1
+1044,"lipstick, lip rouge",0.0010149422927234102,6,True,1
+1045,"television, television system",0.0010149422927234102,6,True,1
+1046,chain,0.0010149422927234102,6,True,1
+1047,"magazine, mag",0.0010149422927234102,6,False,1
+1048,"armor plate, armour plate, armor plating, plate armor, plate armour",0.0020298845854468204,6,False,2
+1049,umbrella,0.0010149422927234102,6,True,1
+1050,window shade,0.0010149422927234102,6,True,1
+1051,ski mask,0.0010149422927234102,6,True,1
+1052,cuirass,0.0010149422927234102,6,True,1
+1053,"chain mail, ring mail, mail, chain armor, chain armour, ring armor, ring armour",0.0010149422927234102,6,True,1
+1054,"pullover, slipover",0.000726854826558073,6,False,1
+1055,cardigan,0.0010149422927234102,6,True,1
+1056,"bikini, two-piece",0.0010149422927234102,6,True,1
+1057,"swimming trunks, bathing trunks",0.0010149422927234102,6,True,1
+1058,"maillot, tank suit",0.0010149422927234102,6,True,1
+1059,cloak,0.0010149422927234102,6,False,1
+1060,coat,0.0028519878425527826,6,False,3
+1061,"necktie, tie",0.002976903817041818,6,False,3
+1062,"feather boa, boa",0.0010149422927234102,6,True,1
+1063,stole,0.0010149422927234102,6,True,1
+1064,"hoopskirt, crinoline",0.0010149422927234102,6,True,1
+1065,"miniskirt, mini",0.0010149422927234102,6,True,1
+1066,overskirt,0.0007846284647592518,6,True,1
+1067,sarong,0.0010149422927234102,6,True,1
+1068,bulletproof vest,0.0009181324124944081,6,True,1
+1069,"jersey, T-shirt, tee shirt",0.0010032314201150632,6,True,1
+1070,abaya,0.0010149422927234102,6,True,1
+1071,kimono,0.0010149422927234102,6,True,1
+1072,"jean, blue jean, denim",0.0010149422927234102,6,True,1
+1073,"brassiere, bra, bandeau",0.0010149422927234102,6,True,1
+1074,"tights, leotards",0.0010149422927234102,6,False,1
+1075,stocking,0.0010149422927234102,6,False,1
+1076,sock,0.0010149422927234102,6,True,1
+1077,shower cap,0.0010149422927234102,6,True,1
+1078,mortarboard,0.0010149422927234102,6,True,1
+1079,"bathing cap, swimming cap",0.0010149422927234102,6,True,1
+1080,sombrero,0.0010149422927234102,6,True,1
+1081,"bearskin, busby, shako",0.0009438963322327715,6,True,1
+1082,"cowboy hat, ten-gallon hat",0.0010149422927234102,6,True,1
+1083,"bonnet, poke bonnet",0.0010149422927234102,6,True,1
+1084,crash helmet,0.0010149422927234102,6,True,1
+1085,football helmet,0.0010149422927234102,6,True,1
+1086,vestment,0.0010149422927234102,6,True,1
+1087,"academic gown, academic robe, judge's robe",0.0010149422927234102,6,True,1
+1088,mitten,0.0010149422927234102,6,True,1
+1089,gown,0.0010149422927234102,6,True,1
+1090,wig,0.0010149422927234102,6,True,1
+1091,adhesive bandage,0.0010149422927234102,6,False,1
+1092,"home appliance, household appliance",0.010909068197095546,6,False,11
+1093,condiment,0.0030448268781702306,6,False,3
+1094,"loaf of bread, loaf",0.0020298845854468204,6,False,2
+1095,cracker,0.0010149422927234102,6,False,1
+1096,"bun, roll",0.0010149422927234102,6,False,1
+1097,punch,0.0019463470275072783,6,False,2
+1098,red wine,0.0010149422927234102,6,True,1
+1099,frozen dessert,0.0020298845854468204,6,False,2
+1100,"pudding, pud",0.0010149422927234102,6,False,1
+1101,plate,0.0010149422927234102,6,True,1
+1102,sandwich,0.0020298845854468204,6,False,2
+1103,consomme,0.0009423348825516586,6,True,1
+1104,"hot pot, hotpot",0.0008970528417993834,6,True,1
+1105,bubble,0.0010149422927234102,6,True,1
+1106,edible fruit,0.0101494229272341,6,False,10
+1107,seed,0.0030448268781702306,6,False,3
+1108,"ear, spike, capitulum",0.0010149422927234102,6,True,1
+1109,acorn,0.0010149422927234102,6,True,1
+1110,"hip, rose hip, rosehip",0.0010149422927234102,6,True,1
+1111,daisy,0.0010149422927234102,6,True,1
+1112,"orchid, orchidaceous plant",0.0010149422927234102,6,False,1
+1113,"scarabaeid beetle, scarabaeid, scarabaean",0.0020298845854468204,7,False,2
+1114,"danaid, danaid butterfly",0.0010149422927234102,7,False,1
+1115,"ringlet, ringlet butterfly",0.0010149422927234102,7,True,1
+1116,"lycaenid, lycaenid butterfly",0.0010149422927234102,7,True,1
+1117,"nymphalid, nymphalid butterfly, brush-footed butterfly, four-footed butterfly",0.0010149422927234102,7,False,1
+1118,"pierid, pierid butterfly",0.0010149422927234102,7,False,1
+1119,"sulphur butterfly, sulfur butterfly",0.0010149422927234102,7,True,1
+1120,fiddler crab,0.0010149422927234102,7,True,1
+1121,"Dungeness crab, Cancer magister",0.0010149422927234102,7,True,1
+1122,"rock crab, Cancer irroratus",0.0010149422927234102,7,True,1
+1123,"king crab, Alaska crab, Alaskan king crab, Alaska king crab, Paralithodes camtschatica",0.0010149422927234102,7,True,1
+1124,true lobster,0.0010149422927234102,7,False,1
+1125,"spiny lobster, langouste, rock lobster, crawfish, crayfish, sea crawfish",0.0010149422927234102,7,True,1
+1126,brain coral,0.0010149422927234102,7,True,1
+1127,"odd-toed ungulate, perissodactyl, perissodactyl mammal",0.0020298845854468204,7,False,2
+1128,"even-toed ungulate, artiodactyl, artiodactyl mammal",0.015224134390851147,7,False,15
+1129,ape,0.005074711463617051,7,False,5
+1130,monkey,0.013194249805404328,7,False,13
+1131,lemur,0.0020298845854468204,7,False,2
+1132,"canine, canid",0.012179307512680919,7,False,12
+1133,"feline, felid",0.008119538341787282,7,False,8
+1134,"viverrine, viverrine mammal",0.0020298845854468204,7,False,2
+1135,"musteline mammal, mustelid, musteline",0.007104596049063871,7,False,7
+1136,bear,0.004059769170893641,7,False,4
+1137,procyonid,0.0020298845854468204,7,False,2
+1138,"leporid, leporid mammal",0.0030448268781702306,7,False,3
+1139,"porcupine, hedgehog",0.0010149422927234102,7,True,1
+1140,cavy,0.0010149422927234102,7,False,1
+1141,squirrel,0.0009415541577111021,7,False,1
+1142,beaver,0.0010149422927234102,7,True,1
+1143,marmot,0.0010149422927234102,7,True,1
+1144,hamster,0.0010149422927234102,7,True,1
+1145,"cetacean, cetacean mammal, blower",0.00191277585936335,7,False,2
+1146,"pinniped mammal, pinniped, pinnatiped",0.0010149422927234102,7,False,1
+1147,"sea cow, sirenian mammal, sirenian",0.0010149422927234102,7,False,1
+1148,elephant,0.0020298845854468204,7,False,2
+1149,armadillo,0.0010149422927234102,7,True,1
+1150,"sloth, tree sloth",0.0010149422927234102,7,False,1
+1151,wombat,0.0010149422927234102,7,True,1
+1152,"phalanger, opossum, possum",0.0010149422927234102,7,False,1
+1153,kangaroo,0.0010149422927234102,7,False,1
+1154,"platypus, duckbill, duckbilled platypus, duck-billed platypus, Ornithorhynchus anatinus",0.000993081997187829,7,True,1
+1155,"echidna, spiny anteater, anteater",0.0010149422927234102,7,True,1
+1156,heron,0.0030448268781702306,7,False,3
+1157,stork,0.0020298845854468204,7,False,2
+1158,"shorebird, shore bird, limicoline bird",0.005074711463617051,7,False,5
+1159,rail,0.0010149422927234102,7,False,1
+1160,bustard,0.0010149422927234102,7,True,1
+1161,flamingo,0.0010149422927234102,7,True,1
+1162,spoonbill,0.0010149422927234102,7,True,1
+1163,crane,0.0010149422927234102,7,True,1
+1164,"limpkin, Aramus pictus",0.0010149422927234102,7,True,1
+1165,anseriform bird,0.002920691628521752,7,False,3
+1166,pelecaniform seabird,0.0010149422927234102,7,False,1
+1167,"pelagic bird, oceanic bird",0.0010149422927234102,7,False,1
+1168,sphenisciform seabird,0.0010149422927234102,7,False,1
+1169,"black swan, Cygnus atratus",0.0010149422927234102,7,True,1
+1170,purple gallinule,0.0010149422927234102,7,False,1
+1171,lorikeet,0.0010149422927234102,7,True,1
+1172,"sulphur-crested cockatoo, Kakatoe galerita, Cacatua galerita",0.0010149422927234102,7,True,1
+1173,"great grey owl, great gray owl, Strix nebulosa",0.0010149422927234102,7,True,1
+1174,kite,0.0010149422927234102,7,True,1
+1175,"bald eagle, American eagle, Haliaeetus leucocephalus",0.0010149422927234102,7,True,1
+1176,corvine bird,0.0020298845854468204,7,False,2
+1177,thrush,0.0020298845854468204,7,False,2
+1178,finch,0.005074711463617051,7,False,5
+1179,"water ouzel, dipper",0.0010149422927234102,7,True,1
+1180,"titmouse, tit",0.0010149422927234102,7,False,1
+1181,coucal,0.0008283490558304141,7,True,1
+1182,"teleost fish, teleost, teleostan",0.008770662858811378,7,False,9
+1183,"elasmobranch, selachian",0.005074711463617051,7,False,5
+1184,"barracouta, snoek",0.0010149422927234102,7,True,1
+1185,salmon,0.0010149422927234102,7,False,1
+1186,eft,0.0010149422927234102,7,True,1
+1187,"common newt, Triturus vulgaris",0.0010149422927234102,7,True,1
+1188,"axolotl, mud puppy, Ambystoma mexicanum",0.0010149422927234102,7,True,1
+1189,"spotted salamander, Ambystoma maculatum",0.0010149422927234102,7,True,1
+1190,"bullfrog, Rana catesbeiana",0.0010149422927234102,7,True,1
+1191,viper,0.0030448268781702306,7,False,3
+1192,"elapid, elapid snake",0.0020298845854468204,7,False,2
+1193,constrictor,0.0018510985969593888,7,False,2
+1194,"colubrid snake, colubrid",0.009134480634510691,7,False,9
+1195,sea snake,0.0010149422927234102,7,True,1
+1196,crocodile,0.0010149422927234102,7,False,1
+1197,"alligator, gator",0.0010149422927234102,7,False,1
+1198,lizard,0.011021492574135677,7,False,11
+1199,dinosaur,0.0009883976481444904,7,False,1
+1200,turtle,0.005074711463617051,7,False,5
+1201,Italian greyhound,0.0010149422927234102,7,True,1
+1202,whippet,0.0010149422927234102,7,True,1
+1203,Irish wolfhound,0.0010149422927234102,7,True,1
+1204,"borzoi, Russian wolfhound",0.0010149422927234102,7,True,1
+1205,black-and-tan coonhound,0.0005714905832873357,7,True,1
+1206,English foxhound,0.0005886665297795779,7,True,1
+1207,"Walker hound, Walker foxhound",0.0008002429615703812,7,True,1
+1208,Chesapeake Bay retriever,0.0010149422927234102,7,True,1
+1209,flat-coated retriever,0.0010149422927234102,7,True,1
+1210,Labrador retriever,0.0010149422927234102,7,True,1
+1211,golden retriever,0.0010149422927234102,7,True,1
+1212,curly-coated retriever,0.0009509228557977797,7,True,1
+1213,English setter,0.0010149422927234102,7,True,1
+1214,"Irish setter, red setter",0.0010149422927234102,7,True,1
+1215,Gordon setter,0.0010149422927234102,7,True,1
+1216,"vizsla, Hungarian pointer",0.0010149422927234102,7,True,1
+1217,German short-haired pointer,0.0010149422927234102,7,True,1
+1218,water spaniel,0.0007565223704992189,7,False,1
+1219,"springer spaniel, springer",0.0020298845854468204,7,False,2
+1220,"clumber, clumber spaniel",0.0010149422927234102,7,True,1
+1221,Sussex spaniel,0.0010149422927234102,7,True,1
+1222,Brittany spaniel,0.0010149422927234102,7,True,1
+1223,"cocker spaniel, English cocker spaniel, cocker",0.0010149422927234102,7,True,1
+1224,Lakeland terrier,0.0010149422927234102,7,True,1
+1225,Welsh terrier,0.0007307584507608554,7,False,1
+1226,"Staffordshire bullterrier, Staffordshire bull terrier",0.0010149422927234102,7,True,1
+1227,"American Staffordshire terrier, Staffordshire terrier, American pit bull terrier, pit bull terrier",0.0010149422927234102,7,True,1
+1228,wire-haired fox terrier,0.0007627681692236706,7,True,1
+1229,giant schnauzer,0.0010149422927234102,7,True,1
+1230,standard schnauzer,0.0010149422927234102,7,True,1
+1231,miniature schnauzer,0.0010149422927234102,7,True,1
+1232,groenendael,0.0010149422927234102,7,True,1
+1233,malinois,0.0010149422927234102,7,True,1
+1234,"Doberman, Doberman pinscher",0.0010149422927234102,7,True,1
+1235,miniature pinscher,0.0010149422927234102,7,True,1
+1236,"affenpinscher, monkey pinscher, monkey dog",0.0007448114978908718,7,True,1
+1237,Blenheim spaniel,0.0010149422927234102,7,True,1
+1238,peacock,0.0010149422927234102,7,True,1
+1239,"butcher shop, meat market",0.0010149422927234102,7,True,1
+1240,"bookshop, bookstore, bookstall",0.0010149422927234102,7,True,1
+1241,"bakery, bakeshop, bakehouse",0.0010149422927234102,7,True,1
+1242,toyshop,0.0010149422927234102,7,True,1
+1243,"shoe shop, shoe-shop, shoe store",0.0010149422927234102,7,True,1
+1244,"confectionery, confectionary, candy store",0.0010149422927234102,7,True,1
+1245,barbershop,0.0010149422927234102,7,True,1
+1246,"tobacco shop, tobacconist shop, tobacconist",0.0009759060506955867,7,True,1
+1247,"grocery store, grocery, food market, market",0.0010149422927234102,7,True,1
+1248,"prison, prison house",0.0010149422927234102,7,True,1
+1249,monastery,0.0009017371908427222,7,True,1
+1250,"worm fence, snake fence, snake-rail fence, Virginia fence",0.0010149422927234102,7,True,1
+1251,sliding door,0.0010149422927234102,7,True,1
+1252,turnstile,0.0010149422927234102,7,True,1
+1253,chair of state,0.0007619874443831142,7,False,1
+1254,barber chair,0.0010149422927234102,7,True,1
+1255,"rocking chair, rocker",0.0010149422927234102,7,True,1
+1256,folding chair,0.0010149422927234102,7,True,1
+1257,"convertible, sofa bed",0.0010149422927234102,7,False,1
+1258,park bench,0.0010149422927234102,7,True,1
+1259,four-poster,0.0010149422927234102,7,True,1
+1260,"truck, motortruck",0.006994513846545409,7,False,7
+1261,"golfcart, golf cart",0.0010149422927234102,7,True,1
+1262,"motorcycle, bike",0.0010149422927234102,7,False,1
+1263,"car, auto, automobile, machine, motorcar",0.0101494229272341,7,False,10
+1264,"amphibian, amphibious vehicle",0.0010149422927234102,7,True,1
+1265,go-kart,0.0010149422927234102,7,True,1
+1266,"snowplow, snowplough",0.0010149422927234102,7,True,1
+1267,electric locomotive,0.0010149422927234102,7,True,1
+1268,steam locomotive,0.0010149422927234102,7,True,1
+1269,"tank, army tank, armored combat vehicle, armoured combat vehicle",0.0010149422927234102,7,True,1
+1270,half track,0.0010149422927234102,7,True,1
+1271,snowmobile,0.0010149422927234102,7,True,1
+1272,"jinrikisha, ricksha, rickshaw",0.0010149422927234102,7,True,1
+1273,"horse cart, horse-cart",0.0010149422927234102,7,True,1
+1274,oxcart,0.0010149422927234102,7,True,1
+1275,whiskey jug,0.0008236647067870753,7,True,1
+1276,water jug,0.0010149422927234102,7,True,1
+1277,coffee mug,0.0010149422927234102,7,True,1
+1278,water tower,0.0010149422927234102,7,True,1
+1279,cistern,0.0010149422927234102,7,False,1
+1280,ship,0.005947561835359183,7,False,6
+1281,boat,0.006016265621328153,7,False,6
+1282,"sailing vessel, sailing ship",0.0030448268781702306,7,False,3
+1283,lighter-than-air craft,0.0020298845854468204,7,False,2
+1284,heavier-than-air craft,0.0020298845854468204,7,False,2
+1285,"bullet train, bullet",0.0010149422927234102,7,True,1
+1286,wheel,0.003916896525071807,7,False,4
+1287,"carousel, carrousel, merry-go-round, roundabout, whirligig",0.0010149422927234102,7,True,1
+1288,reel,0.0010149422927234102,7,True,1
+1289,"gas pump, gasoline pump, petrol pump, island dispenser",0.0010149422927234102,7,True,1
+1290,"disk, disc",0.0010149422927234102,7,False,1
+1291,"personal computer, PC, microcomputer",0.00385209636330562,7,False,4
+1292,"slide rule, slipstick",0.0009072022647266174,7,True,1
+1293,"chain saw, chainsaw",0.0009321854596244245,7,True,1
+1294,"telescope, scope",0.0010149422927234102,7,False,1
+1295,microscope,0.0010149422927234102,7,False,1
+1296,sundial,0.0010149422927234102,7,True,1
+1297,"watch, ticker",0.0006940643832547013,7,False,1
+1298,clock,0.003037800354605223,7,False,3
+1299,sandglass,0.0010149422927234102,7,False,1
+1300,timer,0.001861248019886623,7,False,2
+1301,"rule, ruler",0.0010149422927234102,7,True,1
+1302,"odometer, hodometer, mileometer, milometer",0.0010149422927234102,7,True,1
+1303,"firearm, piece, small-arm",0.0030448268781702306,7,False,3
+1304,cannon,0.0010149422927234102,7,True,1
+1305,magnetic compass,0.0009017371908427222,7,True,1
+1306,"sunglasses, dark glasses, shades",0.0010149422927234102,7,True,1
+1307,"panpipe, pandean pipe, syrinx",0.0010149422927234102,7,True,1
+1308,"beating-reed instrument, reed instrument, reed",0.0030448268781702306,7,False,3
+1309,"flute, transverse flute",0.0010149422927234102,7,True,1
+1310,"French horn, horn",0.0010149422927234102,7,True,1
+1311,"cornet, horn, trumpet, trump",0.0010149422927234102,7,True,1
+1312,trombone,0.0010149422927234102,7,True,1
+1313,"harmonica, mouth organ, harp, mouth harp",0.0010149422927234102,7,True,1
+1314,"grand piano, grand",0.0010149422927234102,7,True,1
+1315,"upright, upright piano",0.0010149422927234102,7,True,1
+1316,"violin, fiddle",0.0010149422927234102,7,True,1
+1317,"cello, violoncello",0.0010149422927234102,7,True,1
+1318,acoustic guitar,0.0010149422927234102,7,True,1
+1319,electric guitar,0.0010149422927234102,7,True,1
+1320,harp,0.0010149422927234102,7,True,1
+1321,padlock,0.0010149422927234102,7,True,1
+1322,combination lock,0.0009493614061166668,7,True,1
+1323,hair slide,0.0010149422927234102,7,True,1
+1324,safety pin,0.000982932574260595,7,True,1
+1325,"hydraulic brake, hydraulic brakes",0.0010149422927234102,7,False,1
+1326,post,0.0010149422927234102,7,False,1
+1327,jack-o'-lantern,0.0010149422927234102,7,True,1
+1328,sunglass,0.0010149422927234102,7,True,1
+1329,"microphone, mike",0.0010149422927234102,7,True,1
+1330,"loudspeaker, speaker, speaker unit, loudspeaker system, speaker system",0.0010149422927234102,7,True,1
+1331,"pan, cooking pan",0.0019689880478834156,7,False,2
+1332,cooker,0.0009267203857405293,7,False,1
+1333,"turner, food turner",0.0010149422927234102,7,False,1
+1334,pot,0.0030448268781702306,7,False,3
+1335,bottle opener,0.0010149422927234102,7,False,1
+1336,"can opener, tin opener",0.0010149422927234102,7,True,1
+1337,edge tool,0.003313396223321656,7,False,4
+1338,space bar,0.0008158574583815106,7,True,1
+1339,"cellular telephone, cellular phone, cellphone, cell, mobile phone",0.0010149422927234102,7,True,1
+1340,"stereo, stereophony, stereo system, stereophonic system",0.0010149422927234102,7,False,1
+1341,jigsaw puzzle,0.0010149422927234102,7,True,1
+1342,"crossword puzzle, crossword",0.0010149422927234102,7,True,1
+1343,"drilling platform, offshore rig",0.0010149422927234102,7,True,1
+1344,comic book,0.0010149422927234102,7,True,1
+1345,"breastplate, aegis, egis",0.0010149422927234102,7,True,1
+1346,helmet,0.0010149422927234102,7,False,1
+1347,sweatshirt,0.000726854826558073,7,True,1
+1348,poncho,0.0010149422927234102,7,True,1
+1349,"raincoat, waterproof",0.0008221032571059623,7,False,1
+1350,"lab coat, laboratory coat",0.0010149422927234102,7,True,1
+1351,fur coat,0.0010149422927234102,7,True,1
+1352,Windsor tie,0.0009470192315949974,7,True,1
+1353,"bolo tie, bolo, bola tie, bola",0.0010149422927234102,7,True,1
+1354,"bow tie, bow-tie, bowtie",0.0010149422927234102,7,True,1
+1355,maillot,0.0010149422927234102,7,True,1
+1356,Christmas stocking,0.0010149422927234102,7,True,1
+1357,Band Aid,0.0010149422927234102,7,True,1
+1358,white goods,0.0030448268781702306,7,False,3
+1359,kitchen appliance,0.0058343567334784956,7,False,6
+1360,"iron, smoothing iron",0.0010149422927234102,7,True,1
+1361,"vacuum, vacuum cleaner",0.0010149422927234102,7,True,1
+1362,sauce,0.0020298845854468204,7,False,2
+1363,dip,0.0010149422927234102,7,False,1
+1364,"meat loaf, meatloaf",0.0010149422927234102,7,True,1
+1365,French loaf,0.0010149422927234102,7,True,1
+1366,pretzel,0.0010149422927234102,7,True,1
+1367,"bagel, beigel",0.0010149422927234102,7,True,1
+1368,cup,0.0010149422927234102,7,True,1
+1369,eggnog,0.000931404734783868,7,True,1
+1370,"ice lolly, lolly, lollipop, popsicle",0.0010149422927234102,7,True,1
+1371,"ice cream, icecream",0.0010149422927234102,7,True,1
+1372,trifle,0.0010149422927234102,7,True,1
+1373,"hotdog, hot dog, red hot",0.0010149422927234102,7,True,1
+1374,"hamburger, beefburger, burger",0.0010149422927234102,7,False,1
+1375,"citrus, citrus fruit, citrous fruit",0.0020298845854468204,7,False,2
+1376,fig,0.0010149422927234102,7,True,1
+1377,custard apple,0.0010149422927234102,7,True,1
+1378,"pineapple, ananas",0.0010149422927234102,7,True,1
+1379,banana,0.0010149422927234102,7,True,1
+1380,pomegranate,0.0010149422927234102,7,True,1
+1381,berry,0.0010149422927234102,7,False,1
+1382,apple,0.0010149422927234102,7,False,1
+1383,"jackfruit, jak, jack",0.0010149422927234102,7,True,1
+1384,"buckeye, horse chestnut, conker",0.0010149422927234102,7,True,1
+1385,"oilseed, oil-rich seed",0.0010149422927234102,7,False,1
+1386,"grain, caryopsis",0.0010149422927234102,7,False,1
+1387,"lady's slipper, lady-slipper, ladies' slipper, slipper orchid",0.0010149422927234102,7,False,1
+1388,dung beetle,0.0010149422927234102,8,True,1
+1389,rhinoceros beetle,0.0010149422927234102,8,True,1
+1390,"monarch, monarch butterfly, milkweed butterfly, Danaus plexippus",0.0010149422927234102,8,True,1
+1391,admiral,0.0010149422927234102,8,True,1
+1392,cabbage butterfly,0.0010149422927234102,8,True,1
+1393,"American lobster, Northern lobster, Maine lobster, Homarus americanus",0.0010149422927234102,8,True,1
+1394,"equine, equid",0.0020298845854468204,8,False,2
+1395,ruminant,0.009134480634510691,8,False,9
+1396,swine,0.0030448268781702306,8,False,3
+1397,camel,0.0010149422927234102,8,False,1
+1398,llama,0.0010149422927234102,8,True,1
+1399,"hippopotamus, hippo, river horse, Hippopotamus amphibius",0.0010149422927234102,8,True,1
+1400,anthropoid ape,0.005074711463617051,8,False,5
+1401,"New World monkey, platyrrhine, platyrrhinian",0.006089653756340461,8,False,6
+1402,"Old World monkey, catarrhine",0.007104596049063871,8,False,7
+1403,"Madagascar cat, ring-tailed lemur, Lemur catta",0.0010149422927234102,8,True,1
+1404,"indri, indris, Indri indri, Indri brevicaudatus",0.0010149422927234102,8,True,1
+1405,wild dog,0.0030448268781702306,8,False,3
+1406,wolf,0.004059769170893641,8,False,4
+1407,fox,0.004059769170893641,8,False,4
+1408,"hyena, hyaena",0.0010149422927234102,8,True,1
+1409,"big cat, cat",0.006089653756340461,8,False,6
+1410,"cat, true cat",0.0020298845854468204,8,False,2
+1411,mongoose,0.0010149422927234102,8,True,1
+1412,"meerkat, mierkat",0.0010149422927234102,8,True,1
+1413,mink,0.0010149422927234102,8,True,1
+1414,"black-footed ferret, ferret, Mustela nigripes",0.0010149422927234102,8,True,1
+1415,"polecat, fitch, foulmart, foumart, Mustela putorius",0.0010149422927234102,8,True,1
+1416,otter,0.0010149422927234102,8,True,1
+1417,weasel,0.0010149422927234102,8,True,1
+1418,badger,0.0010149422927234102,8,True,1
+1419,"skunk, polecat, wood pussy",0.0010149422927234102,8,True,1
+1420,"ice bear, polar bear, Ursus Maritimus, Thalarctos maritimus",0.0010149422927234102,8,True,1
+1421,"brown bear, bruin, Ursus arctos",0.0010149422927234102,8,True,1
+1422,"sloth bear, Melursus ursinus, Ursus ursinus",0.0010149422927234102,8,True,1
+1423,"American black bear, black bear, Ursus americanus, Euarctos americanus",0.0010149422927234102,8,True,1
+1424,"lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens",0.0010149422927234102,8,True,1
+1425,"giant panda, panda, panda bear, coon bear, Ailuropoda melanoleuca",0.0010149422927234102,8,True,1
+1426,"rabbit, coney, cony",0.0020298845854468204,8,False,2
+1427,hare,0.0010149422927234102,8,True,1
+1428,"guinea pig, Cavia cobaya",0.0010149422927234102,8,True,1
+1429,tree squirrel,0.0009415541577111021,8,False,1
+1430,whale,0.00191277585936335,8,False,2
+1431,seal,0.0010149422927234102,8,False,1
+1432,"dugong, Dugong dugon",0.0010149422927234102,8,True,1
+1433,"Indian elephant, Elephas maximus",0.0010149422927234102,8,True,1
+1434,"African elephant, Loxodonta africana",0.0010149422927234102,8,True,1
+1435,"three-toed sloth, ai, Bradypus tridactylus",0.0010149422927234102,8,True,1
+1436,"koala, koala bear, kangaroo bear, native bear, Phascolarctos cinereus",0.0010149422927234102,8,True,1
+1437,"wallaby, brush kangaroo",0.0010149422927234102,8,True,1
+1438,bittern,0.0010149422927234102,8,True,1
+1439,egret,0.0010149422927234102,8,False,1
+1440,"little blue heron, Egretta caerulea",0.0010149422927234102,8,True,1
+1441,"white stork, Ciconia ciconia",0.0010149422927234102,8,True,1
+1442,"black stork, Ciconia nigra",0.0010149422927234102,8,True,1
+1443,"oystercatcher, oyster catcher",0.0010149422927234102,8,True,1
+1444,sandpiper,0.0020298845854468204,8,False,2
+1445,snipe,0.0010149422927234102,8,False,1
+1446,plover,0.0010149422927234102,8,False,1
+1447,coot,0.0010149422927234102,8,False,1
+1448,duck,0.0019057493357983418,8,False,2
+1449,goose,0.0010149422927234102,8,True,1
+1450,pelican,0.0010149422927234102,8,True,1
+1451,"albatross, mollymawk",0.0010149422927234102,8,True,1
+1452,penguin,0.0010149422927234102,8,False,1
+1453,"European gallinule, Porphyrio porphyrio",0.0010149422927234102,8,True,1
+1454,jay,0.0010149422927234102,8,True,1
+1455,magpie,0.0010149422927234102,8,True,1
+1456,"nightingale, Luscinia megarhynchos",0.0010149422927234102,8,False,1
+1457,"robin, American robin, Turdus migratorius",0.0010149422927234102,8,True,1
+1458,"junco, snowbird",0.0010149422927234102,8,True,1
+1459,bunting,0.0010149422927234102,8,False,1
+1460,"brambling, Fringilla montifringilla",0.0010149422927234102,8,True,1
+1461,"house finch, linnet, Carpodacus mexicanus",0.0010149422927234102,8,True,1
+1462,"goldfinch, Carduelis carduelis",0.0010149422927234102,8,True,1
+1463,chickadee,0.0010149422927234102,8,True,1
+1464,"soft-finned fish, malacopterygian",0.0029394290246951074,8,False,3
+1465,"spiny-finned fish, acanthopterygian",0.0038013492486694495,8,False,4
+1466,"ganoid, ganoid fish",0.0020298845854468204,8,False,2
+1467,ray,0.0020298845854468204,8,False,2
+1468,shark,0.0030448268781702306,8,False,3
+1469,"coho, cohoe, coho salmon, blue jack, silver salmon, Oncorhynchus kisutch",0.0010149422927234102,8,True,1
+1470,"horned viper, cerastes, sand viper, horned asp, Cerastes cornutus",0.0010149422927234102,8,True,1
+1471,pit viper,0.0020298845854468204,8,False,2
+1472,mamba,0.0010149422927234102,8,False,1
+1473,cobra,0.0010149422927234102,8,False,1
+1474,boa,0.0018510985969593888,8,False,2
+1475,"ringneck snake, ring-necked snake, ring snake",0.0010149422927234102,8,True,1
+1476,"king snake, kingsnake",0.0010149422927234102,8,True,1
+1477,"green snake, grass snake",0.0010149422927234102,8,True,1
+1478,water snake,0.0010149422927234102,8,True,1
+1479,"night snake, Hypsiglena torquata",0.0010149422927234102,8,True,1
+1480,"garter snake, grass snake",0.0010149422927234102,8,True,1
+1481,vine snake,0.0010149422927234102,8,True,1
+1482,"thunder snake, worm snake, Carphophis amoenus",0.0010149422927234102,8,True,1
+1483,"hognose snake, puff adder, sand viper",0.0010149422927234102,8,True,1
+1484,"African crocodile, Nile crocodile, Crocodylus niloticus",0.0010149422927234102,8,True,1
+1485,"American alligator, Alligator mississipiensis",0.0010149422927234102,8,True,1
+1486,"agamid, agamid lizard",0.0018870119396249864,8,False,2
+1487,"monitor, monitor lizard, varan",0.0010149422927234102,8,False,1
+1488,anguid lizard,0.0010149422927234102,8,False,1
+1489,gecko,0.0010149422927234102,8,False,1
+1490,"chameleon, chamaeleon",0.0010149422927234102,8,False,1
+1491,"iguanid, iguanid lizard",0.0020298845854468204,8,False,2
+1492,"lacertid lizard, lacertid",0.0010149422927234102,8,False,1
+1493,"teiid lizard, teiid",0.0010149422927234102,8,False,1
+1494,venomous lizard,0.0010149422927234102,8,False,1
+1495,"ornithischian, ornithischian dinosaur",0.0009883976481444904,8,False,1
+1496,"sea turtle, marine turtle",0.0020298845854468204,8,False,2
+1497,mud turtle,0.0010149422927234102,8,True,1
+1498,terrapin,0.0010149422927234102,8,True,1
+1499,"box turtle, box tortoise",0.0010149422927234102,8,True,1
+1500,Irish water spaniel,0.0007565223704992189,8,True,1
+1501,"English springer, English springer spaniel",0.0010149422927234102,8,True,1
+1502,Welsh springer spaniel,0.0010149422927234102,8,True,1
+1503,"Sealyham terrier, Sealyham",0.0007307584507608554,8,True,1
+1504,throne,0.0007619874443831142,8,True,1
+1505,"studio couch, day bed",0.0010149422927234102,8,True,1
+1506,"tow truck, tow car, wrecker",0.0010149422927234102,8,True,1
+1507,"garbage truck, dustcart",0.0010149422927234102,8,True,1
+1508,"pickup, pickup truck",0.0010149422927234102,8,True,1
+1509,van,0.0019198023829283583,8,False,2
+1510,"fire engine, fire truck",0.0010149422927234102,8,True,1
+1511,"trailer truck, tractor trailer, trucking rig, rig, articulated lorry, semi",0.0010149422927234102,8,True,1
+1512,"minibike, motorbike",0.0010149422927234102,8,False,1
+1513,"racer, race car, racing car",0.0010149422927234102,8,True,1
+1514,"limousine, limo",0.0010149422927234102,8,True,1
+1515,"sports car, sport car",0.0010149422927234102,8,True,1
+1516,"beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon",0.0010149422927234102,8,True,1
+1517,convertible,0.0010149422927234102,8,True,1
+1518,"jeep, landrover",0.0010149422927234102,8,True,1
+1519,minivan,0.0010149422927234102,8,True,1
+1520,ambulance,0.0010149422927234102,8,True,1
+1521,"cab, hack, taxi, taxicab",0.0010149422927234102,8,True,1
+1522,Model T,0.0010149422927234102,8,True,1
+1523,rain barrel,0.0010149422927234102,8,True,1
+1524,"warship, war vessel, combat ship",0.0020298845854468204,8,False,2
+1525,passenger ship,0.0010149422927234102,8,False,1
+1526,"pirate, pirate ship",0.0008728503717421328,8,True,1
+1527,"cargo ship, cargo vessel",0.0010149422927234102,8,False,1
+1528,wreck,0.0010149422927234102,8,True,1
+1529,sea boat,0.0010149422927234102,8,False,1
+1530,"motorboat, powerboat",0.0010149422927234102,8,False,1
+1531,small boat,0.0019564964504345124,8,False,2
+1532,gondola,0.0010149422927234102,8,True,1
+1533,fireboat,0.0010149422927234102,8,True,1
+1534,"sailboat, sailing boat",0.0020298845854468204,8,False,2
+1535,schooner,0.0010149422927234102,8,True,1
+1536,"airship, dirigible",0.0010149422927234102,8,True,1
+1537,balloon,0.0010149422927234102,8,True,1
+1538,"airplane, aeroplane, plane",0.0010149422927234102,8,False,1
+1539,"warplane, military plane",0.0010149422927234102,8,True,1
+1540,"paddlewheel, paddle wheel",0.0010149422927234102,8,True,1
+1541,car wheel,0.0010149422927234102,8,True,1
+1542,potter's wheel,0.0010149422927234102,8,True,1
+1543,pinwheel,0.0008720696469015763,8,True,1
+1544,"puck, hockey puck",0.0010149422927234102,8,True,1
+1545,desktop computer,0.0010149422927234102,8,True,1
+1546,portable computer,0.00283715407058221,8,False,3
+1547,astronomical telescope,0.0010149422927234102,8,False,1
+1548,light microscope,0.0010149422927234102,8,False,1
+1549,digital watch,0.0006940643832547013,8,True,1
+1550,wall clock,0.0010141615678828538,8,True,1
+1551,digital clock,0.0010149422927234102,8,True,1
+1552,analog clock,0.0010086964939989586,8,True,1
+1553,hourglass,0.0010149422927234102,8,True,1
+1554,"stopwatch, stop watch",0.0008463057271632129,8,True,1
+1555,parking meter,0.0010149422927234102,8,True,1
+1556,"pistol, handgun, side arm, shooting iron",0.0010149422927234102,8,False,1
+1557,rifle,0.0010149422927234102,8,True,1
+1558,"autoloader, self-loader",0.0010149422927234102,8,False,1
+1559,"single-reed instrument, single-reed woodwind",0.0010149422927234102,8,False,1
+1560,"double-reed instrument, double reed",0.0020298845854468204,8,False,2
+1561,"disk brake, disc brake",0.0010149422927234102,8,True,1
+1562,maypole,0.0010149422927234102,8,True,1
+1563,wok,0.0010149422927234102,8,True,1
+1564,"frying pan, frypan, skillet",0.0009540457551600056,8,True,1
+1565,Crock Pot,0.0009267203857405293,8,True,1
+1566,spatula,0.0010149422927234102,8,True,1
+1567,"caldron, cauldron",0.0010149422927234102,8,True,1
+1568,teapot,0.0010149422927234102,8,True,1
+1569,coffeepot,0.0010149422927234102,8,True,1
+1570,"corkscrew, bottle screw",0.0010149422927234102,8,True,1
+1571,knife,0.0016028280976624317,8,False,2
+1572,"plane, carpenter's plane, woodworking plane",0.0010149422927234102,8,True,1
+1573,"ax, axe",0.0006956258329358142,8,False,1
+1574,iPod,0.0010149422927234102,8,True,1
+1575,pickelhaube,0.0010149422927234102,8,True,1
+1576,trench coat,0.0008221032571059623,8,True,1
+1577,"dishwasher, dish washer, dishwashing machine",0.0010149422927234102,8,True,1
+1578,"refrigerator, icebox",0.0010149422927234102,8,True,1
+1579,"washer, automatic washer, washing machine",0.0010149422927234102,8,True,1
+1580,toaster,0.0010149422927234102,8,True,1
+1581,coffee maker,0.0008869034188721493,8,False,1
+1582,oven,0.0020298845854468204,8,False,2
+1583,waffle iron,0.0008876841437127057,8,True,1
+1584,"microwave, microwave oven",0.0010149422927234102,8,True,1
+1585,"chocolate sauce, chocolate syrup",0.0010149422927234102,8,True,1
+1586,"spaghetti sauce, pasta sauce",0.0010149422927234102,8,False,1
+1587,guacamole,0.0010149422927234102,8,True,1
+1588,cheeseburger,0.0010149422927234102,8,True,1
+1589,orange,0.0010149422927234102,8,True,1
+1590,lemon,0.0010149422927234102,8,True,1
+1591,strawberry,0.0010149422927234102,8,True,1
+1592,"eating apple, dessert apple",0.0010149422927234102,8,False,1
+1593,rapeseed,0.0010149422927234102,8,True,1
+1594,kernel,0.0010149422927234102,8,False,1
+1595,"yellow lady's slipper, yellow lady-slipper, Cypripedium calceolus, Cypripedium parviflorum",0.0010149422927234102,8,True,1
+1596,"horse, Equus caballus",0.0010149422927234102,9,False,1
+1597,zebra,0.0010149422927234102,9,True,1
+1598,bovid,0.009134480634510691,9,False,9
+1599,"hog, pig, grunter, squealer, Sus scrofa",0.0010149422927234102,9,True,1
+1600,"wild boar, boar, Sus scrofa",0.0010149422927234102,9,True,1
+1601,warthog,0.0010149422927234102,9,True,1
+1602,"Arabian camel, dromedary, Camelus dromedarius",0.0010149422927234102,9,True,1
+1603,"great ape, pongid",0.0030448268781702306,9,False,3
+1604,lesser ape,0.0020298845854468204,9,False,2
+1605,"squirrel monkey, Saimiri sciureus",0.0010149422927234102,9,True,1
+1606,"capuchin, ringtail, Cebus capucinus",0.0010149422927234102,9,True,1
+1607,marmoset,0.0010149422927234102,9,True,1
+1608,"spider monkey, Ateles geoffroyi",0.0010149422927234102,9,True,1
+1609,"titi, titi monkey",0.0010149422927234102,9,True,1
+1610,"howler monkey, howler",0.0010149422927234102,9,True,1
+1611,"colobus, colobus monkey",0.0010149422927234102,9,True,1
+1612,"patas, hussar monkey, Erythrocebus patas",0.0010149422927234102,9,True,1
+1613,macaque,0.0010149422927234102,9,True,1
+1614,"guenon, guenon monkey",0.0010149422927234102,9,True,1
+1615,"proboscis monkey, Nasalis larvatus",0.0010149422927234102,9,True,1
+1616,baboon,0.0010149422927234102,9,True,1
+1617,langur,0.0010149422927234102,9,True,1
+1618,"dingo, warrigal, warragal, Canis dingo",0.0010149422927234102,9,True,1
+1619,"African hunting dog, hyena dog, Cape hunting dog, Lycaon pictus",0.0010149422927234102,9,True,1
+1620,"dhole, Cuon alpinus",0.0010149422927234102,9,True,1
+1621,"timber wolf, grey wolf, gray wolf, Canis lupus",0.0010149422927234102,9,True,1
+1622,"red wolf, maned wolf, Canis rufus, Canis niger",0.0010149422927234102,9,True,1
+1623,"white wolf, Arctic wolf, Canis lupus tundrarum",0.0010149422927234102,9,True,1
+1624,"coyote, prairie wolf, brush wolf, Canis latrans",0.0010149422927234102,9,True,1
+1625,"Arctic fox, white fox, Alopex lagopus",0.0010149422927234102,9,True,1
+1626,"grey fox, gray fox, Urocyon cinereoargenteus",0.0010149422927234102,9,True,1
+1627,"red fox, Vulpes vulpes",0.0010149422927234102,9,True,1
+1628,"kit fox, Vulpes macrotis",0.0010149422927234102,9,True,1
+1629,"jaguar, panther, Panthera onca, Felis onca",0.0010149422927234102,9,True,1
+1630,"lion, king of beasts, Panthera leo",0.0010149422927234102,9,True,1
+1631,"snow leopard, ounce, Panthera uncia",0.0010149422927234102,9,True,1
+1632,"leopard, Panthera pardus",0.0010149422927234102,9,True,1
+1633,"cheetah, chetah, Acinonyx jubatus",0.0010149422927234102,9,True,1
+1634,"tiger, Panthera tigris",0.0010149422927234102,9,True,1
+1635,wildcat,0.0020298845854468204,9,False,2
+1636,"wood rabbit, cottontail, cottontail rabbit",0.0010149422927234102,9,True,1
+1637,"Angora, Angora rabbit",0.0010149422927234102,9,True,1
+1638,"fox squirrel, eastern fox squirrel, Sciurus niger",0.0009415541577111021,9,True,1
+1639,toothed whale,0.0010149422927234102,9,False,1
+1640,"baleen whale, whalebone whale",0.0008978335666399398,9,False,1
+1641,eared seal,0.0010149422927234102,9,False,1
+1642,"American egret, great white heron, Egretta albus",0.0010149422927234102,9,True,1
+1643,"redshank, Tringa totanus",0.0010149422927234102,9,True,1
+1644,"red-backed sandpiper, dunlin, Erolia alpina",0.0010149422927234102,9,True,1
+1645,dowitcher,0.0010149422927234102,9,True,1
+1646,turnstone,0.0010149422927234102,9,False,1
+1647,"American coot, marsh hen, mud hen, water hen, Fulica americana",0.0010149422927234102,9,True,1
+1648,sea duck,0.0008908070430749316,9,False,1
+1649,drake,0.0010149422927234102,9,True,1
+1650,"king penguin, Aptenodytes patagonica",0.0010149422927234102,9,True,1
+1651,bulbul,0.0010149422927234102,9,True,1
+1652,"indigo bunting, indigo finch, indigo bird, Passerina cyanea",0.0010149422927234102,9,True,1
+1653,cypriniform fish,0.0020298845854468204,9,False,2
+1654,eel,0.0009095444392482869,9,True,1
+1655,"percoid fish, percoid, percoidean",0.001771464663222629,9,False,2
+1656,"plectognath, plectognath fish",0.0010149422927234102,9,False,1
+1657,"scorpaenoid, scorpaenoid fish",0.0010149422927234102,9,False,1
+1658,"gar, garfish, garpike, billfish, Lepisosteus osseus",0.0010149422927234102,9,True,1
+1659,sturgeon,0.0010149422927234102,9,True,1
+1660,stingray,0.0010149422927234102,9,True,1
+1661,"electric ray, crampfish, numbfish, torpedo",0.0010149422927234102,9,True,1
+1662,mackerel shark,0.0010149422927234102,9,False,1
+1663,"hammerhead, hammerhead shark",0.0010149422927234102,9,True,1
+1664,requiem shark,0.0010149422927234102,9,False,1
+1665,"rattlesnake, rattler",0.0020298845854468204,9,False,2
+1666,"black mamba, Dendroaspis augusticeps",0.0010149422927234102,9,False,1
+1667,"Indian cobra, Naja naja",0.0010149422927234102,9,True,1
+1668,"boa constrictor, Constrictor constrictor",0.0010149422927234102,9,True,1
+1669,python,0.0008361563042359788,9,False,1
+1670,agama,0.0010149422927234102,9,True,1
+1671,"frilled lizard, Chlamydosaurus kingi",0.0008720696469015763,9,True,1
+1672,"Komodo dragon, Komodo lizard, dragon lizard, giant lizard, Varanus komodoensis",0.0010149422927234102,9,True,1
+1673,alligator lizard,0.0010149422927234102,9,True,1
+1674,banded gecko,0.0010149422927234102,9,True,1
+1675,"African chameleon, Chamaeleo chamaeleon",0.0010149422927234102,9,True,1
+1676,"common iguana, iguana, Iguana iguana",0.0010149422927234102,9,True,1
+1677,"American chameleon, anole, Anolis carolinensis",0.0010149422927234102,9,True,1
+1678,"green lizard, Lacerta viridis",0.0010149422927234102,9,True,1
+1679,"whiptail, whiptail lizard",0.0010149422927234102,9,True,1
+1680,"Gila monster, Heloderma suspectum",0.0010149422927234102,9,True,1
+1681,"ceratopsian, horned dinosaur",0.0009883976481444904,9,False,1
+1682,"loggerhead, loggerhead turtle, Caretta caretta",0.0010149422927234102,9,True,1
+1683,"leatherback turtle, leatherback, leathery turtle, Dermochelys coriacea",0.0010149422927234102,9,True,1
+1684,moving van,0.0009048600902049481,9,True,1
+1685,"police van, police wagon, paddy wagon, patrol wagon, wagon, black Maria",0.0010149422927234102,9,True,1
+1686,moped,0.0010149422927234102,9,True,1
+1687,"submersible, submersible warship",0.0010149422927234102,9,False,1
+1688,"aircraft carrier, carrier, flattop, attack aircraft carrier",0.0010149422927234102,9,True,1
+1689,"liner, ocean liner",0.0010149422927234102,9,True,1
+1690,"container ship, containership, container vessel",0.0010149422927234102,9,True,1
+1691,lifeboat,0.0010149422927234102,9,True,1
+1692,speedboat,0.0010149422927234102,9,True,1
+1693,canoe,0.0010149422927234102,9,True,1
+1694,yawl,0.0009415541577111021,9,True,1
+1695,trimaran,0.0010149422927234102,9,True,1
+1696,catamaran,0.0010149422927234102,9,True,1
+1697,airliner,0.0010149422927234102,9,True,1
+1698,"laptop, laptop computer",0.0010149422927234102,9,True,1
+1699,"notebook, notebook computer",0.0010149422927234102,9,True,1
+1700,"hand-held computer, hand-held microcomputer",0.0008072694851353894,9,True,1
+1701,"radio telescope, radio reflector",0.0010149422927234102,9,True,1
+1702,"hand glass, simple microscope, magnifying glass",0.0010149422927234102,9,False,1
+1703,"revolver, six-gun, six-shooter",0.0010149422927234102,9,True,1
+1704,"automatic firearm, automatic gun, automatic weapon",0.0010149422927234102,9,False,1
+1705,"sax, saxophone",0.0010149422927234102,9,True,1
+1706,"oboe, hautboy, hautbois",0.0010149422927234102,9,True,1
+1707,bassoon,0.0010149422927234102,9,True,1
+1708,"cleaver, meat cleaver, chopper",0.0008330334048737529,9,True,1
+1709,"letter opener, paper knife, paperknife",0.0007697946927886788,9,True,1
+1710,hatchet,0.0006956258329358142,9,True,1
+1711,espresso maker,0.0008869034188721493,9,True,1
+1712,rotisserie,0.0010149422927234102,9,True,1
+1713,Dutch oven,0.0010149422927234102,9,True,1
+1714,carbonara,0.0010149422927234102,9,True,1
+1715,Granny Smith,0.0010149422927234102,9,True,1
+1716,corn,0.0010149422927234102,9,True,1
+1717,sorrel,0.0010149422927234102,10,True,1
+1718,antelope,0.0030448268781702306,10,False,3
+1719,bison,0.0010149422927234102,10,True,1
+1720,wild sheep,0.0010149422927234102,10,False,1
+1721,"goat, caprine animal",0.0010149422927234102,10,False,1
+1722,"Old World buffalo, buffalo",0.0010149422927234102,10,False,1
+1723,sheep,0.0010149422927234102,10,False,1
+1724,bovine,0.0010149422927234102,10,False,1
+1725,"gorilla, Gorilla gorilla",0.0010149422927234102,10,True,1
+1726,"chimpanzee, chimp, Pan troglodytes",0.0010149422927234102,10,True,1
+1727,"orangutan, orang, orangutang, Pongo pygmaeus",0.0010149422927234102,10,True,1
+1728,"siamang, Hylobates syndactylus, Symphalangus syndactylus",0.0010149422927234102,10,True,1
+1729,"gibbon, Hylobates lar",0.0010149422927234102,10,True,1
+1730,"cougar, puma, catamount, mountain lion, painter, panther, Felis concolor",0.0010149422927234102,10,True,1
+1731,"lynx, catamount",0.0010149422927234102,10,True,1
+1732,dolphin,0.0010149422927234102,10,False,1
+1733,"grey whale, gray whale, devilfish, Eschrichtius gibbosus, Eschrichtius robustus",0.0008978335666399398,10,True,1
+1734,sea lion,0.0010149422927234102,10,True,1
+1735,"ruddy turnstone, Arenaria interpres",0.0010149422927234102,10,True,1
+1736,"merganser, fish duck, sawbill, sheldrake",0.0008908070430749316,10,False,1
+1737,"cyprinid, cyprinid fish",0.0020298845854468204,10,False,2
+1738,butterfly fish,0.0007565223704992189,10,False,1
+1739,"damselfish, demoiselle",0.0010149422927234102,10,False,1
+1740,"puffer, pufferfish, blowfish, globefish",0.0010149422927234102,10,True,1
+1741,"scorpaenid, scorpaenid fish",0.0010149422927234102,10,False,1
+1742,"great white shark, white shark, man-eater, man-eating shark, Carcharodon carcharias",0.0010149422927234102,10,True,1
+1743,"tiger shark, Galeocerdo cuvieri",0.0010149422927234102,10,True,1
+1744,"diamondback, diamondback rattlesnake, Crotalus adamanteus",0.0010149422927234102,10,True,1
+1745,"sidewinder, horned rattlesnake, Crotalus cerastes",0.0010149422927234102,10,True,1
+1746,green mamba,0.0010149422927234102,10,True,1
+1747,"rock python, rock snake, Python sebae",0.0008361563042359788,10,True,1
+1748,triceratops,0.0009883976481444904,10,True,1
+1749,"submarine, pigboat, sub, U-boat",0.0010149422927234102,10,True,1
+1750,"loupe, jeweler's loupe",0.0010149422927234102,10,True,1
+1751,"automatic rifle, automatic, machine rifle",0.0010149422927234102,10,False,1
+1752,gazelle,0.0010149422927234102,11,True,1
+1753,hartebeest,0.0010149422927234102,11,True,1
+1754,"impala, Aepyceros melampus",0.0010149422927234102,11,True,1
+1755,mountain sheep,0.0010149422927234102,11,False,1
+1756,wild goat,0.0010149422927234102,11,False,1
+1757,"water buffalo, water ox, Asiatic buffalo, Bubalus bubalis",0.0010149422927234102,11,True,1
+1758,"ram, tup",0.0010149422927234102,11,True,1
+1759,"cattle, cows, kine, oxen, Bos taurus",0.0010149422927234102,11,False,1
+1760,"killer whale, killer, orca, grampus, sea wolf, Orcinus orca",0.0010149422927234102,11,True,1
+1761,"red-breasted merganser, Mergus serrator",0.0008908070430749316,11,True,1
+1762,"goldfish, Carassius auratus",0.0010149422927234102,11,True,1
+1763,"tench, Tinca tinca",0.0010149422927234102,11,True,1
+1764,"rock beauty, Holocanthus tricolor",0.0007565223704992189,11,True,1
+1765,anemone fish,0.0010149422927234102,11,True,1
+1766,lionfish,0.0010149422927234102,11,True,1
+1767,"assault rifle, assault gun",0.0010149422927234102,11,True,1
+1768,"bighorn, bighorn sheep, cimarron, Rocky Mountain bighorn, Rocky Mountain sheep, Ovis canadensis",0.0010149422927234102,12,True,1
+1769,"ibex, Capra ibex",0.0010149422927234102,12,True,1
+1770,ox,0.0010149422927234102,12,True,1
