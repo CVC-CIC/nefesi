@@ -122,7 +122,7 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
     :param layer_name: the name of the layer of the network where is the neuron to analyze
     :param neuron_idx: the index of the neuron to analyze
     :param as_numpy: get the result as a numpy array
-    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies)
+    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies), type 3  as activation itself
     :param thr_mth = take max from the image (1), take max from all activatiosn (0)
     :return: An image that is the original image with a mask of the activation camp superposed
     """
@@ -137,16 +137,17 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
         max_act = np.max(activations)
     norm_activations = activations / max_act
 
-    sz_img = np.array((224, 224))
-    if type == 2:
-        norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).resize(tuple(sz_img), PIL.Image.BILINEAR))
-    else:
-        vertex = lambda a, b, c, d: [a, b, a, d, c, d, c, b]
 
+    sz_img = np.array((224, 224))
+    if type == 2 or type ==4:
+        norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).resize(tuple(sz_img), PIL.Image.BILINEAR))
+    elif type ==1 or type==3:
+        # vertex = lambda a, b, c, d: [a, b, a, d, c, d, c, b]
+        #
         #     1 | 4
         #   ----------
         #     2 | 3
-
+        #
         # ci1=[0,0]
         # ci2=[0,0]
         # ci3=[0,0]
@@ -208,26 +209,47 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
         # c = ((ct_img[1], ct_img[0], sz_img[1]-1, sz_img[0]-1), (ct_act[1], ct_act[0], ct_act[1], sz_act[0]-1, sz_act[1]-1, sz_act[0]-1, sz_act[1]-1, ct_act[0]))
         # d = ((ct_img[1],         0, sz_img[1]-1,   ct_img[0]), (ct_act[1],         0, ct_act[1],   ct_act[0], sz_act[1]-1,   ct_act[0], sz_act[1]-1,         0))
 
+        # rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
+        # rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
+        # mesh = []
+        # for y in range(rec_field_map.shape[0]):
+        #     for x in range(rec_field_map.shape[1]):
+        #         r = rec_field_map[y, x][[2, 0, 3, 1]]
+        #         if r[0] == 0:
+        #             r[0] = r[2]-rec_field_sz[1]
+        #         if r[1] == 0:
+        #             r[1] = r[3] - rec_field_sz[0]
+        #         if r[2] == sz_img[1]:
+        #             r[2] = r[0] + rec_field_sz[1]-1
+        #         if r[3] == sz_img[0]:
+        #             r[3] = r[1] + rec_field_sz[0] - 1
+        #         mesh.append([list(r)] + [vertex(x, y, x, y)])
+        #
+        # norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).transform(tuple(sz_img), PIL.Image.MESH, mesh, PIL.Image.BILINEAR))
+
+
         rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
-        rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
-        mesh = []
-        for y in range(rec_field_map.shape[0]):
-            for x in range(rec_field_map.shape[1]):
-                r = rec_field_map[y, x][[2, 0, 3, 1]]
-                if r[0] == 0:
-                    r[0] = r[2]-rec_field_sz[1]
-                if r[1] == 0:
-                    r[1] = r[3] - rec_field_sz[0]
-                if r[2] == sz_img[1]:
-                    r[2] = r[0] + rec_field_sz[1]-1
-                if r[3] == sz_img[0]:
-                    r[3] = r[1] + rec_field_sz[0] - 1
-                mesh.append([list(r)] + [vertex(x, y, x, y)])
+        pos = np.zeros(list(activations.shape)[::-1]+[2])
+        for y in range(activations.shape[0]):
+            for x in range(activations.shape[1]):
+                rec = rec_field_map[y, x]
+                pos[y,x,1] = math.floor((rec[1]+rec[0])/2)
+                pos[y,x,0] = math.floor((rec[3]+rec[2])/2)
+        from scipy.interpolate import griddata
 
-        norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).transform(tuple(sz_img), PIL.Image.MESH, mesh, PIL.Image.BILINEAR))
+        gx, gy = np.mgrid[0:sz_img[1], 0:sz_img[0]]
+        norm_activations_upsampled = griddata(pos.reshape((-1, 2)), activations.reshape(-1), (gx, gy), method='cubic', fill_value=0).T
+        norm_activations_upsampled[norm_activations_upsampled<0] = 0
+        norm_activations_upsampled *= np.max(activations)/np.max(norm_activations_upsampled)
+        norm_activations_upsampled /= max_act
 
-    img = network_data.dataset._load_image(image_name, as_numpy=True).astype(np.float)
-    img[norm_activations_upsampled < thr] *= 0.25
+    if type > 2:
+        img = norm_activations_upsampled * 255
+        img = np.dstack((img, img, img))
+    else:
+        img = network_data.dataset._load_image(image_name, as_numpy=True).astype(np.float)
+        img[norm_activations_upsampled < thr] *= 0.25
+
     if as_numpy:
         return img
     else:
