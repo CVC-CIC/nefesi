@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 sys.path.append('..')
 import nefesi.util.GPUtil as gpu
