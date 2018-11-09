@@ -2,6 +2,7 @@ import numpy as np
 import os
 from .util import general_functions as gf
 from . import read_activations as read_act
+from anytree import Node
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
@@ -81,7 +82,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
     rel_freq = relative_freq_class(neuron_data, labels)
 
     if rel_freq is None:
-        return None, 0.0
+        return "NoClass", 0.0
     else:
         freq_avoid_th = []
         sum_fr = 0.0
@@ -115,6 +116,8 @@ def relative_freq_class(neuron_data, labels = None):
     #If the max activation is 0 not continue
     if np.isclose(neuron_data.activations[0], 0.0):
         return None
+        #return np.array([('n0000000', 'NoClass', 0, 0.0)])
+
 
     #------------------------INITS NEURON_DATA.TOP_LABELS IF NOT IS INITIALIZED---------------------------------
     if neuron_data.top_labels is None:
@@ -169,6 +172,8 @@ def get_hierarchical_population_code_idx(neuron_data, xml='../nefesi/imagenet_st
     :return: Integer, population code value. (Number of classes with frequency higher to threshold_pc in N-top activations
     """
     rel_freq = relative_freq_class(neuron_data, None)
+    if rel_freq is None:
+        return Node('root', freq=0, rep=0)
     rel_freq = rel_freq[rel_freq['rel_freq'] >= threshold_pc]
     tree = gf.get_hierarchy_of_label(rel_freq['label_name'], rel_freq['rel_freq'], xml,population_code,class_sel)
     return tree
