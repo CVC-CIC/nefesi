@@ -57,6 +57,7 @@ class NeuronWindow(object):
         self.neuron_feature_frame.pack(side=LEFT, fill=BOTH, expand=True)
         self.decomposition_frame = Frame(self.basic_frame)
         self.set_decomposition_frame(self.decomposition_frame)
+        self.set_nf_frame(self.decomposition_frame)
         self.images_frame.pack(side=LEFT,padx=5)
         self.neuron_feature_frame.pack(side=LEFT,padx=5)
         self.index_info.pack(side=RIGHT)
@@ -67,13 +68,29 @@ class NeuronWindow(object):
         self.set_nf_panel(option=self.combo_nf_option.get())
         self.update_decomposition_panel(panel=self.panel_image)
 
+    def set_nf_frame(self, master):
+        image_frame2 = Frame(master=master)
+
+        current_image2 = self.neuron._neuron_feature
+        current_image2 = current_image2.resize((int(self.image_actual_size[0] / 2), int(self.image_actual_size[1] / 2)),
+                                               Image.ANTIALIAS)  # resize mantaining aspect ratio
+        img = ImageTk.PhotoImage(current_image2)
+
+        self.panel_image2 = Label(master=image_frame2, image=img)
+        self.panel_image2.image = img
+        self.panel_image2.pack(side=BOTTOM)
+        image_frame2.pack(side=BOTTOM)
+
+
+
+
     def set_decomposition_frame(self, master):
         image_frame = Frame(master=master)
         image_num_label, activation_label, norm_activation_label, class_label = self.set_decomposition_label(master)
         current_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        current_image = current_image.resize(self.image_actual_size, Image.ANTIALIAS)  # resize mantaining aspect ratio
+        current_image = current_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(current_image)
 
         self.panel_image = Label(master=image_frame, image=img)
@@ -85,8 +102,8 @@ class NeuronWindow(object):
                                         image_num_label,activation_label,norm_activation_label,class_label))
         increase_button.pack(side=RIGHT, fill='y')
         decrease_button.pack(side=LEFT,fill='y')
-        self.panel_image.pack(side=RIGHT)
-        image_frame.pack(side=BOTTOM)
+        self.panel_image.pack(side=TOP)
+        image_frame.pack(side=TOP)
 
     def set_decomposition_label(self, master):
         text_frame = Frame(master=master)
@@ -130,7 +147,7 @@ class NeuronWindow(object):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        new_image = new_image.resize(self.image_actual_size,Image.ANTIALIAS)
+        new_image = new_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)),Image.ANTIALIAS)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)
         panel.image = img
@@ -179,7 +196,7 @@ class NeuronWindow(object):
             self.update_decomposition_panel(panel=self.panel_image)
 
 
-    def set_nf_panel(self,option='neuron feature'):
+    def set_nf_panel(self,option='images mosaic'):
         option= option.lower()
         if option=='neuron feature':
             img = self.neuron._neuron_feature
