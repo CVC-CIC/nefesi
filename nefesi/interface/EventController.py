@@ -8,7 +8,7 @@ except ImportError:
 
 from .popup_windows.neuron_window import IMAGE_BIG_DEFAULT_SIZE, IMAGE_SMALL_DEFAULT_SIZE
 from ..util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
-    get_listbox_selection, get_image_masked
+    get_listbox_selection
 from .popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
 import numpy as np
 from PIL import ImageTk, Image

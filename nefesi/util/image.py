@@ -153,7 +153,7 @@ class ImageDataset(object):
         im_crop = img.crop((ci, ri, cf, rf))
         return im_crop
 
-    def _load_image(self, img_name, as_numpy = False,prep_function=False):
+    def _load_image(self, img_name, as_numpy = False, prep_function=False):
         """Loads an image into PIL format.
 
         :param img_name: String, name of the image.

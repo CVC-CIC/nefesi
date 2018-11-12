@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 import keras.backend as K
 from .neuron_data import NeuronData
+import PIL
 
 ACTIVATIONS_BATCH_SIZE = 200
 
@@ -167,3 +168,48 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
 def get_activation_mask(image, model, layer_name, idx_neuron):
     total_activations = get_one_neuron_activations(model, image,
                                                    idx_neuron=idx_neuron, layer_name=layer_name)[0]
+
+def get_image_activation(network_data, image_name, layer_name, neuron_idx, type=1):
+    """
+    Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
+    neuron_idx of layer layer_name
+    :param network_data: Network_data object representing the nefesi network
+    :param image_name: the name of the image to analyze
+    :param layer_name: the name of the layer of the network where is the neuron to analyze
+    :param neuron_idx: the index of the neuron to analyze
+    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies)
+    :return: An image that is activation on a neuron but in the original image size
+    """
+    input = network_data.dataset._load_image(image_name, as_numpy=True,
+                                                  prep_function=True)[np.newaxis, ...]
+    activations = get_one_neuron_activations(model=network_data.model, model_inputs=input,
+                                             layer_name=layer_name, idx_neuron=neuron_idx, )[0]
+
+    sz_img = input[0].shape[0:2]
+    if type == 2:
+        activations_upsampled = np.array(PIL.Image.fromarray(activations).resize(tuple(sz_img), PIL.Image.BILINEAR))
+    elif type ==1 or type==3:
+        rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
+        rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
+        pos = np.zeros(list(activations.shape)[::-1]+[2])
+        for y in range(activations.shape[0]):
+            for x in range(activations.shape[1]):
+                r = rec_field_map[y, x]
+                if r[0] == 0:
+                    r[0] = r[1]-rec_field_sz[1]
+                if r[2] == 0:
+                    r[2] = r[3] - rec_field_sz[0]
+                if r[1] == sz_img[0]:
+                    r[1] = r[0] + rec_field_sz[1]-1
+                if r[3] == sz_img[1]:
+                            r[3] = r[2] + rec_field_sz[0] - 1
+                pos[y, x, 1] = (r[1] + r[0]) / 2.0
+                pos[y, x, 0] = (r[3] + r[2]) / 2.0
+        from scipy.interpolate import RectBivariateSpline
+        spline = RectBivariateSpline(np.unique(np.sort(pos[1], axis=None)), np.unique(np.sort(pos[0], axis=None)), activations, kx=2, ky=2)
+        activations_upsampled = spline(np.arange(sz_img[0]), np.arange(sz_img[1]))
+
+
+        activations_upsampled[activations_upsampled<0] = 0
+
+    return activations_upsampled

@@ -8,7 +8,7 @@ import PIL
 from anytree import Node, RenderTree
 import xml.etree.ElementTree as ET
 from ..symmetry_index import SYMMETRY_AXES
-from ..read_activations import get_one_neuron_activations
+from ..read_activations import get_one_neuron_activations, get_image_activation
 
 try:
     from tkinter import *
@@ -122,133 +122,30 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
     :param layer_name: the name of the layer of the network where is the neuron to analyze
     :param neuron_idx: the index of the neuron to analyze
     :param as_numpy: get the result as a numpy array
-    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies), type 3  as activation itself
+    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies), type 3,4  as activation itself
     :param thr_mth = take max from the image (1), take max from all activatiosn (0)
     :return: An image that is the original image with a mask of the activation camp superposed
     """
-    input = network_data.dataset._load_image(image_name, as_numpy=True,
-                                                  prep_function=True)[np.newaxis, ...]
-    activations = get_one_neuron_activations(model=network_data.model, layer_name=layer_name,
-                                             idx_neuron=neuron_idx, model_inputs=input)[0]
+    show_activation = False
+    if type >2:
+        type -= 2
+        show_activation = True
+
+    activation_upsampled = get_image_activation(network_data, image_name, layer_name, neuron_idx, type)
 
     if thr_mth==0:
         max_act = np.max(network_data.get_layer_by_name(layer_name).neurons_data[neuron_idx].activations)
     else:
-        max_act = np.max(activations)
-    norm_activations = activations / max_act
+        max_act = np.max(activation_upsampled)
+    norm_activation_upsampled = activation_upsampled / max_act
 
 
-    sz_img = np.array((224, 224))
-    if type == 2 or type ==4:
-        norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).resize(tuple(sz_img), PIL.Image.BILINEAR))
-    elif type ==1 or type==3:
-        # vertex = lambda a, b, c, d: [a, b, a, d, c, d, c, b]
-        #
-        #     1 | 4
-        #   ----------
-        #     2 | 3
-        #
-        # ci1=[0,0]
-        # ci2=[0,0]
-        # ci3=[0,0]
-        # ci4=[0,0]
-        # if sz_img[0] % 2:  #senar
-        #     ci1[0],ci2[0],ci3[0],ci4[0] = sz_img[0]//2
-        # else: # parell
-        #     ci1[0] = sz_img[0]//2-1
-        #     ci4[0] = sz_img[0]//2-1
-        #     ci2[0] = sz_img[0]//2
-        #     ci3[0] = sz_img[0]//2
-        # if sz_img[1] % 2:  #senar
-        #     ci1[1],ci2[1],ci3[1],ci4[1] = sz_img[1]//2
-        # else: # parell
-        #     ci1[1] = sz_img[1]//2-1
-        #     ci2[1] = sz_img[1]//2-1
-        #     ci3[1] = sz_img[1]//2
-        #     ci4[1] = sz_img[1]//2
-        #
-        # sz_act = np.array(norm_activations.shape)
-        # ca1=[0,0]
-        # ca2=[0,0]
-        # ca3=[0,0]
-        # ca4=[0,0]
-        # if sz_act[0] % 2:  #senar
-        #     ca1[0],ca2[0],ca3[0],ca4[0] = sz_act[0]//2
-        # else: # parell
-        #     ca1[0] = sz_act[0]//2-1
-        #     ca4[0] = sz_act[0]//2-1
-        #     ca2[0] = sz_act[0]//2
-        #     ca3[0] = sz_act[0]//2
-        # if sz_img[1] % 2:  #senar
-        #     ca1[1],ca2[1],ca3[1],ca4[1] = sz_act[1]//2
-        # else: # parell
-        #     ca1[1] = sz_act[1]//2-1
-        #     ca2[1] = sz_act[1]//2-1
-        #     ca3[1] = sz_act[1]//2
-        #     ca4[1] = sz_act[1]//2
-        #
-        # a = [[     0,     0,       ci1[1],      ci1[0]]]
-        # b = [[     0, ci2[0],      ci2[1], sz_img[0]-1]]
-        # c = [[ci3[1], ci3[0], sz_img[1]-1, sz_img[0]-1]]
-        # d = [[ci4[1],      0, sz_img[1]-1,      ci4[0]]]
-        # a.append(vertex(     0,      0,      ca1[1],      ca1[0]))
-        # b.append(vertex(     0, ca2[0],      ca2[1], sz_act[0]-1))
-        # c.append(vertex(ca3[1], ca3[0], sz_act[1]-1, sz_act[0]-1))
-        # d.append(vertex(ca4[1],      0, sz_act[1]-1,      ca4[0]))
-        #
-        # sz_act = np.array(norm_activations.shape)
-        # layer = network_data.get_layer_by_name(layer_name)
-        # sz_act = np.array(layer.receptive_field_map.shape[:-1])
-        # ct_act = sz_act //2
-        # ct_img = np.array(layer.receptive_field_map[ct_act[0], ct_act[1], :])
-        # ct_img = np.array([ct_img[1]-ct_img[0],ct_img[3]-ct_img[2]])//2
-        # ct_img = sz_img // 2
-        #
-        # a = ((        0,         0,   ct_img[1],   ct_img[0]), (        0,         0,         0,   ct_act[0],   ct_act[1],   ct_act[0],   ct_act[1],         0))
-        # b = ((        0, ct_img[0],   ct_img[1], sz_img[0]-1), (        0, ct_act[0],         0, sz_act[0]-1,   ct_act[1], sz_act[0]-1,   ct_act[1], ct_act[0]))
-        # c = ((ct_img[1], ct_img[0], sz_img[1]-1, sz_img[0]-1), (ct_act[1], ct_act[0], ct_act[1], sz_act[0]-1, sz_act[1]-1, sz_act[0]-1, sz_act[1]-1, ct_act[0]))
-        # d = ((ct_img[1],         0, sz_img[1]-1,   ct_img[0]), (ct_act[1],         0, ct_act[1],   ct_act[0], sz_act[1]-1,   ct_act[0], sz_act[1]-1,         0))
-
-        # rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
-        # rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
-        # mesh = []
-        # for y in range(rec_field_map.shape[0]):
-        #     for x in range(rec_field_map.shape[1]):
-        #         r = rec_field_map[y, x][[2, 0, 3, 1]]
-        #         if r[0] == 0:
-        #             r[0] = r[2]-rec_field_sz[1]
-        #         if r[1] == 0:
-        #             r[1] = r[3] - rec_field_sz[0]
-        #         if r[2] == sz_img[1]:
-        #             r[2] = r[0] + rec_field_sz[1]-1
-        #         if r[3] == sz_img[0]:
-        #             r[3] = r[1] + rec_field_sz[0] - 1
-        #         mesh.append([list(r)] + [vertex(x, y, x, y)])
-        #
-        # norm_activations_upsampled = np.array(PIL.Image.fromarray(norm_activations).transform(tuple(sz_img), PIL.Image.MESH, mesh, PIL.Image.BILINEAR))
-
-
-        rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
-        pos = np.zeros(list(activations.shape)[::-1]+[2])
-        for y in range(activations.shape[0]):
-            for x in range(activations.shape[1]):
-                rec = rec_field_map[y, x]
-                pos[y,x,1] = math.floor((rec[1]+rec[0])/2)
-                pos[y,x,0] = math.floor((rec[3]+rec[2])/2)
-        from scipy.interpolate import griddata
-
-        gx, gy = np.mgrid[0:sz_img[1], 0:sz_img[0]]
-        norm_activations_upsampled = griddata(pos.reshape((-1, 2)), activations.reshape(-1), (gx, gy), method='cubic', fill_value=0).T
-        norm_activations_upsampled[norm_activations_upsampled<0] = 0
-        norm_activations_upsampled *= np.max(activations)/np.max(norm_activations_upsampled)
-        norm_activations_upsampled /= max_act
-
-    if type > 2:
-        img = norm_activations_upsampled * 255
-        img = np.dstack((img, img, img))
-    else:
+    if not show_activation:
         img = network_data.dataset._load_image(image_name, as_numpy=True).astype(np.float)
-        img[norm_activations_upsampled < thr] *= 0.25
+        img[norm_activation_upsampled < thr] *= 0.25
+    else:
+        img = norm_activation_upsampled * 255
+        img = np.dstack((img, img, img))
 
     if as_numpy:
         return img
