@@ -283,6 +283,20 @@ class NetworkData(object):
         # Save all data
         self.save_to_disk(file_name=file_name)
 
+    def recalculateNF(self,file_name=None, layers = None):
+        if layers is None:
+            layers = self.layers_data
+        else:
+            layers = [l for l in self.layers_data if l.layer_id in layers]
+
+        for layer in layers:
+            print(layer.layer_id)
+            layer.build_neuron_feature(self)
+
+        save_path, file_name = os.path.split(file_name)
+        self.save_to_disk(file_name=file_name, save_path=save_path, save_model=False)
+
+
     def get_layers_name(self):
         """Builds a list with the name of each layer in `layers_data`.
 
@@ -665,11 +679,11 @@ class NetworkData(object):
         :param save_model: If its True, the model will be saved
             as a HDF5 file.
         """
-        if file_name is None:
+        if file_name is None or file_name is '':
             file_name = self.default_file_name
         if not file_name.endswith('.obj'):
             file_name+='.obj'
-        if save_path is not None:
+        if save_path is not None and save_path is not '':
             self.save_path = save_path
 
         model_name = self.model.name

@@ -21,10 +21,18 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True)
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron
             patches = neuron.get_patches(network_data, layer_data)
-            non_black_pixels_count = np.count_nonzero(np.sum(patches, axis=-1) > 0, axis=0)
-            assignment_multiplier = np.repeat(len(patches) / non_black_pixels_count, 3).reshape(
-                non_black_pixels_count.shape + (3,))
+            mode = 1
+            if mode == 1:
+            #set values out of the image (black ones) to a given values (127)
+                zeros = np.repeat((np.sum(patches, axis=-1)>0)==0, 3).reshape(patches.shape)
+                patches[zeros] = 127
+                assignment_multiplier = 1
+            else:
             # Set the neuron feature but not having in count pixels with value full black
+                non_black_pixels_count = np.count_nonzero(np.sum(patches, axis=-1) > 0, axis=0)
+                assignment_multiplier = np.repeat(len(patches) / non_black_pixels_count, 3).reshape(
+                    non_black_pixels_count.shape + (3,))
+
             nf = np.sum((patches * assignment_multiplier).reshape(patches.shape[0], -1) * (norm_activations / np.sum(
                 norm_activations))[:, np.newaxis], axis=0).reshape(patches.shape[1:])
             """

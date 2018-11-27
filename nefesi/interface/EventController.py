@@ -13,8 +13,6 @@ from .popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindo
 import numpy as np
 from PIL import ImageTk, Image
 
-
-
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
