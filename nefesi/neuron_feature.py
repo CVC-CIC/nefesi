@@ -5,7 +5,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import _Pooling2D
 
 
-def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True):
+def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True, mode = 0,threshold_to_noncount = 0.1):
     """This function build the neuron features (NF) for all neurons
     in `filters`.
 
@@ -20,21 +20,31 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True)
         if neuron.norm_activations is not None:
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron
-            patches = neuron.get_patches(network_data, layer_data)
-            mode = 1
+            patches,masks = neuron.get_patches(network_data, layer_data,return_mask=True)
+            channels = 1 if len(patches.shape) < 4 else patches.shape[-1]
             if mode == 1:
             #set values out of the image (black ones) to a given values (127)
-                zeros = np.repeat((np.sum(patches, axis=-1)>0)==0, 3).reshape(patches.shape)
-                patches[zeros] = 127
-                assignment_multiplier = 1
+                patches[np.repeat(masks,channels).reshape(patches.shape)] = 127
+                nf = np.sum(patches.reshape(patches.shape[0], -1) * (norm_activations / np.sum(
+                norm_activations))[:, np.newaxis], axis=0).reshape(patches.shape[1:])
             else:
-            # Set the neuron feature but not having in count pixels with value full black
-                non_black_pixels_count = np.count_nonzero(np.sum(patches, axis=-1) > 0, axis=0)
+            # Set the neuron feature but not having in count pixels of paddings.
+                #each pixel that corresponds to a true image give norm_activation weigth, paddings don't contribute
+                contributions_per_pixel = np.sum((masks==False)*np.repeat(norm_activations,masks[0].size).
+                                                 reshape(masks.shape),axis=0)
+                #each pixel of patchs multiplies by his norm_activation
+                patches_weighted = patches*np.repeat(norm_activations,patches[0].size).reshape(patches.shape)
+                #normalized having that only pixels that appears counts
+                nf = np.sum(patches_weighted,axis=0) / np.repeat(contributions_per_pixel, channels).\
+                    reshape(patches[0].shape)
+                #only pixels that have more than 10% of info from ntop scoring counts the rest shows gray
+                relevant_pixels = contributions_per_pixel>(np.sum(norm_activations)*threshold_to_noncount)
+                nf[relevant_pixels == False] = 127
+                """
+                non_black_pixels_count = np.count_nonzero(np.sum(patches, axis=-1)==1, axis=0)
                 assignment_multiplier = np.repeat(len(patches) / non_black_pixels_count, 3).reshape(
                     non_black_pixels_count.shape + (3,))
-
-            nf = np.sum((patches * assignment_multiplier).reshape(patches.shape[0], -1) * (norm_activations / np.sum(
-                norm_activations))[:, np.newaxis], axis=0).reshape(patches.shape[1:])
+                """
             """
             nf = np.sum(patches.reshape(patches.shape[0],-1)*(norm_activations/np.sum(norm_activations))[:,np.newaxis],axis=0).\
                 reshape(patches.shape[1:])

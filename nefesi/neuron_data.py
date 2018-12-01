@@ -123,7 +123,7 @@ class NeuronData(object):
     def neuron_feature(self, neuron_feature):
         self._neuron_feature = neuron_feature
 
-    def get_patches(self, network_data, layer_data, as_numpy=True):
+    def get_patches(self, network_data, layer_data, as_numpy=True, return_mask=False):
         """Returns the patches (receptive fields) from images in
         `images_id` for this neuron.
 
@@ -139,17 +139,16 @@ class NeuronData(object):
         else:
             crop_positions = [None]*self.xy_locations.shape[0]
 
-        #First iteration of for, maded first in order to set the output array size
-        patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
-        if rf_size is not None and rf_size != patch.size:
-            patch = self._adjust_patch_size(patch, crop_positions[0], rf_size)
         if as_numpy:
-            patch = image.img_to_array(patch)
-            patches = np.zeros(shape = (self._max_activations,)+patch.shape)
+            patch = image.img_to_array(image_dataset.get_patch(self.images_id[0], crop_positions[0]))
+            size = rf_size+(patch.shape[-1],) if len(patch.shape) == 3 else rf_size
+            patches = np.zeros(shape = (self._max_activations,)+size,dtype=np.float)
         else:
             patches = np.zeros(shape = (self._max_activations), dtype=np.object)
-        patches[0] = patch
-        for i in range(1, self._max_activations):
+        if return_mask:
+            masks = np.zeros(shape = (self._max_activations,)+rf_size,dtype=np.bool)
+        for i in range(self._max_activations):
+            mask = None
             crop_pos = crop_positions[i]
             # crop the origin image with previous location
             patch = image_dataset.get_patch(self.images_id[i], crop_pos)
@@ -159,11 +158,19 @@ class NeuronData(object):
             # This is due that some receptive fields has padding
             # that come of the network architecture.
             if  rf_size is not None and rf_size != patch.size:
-                patch = self._adjust_patch_size(patch,crop_pos, rf_size)
+                if return_mask:
+                    patch,mask = self._adjust_patch_size(patch,crop_pos, rf_size,returns_mask=return_mask)
+                else:
+                    patch = self._adjust_patch_size(patch,crop_pos, rf_size)
             if as_numpy:
                 patch = image.img_to_array(patch)
             patches[i] = patch
-        return patches
+            if mask is not None:
+                masks[i] = mask
+        if return_mask:
+            return patches,masks
+        else:
+            return patches
 
     def get_patch_by_idx(self, network_data, layer_data, i):
         image_dataset = network_data.dataset
@@ -176,7 +183,7 @@ class NeuronData(object):
         if rf_size != patch.size:
             patch = self._adjust_patch_size(patch, crop_position, rf_size)
         return patch
-    def _adjust_patch_size(self, patch, crop_position, rf_size):
+    def _adjust_patch_size(self, patch, crop_position, rf_size,returns_mask=False):
         bl, bu, br, bd = (0, 0, 0, 0)
         if crop_position is not None:
             w, h = patch.size
@@ -191,7 +198,13 @@ class NeuronData(object):
                     bu = rf_size[1] - h
                 else:
                     bd = rf_size[1] - h
-        return ImageOps.expand(patch, (bl, bu, br, bd))
+        image = ImageOps.expand(patch, (bl, bu, br, bd),fill= 127)
+        if returns_mask:
+            mask = np.ones((image.size[1],image.size[0]),dtype=np.bool)
+            mask[bu:bu + patch.size[0], bl:bl + patch.size[1]] = False
+            return image, mask
+        else:
+            return image
 
     def print_params(self):
         """Returns a string with some information about this neuron.
