@@ -198,10 +198,10 @@ class NeuronData(object):
                     bu = rf_size[1] - h
                 else:
                     bd = rf_size[1] - h
-        image = ImageOps.expand(patch, (bl, bu, br, bd),fill= 127)
+        image = ImageOps.expand(patch, (bl, bu, br, bd),fill= 0)
         if returns_mask:
             mask = np.ones((image.size[1],image.size[0]),dtype=np.bool)
-            mask[bu:bu + patch.size[0], bl:bl + patch.size[1]] = False
+            mask[bu:bu + patch.size[1], bl:bl + patch.size[0]] = False
             return image, mask
         else:
             return image
