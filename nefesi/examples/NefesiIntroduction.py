@@ -21,7 +21,7 @@ def main():
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
-	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5', '/datatmp/datasets/ImageNetFused/', '/home/ramon/work/nefesi/Data2/')
+	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/eric/Nefesi/Data/Vgg16Efficiency/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	print("TIME ELAPSED: "+str(time.time()-start))
@@ -38,9 +38,9 @@ def example7AnalyzingResults():
 	nefesiModel = example6LoadingResults()
 	start = time.time()
 	#colorSelectivity(nefesiModel)
-	#symmetrySelectivity(nefesiModel)
+	symmetrySelectivity(nefesiModel)
 	#classSelectivity(nefesiModel)
-	orientationSelectivity(nefesiModel)
+	#orientationSelectivity(nefesiModel)
 	#populationCode(nefesiModel)
 	end = time.time()
 	print("TIME ELAPSED: ")
@@ -69,7 +69,7 @@ def orientationSelectivity(nefesiModel):
 															  --> mean of last 3 values
 	"""
 	#Let's evaluate first layer (64 neurons)
-	layersToEvaluate = 'block1_conv1'
+	layersToEvaluate = 'block5_conv1'
 	print("Let's Evaluate the orientation selectivity index of layers: "+
 		  str(nefesiModel.get_layers_analyzed_that_match_regEx(layersToEvaluate))+ " (This operation will take minutes).")
 	#degrees_orientation_idx 180 will be only one rotation
@@ -90,7 +90,7 @@ def classSelectivity(nefesiModel):
 		SelectivityIndexForThisClass(float)). This index only take a seconds to calculate.
 	"""
 	#Let's to evaluate layers 1 and 3
-	layersToEvaluate = 'block(1|3)_conv1'
+	layersToEvaluate = 'block(5)_conv1'
 	"""
 	This selectivity index accepts a dictionary, that translate from real label names (often not human readable as n03794056)
 	to another label names (that can be human readable as 'mousetrap'). This dictionary can be specified as a none if this
@@ -139,7 +139,7 @@ def symmetrySelectivity(nefesiModel):
 	 0º rotated image, 45º rotated image, 90º rotated image, 135º rotated image, the mean) that specifies the area between
 	 two graphics (activations with images vs activations with mirrored images)
 	"""
-	layersToEvaluate = ["block1_conv1"]
+	layersToEvaluate = ["block5_conv1"]
 	print("Let's Evaluate the symmetry selectivity index of " + str(len(layersToEvaluate)) + " layers: " + str(layersToEvaluate)+
 		  " (This operation can take minutes)")
 	"""
@@ -180,7 +180,7 @@ def colorSelectivity(nefesiModel):
 
 	More info at: https://arxiv.org/abs/1702.00382v1
 	"""
-	layersToEvaluate = ["block1_conv1"]
+	layersToEvaluate = ["block5_conv1"]
 	print("Let's Evaluate the color selectivity index of "+str(len(layersToEvaluate))+" layers: "+str(layersToEvaluate))
 	"""
 	selIdx will be a dictionary that contains per each key in sel_index a list that contains a entrance per each layer
@@ -211,7 +211,7 @@ def example6LoadingResults():
 	or file_name=vgg16.obj (vgg16.obj==block2_conv1.obj (in this case)) if you want to charge all layer results)
 
 	"""
-	nefesiModel = NetworkData.load_from_disk(file_name="../Data/vgg16.obj", model_file="../Data/VGG16.h5")
+	nefesiModel = NetworkData.load_from_disk(file_name="../../Data/Vgg16Efficiency/vgg16.obj", model_file="../../Data/VGG16.h5")
 	return nefesiModel
 
 """
@@ -275,8 +275,8 @@ def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	#nefesiModel.layers_data = "block(1)_conv1"#|3|5
-	nefesiModel.layers_data = "fc2"
+	nefesiModel.layers_data = "block(3|5)_conv(1)"
+	#nefesiModel.layers_data = "fc2"
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
 	return nefesiModel

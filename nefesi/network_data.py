@@ -9,9 +9,11 @@ import warnings
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 
+from .neuron_data import NeuronData
 from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
 from .util.image import ImageDataset
+from .read_activations import fill_all_layers_data_batch
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -224,71 +226,76 @@ class NetworkData(object):
             raise ValueError("Dataset attribute not setted. It must be setted on network_data object, before call"
                              " eval_network(...) or setted as argument(s) (directory,[target_size, preprocessing_function,"
                              " color_mode]) in eval_network function ")
+        #if layer.layer_id in layer_names: #if is not, exception was raised
+        datagen = ImageDataGenerator(preprocessing_function=preprocessing_function)
+        data_batch = datagen.flow_from_directory(
+            self.dataset.src_dataset,
+            target_size=self.dataset.target_size,
+            batch_size=batch_size,
+            shuffle=False,
+            color_mode=self.dataset.color_mode
+        )
 
+        num_images = data_batch.samples
+        idx_start = data_batch.batch_index
+        idx_end = idx_start + data_batch.batch_size
+        #the min between full size and 0,5MB by array (and 64MB for the img_name)
+        buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
+        buffer_size = 10
+        #Init all neuron_data attributes of all layers
+        for i in range(len(self.layers_data)):
+            neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
+            self.layers_data[i].neurons_data = np.zeros(neurons_of_layer, dtype=np.object)
+            for j in range(neurons_of_layer):
+                self.layers_data[i].neurons_data[j] = NeuronData(num_max_activations, batch_size, buffered_iterations=buffer_size)
+
+
+        start = time.time()
+        for n_batches, imgs in enumerate(data_batch):
+            images = imgs[0]
+            # Apply the preprocessing function to the inputs
+            file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
+            # Search the maximum activations
+            fill_all_layers_data_batch(file_names, images, self.model, self.layers_data)
+
+            if verbose:
+                img_sec = idx_end / (time.time() - start)
+                print("Num batch: {batch},"
+                      " Num images processed: {processed}/{total}. Remaining: {secs}".format(
+                        batch=n_batches,
+                        processed=idx_end,
+                        total=num_images,
+                        secs=str(datetime.timedelta(seconds=(num_images-idx_end)/img_sec))))
+
+            idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
+            if n_batches%1000==0:
+                self.save_to_disk(file_name=self.model.name+'PartialSave'+str(int((idx_start/data_batch.samples)*100))+'PerCent',erase_partials=True)
+            #If the idx of the next last image will overpass the total num of images, ends the analysis
+            if idx_end > num_images:
+                break
+        if verbose:
+            print("Analysis ended. Sorting results")
         for layer in self.layers_data:
-            #if layer.layer_id in layer_names: #if is not, exception was raised
-            datagen = ImageDataGenerator(preprocessing_function=preprocessing_function)
-            data_batch = datagen.flow_from_directory(
-                self.dataset.src_dataset,
-                target_size=self.dataset.target_size,
-                batch_size=batch_size,
-                shuffle=False,
-                color_mode=self.dataset.color_mode
-            )
-
-            num_images = data_batch.samples
-            idx_start = data_batch.batch_index
-            idx_end = idx_start + data_batch.batch_size
-            #the min between full size and 0,5MB by array (and 64MB for the img_name)
-            buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-            buffer_size = 10
-
-            start = time.time()
-            for n_batches, imgs in enumerate(data_batch):
-
-                images = imgs[0]
-                # Apply the preprocessing function to the inputs
-                file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
-                # Search the maximum activations
-                layer.evaluate_activations(file_names, images, self.model, num_max_activations, batch_size,
-                                           batches_to_buffer=buffer_size)
-
-                if verbose:
-                    img_sec = idx_end / (time.time() - start)
-                    print("Layer: {layer}, Num batch: {batch},"
-                          " Num images processed: {processed}/{total}. Remaining: {secs}".format(
-                            layer=layer.layer_id,
-                            batch=n_batches,
-                            processed=idx_end,
-                            total=num_images,
-                            secs=str(datetime.timedelta(seconds=(num_images-idx_end)/img_sec))))
-
-                idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
-                #If the idx of the next last image will overpass the total num of images, ends the analysis
-                if idx_end > num_images:
-                    break
-            for neuron in layer.neurons_data:
-                neuron.sortResults()
-
+            layer.sort_neuron_data()
             # Set the number of maximum activations stored in each neuron
             layer.set_max_activations()
 
-            if build_nf:
-                # Build the neuron features
+        if build_nf:
+            if verbose:
+                print("Sort ended. Building neuron features")
+            # Build the neuron features
+            for layer in self.layers_data:
                 layer.build_neuron_feature(self)
-            if save_for_layers:
-                # Save the results each time we have a evaluated layer
-                self.save_to_disk(layer.layer_id)
-
         # Save all data
-        self.save_to_disk(file_name=file_name)
+        self.save_to_disk(file_name=file_name,erase_partials=True)
 
     def recalculateNF(self,file_name=None, layers = None):
+
         if layers is None:
             layers = self.layers_data
         else:
             layers = [l for l in self.layers_data if l.layer_id in layers]
-
+            
         for layer in layers:
             print(layer.layer_id)
             layer.build_neuron_feature(self)
@@ -667,7 +674,7 @@ class NetworkData(object):
 
         return res_act, res_neurons, res_loc, res_nf
 
-    def save_to_disk(self, file_name=None, save_path=None, save_model=True):
+    def save_to_disk(self, file_name=None, save_path=None, save_model=True, erase_partials=False):
         """Save all results. The file saved will contain the
         `nefesi.network_data.NetworkData` object and the rest
          of containing objects.
@@ -697,6 +704,10 @@ class NetworkData(object):
             self.model.save(model_name + '.h5')
         #Save the object without model info
         self.model = None
+        if erase_partials:
+            for file in os.listdir(self.save_path):
+                if 'PartialSave' in file:
+                    os.remove(self.save_path+file)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         self.model = model

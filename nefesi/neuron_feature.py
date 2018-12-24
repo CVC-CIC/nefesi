@@ -5,7 +5,7 @@ from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import _Pooling2D
 
 
-def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = True, mode = 0,threshold_to_noncount = 0.1):
+def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False, mode = 1,threshold_to_noncount = 0.1):
     """This function build the neuron features (NF) for all neurons
     in `filters`.
 

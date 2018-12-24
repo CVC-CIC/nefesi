@@ -12,7 +12,7 @@ import pickle
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
-
+BATCH_SIZE = 100
 
 class EvaluationWithConfig:
 	def __init__(self, network_data, model_file, evaluate_index=False, verbose=True):
@@ -26,7 +26,7 @@ class EvaluationWithConfig:
 		self.network_data.save_changes = True
 		# Change it for use a new preprocessing function
 		self.set_preprocess_function()
-		self.network_data.eval_network(verbose=self.verbose)
+		self.network_data.eval_network(verbose=self.verbose,batch_size=BATCH_SIZE)
 		if self.evaluate_index:
 			run_calculs(network_data=self.network_data,verbose=self.verbose)
 

@@ -41,6 +41,10 @@ class LayerData(object):
         for f in self.neurons_data:
             f.set_max_activations()
 
+    def sort_neuron_data(self):
+        for neuron in self.neurons_data:
+            neuron.sortResults()
+
     def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size,batches_to_buffer = 20):
         self.neurons_data = get_sorted_activations(file_names, images, model,
                                                    self.layer_id, self.neurons_data,
@@ -52,7 +56,6 @@ class LayerData(object):
     def remove_selectivity_idx(self, idx):
         """Removes de idx selectivity index from the neurons of the layer.
 
-        :param idx: The selectivity index.
 
         :return: none.
         """
