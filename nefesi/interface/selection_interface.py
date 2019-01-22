@@ -60,7 +60,7 @@ class SelectionInterface():
         filename = filedialog.askopenfilename(title=title,
                                               filetypes=((type, '*.' + type), ("all files", "*.*")),
                                               initialdir=initialdir, initialfile=initialfile)
-        filename = relpath(filename)
+        #filename = relpath(filename)
         return filename
 
 

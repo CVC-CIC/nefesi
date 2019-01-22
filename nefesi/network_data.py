@@ -226,8 +226,10 @@ class NetworkData(object):
             raise ValueError("Dataset attribute not setted. It must be setted on network_data object, before call"
                              " eval_network(...) or setted as argument(s) (directory,[target_size, preprocessing_function,"
                              " color_mode]) in eval_network function ")
+        if preprocessing_function is not None:
+            self.dataset.preprocessing_function = preprocessing_function
         #if layer.layer_id in layer_names: #if is not, exception was raised
-        datagen = ImageDataGenerator(preprocessing_function=preprocessing_function)
+        datagen = ImageDataGenerator(preprocessing_function=self.dataset.preprocessing_function)
         data_batch = datagen.flow_from_directory(
             self.dataset.src_dataset,
             target_size=self.dataset.target_size,
@@ -240,7 +242,7 @@ class NetworkData(object):
         idx_start = data_batch.batch_index
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
-        buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
+        #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
         buffer_size = 10
         #Init all neuron_data attributes of all layers
         for i in range(len(self.layers_data)):
@@ -268,11 +270,14 @@ class NetworkData(object):
                         secs=str(datetime.timedelta(seconds=(num_images-idx_end)/img_sec))))
 
             idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
-            if n_batches%1000==0:
-                self.save_to_disk(file_name=self.model.name+'PartialSave'+str(int((idx_start/data_batch.samples)*100))+'PerCent',erase_partials=True)
-            #If the idx of the next last image will overpass the total num of images, ends the analysis
+
+            # If the idx of the next last image will overpass the total num of images, ends the analysis
             if idx_end > num_images:
                 break
+            elif n_batches%1000==0 and n_batches!=0:
+                self.save_to_disk(file_name=self.model.name+'PartialSave'+str(int((idx_start/data_batch.samples)*100))+
+                                            'PerCent',erase_partials=True)
+
         if verbose:
             print("Analysis ended. Sorting results")
         for layer in self.layers_data:

@@ -85,9 +85,9 @@ class NeuronData(object):
             self.images_id = self.images_id[idx]
             self.xy_locations = self.xy_locations[idx,:]
         else:
-            self.activations[:self._index] = self.activations[idx]
-            self.images_id[:self._index] = self.images_id[idx]
-            self.xy_locations[:self._index,:] = self.xy_locations[idx, :]
+            self.activations[:self._max_activations] = self.activations[idx]
+            self.images_id[:self._max_activations] = self.images_id[idx]
+            self.xy_locations[:self._max_activations,:] = self.xy_locations[idx, :]
 
 
     def sort(self):

@@ -19,6 +19,97 @@ except ImportError:
     from Tkinter import ttk
 
 
+def get_dataset_labes_and_freq(dataset_path):
+    labels = np.array(os.listdir(dataset_path))
+    freq = np.zeros(len(labels), dtype=np.float)
+    for i, label in enumerate(labels):
+        freq[i] = len(os.listdir(dataset_path+'/'+label))
+    freq /= np.sum(freq)
+    return labels, freq
+
+
+def get_labels_and_freqs_for_tree_level(tree, level=1, separate = True):
+    if level<0:
+        raise ValueError('level must be higher than 0. Level = '+str(level))
+    elif level==0:
+        return tree.freq, tree.name, tree.is_leaf
+    else:
+        labels_and_freq = [get_labels_and_freqs_for_tree_level(child,level-1, separate=False)
+                           for child in tree.children if not child.is_leaf]
+        if separate:
+            return separate_nested_labels_and_freqs(labels_and_freq, levels = level-1)
+        else:
+            return labels_and_freq
+
+def get_hierarchy_of_label(labels, freqs, xml, population_code=0, class_sel=0):
+    if type(xml) is str:
+        xml = ET.parse(xml)
+    humanLists = []
+    synsetLists = []
+    for label, freq in zip(labels, freqs):
+        xPath = './/synset[@wnid="'+label+'"]'
+        result = xml.find(xPath)
+        humanList = []
+        synsetList = []
+        while len(result.attrib) is not 0:
+
+            humanList.append((result.attrib['words'],freq))
+            synsetList.append(result.attrib['wnid'])
+            xPath+='/..'
+            result = xml.find(xPath)
+        humanLists.append(humanList)
+        synsetLists.append(synsetList)
+
+    hierarchy = {'root': Node('root', freq=class_sel, rep=population_code)}
+    for list_count in range(len(humanLists)):
+        parent = synsetLists[list_count][-1]
+        if parent not in hierarchy:
+            hierarchy[parent] = Node(humanLists[list_count][-1][0],parent=hierarchy['root'], freq = humanLists[list_count][-1][1], rep=1)
+        else:
+            hierarchy[parent].freq += humanLists[list_count][-1][1]
+            hierarchy[parent].rep += 1
+        for i in range(len(humanLists[list_count])-2,-1,-1):
+            if synsetLists[list_count][i] not in hierarchy:
+                hierarchy[synsetLists[list_count][i]] = Node(humanLists[list_count][i],parent=hierarchy[parent], freq = humanLists[list_count][-1][1], rep=1)
+            else:
+                hierarchy[synsetLists[list_count][i]].freq += humanLists[list_count][-1][1]
+                hierarchy[synsetLists[list_count][i]].rep += 1
+            parent = synsetLists[list_count][i]
+
+    return hierarchy['root']
+
+			
+			
+def separate_nested_labels_and_freqs(l, levels):
+    import itertools
+    l_intermediate = []
+    l_first_class_level = []
+    for j in range(len(l)):
+        sublist = l[j]
+        for i in range(levels-1):
+            sublist = list(itertools.chain.from_iterable(sublist))
+        l_first_class_level+=list(np.full(shape=len(sublist), fill_value=j))
+        l_intermediate+=sublist
+    l_names = []
+    l_freqs = []
+    l_leaf = []
+    for element in l_intermediate:
+        if element is not []:
+            if type(element[1]) is tuple:
+                l_names.append(element[1][0])
+            else:
+                l_names.append(element[1])
+            l_freqs.append(element[0])
+            l_leaf.append(element[2])
+    return np.array(l_names), np.array(l_freqs), np.array(l_leaf), np.array(l_first_class_level)
+	
+	
+	
+	
+	
+	
+	
+	
 def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
     cmap = plt.cm.get_cmap(color_map)
     bins, count = np.histogram(idx_values,bins='fd')
@@ -74,43 +165,6 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
                     """
 
     return positions
-
-def get_hierarchy_of_label(labels, freqs, xml, population_code=0, class_sel=0):
-    if type(xml) is str:
-        xml = ET.parse(xml)
-    humanLists = []
-    synsetLists = []
-    for label, freq in zip(labels, freqs):
-        xPath = './/synset[@wnid="'+label+'"]'
-        result = xml.find(xPath)
-        humanList = []
-        synsetList = []
-        while len(result.attrib) is not 0:
-
-            humanList.append((result.attrib['words'],freq))
-            synsetList.append(result.attrib['wnid'])
-            xPath+='/..'
-            result = xml.find(xPath)
-        humanLists.append(humanList)
-        synsetLists.append(synsetList)
-
-    hierarchy = {'root': Node('root', freq=class_sel, rep=population_code)}
-    for list_count in range(len(humanLists)):
-        parent = synsetLists[list_count][-1]
-        if parent not in hierarchy:
-            hierarchy[parent] = Node(humanLists[list_count][-1][0],parent=hierarchy['root'], freq = humanLists[list_count][-1][1], rep=1)
-        else:
-            hierarchy[parent].freq += humanLists[list_count][-1][1]
-            hierarchy[parent].rep += 1
-        for i in range(len(humanLists[list_count])-2,-1,-1):
-            if synsetLists[list_count][i] not in hierarchy:
-                hierarchy[synsetLists[list_count][i]] = Node(humanLists[list_count][i],parent=hierarchy[parent], freq = humanLists[list_count][-1][1], rep=1)
-            else:
-                hierarchy[synsetLists[list_count][i]].freq += humanLists[list_count][-1][1]
-                hierarchy[synsetLists[list_count][i]].rep += 1
-            parent = synsetLists[list_count][i]
-
-    return hierarchy['root']
 
 
 def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, type=1, thr_mth = 1, thr = 0.005):

@@ -26,22 +26,19 @@ def get_activations(model, model_inputs, layers_data):
     # connected to multiple inputs. Assumes the input at node index=0
     # is the input where the model inputs come from.
     outputs = [model.get_layer(layer.layer_id).output for layer in layers_data]
-    start = time.time()
     # evaluation functions
     funcs = K.function(inp+ [K.learning_phase()], outputs)
     # K.learning_phase flag = 1 (train mode)
     layer_outputs = funcs([model_inputs, 1])
-    print("Funcs -> " + str(float(time.time() - start)))
+    locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
+    """
     with ThreadPool(processes=None) as pool:  # use all cpu cores
-        start = time.time()
         async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
-        print("CPU -> " + str(float(time.time() - start)))
-        start = time.time()
         locations_and_max = [async_result.get() for async_result in async_results]
-        print("CPUAsync -> " + str(float(time.time() - start)))
-        pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...
-        #pool.terminate()
-        #pool.join()
+        pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...-
+        pool.terminate()
+        pool.join()
+    """
     return locations_and_max
 
 def get_argmax_and_max(layer):

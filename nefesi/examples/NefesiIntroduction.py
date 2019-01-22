@@ -5,7 +5,7 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
-
+import nefesi.util.general_functions as gf
 from nefesi.network_data import NetworkData
 from nefesi.util.image import ImageDataset
 import numpy as np
@@ -15,16 +15,22 @@ import pickle
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 
+gpu.assignGPU()
+
 def main():
 	start = time.time()
 	#example1SaveModel(VGG16) #Charge a standard model and save it locally
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
-	example5NetworkEvaluation(      '/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/eric/Nefesi/Data/Vgg16Efficiency/')
+	example5NetworkEvaluation('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/eric/Nefesi/Data/Vgg16Efficiency/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
-	print("TIME ELAPSED: "+str(time.time()-start))
+	#print("TIME ELAPSED: "+str(time.time()-start))
+	#tree = pickle.load(open('imagenet_tree.tree', 'rb'))
+	#names, freqs, leaf_info, first_class_id = gf.get_labels_and_freqs_for_tree_level(tree, level = 5)
+	#from ..util import plotting as plt
+	#plt.plot_with_cumsum(names, freqs, leaf_info, first_class_id, level=5)
 
 """
 Analyze the results of the evaluation
@@ -235,7 +241,7 @@ def example5NetworkEvaluation(model_file_name, dataset_folder, save_folder):
 		  "(os.environ[\"CUDA_VISIBLE_DEVICES\"] = \"1\" \n"
 		  "GO TO EVALUATE! :)")
 	start = time.time()
-	nefesiModel.eval_network(verbose=True, batch_size=250)
+	nefesiModel.eval_network(verbose=True, batch_size=100)
 	print("TIME ELAPSED: "+str(time.time()-start))
 
 	print("Evaluation finished, nefesiObject have now the info of analysis and results can be reloaded with files (.obj)"

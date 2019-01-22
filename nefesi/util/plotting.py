@@ -7,6 +7,28 @@ import math
 from PIL import ImageDraw
 from sklearn.manifold import TSNE
 
+def plot_with_cumsum(x, y, leafs, first_level_id, level):
+    from matplotlib import colors as mcolors
+    y = y*100
+    colors = {0: 'slategray', 1:'mediumslateblue', 2:'deepskyblue',
+              3:'green', 4: 'olive', 5: 'darkorange', 6:'gold',
+              7: 'coral'}
+    color_list = np.zeros(shape=len(first_level_id), dtype=np.object)
+    for i in range(len(first_level_id)):
+        if leafs[i]:
+            color_list[i] = 'red'
+        else:
+            color_list[i] = colors[color_list[i]]
+    #idx_sort = y.argsort()[::-1]
+    #y = y[idx_sort]
+    #x = x[idx_sort]
+
+    plt.xticks(rotation=90)
+    plt.ylabel("% of images at this node")
+    plt.xlabel("WordNet node name")
+    plt.title("Level "+str(level)+" frequency [Total of images at this level -> "+str(np.round(np.sum(y),2))+"%]")
+    barlist = plt.bar(x, y, color = color_list)
+    plt.show()
 
 def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):
     """Plots a summary over the selectivity indexes from a group of

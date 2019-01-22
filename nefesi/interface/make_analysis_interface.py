@@ -301,14 +301,14 @@ class MakeAnalysisInterface():
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
                                               filetypes=((type, '*.' + type), ("all files", "*.*")))
-        if filename != '':
-            filename = relpath(filename)
+        #if filename != '':
+        #    filename = relpath(filename)
         return filename
 
     def ask_for_directory(self, title="Select Directory"):
         dir_name = filedialog.askdirectory(title=title)
-        if dir_name != '':
-            dir_name = relpath(dir_name)
+        #if dir_name != '':
+        #    dir_name = relpath(dir_name)
         return dir_name
 
     def _on_click_set_model(self, label_selection):
