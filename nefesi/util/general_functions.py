@@ -89,6 +89,7 @@ def separate_nested_labels_and_freqs(l, levels):
         for i in range(levels-1):
             sublist = list(itertools.chain.from_iterable(sublist))
         l_first_class_level+=list(np.full(shape=len(sublist), fill_value=j))
+        sublist.sort(key=lambda a: a[0], reverse=True)
         l_intermediate+=sublist
     l_names = []
     l_freqs = []

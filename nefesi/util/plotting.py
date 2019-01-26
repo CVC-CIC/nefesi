@@ -15,19 +15,29 @@ def plot_with_cumsum(x, y, leafs, first_level_id, level):
               7: 'coral'}
     color_list = np.zeros(shape=len(first_level_id), dtype=np.object)
     for i in range(len(first_level_id)):
-        if leafs[i]:
-            color_list[i] = 'red'
-        else:
-            color_list[i] = colors[color_list[i]]
+        color_list[i] = colors[first_level_id[i]]
     #idx_sort = y.argsort()[::-1]
     #y = y[idx_sort]
     #x = x[idx_sort]
-
-    plt.xticks(rotation=90)
+    from matplotlib.lines import Line2D
+    custom_lines = [Line2D([0], [0], color='slategray', lw=4),
+                    Line2D([0], [0], color='mediumslateblue', lw=4),
+                    Line2D([0], [0], color='deepskyblue', lw=4),
+                    Line2D([0], [0], color='green', lw=4),
+                    Line2D([0], [0], color='olive', lw=4),
+                    Line2D([0], [0], color='darkorange', lw=4),
+                    Line2D([0], [0], color='gold', lw=4),
+                    Line2D([0], [0], color='coral', lw=4)]
+    plt.legend(custom_lines, ['Artifact, Artefact', 'Animal, Fauna', 'Natural Object', 'Geological Form.', 'Misc', 'Fungus', 'Plant, Flora', 'Person, Individual'], prop={'size':8})
+    plt.xticks(rotation=90,fontsize=10)
     plt.ylabel("% of images at this node")
     plt.xlabel("WordNet node name")
     plt.title("Level "+str(level)+" frequency [Total of images at this level -> "+str(np.round(np.sum(y),2))+"%]")
+    #x[33] = 'dish artifact'
+    #x[139] = 'geological bar'
+    plt.margins(x=0.005)
     barlist = plt.bar(x, y, color = color_list)
+    plt.gcf().subplots_adjust(bottom=0.3)
     plt.show()
 
 def plot_sel_idx_summary(selectivity_idx, bins=10, color_map='jet'):

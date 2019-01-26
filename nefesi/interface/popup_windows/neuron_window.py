@@ -63,6 +63,13 @@ class NeuronWindow(object):
         self.index_info.pack(side=RIGHT)
         self.decomposition_frame.pack(side=RIGHT)
         self.basic_frame.pack(side=TOP)
+        """
+        BORRAR ESTO!!!!!
+        """
+
+        import nefesi.class_index as c
+        c.get_concept_selectivity_of_neuron(network_data, layer_to_evaluate, neuron_idx)
+
 
     def update_images_size(self):
         self.set_nf_panel(option=self.combo_nf_option.get())

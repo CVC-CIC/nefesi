@@ -23,14 +23,14 @@ def main():
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
-	example5NetworkEvaluation('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/eric/Nefesi/Data/Vgg16Efficiency/')
+	#example5NetworkEvaluation('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/eric/Nefesi/Data/Vgg16Efficiency/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	#print("TIME ELAPSED: "+str(time.time()-start))
-	#tree = pickle.load(open('imagenet_tree.tree', 'rb'))
-	#names, freqs, leaf_info, first_class_id = gf.get_labels_and_freqs_for_tree_level(tree, level = 5)
-	#from ..util import plotting as plt
-	#plt.plot_with_cumsum(names, freqs, leaf_info, first_class_id, level=5)
+	tree = pickle.load(open('imagenet_tree.tree', 'rb'))
+	names, freqs, leaf_info, first_class_id = gf.get_labels_and_freqs_for_tree_level(tree, level = 11)
+	from nefesi.util import plotting as plt
+	plt.plot_with_cumsum(names, freqs, leaf_info, first_class_id, level=11)
 
 """
 Analyze the results of the evaluation

@@ -2,6 +2,7 @@ import numpy as np
 import os
 from .util import general_functions as gf
 from . import read_activations as read_act
+from .util.segmentation.Broden_analize import Segment_images
 from anytree import Node
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
@@ -67,6 +68,66 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_l
         concepts[i] = labels[:min(len(labels), index_by_level)]
 
     return np.array(concepts)
+
+def concept_selectivity_of_image(activations_mask, segmented_image, type='max'):
+    """
+    :param type: 'max' = only the max of every region, 'sum' sum of the pixels of a region
+    :return:
+    """
+    activations_mask = activations_mask.reshape(-1)
+    ids, correspondency = np.unique(segmented_image, return_inverse=True)
+    histogram = np.zeros(shape=len(ids), dtype=np.float)
+    if type == 'max':
+        for i in range(len(ids)):
+            histogram[i] = np.max(activations_mask[correspondency == i])
+    elif type == 'sum':
+        for i in range(len(ids)):
+            histogram[i] = np.sum(activations_mask[correspondency == i])
+    else:
+        raise ValueError('Valid types: max and sum. Type '+str(type)+' is not valid')
+    normalized_hist = histogram/np.sum(histogram)
+    return ids, normalized_hist
+
+
+def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='max'):
+    neuron = network_data.get_neuron_of_layer(layer_name, neuron_idx)
+    image_names = neuron.images_id
+    images_ids = neuron.images_id
+    activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
+    """
+    Change it for the code to obtain the object and parts matrix
+    """
+    full_image_names = [network_data.dataset.src_dataset + image_name for image_name in image_names]
+    segmentation = Segment_images(full_image_names)
+    """
+    Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
+    segmentators. Less efficient but more flexible
+    """
+    general_hist = {}
+    norm_activations = neuron.norm_activations
+    for i in range(len(images_ids)):
+        ids, personal_hist = concept_selectivity_of_image(activations_mask=activations_masks[i],
+                                                          segmented_image=segmentation[i]['object'],
+                                                          type=type)
+        personal_hist *= norm_activations[i]
+
+        for id, value in zip(ids, personal_hist):
+            if id in general_hist:
+                general_hist[id] += value
+            else:
+                general_hist[id] = value
+    #Dict to Structured Numpy
+    general_hist = np.array(list(general_hist.items()), dtype = [('id', np.int), ('value',np.float)])
+    #Ordering
+    general_hist = np.sort(general_hist, order = 'value')[::-1]
+    #Normalized
+    general_hist['value'] /= np.sum(general_hist['value'])
+    return general_hist
+
+
+
+
+
 
 
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
