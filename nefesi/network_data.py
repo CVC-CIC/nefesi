@@ -58,6 +58,7 @@ class NetworkData(object):
         self.default_thr_class_idx = default_thr_class_idx
         self.default_file_name = default_file_name
         self.indexs_accepted = self.get_indexs_accepted()
+        self.MIN_PROCESS_TIME_TO_OVERWRITE = MIN_PROCESS_TIME_TO_OVERWRITE
 
 
     @property
@@ -781,7 +782,8 @@ class NetworkData(object):
 
     def addmits_concept_selectivity(self):
         try:
-            self.layers_data[0].neurons_data[0].concept_selectivity_idx(layer_data=self.layers_data[0],network_data=self)
+            self.layers_data[0].neurons_data[0].concept_selectivity_idx(layer_data=self.layers_data[0],network_data=self,
+                                                                        neuron_idx=0)
             return True
         except:
             return False

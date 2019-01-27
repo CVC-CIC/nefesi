@@ -208,11 +208,13 @@ def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
     concept_selectivity = None
+    """
     if network_data.addmits_concept_selectivity():
         layer_data = network_data.get_layer_by_name(layer=layer_name)
         concept_selectivity = [layer_data.neurons_data[id].concept_selectivity_idx(layer_data=layer_data,
                                                                 network_data=network_data,
-                                                                labels=None) for id in valids_ids]
+                                                                neuron_idx=id) for id in valids_ids]
+    """
     hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         text = str(valids_idx[i]['label'])

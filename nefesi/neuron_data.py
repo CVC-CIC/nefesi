@@ -3,7 +3,7 @@ from PIL import ImageOps
 from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
 from . import symmetry_index as sym
-from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_idx
+from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron
 from .color_index import get_color_selectivity_index
 from .orientation_index import get_orientation_index
 
@@ -285,7 +285,7 @@ class NeuronData(object):
         self.selectivity_idx[key] = symmetry_idx
         return symmetry_idx
 
-    def concept_selectivity_idx(self,layer_data, network_data, labels=None):
+    def concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object'):
         """Returns the class selectivity index for this neuron.
 
         :param labels: Dictionary, key: name class, value: label class.
@@ -301,12 +301,9 @@ class NeuronData(object):
         if concept_idx is not None:
             return concept_idx
 
-        #Labels always must to be a dictionary
-        if type(labels) is not dict and labels is not None:
-            raise TypeError("The 'labels' argument should be a dictionary if is specified")
+        concept_idx = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data.layer_id,
+                                                        neuron_idx=neuron_idx, type=type, concept=concept)
 
-        concept_idx = get_concept_selectivity_idx(self,network_data=network_data, layer_data=layer_data,
-                                                  normalize_by_activations=True)
         self.selectivity_idx['concept'] = concept_idx
         return concept_idx
 

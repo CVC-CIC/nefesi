@@ -6,6 +6,8 @@ from .neuron_feature import compute_nf, get_each_point_receptive_field,find_laye
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 
+MIN_PROCESS_TIME_TO_OVERWRITE = 10
+
 class LayerData(object):
     """This class contains all the information related with the
     layers already evaluated.
@@ -121,7 +123,8 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,labels=labels)
+                sel_idx[i] = self.neurons_data[i].concept_selectivity_idx(network_data=network_data, layer_data=self,
+                                                                          neuron_idx=i)
         elif index_name.lower() == 'population code':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.int)
             for i in range(len(self.neurons_data)):
@@ -136,6 +139,8 @@ class LayerData(object):
     def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_class_idx=1., thr_pc=0.1):
         assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
         model = network_data.model
+        import time
+        start_time = time.time()
         dataset = network_data.dataset
         neuron = self.neurons_data[neuron_idx]
         index = dict()
@@ -153,7 +158,12 @@ class LayerData(object):
         index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_class_idx)
         if network_data.addmits_concept_selectivity():
             index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
-                                                              labels=network_data.default_labels_dict)
+                                                              neuron_idx=neuron_idx)
+        if network_data.save_changes:
+            end_time = time.time()
+            if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                # Update only the modelName.obj
+                network_data.save_to_disk(file_name=None, save_model=False)
         return index
 
 

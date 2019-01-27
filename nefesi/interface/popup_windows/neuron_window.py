@@ -2,6 +2,8 @@ from anytree import RenderTree
 
 from .one_layer_popup_window import OneLayerPopupWindow
 
+MAX_CONCEPTS_TO_SHOW = 4
+
 IMAGE_BIG_DEFAULT_SIZE = (800,800)
 IMAGE_SMALL_DEFAULT_SIZE = (450,450)
 ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
@@ -63,12 +65,6 @@ class NeuronWindow(object):
         self.index_info.pack(side=RIGHT)
         self.decomposition_frame.pack(side=RIGHT)
         self.basic_frame.pack(side=TOP)
-        """
-        BORRAR ESTO!!!!!
-        """
-
-        import nefesi.class_index as c
-        c.get_concept_selectivity_of_neuron(network_data, layer_to_evaluate, neuron_idx)
 
 
     def update_images_size(self):
@@ -276,17 +272,15 @@ class NeuronWindow(object):
                 except:
                     pass
             elif label == 'concept':
-                text = 'Concept: '
-                for level_idx, level in enumerate(idx):
-                    text += '\n Level ' + str(level_idx) + ' concepts:\n'
-                    for concept_idx, concept in enumerate(level):
-                        if concept_idx >= 2:
-                            break
-                        elif concept_idx > 0:
-                            text += ', '
-                        else:
-                            text += '  '
-                        text += concept['class'] + '(' + str(round(concept['count'], ndigits=2)) + ')'
+                text = 'Object: \n'
+                for concept_idx, concept in enumerate(idx):
+                    if concept_idx >= MAX_CONCEPTS_TO_SHOW:
+                        break
+                    elif concept_idx > 0:
+                        text += ', '
+                    else:
+                        text += '  '
+                    text += concept[0] + '(' + str(round(concept[1], ndigits=3)) + ')'
             Label(master=master, text=text, justify=LEFT).grid(column=0, row=i+1)
         checkbox_img_value = tk.BooleanVar(master=master)
         checkbox_advanced_charts_value = tk.BooleanVar(master=master)
