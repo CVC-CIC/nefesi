@@ -8,6 +8,7 @@ LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
 REL_FREQ_POS = 3
+CONCEPT_TRANSLATION_BASE_DIR = '../nefesi/util/segmentation/meta_file/'
 
 def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_level=5,
                                 normalize_by_activations = False):
@@ -69,9 +70,10 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_l
 
     return np.array(concepts)
 
-def concept_selectivity_of_image(activations_mask, segmented_image, type='max'):
+def concept_selectivity_of_image(activations_mask, segmented_image, type='mean'):
     """
-    :param type: 'max' = only the max of every region, 'sum' sum of the pixels of a region
+    :param type: 'max' = only the max of every region, 'sum' sum of the pixels of a region, 'mean' the mean of the activation
+    in each region.
     :return:
     """
     activations_mask = activations_mask.reshape(-1)
@@ -83,14 +85,29 @@ def concept_selectivity_of_image(activations_mask, segmented_image, type='max'):
     elif type == 'sum':
         for i in range(len(ids)):
             histogram[i] = np.sum(activations_mask[correspondency == i])
+    elif type == 'mean':
+        for i in range(len(ids)):
+            histogram[i] = np.mean(activations_mask[correspondency == i])
     else:
-        raise ValueError('Valid types: max and sum. Type '+str(type)+' is not valid')
+        raise ValueError('Valid types: max, sum and mean. Type '+str(type)+' is not valid')
     normalized_hist = histogram/np.sum(histogram)
     return ids, normalized_hist
 
 
-def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='max'):
+def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object'):
+    """
+
+    :param network_data:
+    :param layer_name:
+    :param neuron_idx:
+    :param type:
+    :param concept: 'object', 'part', 'texture'
+    :return:
+    """
     neuron = network_data.get_neuron_of_layer(layer_name, neuron_idx)
+    layer_data = network_data.get_layer_by_name(layer_name)
+    receptive_field = layer_data.receptive_field_map
+
     image_names = neuron.images_id
     images_ids = neuron.images_id
     activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
@@ -101,13 +118,19 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     segmentation = Segment_images(full_image_names)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
-    segmentators. Less efficient but more flexible
+    segmentators. Less efficient but more flexible (And the execution time of this for is short)
     """
     general_hist = {}
     norm_activations = neuron.norm_activations
     for i in range(len(images_ids)):
-        ids, personal_hist = concept_selectivity_of_image(activations_mask=activations_masks[i],
-                                                          segmented_image=segmentation[i]['object'],
+        #Crop for only use the receptive field
+        ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
+        cropped_activation_masks = activations_masks[i][ri:rf, ci:cf]
+        cropped_segmentation = segmentation[i][concept][ri:rf, ci:cf]
+
+        #Make individual hist
+        ids, personal_hist = concept_selectivity_of_image(activations_mask=cropped_activation_masks,
+                                                          segmented_image=cropped_segmentation,
                                                           type=type)
         personal_hist *= norm_activations[i]
 
@@ -122,7 +145,16 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     general_hist = np.sort(general_hist, order = 'value')[::-1]
     #Normalized
     general_hist['value'] /= np.sum(general_hist['value'])
+    general_hist = translate_concept_hist(general_hist, concept)
     return general_hist
+
+def translate_concept_hist(hist, concept):
+    # Charge without index (redundant with pos) and without header
+    translation = np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
+    translated_hist = [(translation[id],value) for id, value in hist]
+    return np.array(translated_hist, dtype=[('id', np.object), ('value', np.float)])
+
+
 
 
 

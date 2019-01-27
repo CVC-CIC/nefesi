@@ -149,9 +149,10 @@ class ImageDataset(object):
         if crop_pos is None:
             return img
 
-        ri, rf, ci, cf = crop_pos
-        im_crop = img.crop((ci, ri, cf, rf))
+        im_crop = crop_img(img,crop_pos)
         return im_crop
+
+
 
     def _load_image(self, img_name, as_numpy = False, prep_function=False):
         """Loads an image into PIL format.
@@ -407,6 +408,10 @@ def rotate_images_axis(images, rot_axis, layer_data, pos):
             rot_images[axis_pos, i, row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
     return rot_images
 
+def crop_img(img, crop_pos):
+    ri, rf, ci, cf = crop_pos
+    im_crop = img.crop((ci, ri, cf, rf))
+    return im_crop
 
 def rotate_rf(img, rot_axis):
     if rot_axis == 0:
