@@ -7,6 +7,8 @@ except ImportError:
     from tkinter import ttk
 
 from ...util.general_functions import get_image_masked
+from ...util.segmentation.utils import maskrcnn_colorencode
+from ...util.segmentation.Broden_analize import Segment_images
 from PIL import ImageTk,Image
 import numpy as np
 
@@ -62,18 +64,25 @@ class ReceptiveFieldPopupWindow(object):
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         ttk.Radiobutton(master, text="Act Ved", variable=self.method_value, value=4,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
+        ttk.Radiobutton(master, text="Segmentation", variable=self.method_value, value=5,
+                        command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         # checkbox_value = BooleanVar(master=master, value=True)
         # ttk.Checkbutton(master=master, text="Receptive camp",
         #                            variable=checkbox_value,
         #                            command=lambda: self._on_checkbox_clicked(checkbox_value)).pack(side=RIGHT)
 
     def _on_checkbox_clicked(self):
-        if self.method_value.get():
+        value = self.method_value.get()
+        if 0<value<5:
             img = get_image_masked(network_data=self.network_data, image_name=self.image_name,
                                    layer_name=self.layer_name, neuron_idx=self.neuron_idx,
                                    type=self.method_value.get(), thr_mth=self.thr_mth.get(), thr=self.thr.get())
         else:
             img = self.network_data.dataset._load_image(self.image_name)
+            if value == 5:
+                segmentation = Segment_images([self.network_data.dataset.src_dataset+self.image_name])
+                img = maskrcnn_colorencode(np.asarray(img), segmentation[0]['object'], np.random.rand(1000, 3) * .7 + .3)
+
         img = self.interface.draw_rectangle_on_image(np.array(img), self.x0, self.x1, self.y0, self.y1)
         img = Image.fromarray(img.astype('uint8'))
         img = img.resize(self.actual_size, Image.ANTIALIAS)
