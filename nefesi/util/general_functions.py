@@ -186,7 +186,7 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
         type -= 2
         show_activation = True
 
-    activation_upsampled = get_image_activation(network_data, image_name, layer_name, neuron_idx, type)
+    activation_upsampled = get_image_activation(network_data, [image_name], layer_name, neuron_idx, type)[0]
 
     if thr_mth==0:
         max_act = np.max(network_data.get_layer_by_name(layer_name).neurons_data[neuron_idx].activations)

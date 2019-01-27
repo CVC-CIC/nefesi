@@ -17,9 +17,6 @@ from .lib.utils import data as torchdata
 
 from .broden_dataset_utils.joint_dataset import broden_dataset
 
-#GPU
-from ..GPUtil import getFirstAvailable
-
 
 
 
@@ -72,7 +69,7 @@ def test(segmentation_module, loader, args):
 
 
 def prepare_test(args):
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"#str(args.gpu_id)
+    #os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"#str(args.gpu_id)
     torch.cuda.set_device(0)
 
     # Network Builders
@@ -156,7 +153,7 @@ def Segment_images(imagepath):
     # Misc arguments
     parser.add_argument('--result', default='./',
                         help='folder to output visualization results')
-    parser.add_argument('--gpu_id', default=getFirstAvailable()[0], type=int,
+    parser.add_argument('--gpu_id', default=0, type=int,
                         help='gpu_id for evaluation')
 
     args = parser.parse_args()
