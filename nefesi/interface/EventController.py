@@ -221,7 +221,7 @@ class EventController():
         ReceptiveFieldPopupWindow(master=self.interface.window, image_cropped=cropped_image,
                                   x_len=x_len, y_len=y_len,
                                   image_name=image_name, layer_name=layer_name,neuron_idx=idx_neuron,
-                                interface = self.interface,x0=x0,x1=x1,y0=y0,y1=y1)
+                                interface = self.interface,x0=x0,x1=x1,y0=y0,y1=y1, actual_idx = actual_idx)
 
     def _on_nf_changed(self, event, combo):
         selection = combo.get()

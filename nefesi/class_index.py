@@ -70,13 +70,14 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_l
 
     return np.array(concepts)
 
-def concept_selectivity_of_image(activations_mask, segmented_image, type='mean'):
+def concept_selectivity_of_image(activations_mask, segmented_image, type='mean'): #activations_mask
     """
     :param type: 'max' = only the max of every region, 'sum' sum of the pixels of a region, 'mean' the mean of the activation
-    in each region.
+    in each region, 'percent' the plain percent, 'activation' the max activation of the n-topScoring.
     :return:
     """
-    activations_mask = activations_mask.reshape(-1)
+    if not (type == 'activation' or type == 'percent'):
+        activations_mask = activations_mask.reshape(-1)
     ids, correspondency = np.unique(segmented_image, return_inverse=True)
     histogram = np.zeros(shape=len(ids), dtype=np.float)
     if type == 'max':
@@ -88,10 +89,16 @@ def concept_selectivity_of_image(activations_mask, segmented_image, type='mean')
     elif type == 'mean':
         for i in range(len(ids)):
             histogram[i] = np.mean(activations_mask[correspondency == i])
+    elif type == 'percent':
+        for i in range(len(ids)):
+            histogram[i] = np.sum(correspondency==i) / segmented_image.size
+    elif type == 'activation':
+        for i in range(len(ids)):
+            histogram[i] = activations_mask
     else:
         raise ValueError('Valid types: max, sum and mean. Type '+str(type)+' is not valid')
-    normalized_hist = histogram/np.sum(histogram)
-    return ids, normalized_hist
+    #normalized_hist = histogram/np.sum(histogram)
+    return ids, histogram
 
 
 def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object'):
@@ -110,7 +117,8 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
 
     image_names = neuron.images_id
     images_ids = neuron.images_id
-    activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
+    if not type == 'activation':
+        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
     """
     Change it for the code to obtain the object and parts matrix
     """
@@ -125,14 +133,15 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     for i in range(len(images_ids)):
         #Crop for only use the receptive field
         ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
-        cropped_activation_masks = activations_masks[i][ri:rf, ci:cf]
+        ri, rf, ci, cf = abs(ri), abs(rf), abs(ci), abs(cf)
         cropped_segmentation = segmentation[i][concept][ri:rf, ci:cf]
-
+        activation = norm_activations[i] if type=='activation' else activations_masks[i][ri:rf, ci:cf]
         #Make individual hist
-        ids, personal_hist = concept_selectivity_of_image(activations_mask=cropped_activation_masks,
+        ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,
                                                           segmented_image=cropped_segmentation,
                                                           type=type)
-        personal_hist *= norm_activations[i]
+        if not type == 'activation':
+            personal_hist *= norm_activations[i]
 
         for id, value in zip(ids, personal_hist):
             if id in general_hist:
@@ -151,7 +160,7 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
 def translate_concept_hist(hist, concept):
     # Charge without index (redundant with pos) and without header
     translation = np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
-    translated_hist = [(translation[id],value) for id, value in hist]
+    translated_hist = [(translation[element['id']],element['value']) for element in hist]
     return np.array(translated_hist, dtype=[('id', np.object), ('value', np.float)])
 
 
