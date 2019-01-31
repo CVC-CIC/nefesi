@@ -84,7 +84,7 @@ class ReceptiveFieldPopupWindow(object):
         if 0<value<5:
             img = get_image_masked(network_data=self.network_data, image_name=self.image_name,
                                    layer_name=self.layer_name, neuron_idx=self.neuron_idx,
-                                   type=self.method_value.get(), thr_mth=self.thr_mth.get(), thr=self.thr.get())
+                                   type=self.method_value.get(), thr_mth=self.thr_mth.get(), thr=self.thr.get()/100)
         else:
             img = self.network_data.dataset._load_image(self.image_name)
             if value == 5:
@@ -110,13 +110,15 @@ class ReceptiveFieldPopupWindow(object):
     def set_threshold_frame(self, master):
         master = LabelFrame(master, text="Threshold", padx=2, pady=2)
         master.pack(side=TOP, fill=X, expand="yes")
-        self.thr_mth = IntVar(master=master, value=1)
+        self.thr_mth = DoubleVar(master=master, value=1.)
         ttk.Radiobutton(master, text="Max over Top", variable=self.thr_mth, value=0,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w")
         ttk.Radiobutton(master, text="Max over Image", variable=self.thr_mth, value=1,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w")
-        self.thr = Scale(master, from_=0, to=1, orient=HORIZONTAL, digits=4, resolution=0.001)
-        self.thr.set(0.005)
+        #This needs to be changed for use decimal numbers, but sames to have a bug with resolutions decimals
+        #Temporary is using a % scale
+        self.thr = Scale(master, from_=0, to=100, orient=HORIZONTAL, digits=3, resolution=1)
+        self.thr.set(5)
         self.thr.pack(side=TOP)
 
     def set_labels_frame(self, master, segment, color_list):

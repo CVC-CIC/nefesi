@@ -46,6 +46,9 @@ class BrodenDataset:
 
         """ use multi source dataset """
         self.broden_dataset_info = "../nefesi/util/segmentation/meta_file"
+        if not os.path.isdir(self.broden_dataset_info):
+            self.broden_dataset_info = "../util/segmentation/meta_file"
+
         self.record_list = {"train": [], "validation": []}
         self.record_list['train'].append(get_records(
             os.path.join(self.broden_dataset_info, "broden_ade20k_pascal_train.json")))

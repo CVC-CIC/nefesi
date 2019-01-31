@@ -201,6 +201,8 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
         return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 3))
 
 
+
+
 def relative_freq_class(neuron_data, labels = None):
     """Calculates the relative frequencies of appearance of each class among
     the TOP scoring images from `neuron_data`.
@@ -262,6 +264,23 @@ def get_population_code_idx(neuron_data, labels=None, threshold_pc=0.1):
     else:
         #classes with relative  frequency more than threshold_pc
         return np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
+
+def get_population_code_classes(neuron_data, labels=None, threshold_pc=0.1):
+    """Returns the population code index value
+
+    :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
+    :param labels: Dictionary, key: name class, value: label class.
+    :param threshold_pc: Float. Threshold to consider that neuron is well selective to a class
+
+    :return: Integer, population code value. (Number of classes with frequency higher to threshold_pc in N-top activations
+    """
+    rel_freq = relative_freq_class(neuron_data, labels)
+    if rel_freq is None:
+        return 0
+    else:
+        #classes with relative  frequency more than threshold_pc
+        pc = np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
+        return rel_freq['human_name'][:pc]
 
 def get_hierarchical_population_code_idx(neuron_data, xml='../nefesi/imagenet_structure.xml', threshold_pc=0.1,
                                          population_code=0, class_sel=0):

@@ -27,7 +27,8 @@ def test(segmentation_module, loader, args):
     for i, data in enumerate(loader):
         # process data
         data = data[0]
-
+        if i%100==0:
+            print(str(i)+' images done')
         seg_size = data['img_ori'].shape[0:2]
 
         with torch.no_grad():

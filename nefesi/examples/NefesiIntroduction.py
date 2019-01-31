@@ -5,9 +5,9 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 
 from keras.applications.vgg16 import VGG16, preprocess_input
 from keras.models import load_model #For load local keras models (h5 files)
-import nefesi.util.general_functions as gf
-from nefesi.network_data import NetworkData
-from nefesi.util.image import ImageDataset
+from ..util.general_functions import have_all_imagenet_segmentation
+#from nefesi.network_data import NetworkData
+#from nefesi.util.image import ImageDataset
 import numpy as np
 import time
 import pickle
@@ -15,7 +15,6 @@ import pickle
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 
-gpu.assignGPU()
 
 def main():
 	start = time.time()
@@ -27,10 +26,11 @@ def main():
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	#print("TIME ELAPSED: "+str(time.time()-start))
-	tree = pickle.load(open('imagenet_tree.tree', 'rb'))
-	names, freqs, leaf_info, first_class_id = gf.get_labels_and_freqs_for_tree_level(tree, level = 11)
-	from nefesi.util import plotting as plt
-	plt.plot_with_cumsum(names, freqs, leaf_info, first_class_id, level=11)
+	have_all_imagenet_segmentation('/datatmp/datasets/ImageNetFused/')
+	#tree = pickle.load(open('imagenet_tree.tree', 'rb'))
+	#names, freqs, leaf_info, first_class_id = gf.get_labels_and_freqs_for_tree_level(tree, level = 11)
+	#from nefesi.util import plotting as plt
+	#plt.plot_with_cumsum(names, freqs, leaf_info, first_class_id, level=11)
 
 """
 Analyze the results of the evaluation

@@ -33,7 +33,10 @@ class AdeSegmentation(AbstractSegmentation):
         self.index = Ade20kIndex(
             **{name: index[name][()] for name in index.dtype.names})
         # Here we use adechallenger scene label instead of ade20k.
-        with open("../nefesi/util/segmentation/meta_file/scene_categories.txt", 'r') as f:
+        dir_of_scene_cat = "../nefesi/util/segmentation/meta_file/scene_categories.txt"
+        if not os.path.isfile(dir_of_scene_cat):
+            dir_of_scene_cat = "../util/segmentation/meta_file/scene_categories.txt"
+        with open(dir_of_scene_cat, 'r') as f:
             lines = f.readlines()
         self.index_scene_adecha = []
         for i, l in enumerate(lines):

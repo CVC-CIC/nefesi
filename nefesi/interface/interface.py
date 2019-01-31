@@ -24,10 +24,10 @@ from .popup_windows.one_layer_popup_window import OneLayerPopupWindow
 from .popup_windows.neuron_window import NeuronWindow
 from .popup_windows.confirm_popup import ConfirmPopup
 from .popup_windows.erase_calculated_index_popup import EraseCalculatedIndexPopup
-#from .popup_windows.loading_popup import LoadingPopup
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
+from ..util.plotting import main_plot_pc_of_cass
 
 
 
@@ -165,7 +165,9 @@ class Interface():
         menubar.add_cascade(label="Configuration", menu=config_menu)
         plot_menu = Menu(menubar)
         plot_menu.add_command(label="Select Neuron plot", command=self.plot_specific_neuron)
+        plot_menu.add_command(label="Class Selective neurons", command=self.class_selective_plot)
         menubar.add_cascade(label="Plot", menu=plot_menu)
+
 
 
     def plot_specific_neuron(self):
@@ -173,6 +175,10 @@ class Interface():
         if layer is not None and neuron_idx is not None:
             neuron_window = NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)
             self.window.wait_window(neuron_window.window)
+
+    def class_selective_plot(self):
+        main_plot_pc_of_cass(self.network_data,master = self.window)
+
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
                                    filetypes=((type, '*.'+type), ("all files", "*.*")))

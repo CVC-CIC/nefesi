@@ -9,6 +9,7 @@ from anytree import Node, RenderTree
 import xml.etree.ElementTree as ET
 from ..symmetry_index import SYMMETRY_AXES
 from ..read_activations import get_one_neuron_activations, get_image_activation
+from .segmentation.Broden_analize import Segment_images
 
 try:
     from tkinter import *
@@ -18,6 +19,36 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
+
+
+def have_all_imagenet_segmentation(dataset_path):
+    from itertools import combinations
+    import pickle
+    labels = np.array(os.listdir(dataset_path))
+    pairs = {'object':{}, 'material':{}, 'part':{}, 'scene':np.zeros(365,np.int)}
+    for i, label in enumerate(labels):
+        class_path = dataset_path + label+'/'
+        images_of_class = os.listdir(class_path)
+        image_paths = [class_path + im_name for im_name in images_of_class]
+        for segment_idx in range(0,len(image_paths),400):
+            segmented = Segment_images(np.array(image_paths)[segment_idx:segment_idx+400])
+            for segment in segmented:
+                for concept in ['object', 'material', 'part']:
+                    uniques = np.unique(segment[concept])
+                    pos_of_0 = np.where(uniques == 0)[0]
+                    if len(pos_of_0):
+                        uniques = np.delete(uniques,pos_of_0[0])
+                    uniques.sort()
+                    for combination in combinations(uniques,r=2):
+                        if combination in pairs[concept]:
+                            pairs[concept][combination] += 1
+                        else:
+                            pairs[concept][combination] = 1
+                scene = np.argmax(segment['scene'])
+                pairs['scene'][scene]+=1
+        pickle.dump(pairs, open('segment_combinations.dict', 'wb'))
+
+    return labels
 
 def get_dataset_labes_and_freq(dataset_path):
     labels = np.array(os.listdir(dataset_path))

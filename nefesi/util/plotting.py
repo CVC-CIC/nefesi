@@ -6,6 +6,10 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
 from PIL import ImageDraw
 from sklearn.manifold import TSNE
+from matplotlib.widgets import RadioButtons,Button, Slider
+from scipy.interpolate import interp1d
+
+LIST_OF_BUTTONS_TO_NO_DETACH = []
 
 def plot_with_cumsum(x, y, leafs, first_level_id, level):
     from matplotlib import colors as mcolors
@@ -271,6 +275,174 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
     #     ax.add_artist(ab)
 
     plt.show()
+
+
+def main_plot_pc_of_cass(network_data, master = None):
+    axcolor = 'lightgoldenrodyellow'
+    rax = plt.axes([0.005, 0.2, 0.15, 0.55], facecolor=axcolor)
+    rax2 = plt.axes([0.16, 0.5, 0.8, 0.05], facecolor=axcolor)
+    radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
+    class_name_list = np.sort(np.array(list(network_data.default_labels_dict.values())))
+    def updateslide(val):
+        plt.suptitle(class_name_list[int(val)],y=0.7,x=0.5)
+
+    slid= Slider(rax2,'',0, len(class_name_list)-1,valinit=499,valfmt='%d')
+    slid.on_changed(updateslide)
+
+    def _yes(event):
+        class_name=class_name_list[int(slid.val)]
+        plot_pc_of_class(network_data,radio.value_selected,class_name, master)
+
+
+
+    axcut = plt.axes([0.45, 0.05, 0.1, 0.075])
+    bcut = Button(axcut, 'Go', color='red', hovercolor='green')
+    bcut.on_clicked(_yes)
+    plt.show()
+
+def plot_pc_of_class(network_data,layer_name,class_name, master = None):
+    plt.figure()
+
+    #given a nefesimodel, a layer, and a dictionary of the population codes for a given class, plots the different neuron_features were the class appears
+
+
+# first we create a dictionary with all the classes above a threshold (here 0.1)
+    from ..class_index import get_population_code_classes
+    class_info = {}
+    for layer in network_data.layers_data:
+        layer_class = []
+        for i, neuron in enumerate(layer.neurons_data):
+            if neuron.population_code_idx(labels = network_data.default_labels_dict) > 0:
+                layer_class.append((i, tuple(get_population_code_classes(neuron,  labels = network_data.default_labels_dict))))
+        class_info[layer.layer_id] = layer_class
+
+
+
+# then we create the dictionary with the layers and pc where class_name appears
+    pc_dict = {}
+    for layername in class_info.keys():
+        pc_dict[layername] = {}
+        for i, neuron in enumerate(class_info[layername]):
+            if class_name in neuron[1]:
+                pc_number = len(neuron[1])
+                if pc_number not in pc_dict[layername]:
+                    pc_dict[layername][pc_number] = [neuron]
+                else:
+                    pc_dict[layername][pc_number].append(neuron)
+
+
+
+#finally we plot the result (neuron features of neurons of layer_name, activated by class_name)
+
+    nf_size = network_data.get_neuron_of_layer(layer_name, 1).neuron_feature.size[0]
+
+    pcs_of_layer = list(pc_dict[layer_name].keys())
+    pcs_of_layer.sort(reverse=True)
+    image_axes = np.zeros(len(pcs_of_layer), np.object)
+    for k, j in enumerate(pcs_of_layer):
+        neurons_num=len(pc_dict[layer_name][j])
+        neuronfeature= Image.new('RGB',(nf_size*neurons_num,nf_size))
+        for i in range(neurons_num):
+            neuron_num= pc_dict[layer_name][j][i][0]
+            neuronfeature.paste(network_data.get_neuron_of_layer(layer_name, neuron_num).neuron_feature,(i*nf_size,0))
+
+            sub_axis = plt.subplot(len(pcs_of_layer),1,k+1)
+
+            image_axes[k] = (pc_dict[layer_name][j][i][0], sub_axis, pc_dict[layer_name][j])
+            plt.imshow(neuronfeature,shape=(200,200))
+
+            plt.subplots_adjust(hspace=.001)
+
+            plt.xticks([])
+            plt.yticks([])
+
+
+            label=''
+            for clas in pc_dict[layer_name][j][i][1]:
+                label+=str(clas).split(',')[0]+'\n'
+            font_size = int(interp1d([1,3],[12,6], bounds_error=False, fill_value=6)(len(pcs_of_layer)))
+            plt.text(0.01+i/neurons_num, -0.1, label, {'fontsize': font_size},
+                     horizontalalignment='left',
+                     verticalalignment='top',
+                     rotation=0,
+                     clip_on=False,
+                     transform=plt.gca().transAxes)
+
+            plt.text(0.01 + i / neurons_num, 0.9,pc_dict[layer_name][j][i][0], {'fontsize': font_size},
+                     horizontalalignment='left',
+                     verticalalignment='top',
+                     rotation=0,
+                     clip_on=False,
+                     transform=plt.gca().transAxes)
+
+            plt.ylabel('PC = %d' %(j))
+            plt.gcf().subplots_adjust(bottom=0.3)
+
+
+    plt.gcf().canvas.mpl_connect('button_press_event', lambda event: _on_click_image(event,master,  network_data, layer_name, image_axes))
+    plt.suptitle(layer_name, y=0.96)
+
+    layers_neurons = []
+
+    for lay, content in pc_dict.items():
+        if not len(content) == 0:
+            quantity = 0
+            for v in content.values():
+                quantity += len(v)
+            layers_neurons.append((lay,quantity))
+
+
+    # for centering
+    r = len(layers_neurons)/4
+    lines = int(r)
+    excedent = int((r-lines)*4)
+    # Adds the buttons
+    horitzontal_start, vertical_start, width, height  = 0.1, 0.8, 0.2, 0.04
+    axes_list = []
+    for i in range(len(layers_neurons)):
+        line = int(i / 4)
+        if line == lines and excedent==2:
+            h = horitzontal_start + (width * ((i+1) % 4))
+        elif line == lines and excedent == 1:
+            h = 0.4
+        elif line == lines and excedent == 3:
+            h = horitzontal_start+ (width/2) + (width * (i % 4))
+        else:
+            h = horitzontal_start+(width*(i%4))
+        v = 0.01+(height*(lines-line))
+        ax = plt.axes([h, v, 0.195, 0.035])
+        LIST_OF_BUTTONS_TO_NO_DETACH.append(Button(ax, layers_neurons[i][0]+'('+str(layers_neurons[i][1])+')',
+                    color='lemonchiffon', hovercolor='green'))
+        axes_list.append((ax, layers_neurons[i][0]))
+        LIST_OF_BUTTONS_TO_NO_DETACH[-1].on_clicked(lambda event: _on_click_another_layer(event, network_data, class_name, axes_list,master))
+
+
+    plt.subplots_adjust(wspace=0.5, hspace=0.8)
+    plt.show()
+
+
+def _on_click_another_layer(event, network_data, class_name, axes_list, master=None):
+    for axe, layer_name in axes_list:
+        if axe == event.inaxes:
+            plot_pc_of_class(network_data, layer_name, class_name, master)
+
+def _on_click_image(event,master, network_data, layer_name, axes):
+    from ..interface.popup_windows.neuron_window import NeuronWindow
+    if event.xdata != None and event.ydata != None and event.dblclick:
+        for ax in axes:
+            if event.inaxes == ax[1]:
+                max = ax[1].dataLim.x1
+                images = len(ax[2])
+                each_image_width = max/images
+                for i in range(images):
+                    if each_image_width*i<event.xdata<each_image_width*(i+1):
+                        neuron_idx = ax[2][i][0]
+                        print('Opening Neuron '+str(neuron_idx)+ ' of layer '+layer_name)
+                        neuron_window = NeuronWindow(master, network_data=network_data, layer_to_evaluate=layer_name,
+                                     neuron_idx=neuron_idx)
+                        master.wait_window(neuron_window.window)
+                        break
+                break
 
 
 def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
