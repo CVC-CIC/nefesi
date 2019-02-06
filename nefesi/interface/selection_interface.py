@@ -28,9 +28,6 @@ class SelectionInterface():
         self.set_make_indexs_calc_frame()
         self.set_select_action_frame()
 
-        #self.plot_general_index(index='class')
-        #self.plot_general_index(index='class')
-        #self.plot_general_index(index='class')
         #self.plot_general_index(index='orientation')
         self.window.mainloop()
 

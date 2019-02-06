@@ -24,9 +24,10 @@ class ImageDataset(object):
 
 
     def __init__(self, src_dataset, target_size=None,
-                 preprocessing_function=None, color_mode='rgb'):
+                 preprocessing_function=None, color_mode='rgb', src_segmentation_dataset = None):
 
         self.src_dataset = src_dataset
+        self.src_segmentation_dataset = src_segmentation_dataset
         self.target_size = target_size
         self.preprocessing_function = preprocessing_function
         self.color_mode = color_mode
@@ -68,6 +69,23 @@ class ImageDataset(object):
             src_dataset += '/'
         # Sets
         self._src_dataset = src_dataset
+
+    @property
+    def src_segmentation_dataset(self):
+        return self._src_segmentation_dataset
+
+    @src_segmentation_dataset.setter
+    def src_segmentation_dataset(self,src_segmentation_dataset):
+        if type(src_segmentation_dataset) is not str:
+            raise ValueError("src_dataset attribute must be str")
+        elif not os.path.isdir(src_segmentation_dataset):
+            raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
+        elif os.listdir(src_segmentation_dataset) == []:
+            warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
+        if not src_segmentation_dataset.endswith('/'):
+            src_segmentation_dataset += '/'
+        # Sets
+        self._src_segmentation_dataset = src_segmentation_dataset
 
     @property
     def preprocessing_function(self):

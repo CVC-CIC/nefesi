@@ -1,12 +1,12 @@
-
-from ..interface.popup_windows.confirm_popup import ConfirmPopup
-from ..util.general_functions import get_listbox_selection
-from ..util.image import ImageDataset
-from ..network_data import NetworkData
-from ..network_data import get_model_layer_names
-from ..evaluation_scripts.calculate_indexs import CalculateIndexs
-from ..evaluation_scripts.evaluate_with_config import EvaluationWithConfig
-from os.path import relpath
+import sys
+sys.path.append('..')
+from nefesi.interface.popup_windows.confirm_popup import ConfirmPopup
+from nefesi.util.general_functions import get_listbox_selection
+from nefesi.util.image import ImageDataset
+from nefesi.network_data import NetworkData
+from nefesi.network_data import get_model_layer_names
+from nefesi.evaluation_scripts.calculate_indexs import CalculateIndexs
+from nefesi.evaluation_scripts.evaluate_with_config import EvaluationWithConfig
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4

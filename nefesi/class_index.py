@@ -2,7 +2,6 @@ import numpy as np
 import os
 from .util import general_functions as gf
 from . import read_activations as read_act
-from .util.segmentation.Broden_analize import Segment_images
 from anytree import Node
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
@@ -108,7 +107,7 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     :param layer_name:
     :param neuron_idx:
     :param type:
-    :param concept: 'object', 'part', 'texture'
+    :param concept: 'object', 'part', 'material'
     :return:
     """
     neuron = network_data.get_neuron_of_layer(layer_name, neuron_idx)
@@ -122,8 +121,14 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     """
     Change it for the code to obtain the object and parts matrix
     """
-    full_image_names = [network_data.dataset.src_dataset + image_name for image_name in image_names]
-    segmentation = Segment_images(full_image_names)
+    if network_data.dataset.src_segmentation_dataset is not None:
+        full_image_names = [os.path.join(network_data.dataset.src_segmentation_dataset, image_name) for image_name in image_names]
+        segmentation = [np.load(image_name+'.npz') for image_name in full_image_names]
+    else:
+        full_image_names = [os.path.join(network_data.dataset.src_dataset, image_name) for image_name in
+                           image_names]
+        from .util.segmentation.Broden_analize import Segment_images
+        segmentation = Segment_images(full_image_names)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)

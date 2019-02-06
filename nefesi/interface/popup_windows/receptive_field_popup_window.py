@@ -8,9 +8,9 @@ except ImportError:
 
 from ...util.general_functions import get_image_masked
 from ...util.segmentation.utils import maskrcnn_colorencode
-from ...util.segmentation.Broden_analize import Segment_images
 from ...class_index import concept_selectivity_of_image, translate_concept_hist
 from PIL import ImageTk,Image
+import os
 import numpy as np
 
 
@@ -88,7 +88,13 @@ class ReceptiveFieldPopupWindow(object):
         else:
             img = self.network_data.dataset._load_image(self.image_name)
             if value == 5:
-                segmentation = Segment_images([self.network_data.dataset.src_dataset+self.image_name])[0]['object']
+                if self.network_data.dataset.src_segmentation_dataset is not None:
+                    image_path = os.path.join(self.network_data.dataset.src_segmentation_dataset, self.image_name)+'.npz'
+                    segmentation = np.load(image_path)['object']
+                else:
+                    from ...util.segmentation.Broden_analize import Segment_images
+                    image_path = os.path.join(self.network_data.dataset.src_dataset, self.image_name)
+                    segmentation = Segment_images([image_path])[0]['object']
                 if self.color_list is None:
                     self.color_list = np.random.rand(1000, 3) * .7 + .3
                 img = maskrcnn_colorencode(np.asarray(img), segmentation, self.color_list)

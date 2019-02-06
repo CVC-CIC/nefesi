@@ -9,7 +9,6 @@ from anytree import Node, RenderTree
 import xml.etree.ElementTree as ET
 from ..symmetry_index import SYMMETRY_AXES
 from ..read_activations import get_one_neuron_activations, get_image_activation
-from .segmentation.Broden_analize import Segment_images
 
 try:
     from tkinter import *
@@ -20,10 +19,10 @@ except ImportError:
     from Tkinter import ttk
 
 
-
 def have_all_imagenet_segmentation(dataset_path):
     from itertools import combinations
     import pickle
+    from .segmentation.Broden_analize import Segment_images
     labels = np.array(os.listdir(dataset_path))
     pairs = {'object':{}, 'material':{}, 'part':{}, 'scene':np.zeros(365,np.int)}
     for i, label in enumerate(labels):
@@ -49,6 +48,33 @@ def have_all_imagenet_segmentation(dataset_path):
         pickle.dump(pairs, open('segment_combinations.dict', 'wb'))
 
     return labels
+
+
+def save_dataset_segmentation(dataset_path, save_path = '/datatmp/datasets/ImageNetFusedSegmented'):
+    """
+    Save an identical structure of the dataset_path in 'save_path'. The files saved are a compressed numpys that saves
+    the same structure of the Segment_Images output. Can be opened with the same sintax than a dictionary.
+    For example: np.load('n2522224/image_00215p.JPEG.npz)['object'] for get the segmentation on object level
+    :param dataset_path:
+    :return:
+    """
+    from .segmentation.Broden_analize import Segment_images
+    labels = np.array(os.listdir(dataset_path))
+    for i, label in enumerate(labels):
+        class_path_save = os.path.join(save_path, label)
+        class_path_orig = os.path.join(dataset_path, label)
+        if not os.path.isdir(class_path_save):
+            os.makedirs(class_path_save)
+        images_of_class = os.listdir(class_path_orig)
+        image_paths_orig = [os.path.join(class_path_orig, im_name) for im_name in images_of_class]
+        image_paths_save = [os.path.join(class_path_save, im_name) for im_name in images_of_class]
+        for segment_idx in range(0,len(image_paths_orig),400):
+            segmented = Segment_images(np.array(image_paths_orig)[segment_idx:segment_idx+400])
+            for j, segment in enumerate(segmented):
+                np.savez_compressed(image_paths_save[segment_idx+j], object=segment['object'].astype(np.short),
+                                    material=segment['material'].astype(np.short),
+                                    part=np.array(tuple(segment['part']), dtype=np.short),
+                                    scene=segment['scene'])
 
 def get_dataset_labes_and_freq(dataset_path):
     labels = np.array(os.listdir(dataset_path))
