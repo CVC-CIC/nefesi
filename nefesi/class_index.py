@@ -9,16 +9,16 @@ COUNT_POS = 2
 REL_FREQ_POS = 3
 CONCEPT_TRANSLATION_BASE_DIR = '../nefesi/util/segmentation/meta_file/'
 
+"""
 def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_level=5,
                                 normalize_by_activations = False):
-    """Returns the class selectivity index value.
+    Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param labels: Dictionary, key: name class, value: label class.
     :param threshold: Float.
 
     :return: A tuple with: label class and class index value.
-    """
     if neuron_data.top_labels is None:
         _fill_top_labels(neuron_data)
 
@@ -68,7 +68,7 @@ def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_l
         concepts[i] = labels[:min(len(labels), index_by_level)]
 
     return np.array(concepts)
-
+"""
 def concept_selectivity_of_image(activations_mask, segmented_image, type='mean'): #activations_mask
     """
     :param type: 'max' = only the max of every region, 'sum' sum of the pixels of a region, 'mean' the mean of the activation
@@ -100,7 +100,7 @@ def concept_selectivity_of_image(activations_mask, segmented_image, type='mean')
     return ids, histogram
 
 
-def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object'):
+def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object', th = 0.1):
     """
 
     :param network_data:
@@ -159,8 +159,11 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     general_hist = np.sort(general_hist, order = 'value')[::-1]
     #Normalized
     general_hist['value'] /= np.sum(general_hist['value'])
+
     general_hist = translate_concept_hist(general_hist, concept)
     return general_hist
+
+
 
 def translate_concept_hist(hist, concept):
     # Charge without index (redundant with pos) and without header
@@ -176,13 +179,13 @@ def translate_concept_hist(hist, concept):
 
 
 
-def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
+def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
     """Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
     :param labels: Dictionary, key: name class, value: label class.
     :param threshold: Float.
-
+    :param type: type=1 As Ivet defined, type=2 sum of classes that overpass the threshold
     :return: A tuple with: label class and class index value.
     """
     num_max_activations = len(neuron_data.activations)
@@ -190,7 +193,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
 
     if rel_freq is None:
         return "NoClass", 0.0
-    else:
+    elif type == 1:
         freq_avoid_th = []
         sum_fr = 0.0
         for rel in rel_freq:
@@ -202,8 +205,14 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=1.):
 
         m = len(freq_avoid_th)
         c_select_idx = (num_max_activations - m) / (float(num_max_activations - 1))
-        # For the most freqüent class freq_avoid_th[0] the: label ([HUMAN_NAME_POS]) and his selectivity index rounded to two decimals
+        # For the most freqüent class freq_avoid_th[0] the: label ([HUMAN_NAME_POS]) and his selectivity index rounded to three decimals
         return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 3))
+    elif type == 2:
+        in_pc = rel_freq[rel_freq['rel_freq'] >= threshold]
+        if len(in_pc) > 0:
+            return (in_pc[0][HUMAN_NAME_POS], round(np.sum(in_pc['rel_freq']), 3))
+        else:
+            return "NoClass", 0.0
 
 
 
@@ -320,6 +329,19 @@ def get_ntop_population_code(neuron_data, labels=None, threshold_pc=0.1, n=5):
         # classes with relative  frequency more than threshold_pc
         return ntop
 
+def get_entropy_idx(neuron_data,labels=None,base_log=2):
+
+    rel_freq = relative_freq_class(neuron_data, labels)
+
+    if rel_freq is None:
+        return  0.0
+    else:
+        sum_entropy = 0.0
+        for rel in rel_freq:
+            sum_entropy += rel[REL_FREQ_POS]*log(1/rel[REL_FREQ_POS],base_log)
+
+        # For the most freqüent class freq_avoid_th[0] the: label ([HUMAN_NAME_POS]) and his selectivity index rounded to two decimals
+        return (sum_entropy)
 
 def _fill_top_labels(neuron_data):
     """

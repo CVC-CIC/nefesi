@@ -300,6 +300,30 @@ def main_plot_pc_of_cass(network_data, master = None):
     bcut.on_clicked(_yes)
     plt.show()
 
+def main_plot_pc_of_object(network_data, master = None):
+    axcolor = 'lightgoldenrodyellow'
+    rax = plt.axes([0.005, 0.2, 0.15, 0.55], facecolor=axcolor)
+    rax2 = plt.axes([0.16, 0.5, 0.8, 0.05], facecolor=axcolor)
+    radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
+    class_name_list = np.sort(np.array(list(network_data.default_labels_dict.values())))
+    def updateslide(val):
+        plt.suptitle(class_name_list[int(val)],y=0.7,x=0.5)
+
+    slid= Slider(rax2,'',0, len(class_name_list)-1,valinit=499,valfmt='%d')
+    slid.on_changed(updateslide)
+
+    def _yes(event):
+        class_name=class_name_list[int(slid.val)]
+        plot_pc_of_class(network_data,radio.value_selected,class_name, master)
+
+
+
+    axcut = plt.axes([0.45, 0.05, 0.1, 0.075])
+    bcut = Button(axcut, 'Go', color='red', hovercolor='green')
+    bcut.on_clicked(_yes)
+    plt.show()
+
+
 def plot_pc_of_class(network_data,layer_name,class_name, master = None):
     plt.figure()
 

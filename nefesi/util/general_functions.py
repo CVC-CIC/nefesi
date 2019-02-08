@@ -50,7 +50,7 @@ def have_all_imagenet_segmentation(dataset_path):
     return labels
 
 
-def save_dataset_segmentation(dataset_path, save_path = '/datatmp/datasets/ImageNetFusedSegmented'):
+def save_dataset_segmentation(dataset_path, save_path = '/datatmp/datasets/Broden+FlattedSegmented'):
     """
     Save an identical structure of the dataset_path in 'save_path'. The files saved are a compressed numpys that saves
     the same structure of the Segment_Images output. Can be opened with the same sintax than a dictionary.

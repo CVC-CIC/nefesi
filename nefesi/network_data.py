@@ -46,7 +46,7 @@ class NetworkData(object):
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
                  default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
-                 default_thr_class_idx = 1., default_file_name = None):
+                 default_thr_class_idx = .1, default_file_name = None):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
@@ -55,7 +55,7 @@ class NetworkData(object):
         self.default_labels_dict = default_labels_dict
         self.default_degrees_orientation_idx = default_degrees_orientation_idx
         self.default_thr_pc = default_thr_pc
-        self.default_thr_class_idx = default_thr_class_idx
+        #self.default_thr_class_idx = default_thr_class_idx
         self.default_file_name = default_file_name
         self.indexs_accepted = self.get_indexs_accepted()
         self.MIN_PROCESS_TIME_TO_OVERWRITE = MIN_PROCESS_TIME_TO_OVERWRITE
@@ -329,7 +329,7 @@ class NetworkData(object):
             l.remove_selectivity_idx(idx)
 
     def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = None,
-                            labels=None, thr_class_idx=None,
+                            labels=None,
                             thr_pc=None, verbose = True):
         """Returns the selectivity indexes in `sel_index` for each layer
         in `layer_name`.
@@ -362,8 +362,6 @@ class NetworkData(object):
 
         if labels is None:
             labels=self.default_labels_dict
-        if thr_class_idx is None:
-            thr_class_idx = self.default_thr_class_idx
         if thr_pc is None:
             thr_pc = self.default_thr_pc
         if degrees_orientation_idx is None:
@@ -391,7 +389,7 @@ class NetworkData(object):
                 else:
                     sel_idx_dict[index_name].append(layer.selectivity_idx(
                         self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
-                        labels=labels, thr_class_idx=thr_class_idx, thr_pc=thr_pc,verbose=verbose,network_data=self))
+                        labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
                     if self.save_changes:
                         end_time = time.time()
                         if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
@@ -758,19 +756,17 @@ class NetworkData(object):
             if layer_of_model.layer_id == layer:
                 return layer_of_model.neurons_data[neuron_idx]
         raise ValueError("Layer: " + layer + " doesn't exists")
-    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=None, thr_class_idx=None, thr_pc=None ):
+    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=None, thr_pc=None ):
         if orientation_degrees is None:
             orientation_degrees = self.default_degrees_orientation_idx
         if thr_pc is None:
             thr_pc = self.default_thr_pc
-        if thr_class_idx is None:
-            thr_class_idx = self.default_thr_class_idx
 
         for layer_of_model in self.layers_data:
             if layer_of_model.layer_id == layer:
                 return layer_of_model.get_all_index_of_a_neuron(network_data=self,neuron_idx=neuron_idx,
                                                                 orientation_degrees=orientation_degrees,
-                                                                thr_class_idx=thr_class_idx,thr_pc=thr_pc)
+                                                                thr_pc=thr_pc)
         raise ValueError("Layer: " + layer + " doesn't exists")
 
     def get_layer_by_name(self, layer):

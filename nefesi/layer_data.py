@@ -65,7 +65,7 @@ class LayerData(object):
             n.remove_selectivity_idx(idx)
 
     def selectivity_idx(self, model, index_name, dataset,
-                        labels=None, thr_class_idx=1., thr_pc=0.1,degrees_orientation_idx = 15, verbose=True,
+                        labels=None, thr_pc=0.1,degrees_orientation_idx = 15, verbose=True,
                         network_data=None):
         """Returns the selectivity index value for the index in `index_name`.
 
@@ -117,7 +117,7 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_class_idx)
+                sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_pc)
         elif index_name.lower() == 'concept':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.object)
             for i in range(len(self.neurons_data)):
@@ -136,7 +136,7 @@ class LayerData(object):
                              "of theses: "+str(network_data.indexs_accepted))
         return sel_idx
 
-    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_class_idx=1., thr_pc=0.1):
+    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1):
         assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
         model = network_data.model
         import time
@@ -155,7 +155,7 @@ class LayerData(object):
         symmetry[-1] = np.mean(symmetry[:-1])
         index['symmetry'] = symmetry
         index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
-        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_class_idx)
+        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
         if network_data.addmits_concept_selectivity():
             index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
                                                               neuron_idx=neuron_idx)
