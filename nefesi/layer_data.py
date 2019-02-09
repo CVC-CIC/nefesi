@@ -5,6 +5,7 @@ from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
+from .class_index import get_population_code_classes
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
 
@@ -136,7 +137,7 @@ class LayerData(object):
                              "of theses: "+str(network_data.indexs_accepted))
         return sel_idx
 
-    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1):
+    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1, concept='object'):
         assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
         model = network_data.model
         import time
@@ -156,9 +157,14 @@ class LayerData(object):
         index['symmetry'] = symmetry
         index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
         index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
+        index['classes on pc'] = get_population_code_classes(neuron,network_data.default_labels_dict,thr_pc)
         if network_data.addmits_concept_selectivity():
             index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
-                                                              neuron_idx=neuron_idx)
+                                                              neuron_idx=neuron_idx, concept=concept, th=thr_pc)
+            index['conceptpc'] = neuron.concept_population_code(layer_data=self, network_data=network_data,
+                                                              neuron_idx=neuron_idx, concept=concept, th=thr_pc)
+            index['simple concept'] = neuron.single_concept_selectivity_idx(layer_data=self, network_data=network_data,
+                                                              neuron_idx=neuron_idx, concept=concept, th=thr_pc)
         if network_data.save_changes:
             end_time = time.time()
             if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:

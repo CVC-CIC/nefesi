@@ -235,12 +235,12 @@ class NeuronWindow(object):
             panel.image = img
             panel.pack(side=BOTTOM, fill=BOTH, expand=True)
 
-    def set_index_info(self, master, orientation_degrees=None, thr_pc=None):
+    def set_index_info(self, master, orientation_degrees=None, thr_pc=None, concept='object'):
         if orientation_degrees is None:
             orientation_degrees = self.network_data.default_degrees_orientation_idx
         if thr_pc is None:
             thr_pc = self.network_data.default_thr_pc
-        indexs = self.get_index_info(orientation_degrees=orientation_degrees, thr_pc=thr_pc)
+        indexs = self.get_index_info(orientation_degrees=orientation_degrees, thr_pc=thr_pc, concept=concept)
         Label(master=master, text='Selectivity Indexs: ').grid(column=0, row=0)
         for i, (label, idx) in enumerate(indexs.items()):
             if label == 'color':
@@ -250,35 +250,48 @@ class NeuronWindow(object):
                                         'μ='+ str(round(idx[-1],ndigits=3))+' σ='+str(round(np.std(idx[:-1]),ndigits=3))
             elif label == 'symmetry':
                 text = ' Symmetry: μ=' + str(round(idx[-1], ndigits=3)) + ' σ=' + str(round(np.std(idx[:-1]), ndigits=3))
-            elif label == 'class':
-                text = ' Class: '+ str(round(idx[-1], ndigits=3))+' ('+str(idx[0])+')'
             elif label == 'population code':
-                text = ' Population code (thr='+str(thr_pc)+'): '+str(idx)+'\n' \
-                        ' Semantical Hierarchy: \n'
-                try:
-                    tree = get_hierarchical_population_code_idx(self.network_data.get_neuron_of_layer(layer=self.layer_to_evaluate,
-                                                                                                neuron_idx=self.neuron_idx),
-                                                                                                threshold_pc=thr_pc,
-                                                                                                population_code = idx,
-                                                                                                class_sel = 1.)
-                    for pre, _, node in RenderTree(tree):
-                        name = node.name if type(node.name) is str else node.name[0]
-                        treestr = u"%s%s" % (pre, name)
-                        if len(treestr)>TREE_THRESHOLD:
-                            treestr = treestr[:TREE_THRESHOLD-3]+'...'
-                        text += treestr.ljust(TREE_THRESHOLD) +' '+ str(node.rep)+' ('+str(round(node.freq,2)) + ')\n'
-                except:
-                    pass
+                if idx>0:
+                    try:
+                        tree = get_hierarchical_population_code_idx(self.network_data.get_neuron_of_layer(layer=self.layer_to_evaluate,
+                                                                                        neuron_idx=self.neuron_idx),
+                                                                                        threshold_pc=thr_pc,
+                                                                                        population_code = idx,
+                                                                                        class_sel = round(indexs['class'][-1]))
+                        text ='Semantical Hierarchy: \n'
+                        for pre, _, node in RenderTree(tree):
+                            name = node.name if type(node.name) is str else node.name[0]
+                            treestr = u"%s%s" % (pre, name)
+                            if len(treestr)>TREE_THRESHOLD:
+                                treestr = treestr[:TREE_THRESHOLD-3]+'...'
+                            text += treestr.ljust(TREE_THRESHOLD) +' '+ str(node.rep)+' ('+str(round(node.freq,2)) + ')\n'
+                        text += '\n'
+                    except:
+                        continue
+
+            elif label == 'class':
+                text = 'Class: idx - '+ str(round(idx[-1], ndigits=3)) + ', pc(thr='+str(thr_pc)+') - '+\
+                        str(indexs['population code'])
+                if indexs['population code'] > 0:
+                    text += '\n('
+                    for j, pc_class in enumerate(indexs['classes on pc']):
+                        if j != 0:
+                            text+= ', '
+                        text += pc_class
+                    text += ')'
+
             elif label == 'concept':
-                text = 'Object: \n'
-                for concept_idx, concept in enumerate(idx):
-                    if concept_idx >= MAX_CONCEPTS_TO_SHOW:
-                        break
-                    elif concept_idx > 0:
-                        text += ', '
-                    else:
-                        text += '  '
-                    text += concept[0] + '(' + str(round(concept[1], ndigits=3)) + ')'
+                text = concept.capitalize()+': idx - '+str(round(indexs['simple concept'][1],ndigits=3))+ \
+                       ', pc - '+str(indexs['conceptpc'])+'\n'
+                if indexs['conceptpc'] > 0:
+                    text += '('
+                    for concept_idx, concept in enumerate(idx):
+                        if concept_idx > 0:
+                            text += ', '
+                        text += concept[0] + '(' + str(round(concept[1], ndigits=3)) + ')'
+                    text+=')'
+            else:
+                continue
             Label(master=master, text=text, justify=LEFT).grid(column=0, row=i+1)
         checkbox_img_value = tk.BooleanVar(master=master)
         checkbox_advanced_charts_value = tk.BooleanVar(master=master)
@@ -291,14 +304,14 @@ class NeuronWindow(object):
                                     (checkbox_advanced_charts_value,checkbox_img_value))
         checkbox.grid(column=0, row=len(indexs.items())+2)
 
-    def get_index_info(self,orientation_degrees=None, thr_pc=None):
+    def get_index_info(self,orientation_degrees=None, thr_pc=None, concept='object'):
         if orientation_degrees is None:
             orientation_degrees = self.network_data.default_degrees_orientation_idx
         if thr_pc is None:
             thr_pc = self.network_data.default_thr_pc
-        indexs = self.network_data.get_all_index_of_neuron(layer=self.layer_to_evaluate, neuron_idx=self.neuron_idx,
+        indexs = self.network_data.get_all_index_of_neuron(layer=self.layer_data, neuron_idx=self.neuron_idx,
                                                            orientation_degrees=orientation_degrees,
-                                                           thr_pc=thr_pc)
+                                                           thr_pc=thr_pc, concept=concept)
         return indexs
 
     def add_figure_to_frame(self, master_canvas=None, figure=None, default_value=None):

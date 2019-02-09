@@ -115,7 +115,6 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     receptive_field = layer_data.receptive_field_map
 
     image_names = neuron.images_id
-    images_ids = neuron.images_id
     if not type == 'activation':
         activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
     """
@@ -135,7 +134,7 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     """
     general_hist = {}
     norm_activations = neuron.norm_activations
-    for i in range(len(images_ids)):
+    for i in range(len(segmentation)):
         #Crop for only use the receptive field
         ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
         ri, rf, ci, cf = abs(ri), abs(rf), abs(ci), abs(cf)
@@ -159,7 +158,7 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     general_hist = np.sort(general_hist, order = 'value')[::-1]
     #Normalized
     general_hist['value'] /= np.sum(general_hist['value'])
-
+    general_hist = general_hist[general_hist['value'] >= th]
     general_hist = translate_concept_hist(general_hist, concept)
     return general_hist
 

@@ -307,6 +307,43 @@ class NeuronData(object):
         self.selectivity_idx['concept'+concept+str(th)] = concept_idx
         return concept_idx
 
+    def single_concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='activation', concept='object', th = 0.1):
+        """Returns the class selectivity index for this neuron.
+
+        :param labels: Dictionary, key: name class, value: label class.
+            This argument is needed for calculate the class index.
+        :param threshold: Float, required for calculate the class index.
+
+        :return: Float, between 0.1 and 1.0.
+
+        :raise:
+            TypeError: If `labels` is None or not a dictionary.
+        """
+
+        concept_idx = self.concept_selectivity_idx(layer_data=layer_data,network_data=network_data,neuron_idx=neuron_idx,
+                                                   type=type, concept=concept, th=th)
+        return concept_idx[0]['id'], np.sum(concept_idx['value'])
+
+    def concept_population_code(self, layer_data, network_data, neuron_idx, type='activation', concept='object',
+                                       th=0.1):
+        """Returns the class selectivity index for this neuron.
+
+        :param labels: Dictionary, key: name class, value: label class.
+            This argument is needed for calculate the class index.
+        :param threshold: Float, required for calculate the class index.
+
+        :return: Float, between 0.1 and 1.0.
+
+        :raise:
+            TypeError: If `labels` is None or not a dictionary.
+        """
+
+        concept_idx = self.concept_selectivity_idx(layer_data=layer_data, network_data=network_data,
+                                                   neuron_idx=neuron_idx,
+                                                   type=type, concept=concept, th=th)
+        return len(concept_idx)
+
+
     def class_selectivity_idx(self, labels=None, threshold=.1):
         """Returns the class selectivity index for this neuron.
 
