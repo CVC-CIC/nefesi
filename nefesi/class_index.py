@@ -115,8 +115,6 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     receptive_field = layer_data.receptive_field_map
 
     image_names = neuron.images_id
-    if not type == 'activation':
-        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
     """
     Change it for the code to obtain the object and parts matrix
     """
@@ -128,6 +126,9 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
                            image_names]
         from .util.segmentation.Broden_analize import Segment_images
         segmentation = Segment_images(full_image_names)
+
+    if not type == 'activation':
+        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)
@@ -159,8 +160,12 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     #Normalized
     general_hist['value'] /= np.sum(general_hist['value'])
     general_hist = general_hist[general_hist['value'] >= th]
-    general_hist = translate_concept_hist(general_hist, concept)
-    return general_hist
+    if len(general_hist) is 0:
+        return np.array([('None', 0.0)], dtype = [('id', np.object), ('value',np.float)])
+    else:
+        general_hist['value'] = np.round(general_hist['value'],3)
+        general_hist = translate_concept_hist(general_hist, concept)
+        return general_hist
 
 
 

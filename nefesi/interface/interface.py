@@ -161,6 +161,7 @@ class Interface():
         config_menu.add_command(label="Set Label traduction", command=self.set_labels_dict)
         config_menu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
         config_menu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
+        config_menu.add_command(label='Update Indexs Accepted', command=self.update_indexs_accepted)
         config_menu.add_command(label='Erase calculated index', command=self.erase_calculated_index)
         menubar.add_cascade(label="Configuration", menu=config_menu)
         plot_menu = Menu(menubar)
@@ -197,6 +198,9 @@ class Interface():
     def erase_calculated_index(self):
         popup = EraseCalculatedIndexPopup(master = self.window, network_data = self.network_data)
         self.window.wait_window(popup.top)
+
+    def update_indexs_accepted(self):
+        self.network_data.indexs_accepted = self.network_data.get_indexs_accepted()
 
     def set_model(self):
         network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)")
@@ -424,9 +428,9 @@ class Interface():
                               'this operation may take '
         if index in ['symmetry', 'orientation']:
             text += 'several hours\n'
-        elif index == 'color':
+        elif index in 'color':
             text += 'several minutes\n'
-        elif index == 'concept':
+        elif index == 'object':
             text += 'a few minutes\n'
         else:
             text += 'a few seconds\n'

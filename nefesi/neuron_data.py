@@ -341,7 +341,10 @@ class NeuronData(object):
         concept_idx = self.concept_selectivity_idx(layer_data=layer_data, network_data=network_data,
                                                    neuron_idx=neuron_idx,
                                                    type=type, concept=concept, th=th)
-        return len(concept_idx)
+        if concept_idx[0]['id'] is 'None':
+            return 0
+        else:
+            return len(concept_idx)
 
 
     def class_selectivity_idx(self, labels=None, threshold=.1):

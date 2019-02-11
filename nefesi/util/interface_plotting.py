@@ -188,10 +188,9 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
                                       layer_name=layer_to_evaluate, font_size=font_size + 2,
                                       min=min, max=max, condition1=condition1, condition2=condition2,
                                       max_neurons=max_neurons, order=order)
-    elif index == 'concept':
-        indexs_to_calc = [neuron_concept[0]['count'][0] for neuron_concept in sel_idx]
+    elif index == 'object':
         hidden_annotations, neurons_that_pass_filter = \
-            concept_neurons_plot(sel_idx, sel_idx_to_calcs=indexs_to_calc, subplot=subplot,layer_name=layer_to_evaluate,
+            object_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
                                 max_neurons=max_neurons, order=order, network_data=network_data)
 
@@ -244,6 +243,31 @@ def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name
 
     return hidden_annotations, neurons_that_pass_filter
 
+def object_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
+                       network_data=None, max_concept_labels=2):
+
+    circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
+    hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
+    for i in range(len(circles)):
+        text = str(valids_idx[i]['label'])
+        hidden_annotations[i,0] = set_neuron_annotation(subplot=subplot, text=text,
+                                                      position=circles[i],
+                                                      layer_name=layer_name, neuron_idx=valids_ids[i])
+        layer = network_data.get_layer_by_name(layer_name)
+        neuron = layer.neurons_data[valids_ids[i]]
+        neuron_feature = neuron._neuron_feature.resize((25, 25), ANTIALIAS)
+        imagebox = OffsetImage(neuron_feature)
+        imagebox.image.axes = subplot
+        hidden_annotations[i, 1] = set_neuron_img_annotation(subplot=subplot, img=imagebox,
+                                                             position=circles[i],
+                                                             layer_name=layer_name, neuron_idx=valids_ids[i],
+                                                             xybox_pos=(-11, 10))
+
+    return hidden_annotations, neurons_that_pass_filter
+
+"""
 def concept_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                     min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
                        network_data=None, max_concept_labels=2):
@@ -278,7 +302,7 @@ def concept_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_na
                                                              xybox_pos=(-11, 10))
 
     return hidden_annotations, neurons_that_pass_filter
-
+"""
 
 def color_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, subplot, font_size, layer_name='default',
                     min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
@@ -560,6 +584,12 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", spec
                                                                   layer_name=layer_name, font_size=font_size+2)
             x_axis_labels[pos] = layer_name + " \n" \
                                            "μ=" + str(mean) + " σ=" + str(std)
+        elif index == 'object':
+            mean, std, hidden_annotations[pos] = object_layer_bars(sel_idx_of_layer, pos, subplot, colors,
+                                                                  different_bars,
+                                                                  layer_name=layer_name, font_size=font_size + 2)
+            x_axis_labels[pos] = layer_name + " \n" \
+                                              "μ=" + str(mean) + " σ=" + str(std)
         elif index == 'color':
             mean, std, hidden_annotations[pos] = color_layer_bars(sel_idx_of_layer, pos, subplot, colors,
                                                                   different_bars,
@@ -671,7 +701,7 @@ def orientation_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars
 
     hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
                                                  actual_bar = last_bar, layer_name=layer_name,
-                                                 text="INFORMACION ADICIONAL")
+                                                 text="TEXTO POR DECIDIR")
 
     return round(mean_selectivity * 100, 1), round(std_selectivity * 100, 1), round(mean_std_between_rotations * 100, 1),\
            hidden_annotation
@@ -683,11 +713,23 @@ def class_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins
     bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx_values, layer_pos, subplot)
     hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="TEXTIÑU RICO",
+                                                 actual_bar = bar, text="TEXTO POR DECIDIR",
                                                  layer_name=layer_name)
 
     return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
 
+def object_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
+                     layer_name='default', font_size = 12):
+    layer_idx_values = layer_idx['value']
+    bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
+                                                                         layer_idx_values, layer_pos, subplot)
+    hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
+                                                 actual_bar = bar, text="TEXTO POR DECIDIR",
+                                                 layer_name=layer_name)
+
+    return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
+
+"""
 def concept_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
                      layer_name='default', font_size = 12):
 
@@ -699,13 +741,14 @@ def concept_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bi
                                                  layer_name=layer_name)
 
     return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation
+"""
 
 def population_code_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins=10,
                      layer_name='default', font_size = 12):
     bar, mean_selectivity, std_selectivity = plot_population_code_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx, layer_pos, subplot)
     hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="INFORMAZUCIÑA\n ADICIONAL",
+                                                 actual_bar = bar, text="TEXTO POR DECIDIR",
                                                  layer_name=layer_name)
 
     return round(mean_selectivity,1), round(std_selectivity,1), hidden_annotation
@@ -715,7 +758,7 @@ def color_layer_bars(layer_idx, layer_pos, subplot, colors, different_bars, bins
     bar, mean_selectivity, std_selectivity = plot_bars_in_general_figure(bins, colors, different_bars, font_size,
                                                                          layer_idx, layer_pos, subplot)
     hidden_annotation = get_annotation_for_event(subplot=subplot,different_bars=different_bars, layer_pos=layer_pos,
-                                                 actual_bar = bar, text="TEXTIÑU RICO\n DE INFORMAZUCIÑA\n ADICIONAL",
+                                                 actual_bar = bar, text="TEXTO POR DECIDIR",
                                                  layer_name=layer_name)
 
     return round(mean_selectivity*100,1), round(std_selectivity*100,1), hidden_annotation

@@ -356,7 +356,7 @@ class NetworkData(object):
         start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = dict()
 
-        if 'concept' in sel_index or 'concept' == sel_index:
+        if sel_index in ['concept', 'object', 'parts', 'material']:
             if not self.addmits_concept_selectivity():
                 raise ValueError("Dataset in -> "+self.dataset._src_dataset+" doesn't addmits concept selectivity")
 
@@ -377,27 +377,21 @@ class NetworkData(object):
 
         for index_name in sel_index:
             sel_idx_dict[index_name] = []
-
             for l in layer_name:
-                layer = next((layer_data for layer_data in
-                              self.layers_data if l in self.get_layers_name()
-                              and l == layer_data.layer_id), None)
+                layer = self.get_layer_by_name(layer=l)
 
-                if layer is None:
-                    raise ValueError("The layer_id '{}' `layer_name` "
-                                     "argument, is not valid.".format(l))
-                else:
-                    sel_idx_dict[index_name].append(layer.selectivity_idx(
-                        self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
-                        labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
-                    if self.save_changes:
-                        end_time = time.time()
-                        if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
-                            if verbose:
-                                print("Layer: "+l+" saving changes")
-                            # Update only the modelName.obj
-                            self.save_to_disk(file_name=None, save_model=False)
-                        start_time = end_time
+                sel_idx_dict[index_name].append(layer.selectivity_idx(
+                    self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
+                    labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
+
+                if self.save_changes:
+                    end_time = time.time()
+                    if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                        if verbose:
+                            print("Layer: "+l+" saving changes")
+                        # Update only the modelName.obj
+                        self.save_to_disk(file_name=None, save_model=False)
+                    start_time = end_time
 
         return sel_idx_dict
 
@@ -812,7 +806,7 @@ class NetworkData(object):
         for layer_name in layers:
             self.get_layer_by_name(layer_name).erase_index(index_to_erase)
     def get_indexs_accepted(self):
-        return ALL_INDEX_NAMES+['concept'] if self.addmits_concept_selectivity() else ALL_INDEX_NAMES
+        return ALL_INDEX_NAMES+['object'] if self.addmits_concept_selectivity() else ALL_INDEX_NAMES
 
 
 def get_model_layer_names(model, regEx='.*'):
