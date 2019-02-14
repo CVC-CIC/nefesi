@@ -196,7 +196,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
     rel_freq = relative_freq_class(neuron_data, labels)
 
     if rel_freq is None:
-        return "NoClass", 0.0
+        return np.array([("NoClass", 0.0)],dtype=[('human_name','U64'),('rel_freq',np.float)])
     elif type == 1:
         freq_avoid_th = []
         sum_fr = 0.0
@@ -214,9 +214,11 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
     elif type == 2:
         in_pc = rel_freq[rel_freq['rel_freq'] >= threshold]
         if len(in_pc) > 0:
-            return (in_pc[0][HUMAN_NAME_POS], round(np.sum(in_pc['rel_freq']), 3))
+            result = np.zeros(len(in_pc), dtype=[('human_name', 'U64'), ('rel_freq', np.float)])
+            result['human_name'], result['rel_freq'] = in_pc['human_name'], in_pc['rel_freq']
+            return result
         else:
-            return "NoClass", 0.0
+            return np.array([("NoClass", 0.0)],dtype=[('human_name','U64'),('rel_freq',np.float)])
 
 
 
@@ -294,7 +296,7 @@ def get_population_code_classes(neuron_data, labels=None, threshold_pc=0.1):
     """
     rel_freq = relative_freq_class(neuron_data, labels)
     if rel_freq is None:
-        return 0
+        return []
     else:
         #classes with relative  frequency more than threshold_pc
         pc = np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)

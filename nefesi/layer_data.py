@@ -5,7 +5,7 @@ from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
-from .class_index import get_population_code_classes
+from itertools import permutations
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
 
@@ -38,6 +38,7 @@ class LayerData(object):
         self.similarity_index = None
         self.receptive_field_map = None
         self.receptive_field_size = None
+        self.entity_coocurrence = {}
 
 
     def set_max_activations(self):
@@ -118,7 +119,7 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].class_selectivity_idx(labels, thr_pc)
+                sel_idx[i] = self.neurons_data[i].single_class_selectivity_idx(labels, thr_pc)
         elif index_name.lower() == 'object':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
             for i in range(len(self.neurons_data)):
@@ -157,8 +158,8 @@ class LayerData(object):
         symmetry[-1] = np.mean(symmetry[:-1])
         index['symmetry'] = symmetry
         index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
-        index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
-        index['classes on pc'] = get_population_code_classes(neuron,network_data.default_labels_dict,thr_pc)
+        index['class'] = neuron.single_class_selectivity_idx(network_data.default_labels_dict, thr_pc)
+        index['classes on pc'] = neuron.classes_in_pc(network_data.default_labels_dict,thr_pc)
         if network_data.addmits_concept_selectivity():
             index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
                                                               neuron_idx=neuron_idx, concept=concept, th=thr_pc)
@@ -173,6 +174,42 @@ class LayerData(object):
                 network_data.save_to_disk(file_name=None, save_model=False)
         return index
 
+    def get_entity_coocurrence_matrix(self,network_data, th=None, entity='class'):
+        if entity not in self.entity_coocurrence:
+            self.entity_coocurrence[entity] = self._get_entity_coocurrence_matrix(network_data=network_data, th=th,
+                                                                                  entity=entity)
+        return self.entity_coocurrence[entity]
+
+    def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class'):
+
+        dict_labels = network_data.default_labels_dict
+        dict_values = list(dict_labels.values())
+
+        if th is None:
+            th = network_data.default_thr_pc
+
+        class_pairs_matrix = np.zeros((len(dict_values), len(dict_values)), dtype=np.float)
+        # class_ocurrences_vector = np.zeros((len(layers), 1000), dtype=np.float)
+        for neuron in self.neurons_data:
+            classes = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)['human_name']
+            if classes[0] == 'NoClass':
+                continue
+            else:
+
+                index_classes = [dict_values.index(clase) for clase in classes]
+
+                pc = len(classes)
+                relation_weight = 1 / pc
+                # this is the sum of a line
+                # class_ocurrences_vector[l, index_classes] += relation_weight
+
+                if pc == 1:
+                    class_pairs_matrix[index_classes[0], index_classes[0]] += 1
+                else:
+                    for permutation in permutations(index_classes, 2):
+                        class_pairs_matrix[permutation[0], permutation[1]] += relation_weight
+
+        return class_pairs_matrix  # , class_ocurrences_vector
 
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None, verbose = True):

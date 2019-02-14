@@ -150,7 +150,7 @@ class ImageDataset(object):
             images[i] = image.img_to_array(img)
 
         if self.preprocessing_function is not None and prep_function is True:
-            images = self.preprocessing_function(images) #np.asarray(images)) #Now are array right since the beginning
+            images = self.preprocessing_function(images, data_format='channels_last') #np.asarray(images)) #Now are array right since the beginning
                                                             #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
         return images
 

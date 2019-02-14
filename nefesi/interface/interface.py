@@ -27,7 +27,7 @@ from .popup_windows.erase_calculated_index_popup import EraseCalculatedIndexPopu
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
-from ..util.plotting import main_plot_pc_of_cass
+from ..util.plotting import main_plot_pc_of_cass, plot_coocurrence_graph
 
 
 
@@ -167,6 +167,7 @@ class Interface():
         plot_menu = Menu(menubar)
         plot_menu.add_command(label="Select Neuron plot", command=self.plot_specific_neuron)
         plot_menu.add_command(label="Class Selective neurons", command=self.class_selective_plot)
+        plot_menu.add_command(label="Entity Co-ocurrence Graph", command=self.coocurrence_plot)
         menubar.add_cascade(label="Plot", menu=plot_menu)
 
 
@@ -179,6 +180,9 @@ class Interface():
 
     def class_selective_plot(self):
         main_plot_pc_of_cass(self.network_data,master = self.window)
+
+    def coocurrence_plot(self):
+        plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view)
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,

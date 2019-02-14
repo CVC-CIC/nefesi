@@ -76,6 +76,9 @@ def save_dataset_segmentation(dataset_path, save_path = '/datatmp/datasets/Brode
                                     part=np.array(tuple(segment['part']), dtype=np.short),
                                     scene=segment['scene'])
 
+
+
+
 def get_dataset_labes_and_freq(dataset_path):
     labels = np.array(os.listdir(dataset_path))
     freq = np.zeros(len(labels), dtype=np.float)

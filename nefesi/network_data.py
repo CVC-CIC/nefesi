@@ -444,6 +444,24 @@ class NetworkData(object):
                     self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
 
+    def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class'):
+        if layers is None:
+            layers = self.get_layer_names_to_analyze()
+        elif type(layers) is not list:
+            layers = self.get_layers_analyzed_that_match_regEx(layers)
+
+        if th is None:
+            th = self.default_thr_pc
+
+        pairs_matrix = []
+        # class_ocurrences_vector = np.zeros((len(layers), 1000), dtype=np.float)
+
+        for l, layer in enumerate(layers):
+            layer_data = self.get_layer_by_name(layer)
+            pairs_matrix.append(layer_data.get_entity_coocurrence_matrix(network_data=self, th=th,
+                                                                                  entity=entity))
+
+        return np.array(pairs_matrix)  # , class_ocurrences_vector
 
 
     def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None,

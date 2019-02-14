@@ -8,6 +8,7 @@ from PIL import ImageDraw
 from sklearn.manifold import TSNE
 from matplotlib.widgets import RadioButtons,Button, Slider
 from scipy.interpolate import interp1d
+import networkx as nx
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
 
@@ -324,6 +325,59 @@ def main_plot_pc_of_object(network_data, master = None):
     plt.show()
 
 
+def plot_coocurrence_graph(network_data, layers=None, entity='class'):
+    class_matrix = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+    class_matrix = np.sum(class_matrix, axis=0)
+    # Make 0's the diagonal
+    diag = class_matrix[range(class_matrix.shape[0]), range(class_matrix.shape[1])]
+    class_matrix[range(class_matrix.shape[0]), range(class_matrix.shape[1])] = 0
+
+    # strange dict with keys equals to his index. Sames that is the one that needs 'relabel_nodes'
+    label_names = {key: value for key, value in enumerate(network_data.default_labels_dict.values())}
+
+    class_matrix[class_matrix < 1] = 0
+    # class_matrix[class_matrix > 10] = 0
+
+    G = nx.DiGraph(class_matrix)
+    G = nx.relabel_nodes(G, label_names)
+    print(list(nx.isolates(G)))
+    G.remove_nodes_from(list(nx.isolates(G)))
+    G.remove_nodes_from(max(dict(G.degree()).items(), key=lambda x: x[1])[0])
+
+    outdeg = G.out_degree()
+    out2 = list(outdeg)
+
+    to_remove = [n[0] for n in out2 if n[1] > 10]
+    G.remove_nodes_from(to_remove)
+
+    graphs = list(nx.strongly_connected_component_subgraphs(G))
+    label_names = list(graphs[0])
+    # import xml.etree.ElementTree
+    # tree = xml.etree.ElementTree.parse('/home/guillem/Nefesi/nefesi_old/nefesi/imagenet_structure.xml').getroot()
+
+    # gf.get_hierarchy_of_label(labels=label_names, freqs=freqs, xml='/home/guillem/Nefesi/nefesi_old/nefesi/imagenet_structure.xml',population_code=len(label_names))
+    nodes_in_order = list(G.degree._nodes.keys())
+
+    # nodes = nx.draw_networkx(G, with_labels=True)
+
+    labels_inside = list(network_data.default_labels_dict.values())
+    node_representation = [np.sum(diag[labels_inside.index(node)]) for node in nodes_in_order]
+    # An ugly fake for plot the bar
+    nodes = nx.draw_networkx_nodes(G, nx.spring_layout(G), with_labels=True, node_color=node_representation,
+                                   node_cmap=plt.cm.hot)
+
+    plt.close()
+
+    entity = 'class'
+    plt.title(entity.capitalize() + ' correlation in Network')
+    cbr = plt.colorbar(nodes, pad=0.01)
+    cbr.ax.get_yaxis().labelpad = 15
+    cbr.ax.set_ylabel('Neurons with PC = 1', rotation=270)
+    nx.draw(G, with_labels=True, node_color=node_representation,
+            node_cmap=plt.cm.hot)
+    plt.show()
+
+
 def plot_pc_of_class(network_data,layer_name,class_name, master = None):
     plt.figure()
 
@@ -337,7 +391,7 @@ def plot_pc_of_class(network_data,layer_name,class_name, master = None):
         layer_class = []
         for i, neuron in enumerate(layer.neurons_data):
             if neuron.population_code_idx(labels = network_data.default_labels_dict) > 0:
-                layer_class.append((i, tuple(get_population_code_classes(neuron,  labels = network_data.default_labels_dict))))
+                layer_class.append((i, tuple(neuron.classes_in_pc(labels = network_data.default_labels_dict))))
         class_info[layer.layer_id] = layer_class
 
 
