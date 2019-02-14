@@ -182,7 +182,8 @@ class Interface():
         main_plot_pc_of_cass(self.network_data,master = self.window)
 
     def coocurrence_plot(self):
-        plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view)
+        plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view, interface=self)
+
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
@@ -403,8 +404,8 @@ class Interface():
         return button
 
 
-    def get_value_from_popup(self, index=''):
-        popup_window = SpecialValuePopupWindow(self.window, network_data=self.network_data, index=index)
+    def get_value_from_popup(self, index='', max=100., start=10, text=''):
+        popup_window = SpecialValuePopupWindow(self.window, network_data=self.network_data, index=index, max=max, start=start, text=text)
         self.window.wait_window(popup_window.top)
         return popup_window.value
 

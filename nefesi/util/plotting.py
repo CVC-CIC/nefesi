@@ -325,17 +325,33 @@ def main_plot_pc_of_object(network_data, master = None):
     plt.show()
 
 
-def plot_coocurrence_graph(network_data, layers=None, entity='class'):
+def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0):
     class_matrix = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+
     class_matrix = np.sum(class_matrix, axis=0)
     # Make 0's the diagonal
     diag = class_matrix[range(class_matrix.shape[0]), range(class_matrix.shape[1])]
     class_matrix[range(class_matrix.shape[0]), range(class_matrix.shape[1])] = 0
+    if interface is not None:
+        non_zero_matrix = class_matrix[class_matrix > 0.0001]
+        if len(non_zero_matrix) != 0:
+            maxim = round(non_zero_matrix.max(),2)
+            non_zero_mean = round(np.mean(non_zero_matrix),2)
+            minim = round(non_zero_matrix.min(),2)
+            values,counts = np.unique(non_zero_matrix,return_counts=True)
+            mode = round(values[np.argmax(counts)],2)
+            std = round(np.std(non_zero_matrix), 2)
+            text = "Set the threshold for consider a significant "+ entity + " relation.\n " \
+                    "min = "+str(minim)+" max = "+str(maxim)+"\n" \
+                    "mean = "+str(non_zero_mean)+ " mode = "+str(mode) + " std = "+str(std)
+            start = round(min(non_zero_mean+std, maxim-minim),2)
+            th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
+
 
     # strange dict with keys equals to his index. Sames that is the one that needs 'relabel_nodes'
     label_names = {key: value for key, value in enumerate(network_data.default_labels_dict.values())}
 
-    class_matrix[class_matrix < 1] = 0
+    class_matrix[class_matrix < th] = 0
     # class_matrix[class_matrix > 10] = 0
 
     G = nx.DiGraph(class_matrix)
@@ -361,20 +377,25 @@ def plot_coocurrence_graph(network_data, layers=None, entity='class'):
     # nodes = nx.draw_networkx(G, with_labels=True)
 
     labels_inside = list(network_data.default_labels_dict.values())
-    node_representation = [np.sum(diag[labels_inside.index(node)]) for node in nodes_in_order]
+    node_representation = [float(diag[labels_inside.index(node)]) for node in nodes_in_order]
     # An ugly fake for plot the bar
     nodes = nx.draw_networkx_nodes(G, nx.spring_layout(G), with_labels=True, node_color=node_representation,
-                                   node_cmap=plt.cm.hot)
+                                   cmap=plt.cm.cool)
 
     plt.close()
 
+
+    edges_weight = np.array(list(nx.get_edge_attributes(G, 'weight').values()))
+    interpolator = interp1d ([th,edges_weight.max()], [1.,4.])
+    edges_weight = interpolator(edges_weight)
+
     entity = 'class'
     plt.title(entity.capitalize() + ' correlation in Network')
-    cbr = plt.colorbar(nodes, pad=0.01)
+    cbr = plt.colorbar(nodes, pad=0.04)
     cbr.ax.get_yaxis().labelpad = 15
     cbr.ax.set_ylabel('Neurons with PC = 1', rotation=270)
     nx.draw(G, with_labels=True, node_color=node_representation,
-            node_cmap=plt.cm.hot)
+            cmap=plt.cm.cool, alpha=0.95, width=edges_weight)
     plt.show()
 
 
