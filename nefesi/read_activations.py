@@ -249,26 +249,30 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, type
     if type == 1 or type == 3:
         rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
         rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
+        rec_field_map_2 = np.zeros(rec_field_map.shape, dtype=np.int32)
     for input, activation in zip (inputs, activations):
         sz_img = input.shape[0:2]
         if type == 2:
             activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
         elif type ==1 or type==3:
+
+            rec_field_map_mask = np.full(rec_field_map.shape, [0, sz_img[0], 0 , sz_img[1]], dtype=np.int32) == rec_field_map
             pos = np.zeros(list(activation.shape)[::-1]+[2])
-            for y in range(activation.shape[0]):
-                for x in range(activation.shape[1]):
-                    r = rec_field_map[y, x]
-                    if r[0] == 0:
-                        r[0] = r[1]-rec_field_sz[1]
-                    if r[2] == 0:
-                        r[2] = r[3] - rec_field_sz[0]
-                    if r[1] == sz_img[0]:
-                        r[1] = r[0] + rec_field_sz[1]-1
-                    if r[3] == sz_img[1]:
-                                r[3] = r[2] + rec_field_sz[0] - 1
-                    pos[y, x, 1] = (r[1] + r[0]) / 2.0
-                    pos[y, x, 0] = (r[3] + r[2]) / 2.0
-            spline = RectBivariateSpline(np.unique(np.sort(pos[1], axis=None)), np.unique(np.sort(pos[0], axis=None)), activation, kx=2, ky=2)
+
+            rec_field_map_2[:, :, 0] = rec_field_map[:, :, 1] - rec_field_sz[1]
+            rec_field_map_2[:, :, 1] = rec_field_map[:, :, 0] + rec_field_sz[1] - 1
+            rec_field_map_2[:, :, 2] = rec_field_map[:, :, 3] - rec_field_sz[0]
+            rec_field_map_2[:, :, 3] = rec_field_map[:, :, 2] + rec_field_sz[0] - 1
+
+            rec_field_map[rec_field_map_mask] = rec_field_map_2[rec_field_map_mask]
+
+            pos[:, :, 0] = (rec_field_map[:, :, 3] + rec_field_map[:, :, 2]) * 0.5
+            pos[:, :, 1] = (rec_field_map[:, :, 1] + rec_field_map[:, :, 0]) * 0.5
+
+            spline = RectBivariateSpline(np.unique(np.sort(pos[1], axis=None)), np.unique(np.sort(pos[0], axis=None)),
+                                         activation, kx=2, ky=2)
+
+
             activations_upsampled = spline(np.arange(sz_img[0]), np.arange(sz_img[1]))
 
             activations_upsampled[activations_upsampled<0] = 0
