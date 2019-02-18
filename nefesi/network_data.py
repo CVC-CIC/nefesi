@@ -14,6 +14,7 @@ from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
 from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
+from .class_index import get_concept_labels
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -460,8 +461,11 @@ class NetworkData(object):
             layer_data = self.get_layer_by_name(layer)
             pairs_matrix.append(layer_data.get_entity_coocurrence_matrix(network_data=self, th=th,
                                                                                   entity=entity))
-
-        return np.array(pairs_matrix)  # , class_ocurrences_vector
+        if entity == 'class':
+            labels = np.array(list(self.default_labels_dict.values()))
+        elif entity == 'object':
+            labels = get_concept_labels(entity)
+        return np.array(pairs_matrix),labels  # , class_ocurrences_vector
 
 
     def get_selective_neurons(self, layers_or_neurons, idx1, idx2=None,

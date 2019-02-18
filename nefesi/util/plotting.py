@@ -8,12 +8,13 @@ from PIL import ImageDraw
 from sklearn.manifold import TSNE
 from matplotlib.widgets import RadioButtons,Button, Slider
 from scipy.interpolate import interp1d
+from ..class_index import get_concept_labels
 import networkx as nx
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
+NODES_CROPPED_IN_SUMMARY = 2
 
 def plot_with_cumsum(x, y, leafs, first_level_id, level):
-    from matplotlib import colors as mcolors
     y = y*100
     colors = {0: 'slategray', 1:'mediumslateblue', 2:'deepskyblue',
               3:'green', 4: 'olive', 5: 'darkorange', 6:'gold',
@@ -278,44 +279,25 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
     plt.show()
 
 
-def main_plot_pc_of_cass(network_data, master = None):
+def plot_nf_of_entities_in_pc(network_data, master = None, entity='class'):
     axcolor = 'lightgoldenrodyellow'
     rax = plt.axes([0.005, 0.2, 0.15, 0.55], facecolor=axcolor)
     rax2 = plt.axes([0.16, 0.5, 0.8, 0.05], facecolor=axcolor)
     radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
-    class_name_list = np.sort(np.array(list(network_data.default_labels_dict.values())))
-    def updateslide(val):
-        plt.suptitle(class_name_list[int(val)],y=0.7,x=0.5)
+    if entity == 'class':
+        labels = np.sort(np.array(list(network_data.default_labels_dict.values())))
+    if entity == 'object':
+        labels = np.sort(get_concept_labels(entity))
 
-    slid= Slider(rax2,'',0, len(class_name_list)-1,valinit=499,valfmt='%d')
+    def updateslide(val):
+        plt.suptitle(labels[int(val)],y=0.7,x=0.5)
+
+    slid= Slider(rax2,'',0, len(labels)-1,valinit=int(len(labels)/2),valfmt='%d')
     slid.on_changed(updateslide)
 
     def _yes(event):
-        class_name=class_name_list[int(slid.val)]
-        plot_pc_of_class(network_data,radio.value_selected,class_name, master)
-
-
-
-    axcut = plt.axes([0.45, 0.05, 0.1, 0.075])
-    bcut = Button(axcut, 'Go', color='red', hovercolor='green')
-    bcut.on_clicked(_yes)
-    plt.show()
-
-def main_plot_pc_of_object(network_data, master = None):
-    axcolor = 'lightgoldenrodyellow'
-    rax = plt.axes([0.005, 0.2, 0.15, 0.55], facecolor=axcolor)
-    rax2 = plt.axes([0.16, 0.5, 0.8, 0.05], facecolor=axcolor)
-    radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
-    class_name_list = np.sort(np.array(list(network_data.default_labels_dict.values())))
-    def updateslide(val):
-        plt.suptitle(class_name_list[int(val)],y=0.7,x=0.5)
-
-    slid= Slider(rax2,'',0, len(class_name_list)-1,valinit=499,valfmt='%d')
-    slid.on_changed(updateslide)
-
-    def _yes(event):
-        class_name=class_name_list[int(slid.val)]
-        plot_pc_of_class(network_data,radio.value_selected,class_name, master)
+        entity_name=labels[int(slid.val)]
+        plot_pc_of_class(network_data,radio.value_selected,entity_name, master=master, entity=entity)
 
 
 
@@ -325,11 +307,68 @@ def main_plot_pc_of_object(network_data, master = None):
     plt.show()
 
 
-def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0):
-    class_matrix = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+def plot_entity_representation(network_data, layers, entity='class', interface=None, th=0):
+    entity_matrix, xlabels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+    if type(layers) is not list:
+        layers = network_data.get_layers_analyzed_that_match_regEx(layers)
+    entity_representation_vector = np.sum(np.sum(entity_matrix, axis=0), axis=0)
 
+    if interface is not None:
+        entity_non_zero_mask = entity_representation_vector > 0.000001
+        if entity_non_zero_mask.max():
+            entity_non_zero_vector = entity_representation_vector[entity_non_zero_mask]
+            maxim = round(entity_non_zero_vector.max(), 2)
+            non_zero_mean = round(np.mean(entity_non_zero_vector), 2)
+            minim = round(entity_non_zero_vector.min(), 2)
+            values, counts = np.unique(entity_non_zero_vector, return_counts=True)
+            mode = round(values[np.argmax(counts)], 2)
+            std = round(np.std(entity_non_zero_vector), 2)
+            text = "Set the threshold for consider a significant " + entity + " .\n " \
+                 "min = " + str(minim) + " max = " + str(maxim) + "\n" \
+                "mean = " + str(non_zero_mean) + " mode = " + str(mode) + " std = " + str(std)
+            start = round(min(non_zero_mean + std, maxim - minim), 2)
+            th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
+            if th == -1:
+                return
+
+    entity_mask = entity_representation_vector > th
+    entity_representation_vector = entity_representation_vector[entity_mask]
+    xlabels = xlabels[entity_mask]
+
+    args_sorted = entity_representation_vector.argsort()[::-1]
+
+    entity_by_layer_vector = np.sum(entity_matrix, axis=1)
+    entity_by_layer_vector = entity_by_layer_vector[:, entity_mask]
+    entity_by_layer_vector, xlabels = entity_by_layer_vector[:,args_sorted], xlabels[args_sorted]
+    bars = []
+    color_map = plt.cm.get_cmap('autumn')
+    color_map = [color_map(i/(len(layers)-1)) for i in range(len(layers))][::-1]
+    for layer in range(len(layers)):
+        floor_of_bar = np.sum(entity_by_layer_vector[:layer,...], axis=0)
+        bars.append(plt.bar(xlabels, entity_by_layer_vector[layer],
+                              bottom=floor_of_bar, color=color_map[layer])[0])
+
+    plt.xticks(rotation=90, fontsize=10)
+    plt.ylabel("Total Representation ")
+    plt.margins(x=0.005)
+    plt.gcf().subplots_adjust(bottom=0.3)
+    plt.legend(bars[::-1], layers[::-1])
+
+    non_represented_entities = len(entity_non_zero_mask)-np.count_nonzero(entity_non_zero_mask)
+    represented_below_th_entities = len(entity_mask)-(np.count_nonzero(entity_mask)+non_represented_entities)
+    plt.title(entity.capitalize() +" Representation (Total "+entity+": "
+              +str(len(entity_mask))+") [th="+str(round(th,2))+"]  \n"
+                "Non-represented "+entity+": "+str(non_represented_entities)+" - Represented "+entity
+              +" below th: "+ str(represented_below_th_entities))
+
+    plt.show()
+
+
+def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0, max_degree=None):
+    class_matrix, labels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+    #Axis 0 = Layers
     class_matrix = np.sum(class_matrix, axis=0)
-    # Make 0's the diagonal
+    # Make 0's the diagonal for make the matrix a graph adyacecy matrix
     diag = class_matrix[range(class_matrix.shape[0]), range(class_matrix.shape[1])]
     class_matrix[range(class_matrix.shape[0]), range(class_matrix.shape[1])] = 0
     if interface is not None:
@@ -346,51 +385,95 @@ def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=
                     "mean = "+str(non_zero_mean)+ " mode = "+str(mode) + " std = "+str(std)
             start = round(min(non_zero_mean+std, maxim-minim),2)
             th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
+            if th == -1:
+                return
 
 
     # strange dict with keys equals to his index. Sames that is the one that needs 'relabel_nodes'
-    label_names = {key: value for key, value in enumerate(network_data.default_labels_dict.values())}
-
+    label_names = {key: value for key, value in enumerate(labels)}
+    class_matrix[class_matrix < 0.0001] = 0
+    entitys_without_relations = np.count_nonzero(np.max(class_matrix,axis=0) < 0.001)
     class_matrix[class_matrix < th] = 0
-    # class_matrix[class_matrix > 10] = 0
+    entitys_with_relations_below_th = np.count_nonzero(np.max(class_matrix, axis=0) < 0.001)-entitys_without_relations
 
     G = nx.DiGraph(class_matrix)
     G = nx.relabel_nodes(G, label_names)
-    print(list(nx.isolates(G)))
     G.remove_nodes_from(list(nx.isolates(G)))
-    G.remove_nodes_from(max(dict(G.degree()).items(), key=lambda x: x[1])[0])
 
-    outdeg = G.out_degree()
-    out2 = list(outdeg)
+    outdeg = np.array(G.out_degree(), dtype=[('name', np.object),('degree',np.int)])
 
-    to_remove = [n[0] for n in out2 if n[1] > 10]
-    G.remove_nodes_from(to_remove)
+    #The user select the max degree for clean
+    if interface is not None:
+        degrees = outdeg['degree']
+        if len(degrees) != 0:
+            maxim = int(np.max(degrees))
+            mean = round(np.mean(degrees),2)
+            minim = degrees.min()
+            values,counts = np.unique(degrees,return_counts=True)
+            mode = values[np.argmax(counts)]
+            std = round(np.std(degrees), 2)
+            text = "Set the max degree of node for be represented.\n " \
+                    "min = "+str(minim)+" max = "+str(maxim)+"\n" \
+                    "mean = "+str(mean)+ " mode = "+str(mode) + " std = "+str(std)+".\n" \
+                    "[Value included (max for show all nodes)]"
+            max_degree = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=maxim)
+            if max_degree == -1:
+                return
+    elif max_degree is None:
+        max_degree = np.max(outdeg['degree'])
 
-    graphs = list(nx.strongly_connected_component_subgraphs(G))
-    label_names = list(graphs[0])
+    #Remove the nodes with degree over the threshold
+    G.remove_nodes_from(outdeg[outdeg['degree']>max_degree]['name'])
+
+    #graphs = list(nx.strongly_connected_component_subgraphs(G))
+    #label_names = list(graphs[0])
     # import xml.etree.ElementTree
     # tree = xml.etree.ElementTree.parse('/home/guillem/Nefesi/nefesi_old/nefesi/imagenet_structure.xml').getroot()
 
     # gf.get_hierarchy_of_label(labels=label_names, freqs=freqs, xml='/home/guillem/Nefesi/nefesi_old/nefesi/imagenet_structure.xml',population_code=len(label_names))
+
+
+    # ---------- Plot the graph ---------------
     nodes_in_order = list(G.degree._nodes.keys())
 
-    # nodes = nx.draw_networkx(G, with_labels=True)
+    #set the list of node color
+    labels = list(labels)
+    node_representation = [float(diag[labels.index(node)]) for node in nodes_in_order]
 
-    labels_inside = list(network_data.default_labels_dict.values())
-    node_representation = [float(diag[labels_inside.index(node)]) for node in nodes_in_order]
     # An ugly fake for plot the bar
     nodes = nx.draw_networkx_nodes(G, nx.spring_layout(G), with_labels=True, node_color=node_representation,
                                    cmap=plt.cm.cool)
-
     plt.close()
 
-
+    #set the list of edge weight
     edges_weight = np.array(list(nx.get_edge_attributes(G, 'weight').values()))
     interpolator = interp1d ([th,edges_weight.max()], [1.,4.])
     edges_weight = interpolator(edges_weight)
 
-    entity = 'class'
-    plt.title(entity.capitalize() + ' correlation in Network')
+
+    title = entity.capitalize() + ' correlation in Network [th='+str(round(th,2))+"] \n "+\
+            entity.capitalize()+" without relations: "+str(entitys_without_relations)+" - "+\
+            entity.capitalize()+" with all relations below th: "+str(entitys_with_relations_below_th)
+    #append a little summary of the cropped nodes
+    if max_degree != np.max(outdeg['degree']):
+        nodes_cropped = np.count_nonzero(outdeg['degree']>max_degree)
+        title += "\n Nodes with deg>"+str(int(max_degree))+" (not plotted): "+str(nodes_cropped)
+        if nodes_cropped != 0:
+            cropped_nodes = outdeg[outdeg['degree'] > max_degree]
+            cropped_nodes = np.sort(cropped_nodes,order = 'degree')[::-1]
+            title+= " ["
+            for i, (node, degree) in enumerate(cropped_nodes):
+                title+=node+"("+str(degree)+")"
+                if i>=NODES_CROPPED_IN_SUMMARY-1:
+                    title+="..."
+                    break
+                else:
+                    title+=", "
+            else:
+                title = title[:-len(', ')] #erase the last ", "
+            title+="]"
+    #plot
+    plt.title(title)
     cbr = plt.colorbar(nodes, pad=0.04)
     cbr.ax.get_yaxis().labelpad = 15
     cbr.ax.set_ylabel('Neurons with PC = 1', rotation=270)
@@ -399,30 +482,33 @@ def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=
     plt.show()
 
 
-def plot_pc_of_class(network_data,layer_name,class_name, master = None):
+def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entity='class'):
     plt.figure()
-
     #given a nefesimodel, a layer, and a dictionary of the population codes for a given class, plots the different neuron_features were the class appears
-
-
-# first we create a dictionary with all the classes above a threshold (here 0.1)
-    from ..class_index import get_population_code_classes
-    class_info = {}
+    # first we create a dictionary with all the classes above a threshold (here 0.1)
+    entity_info = {}
     for layer in network_data.layers_data:
-        layer_class = []
-        for i, neuron in enumerate(layer.neurons_data):
-            if neuron.population_code_idx(labels = network_data.default_labels_dict) > 0:
-                layer_class.append((i, tuple(neuron.classes_in_pc(labels = network_data.default_labels_dict))))
-        class_info[layer.layer_id] = layer_class
+        layer_entity = []
+        if entity=='class':
+            for i, neuron in enumerate(layer.neurons_data):
+                if neuron.population_code_idx(labels = network_data.default_labels_dict) > 0:
+                    layer_entity.append((i, tuple(neuron.classes_in_pc(labels = network_data.default_labels_dict))))
+        elif entity=='object':
+            for i, neuron in enumerate(layer.neurons_data):
+                if neuron.concept_population_code(layer_data=layer_name, network_data=network_data,neuron_idx=i,
+                                                  concept=entity) > 0:
+                    layer_entity.append((i, tuple(neuron.concept_selectivity_idx(layer_data=layer_name,
+                                                    network_data=network_data, neuron_idx=i,concept=entity)['id'])))
+        entity_info[layer.layer_id] = layer_entity
 
 
 
 # then we create the dictionary with the layers and pc where class_name appears
     pc_dict = {}
-    for layername in class_info.keys():
+    for layername in entity_info.keys():
         pc_dict[layername] = {}
-        for i, neuron in enumerate(class_info[layername]):
-            if class_name in neuron[1]:
+        for i, neuron in enumerate(entity_info[layername]):
+            if entity_name in neuron[1]:
                 pc_number = len(neuron[1])
                 if pc_number not in pc_dict[layername]:
                     pc_dict[layername][pc_number] = [neuron]
@@ -457,8 +543,9 @@ def plot_pc_of_class(network_data,layer_name,class_name, master = None):
 
 
             label=''
-            for clas in pc_dict[layer_name][j][i][1]:
-                label+=str(clas).split(',')[0]+'\n'
+            for name in pc_dict[layer_name][j][i][1]:
+                label+=str(name).split(',')[0]+'\n'
+
             font_size = int(interp1d([1,3],[12,6], bounds_error=False, fill_value=6)(len(pcs_of_layer)))
             plt.text(0.01+i/neurons_num, -0.1, label, {'fontsize': font_size},
                      horizontalalignment='left',
@@ -478,7 +565,7 @@ def plot_pc_of_class(network_data,layer_name,class_name, master = None):
             plt.gcf().subplots_adjust(bottom=0.3)
 
 
-    plt.gcf().canvas.mpl_connect('button_press_event', lambda event: _on_click_image(event,master,  network_data, layer_name, image_axes))
+    plt.gcf().canvas.mpl_connect('button_press_event', lambda event: _on_click_image(event,master,network_data, layer_name, image_axes))
     plt.suptitle(layer_name, y=0.96)
 
     layers_neurons = []
@@ -513,17 +600,19 @@ def plot_pc_of_class(network_data,layer_name,class_name, master = None):
         LIST_OF_BUTTONS_TO_NO_DETACH.append(Button(ax, layers_neurons[i][0]+'('+str(layers_neurons[i][1])+')',
                     color='lemonchiffon', hovercolor='green'))
         axes_list.append((ax, layers_neurons[i][0]))
-        LIST_OF_BUTTONS_TO_NO_DETACH[-1].on_clicked(lambda event: _on_click_another_layer(event, network_data, class_name, axes_list,master))
+        LIST_OF_BUTTONS_TO_NO_DETACH[-1].on_clicked(lambda event: _on_click_another_layer(event, network_data,
+                                                                                          entity_name, axes_list, master,
+                                                                                          entity))
 
 
     plt.subplots_adjust(wspace=0.5, hspace=0.8)
     plt.show()
 
 
-def _on_click_another_layer(event, network_data, class_name, axes_list, master=None):
+def _on_click_another_layer(event, network_data, entity_name, axes_list, master=None, entity='class'):
     for axe, layer_name in axes_list:
         if axe == event.inaxes:
-            plot_pc_of_class(network_data, layer_name, class_name, master)
+            plot_pc_of_class(network_data, layer_name, entity_name, master=master, entity=entity)
 
 def _on_click_image(event,master, network_data, layer_name, axes):
     from ..interface.popup_windows.neuron_window import NeuronWindow

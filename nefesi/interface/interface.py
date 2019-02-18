@@ -1,6 +1,7 @@
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
+PLOTTABLE_ENTITIES = ['class', 'object']
 
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
@@ -20,6 +21,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from ..util.interface_plotting import get_one_layer_plot, get_plot_net_summary_figure
 from .popup_windows.open_selected_neuron_plot import OpenSelectedNeuronPlot
 from .popup_windows.special_value_popup_window import SpecialValuePopupWindow
+from .popup_windows.combobox_popup_window import ComboboxPopupWindow
 from .popup_windows.one_layer_popup_window import OneLayerPopupWindow
 from .popup_windows.neuron_window import NeuronWindow
 from .popup_windows.confirm_popup import ConfirmPopup
@@ -27,7 +29,7 @@ from .popup_windows.erase_calculated_index_popup import EraseCalculatedIndexPopu
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
-from ..util.plotting import main_plot_pc_of_cass, plot_coocurrence_graph
+from ..util.plotting import plot_nf_of_entities_in_pc, plot_coocurrence_graph, plot_entity_representation
 
 
 
@@ -166,7 +168,8 @@ class Interface():
         menubar.add_cascade(label="Configuration", menu=config_menu)
         plot_menu = Menu(menubar)
         plot_menu.add_command(label="Select Neuron plot", command=self.plot_specific_neuron)
-        plot_menu.add_command(label="Class Selective neurons", command=self.class_selective_plot)
+        plot_menu.add_command(label="Entity Selective neurons", command=self.class_selective_plot)
+        plot_menu.add_command(label="Entity Representation", command=self.entity_representation_plot)
         plot_menu.add_command(label="Entity Co-ocurrence Graph", command=self.coocurrence_plot)
         menubar.add_cascade(label="Plot", menu=plot_menu)
 
@@ -179,11 +182,19 @@ class Interface():
             self.window.wait_window(neuron_window.window)
 
     def class_selective_plot(self):
-        main_plot_pc_of_cass(self.network_data,master = self.window)
+        text = 'Select an entity for make the plot'
+        entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
+        plot_nf_of_entities_in_pc(self.network_data, master = self.window, entity=entity)
 
     def coocurrence_plot(self):
-        plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view, interface=self)
+        text = 'Select an entity for make the graph'
+        entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
+        plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view, interface=self,entity=entity)
 
+    def entity_representation_plot(self):
+        text = 'Select an entity for make the plot'
+        entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
+        plot_entity_representation(self.network_data, layers=self.current_layers_in_view, interface=self, entity=entity)
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,
@@ -406,6 +417,11 @@ class Interface():
 
     def get_value_from_popup(self, index='', max=100., start=10, text=''):
         popup_window = SpecialValuePopupWindow(self.window, network_data=self.network_data, index=index, max=max, start=start, text=text)
+        self.window.wait_window(popup_window.top)
+        return popup_window.value
+
+    def get_value_from_popup_combobox(self, values, text):
+        popup_window = ComboboxPopupWindow(self.window, values=values, text=text)
         self.window.wait_window(popup_window.top)
         return popup_window.value
 

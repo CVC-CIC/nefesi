@@ -171,9 +171,14 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
 
 def translate_concept_hist(hist, concept):
     # Charge without index (redundant with pos) and without header
-    translation = np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
+    translation = get_concept_labels(concept=concept)
     translated_hist = [(translation[element['id']],element['value']) for element in hist]
     return np.array(translated_hist, dtype=[('id', np.object), ('value', np.float)])
+
+def get_concept_labels(concept='object'):
+    concept = concept.lower()
+    if concept == 'object':
+        return np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
 
 
 

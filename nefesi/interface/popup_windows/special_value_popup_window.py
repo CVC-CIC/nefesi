@@ -38,9 +38,14 @@ class SpecialValuePopupWindow(object):
             default_entry = network_data.default_thr_pc
             text = POPULATION_CODE_TEXT
         elif index.lower() == 'entity':
-            self.validate_command = (master.register(self._on_entry_updated_check_orientation_index_in_range_0_n),
+            if type(max) is int and type(start) is int:
+                self.validate_command = (master.register(self._on_entry_updated_check_index_in_range_0_n_int),
+                                         '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+            else:
+                self.validate_command = (master.register(self._on_entry_updated_check_orientation_index_in_range_0_n),
                                     '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
             default_entry = start
+
         self.top=Toplevel(master)
         if index.lower != 'entity':
             self.top.title(index.title() + ' Selectivity')
@@ -254,6 +259,78 @@ class SpecialValuePopupWindow(object):
             else:
                 try:
                     #if last value (the value that will remain) is a valid value in range
+                    value = float(value_if_allowed)
+                    if value > self.max or value < 0:
+                        self.ok_button['state'] = 'disabled'
+                        if self.value_entry is not None:
+                            self.value_entry.config({"background": RED_LIGHTED_COLOR})
+                    else:
+                        self.ok_button['state'] = 'normal'
+                        if self.value_entry is not None:
+                            self.value_entry.config({"background": 'white'})
+                except:
+                    pass
+            return True
+        else:
+            self.ok_button['state'] = 'normal'
+            if self.value_entry is not None:
+                self.value_entry.config({"background": 'white'})
+            return True
+
+    def _on_entry_updated_check_index_in_range_0_n_int(self, action, index, value_if_allowed,
+                                                               prior_value, text, validation_type, trigger_type,
+                                                               widget_name):
+
+        is_valid = False
+        # action=1 -> insert
+        if (action == '1'):
+            if text in '+0123456789':
+                try:
+                    # if new value is valid float
+                    value = float(value_if_allowed)
+                    if value > self.max or value < 0:
+                        self.ok_button['state'] = 'disabled'
+                        if self.value_entry is not None:
+                            self.value_entry.config({"background": RED_LIGHTED_COLOR})
+                    else:
+                        # if is not in correct range
+                        self.ok_button['state'] = 'normal'
+                        if self.value_entry is not None:
+                            self.value_entry.config({"background": 'white'})
+                    return True
+                except ValueError:
+                    return False
+            else:
+                if len(value_if_allowed) == 1:
+                    self.ok_button['state'] = 'disabled'
+                    if self.value_entry is not None:
+                        self.value_entry.config({"background": RED_LIGHTED_COLOR})
+                else:
+                    try:
+                        value = float(prior_value)
+                        if value > self.max or value < 0:
+                            self.ok_button['state'] = 'disabled'
+                            if self.value_entry is not None:
+                                self.value_entry.config({"background": RED_LIGHTED_COLOR})
+                        else:
+                            self.ok_button['state'] = 'normal'
+                            if self.value_entry is not None:
+                                self.value_entry.config({"background": 'white'})
+                    except:
+                        self.ok_button['state'] = 'normal'
+                        if self.value_entry is not None:
+                            self.value_entry.config({"background": 'white'})
+                return False
+        # action 0 -> delete
+        elif (action == '0'):
+            # if will be empty
+            if value_if_allowed == '':
+                self.ok_button['state'] = 'disabled'
+                if self.value_entry is not None:
+                    self.value_entry.config({"background": RED_LIGHTED_COLOR})
+            else:
+                try:
+                    # if last value (the value that will remain) is a valid value in range
                     value = float(value_if_allowed)
                     if value > self.max or value < 0:
                         self.ok_button['state'] = 'disabled'

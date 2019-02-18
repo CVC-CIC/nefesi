@@ -5,6 +5,7 @@ from .read_activations import get_sorted_activations, get_activations
 from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
+from .class_index import get_concept_labels
 from itertools import permutations
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
@@ -182,34 +183,40 @@ class LayerData(object):
 
     def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class'):
 
-        dict_labels = network_data.default_labels_dict
-        dict_values = list(dict_labels.values())
+        if entity == 'class':
+            dict_labels = network_data.default_labels_dict
+            labels = list(dict_labels.values())
+        elif entity == 'object':
+            labels = list(get_concept_labels(entity))
 
         if th is None:
             th = network_data.default_thr_pc
 
-        class_pairs_matrix = np.zeros((len(dict_values), len(dict_values)), dtype=np.float)
+        entity_pairs_matrix = np.zeros((len(labels), len(labels)), dtype=np.float)
         # class_ocurrences_vector = np.zeros((len(layers), 1000), dtype=np.float)
-        for neuron in self.neurons_data:
-            classes = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)['human_name']
-            if classes[0] == 'NoClass':
+        for i, neuron in enumerate(self.neurons_data):
+            if entity == 'class':
+                selective_entities = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)['human_name']
+            elif entity == 'object':
+                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i)['id']
+
+            if selective_entities[0] in ['NoClass', 'None']:
                 continue
             else:
+                index_entities = [labels.index(selective_entity) for selective_entity in selective_entities]
 
-                index_classes = [dict_values.index(clase) for clase in classes]
-
-                pc = len(classes)
-                relation_weight = 1 / pc
+                pc = len(selective_entities)
+                relation_weight = 1 / float(pc)
                 # this is the sum of a line
                 # class_ocurrences_vector[l, index_classes] += relation_weight
 
                 if pc == 1:
-                    class_pairs_matrix[index_classes[0], index_classes[0]] += 1
+                    entity_pairs_matrix[index_entities[0], index_entities[0]] += 1
                 else:
-                    for permutation in permutations(index_classes, 2):
-                        class_pairs_matrix[permutation[0], permutation[1]] += relation_weight
+                    for permutation in permutations(index_entities, 2):
+                        entity_pairs_matrix[permutation[0], permutation[1]] += relation_weight
 
-        return class_pairs_matrix  # , class_ocurrences_vector
+        return entity_pairs_matrix  # , class_ocurrences_vector
 
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None, verbose = True):

@@ -255,16 +255,19 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, type
         if type == 2:
             activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
         elif type ==1 or type==3:
-
-            rec_field_map_mask = np.full(rec_field_map.shape, [0, sz_img[0], 0 , sz_img[1]], dtype=np.int32) == rec_field_map
             pos = np.zeros(list(activation.shape)[::-1]+[2])
+            # Generates the Mask that defines the data that need to be operate
+            rec_field_map_mask = np.full(rec_field_map.shape, [0, sz_img[0], 0 , sz_img[1]], dtype=np.int32) == rec_field_map
+            #If have some point to be readjusted
+            if rec_field_map_mask.max():
+                #Generate the mask with all points calculated
+                rec_field_map_2[:, :, 0] = rec_field_map[:, :, 1] - rec_field_sz[1]
+                rec_field_map_2[:, :, 1] = rec_field_map[:, :, 0] + rec_field_sz[1] - 1
+                rec_field_map_2[:, :, 2] = rec_field_map[:, :, 3] - rec_field_sz[0]
+                rec_field_map_2[:, :, 3] = rec_field_map[:, :, 2] + rec_field_sz[0] - 1
 
-            rec_field_map_2[:, :, 0] = rec_field_map[:, :, 1] - rec_field_sz[1]
-            rec_field_map_2[:, :, 1] = rec_field_map[:, :, 0] + rec_field_sz[1] - 1
-            rec_field_map_2[:, :, 2] = rec_field_map[:, :, 3] - rec_field_sz[0]
-            rec_field_map_2[:, :, 3] = rec_field_map[:, :, 2] + rec_field_sz[0] - 1
-
-            rec_field_map[rec_field_map_mask] = rec_field_map_2[rec_field_map_mask]
+                #Crosses two matrix
+                rec_field_map[rec_field_map_mask] = rec_field_map_2[rec_field_map_mask]
 
             pos[:, :, 0] = (rec_field_map[:, :, 3] + rec_field_map[:, :, 2]) * 0.5
             pos[:, :, 1] = (rec_field_map[:, :, 1] + rec_field_map[:, :, 0]) * 0.5

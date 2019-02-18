@@ -300,8 +300,9 @@ class NeuronData(object):
         concept_idx = self.selectivity_idx.get('concept'+concept+str(th))
         if concept_idx is not None:
             return concept_idx
-
-        concept_idx = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data.layer_id,
+        if type(layer_data) is layer_data:
+            layer_data = layer_data.layer_id
+        concept_idx = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data,
                                                         neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1)
 
         self.selectivity_idx['concept'+concept+str(th)] = concept_idx
