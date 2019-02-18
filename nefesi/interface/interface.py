@@ -2,7 +2,8 @@ STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 PLOTTABLE_ENTITIES = ['class', 'object']
-
+COOCURRENCE_OPTIONS = ['1/PC', '1/2', 'local selectivity sum']
+REPRESENTATION_OPTIONS = ['1/PC', '1', 'local selectivity']
 
 import tkinter as tk# note that module name has changed from Tkinter in Python 2 to tkinter in Python 3
 import warnings
@@ -184,17 +185,28 @@ class Interface():
     def class_selective_plot(self):
         text = 'Select an entity for make the plot'
         entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
-        plot_nf_of_entities_in_pc(self.network_data, master = self.window, entity=entity)
+        if entity != -1:
+            plot_nf_of_entities_in_pc(self.network_data, master = self.window, entity=entity)
 
     def coocurrence_plot(self):
         text = 'Select an entity for make the graph'
         entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
-        plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view, interface=self,entity=entity)
+        if entity != -1:
+            text = 'Contribution of each neuron to a pair'
+            operation = self.get_value_from_popup_combobox(values=COOCURRENCE_OPTIONS, text=text)
+            if operation != -1:
+                plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view, interface=self,entity=entity,
+                                   operation=operation)
 
     def entity_representation_plot(self):
         text = 'Select an entity for make the plot'
         entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
-        plot_entity_representation(self.network_data, layers=self.current_layers_in_view, interface=self, entity=entity)
+        if entity != -1:
+            text = 'Contribution of each neuron'
+            operation = self.get_value_from_popup_combobox(values=REPRESENTATION_OPTIONS, text=text)
+            if operation != -1:
+                plot_entity_representation(self.network_data, layers=self.current_layers_in_view, interface=self,
+                                           entity=entity, operation=operation)
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,

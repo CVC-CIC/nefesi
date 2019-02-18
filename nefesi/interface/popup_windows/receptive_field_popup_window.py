@@ -130,10 +130,10 @@ class ReceptiveFieldPopupWindow(object):
     def set_labels_frame(self, master, segment, color_list):
         ids, freqs = concept_selectivity_of_image(activations_mask=None, segmented_image=segment, type='percent')
         arr = [(id, freq, tuple(color_list[id])) for id, freq in zip(ids, freqs)]
-        arr = np.array(arr, dtype=[('id', np.int), ('value', np.float), ('color', np.object)])
+        arr = np.array(arr, dtype=[('label', np.int), ('value', np.float), ('color', np.object)])
         arr_transl = translate_concept_hist(arr, 'object')
-        arr_comp = np.zeros(len(arr), dtype=[('id', np.object), ('value', np.float), ('color', np.object)])
-        arr_comp['id'], arr_comp['value'], arr_comp['color'] = arr_transl['id'], arr_transl['value'], arr['color']
+        arr_comp = np.zeros(len(arr), dtype=[('label', np.object), ('value', np.float), ('color', np.object)])
+        arr_comp['label'], arr_comp['value'], arr_comp['color'] = arr_transl['label'], arr_transl['value'], arr['color']
         arr_comp = np.sort(arr_comp, order = 'value')[::-1]
         for label, freq, color in arr_comp:
             text = label + '('+str(np.round(freq*100,2))+'%)'

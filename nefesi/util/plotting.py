@@ -307,16 +307,18 @@ def plot_nf_of_entities_in_pc(network_data, master = None, entity='class'):
     plt.show()
 
 
-def plot_entity_representation(network_data, layers, entity='class', interface=None, th=0):
-    entity_matrix, xlabels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+def plot_entity_representation(network_data, layers, entity='class', interface=None, th=0,operation='1/PC'):
     if type(layers) is not list:
         layers = network_data.get_layers_analyzed_that_match_regEx(layers)
-    entity_representation_vector = np.sum(np.sum(entity_matrix, axis=0), axis=0)
+
+    entity_representation, xlabels = network_data.get_entinty_representation_vector(layers=layers,entity=entity,
+                                                                                    operation=operation)
+    total_entity_representation = np.sum(entity_representation, axis=0)
 
     if interface is not None:
-        entity_non_zero_mask = entity_representation_vector > 0.000001
+        entity_non_zero_mask = total_entity_representation > 0.000001
         if entity_non_zero_mask.max():
-            entity_non_zero_vector = entity_representation_vector[entity_non_zero_mask]
+            entity_non_zero_vector = total_entity_representation[entity_non_zero_mask]
             maxim = round(entity_non_zero_vector.max(), 2)
             non_zero_mean = round(np.mean(entity_non_zero_vector), 2)
             minim = round(entity_non_zero_vector.min(), 2)
@@ -325,27 +327,29 @@ def plot_entity_representation(network_data, layers, entity='class', interface=N
             std = round(np.std(entity_non_zero_vector), 2)
             text = "Set the threshold for consider a significant " + entity + " .\n " \
                  "min = " + str(minim) + " max = " + str(maxim) + "\n" \
-                "mean = " + str(non_zero_mean) + " mode = " + str(mode) + " std = " + str(std)
+                " mode = " + str(mode) + "mean = " + str(non_zero_mean) + " std = " + str(std)
             start = round(min(non_zero_mean + std, maxim - minim), 2)
             th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
             if th == -1:
                 return
 
-    entity_mask = entity_representation_vector > th
-    entity_representation_vector = entity_representation_vector[entity_mask]
+    entity_mask = total_entity_representation > th
+    total_entity_representation = total_entity_representation[entity_mask]
     xlabels = xlabels[entity_mask]
 
-    args_sorted = entity_representation_vector.argsort()[::-1]
+    args_sorted = total_entity_representation.argsort()[::-1]
 
-    entity_by_layer_vector = np.sum(entity_matrix, axis=1)
-    entity_by_layer_vector = entity_by_layer_vector[:, entity_mask]
-    entity_by_layer_vector, xlabels = entity_by_layer_vector[:,args_sorted], xlabels[args_sorted]
+    entity_representation = entity_representation[:, entity_mask]
+    entity_representation, xlabels = entity_representation[:,args_sorted], xlabels[args_sorted]
     bars = []
     color_map = plt.cm.get_cmap('autumn')
-    color_map = [color_map(i/(len(layers)-1)) for i in range(len(layers))][::-1]
+    if len(layers) == 1:
+        color_map = [color_map(0.0)]
+    else:
+        color_map = [color_map(i/(len(layers)-1)) for i in range(len(layers))][::-1]
     for layer in range(len(layers)):
-        floor_of_bar = np.sum(entity_by_layer_vector[:layer,...], axis=0)
-        bars.append(plt.bar(xlabels, entity_by_layer_vector[layer],
+        floor_of_bar = np.sum(entity_representation[:layer,...], axis=0)
+        bars.append(plt.bar(xlabels, entity_representation[layer],
                               bottom=floor_of_bar, color=color_map[layer])[0])
 
     plt.xticks(rotation=90, fontsize=10)
@@ -364,8 +368,9 @@ def plot_entity_representation(network_data, layers, entity='class', interface=N
     plt.show()
 
 
-def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0, max_degree=None):
-    class_matrix, labels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity)
+def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0, max_degree=None,
+                           operation='1/PC'):
+    class_matrix, labels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity,operation=operation)
     #Axis 0 = Layers
     class_matrix = np.sum(class_matrix, axis=0)
     # Make 0's the diagonal for make the matrix a graph adyacecy matrix
@@ -498,7 +503,7 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
                 if neuron.concept_population_code(layer_data=layer_name, network_data=network_data,neuron_idx=i,
                                                   concept=entity) > 0:
                     layer_entity.append((i, tuple(neuron.concept_selectivity_idx(layer_data=layer_name,
-                                                    network_data=network_data, neuron_idx=i,concept=entity)['id'])))
+                                                    network_data=network_data, neuron_idx=i,concept=entity)['label'])))
         entity_info[layer.layer_id] = layer_entity
 
 

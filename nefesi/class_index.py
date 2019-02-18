@@ -154,14 +154,14 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
             else:
                 general_hist[id] = value
     #Dict to Structured Numpy
-    general_hist = np.array(list(general_hist.items()), dtype = [('id', np.int), ('value',np.float)])
+    general_hist = np.array(list(general_hist.items()), dtype = [('label', np.int), ('value',np.float)])
     #Ordering
     general_hist = np.sort(general_hist, order = 'value')[::-1]
     #Normalized
     general_hist['value'] /= np.sum(general_hist['value'])
     general_hist = general_hist[general_hist['value'] >= th]
     if len(general_hist) is 0:
-        return np.array([('None', 0.0)], dtype = [('id', np.object), ('value',np.float)])
+        return np.array([('None', 0.0)], dtype = [('label', np.object), ('value',np.float)])
     else:
         general_hist['value'] = np.round(general_hist['value'],3)
         general_hist = translate_concept_hist(general_hist, concept)
@@ -172,8 +172,8 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
 def translate_concept_hist(hist, concept):
     # Charge without index (redundant with pos) and without header
     translation = get_concept_labels(concept=concept)
-    translated_hist = [(translation[element['id']],element['value']) for element in hist]
-    return np.array(translated_hist, dtype=[('id', np.object), ('value', np.float)])
+    translated_hist = [(translation[element['label']],element['value']) for element in hist]
+    return np.array(translated_hist, dtype=[('label', np.object), ('value', np.float)])
 
 def get_concept_labels(concept='object'):
     concept = concept.lower()
@@ -201,7 +201,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
     rel_freq = relative_freq_class(neuron_data, labels)
 
     if rel_freq is None:
-        return np.array([("NoClass", 0.0)],dtype=[('human_name','U64'),('rel_freq',np.float)])
+        return np.array([("None", 0.0)],dtype=[('label','U64'),('value',np.float)])
     elif type == 1:
         freq_avoid_th = []
         sum_fr = 0.0
@@ -217,13 +217,13 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
         # For the most freqüent class freq_avoid_th[0] the: label ([HUMAN_NAME_POS]) and his selectivity index rounded to three decimals
         return (freq_avoid_th[0][HUMAN_NAME_POS], round(c_select_idx, 3))
     elif type == 2:
-        in_pc = rel_freq[rel_freq['rel_freq'] >= threshold]
+        in_pc = rel_freq[rel_freq['value'] >= threshold]
         if len(in_pc) > 0:
-            result = np.zeros(len(in_pc), dtype=[('human_name', 'U64'), ('rel_freq', np.float)])
-            result['human_name'], result['rel_freq'] = in_pc['human_name'], in_pc['rel_freq']
+            result = np.zeros(len(in_pc), dtype=[('label', 'U64'), ('value', np.float)])
+            result['label'], result['value'] = in_pc['label'], in_pc['value']
             return result
         else:
-            return np.array([("NoClass", 0.0)],dtype=[('human_name','U64'),('rel_freq',np.float)])
+            return np.array([("None", 0.0)],dtype=[('label','U64'),('value',np.float)])
 
 
 
@@ -237,9 +237,9 @@ def relative_freq_class(neuron_data, labels = None):
 
     :return: Numpy of slices. Each slice contains:
         - The name class 'label_name' (to access as pandas)
-        - The human name class 'human_name' (to access as pandas)
+        - The human name class 'label' (to access as pandas)
         - Number of appearance in this neuron of this class among all classes. 'count' (to access as pandas)
-        - The normalized relative frequency. 'rel_freq' (to access as pandas)
+        - The normalized relative frequency. 'value' (to access as pandas)
     """
 
     #If the max activation is 0 not continue
@@ -255,7 +255,7 @@ def relative_freq_class(neuron_data, labels = None):
     norm_act = neuron_data.norm_activations
     norm_activation_total = np.sum(norm_act)
     classes, classes_idx, classes_counts =  np.unique(neuron_data.top_labels, return_inverse=True, return_counts=True)
-    rel_freq = np.zeros(len(classes),dtype=[('label_name','U64'),('human_name','U64'),('count',np.int), ('rel_freq',np.float)])
+    rel_freq = np.zeros(len(classes),dtype=[('label_name','U64'),('label','U64'),('count',np.int), ('value',np.float)])
 
     #-------------------------------------------CALC THE INDEX-------------------------------------------------
     for label_idx in range(len(classes)):
@@ -269,7 +269,7 @@ def relative_freq_class(neuron_data, labels = None):
             rel_freq[label_idx] = (classes[label_idx], classes[label_idx], appearances_count, norm_activation_label_sum)
 
     # sorts the list by their relative frequencies of norm activations.
-    rel_freq = np.sort(rel_freq, order='rel_freq')[::-1]
+    rel_freq = np.sort(rel_freq, order='value')[::-1]
     return rel_freq
 
 
@@ -288,7 +288,7 @@ def get_population_code_idx(neuron_data, labels=None, threshold_pc=0.1):
         return 0
     else:
         #classes with relative  frequency more than threshold_pc
-        return np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
+        return np.count_nonzero(rel_freq['value']>= threshold_pc)
 
 def get_population_code_classes(neuron_data, labels=None, threshold_pc=0.1):
     """Returns the population code index value
@@ -304,8 +304,8 @@ def get_population_code_classes(neuron_data, labels=None, threshold_pc=0.1):
         return []
     else:
         #classes with relative  frequency more than threshold_pc
-        pc = np.count_nonzero(rel_freq['rel_freq']>= threshold_pc)
-        return rel_freq['human_name'][:pc]
+        pc = np.count_nonzero(rel_freq['value']>= threshold_pc)
+        return rel_freq['label'][:pc]
 
 def get_hierarchical_population_code_idx(neuron_data, xml='../nefesi/imagenet_structure.xml', threshold_pc=0.1,
                                          population_code=0, class_sel=0):
@@ -320,8 +320,8 @@ def get_hierarchical_population_code_idx(neuron_data, xml='../nefesi/imagenet_st
     rel_freq = relative_freq_class(neuron_data, None)
     if rel_freq is None:
         return Node('root', freq=0, rep=0)
-    rel_freq = rel_freq[rel_freq['rel_freq'] >= threshold_pc]
-    tree = gf.get_hierarchy_of_label(rel_freq['label_name'], rel_freq['rel_freq'], xml,population_code,class_sel)
+    rel_freq = rel_freq[rel_freq['value'] >= threshold_pc]
+    tree = gf.get_hierarchy_of_label(rel_freq['label_name'], rel_freq['value'], xml,population_code,class_sel)
     return tree
 
 
@@ -330,7 +330,7 @@ def get_ntop_population_code(neuron_data, labels=None, threshold_pc=0.1, n=5):
     if rel_freq is None:
         return 0
     else:
-        ntop = np.zeros(len(rel_freq),dtype=np.dtype([('label','U128'),('rel_freq',np.float)]))
+        ntop = np.zeros(len(rel_freq),dtype=np.dtype([('label','U128'),('value',np.float)]))
         for i, (_,label,_,freq) in enumerate(rel_freq):
             if freq>threshold_pc:
                 ntop[i] = (label,np.round(freq,decimals=3))
@@ -373,4 +373,5 @@ def get_path_sep(image_name):
             path_sep = '/'
         else:
             path_sep = '\\'
+    return path_sep
     return path_sep

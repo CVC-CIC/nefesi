@@ -175,14 +175,22 @@ class LayerData(object):
                 network_data.save_to_disk(file_name=None, save_model=False)
         return index
 
-    def get_entity_coocurrence_matrix(self,network_data, th=None, entity='class'):
-        if entity not in self.entity_coocurrence:
-            self.entity_coocurrence[entity] = self._get_entity_coocurrence_matrix(network_data=network_data, th=th,
-                                                                                  entity=entity)
-        return self.entity_coocurrence[entity]
+    def get_entity_coocurrence_matrix(self,network_data, th=None, entity='class',operation='1/PC'):
+        key = entity+'coocurrence-th:'+str(th)+'-op:'+operation
+        if key not in self.entity_coocurrence:
+            self.entity_coocurrence[key] = self._get_entity_coocurrence_matrix(network_data=network_data, th=th,
+                                                                                  entity=entity,operation=operation)
+        return self.entity_coocurrence[key]
 
-    def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class'):
+    def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class', operation='1/PC'):
+        """
 
+        :param network_data:
+        :param th:
+        :param entity: 'class' or 'object'
+        :param operation: '1/PC', '1/2' or 'local selecitivity sum'
+        :return:
+        """
         if entity == 'class':
             dict_labels = network_data.default_labels_dict
             labels = list(dict_labels.values())
@@ -193,30 +201,92 @@ class LayerData(object):
             th = network_data.default_thr_pc
 
         entity_pairs_matrix = np.zeros((len(labels), len(labels)), dtype=np.float)
-        # class_ocurrences_vector = np.zeros((len(layers), 1000), dtype=np.float)
         for i, neuron in enumerate(self.neurons_data):
             if entity == 'class':
-                selective_entities = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)['human_name']
+                selective_entities = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)
             elif entity == 'object':
-                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i)['id']
-
-            if selective_entities[0] in ['NoClass', 'None']:
+                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i)
+            if selective_entities['label'][0] == 'None':
                 continue
             else:
-                index_entities = [labels.index(selective_entity) for selective_entity in selective_entities]
-
                 pc = len(selective_entities)
-                relation_weight = 1 / float(pc)
-                # this is the sum of a line
-                # class_ocurrences_vector[l, index_classes] += relation_weight
+                if operation == '1/PC' or operation == '1/2':
+                    index_entities = [labels.index(selective_entity['label']) for selective_entity in selective_entities]
+                    if pc == 1:
+                        entity_pairs_matrix[index_entities[0], index_entities[0]] += 1
+                    else:
+                        weight = 1/float(pc) if operation == '1/PC' else 0.5
+                        for permutation in permutations(index_entities, 2):
+                            entity_pairs_matrix[permutation[0], permutation[1]] += weight
 
-                if pc == 1:
-                    entity_pairs_matrix[index_entities[0], index_entities[0]] += 1
+                elif operation == 'local selectivity sum':
+                    index_entities = [(labels.index(selective_entity['label']), selective_entity['value'])
+                                      for selective_entity in selective_entities]
+                    if pc == 1:
+                        entity_pairs_matrix[index_entities[0][0], index_entities[0][0]] += index_entities[0][1]
+                    else:
+                        for permutation in permutations(index_entities, 2):
+                            weight = permutation[0][1] + permutation[1][1]
+                            entity_pairs_matrix[permutation[0][0], permutation[1][0]] += weight
+
+        return entity_pairs_matrix
+
+    def get_entity_representation(self,network_data, th=None, entity='class', operation='1/PC'):
+        key = entity+'representation-th:'+str(th)+'-op:'+operation
+        if key not in self.entity_coocurrence:
+            self.entity_coocurrence[key] = self._get_entity_representation(network_data=network_data, th=th,
+                                                                                  entity=entity, operation=operation)
+        return self.entity_coocurrence[key]
+
+
+
+    def _get_entity_representation(self,network_data, th=None, entity='class', operation='1/PC'):
+        """
+
+        :param network_data:
+        :param th:
+        :param entity:
+        :param operation: '1/PC','1', 'local selectivity'
+        :return:
+        """
+        if entity == 'class':
+            dict_labels = network_data.default_labels_dict
+            labels = list(dict_labels.values())
+        elif entity == 'object':
+            labels = list(get_concept_labels(entity))
+
+        if th is None:
+            th = network_data.default_thr_pc
+
+        entity_representation = np.zeros(len(labels), dtype=np.float)
+
+        for i, neuron in enumerate(self.neurons_data):
+            if entity == 'class':
+                selective_entities = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)
+            elif entity == 'object':
+                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i)
+            if selective_entities['label'][0] == 'None':
+                continue
+            else:
+                if operation == 'local selectivity':
+                    index_entities = [(labels.index(selective_entity['label']), selective_entity['value'])
+                                      for selective_entity in selective_entities]
                 else:
-                    for permutation in permutations(index_entities, 2):
-                        entity_pairs_matrix[permutation[0], permutation[1]] += relation_weight
+                    index_entities = [labels.index(selective_entity['label']) for selective_entity in selective_entities]
 
-        return entity_pairs_matrix  # , class_ocurrences_vector
+                if operation == '1/PC':
+                    pc = len(selective_entities)
+                    relation_weight = 1 / float(pc)
+                    for index in index_entities:
+                        entity_representation[index] += relation_weight
+                elif operation == '1':
+                    for index in index_entities:
+                        entity_representation[index] += 1.
+                elif operation == 'local selectivity':
+                    for index, weight in index_entities:
+                        entity_representation[index] += weight
+
+        return entity_representation
 
 
     def get_similarity_idx(self, model=None, dataset=None, neurons_idx=None, verbose = True):

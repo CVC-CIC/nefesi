@@ -300,7 +300,7 @@ class NeuronData(object):
         concept_idx = self.selectivity_idx.get('concept'+concept+str(th))
         if concept_idx is not None:
             return concept_idx
-        if type(layer_data) is layer_data:
+        if not isinstance(layer_data,str):
             layer_data = layer_data.layer_id
         concept_idx = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data,
                                                         neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1)
@@ -323,7 +323,7 @@ class NeuronData(object):
 
         concept_idx = self.concept_selectivity_idx(layer_data=layer_data,network_data=network_data,neuron_idx=neuron_idx,
                                                    type=type, concept=concept, th=th)
-        return concept_idx[0]['id'], np.sum(concept_idx['value'])
+        return concept_idx[0]['label'], np.sum(concept_idx['value'])
 
     def concept_population_code(self, layer_data, network_data, neuron_idx, type='mean', concept='object',
                                        th=0.1):
@@ -342,7 +342,7 @@ class NeuronData(object):
         concept_idx = self.concept_selectivity_idx(layer_data=layer_data, network_data=network_data,
                                                    neuron_idx=neuron_idx,
                                                    type=type, concept=concept, th=th)
-        if concept_idx[0]['id'] is 'None':
+        if concept_idx[0]['label'] is 'None':
             return 0
         else:
             return len(concept_idx)
@@ -374,12 +374,12 @@ class NeuronData(object):
 
     def single_class_selectivity_idx(self,labels=None, threshold=.1):
         class_idx = self.class_selectivity_idx(labels=labels, threshold=threshold)
-        return (class_idx[0]['human_name'], round(np.sum(class_idx['rel_freq']), 3))
+        return (class_idx[0]['label'], round(np.sum(class_idx['value']), 3))
 
     def classes_in_pc(self, labels=None, threshold=.1):
         class_idx = self.class_selectivity_idx(labels=labels, threshold=threshold)
 
-        return class_idx['human_name']
+        return class_idx['label']
 
     def population_code_idx(self, labels=None, threshold=0.1):
         """Returns the population code index for this neuron.
