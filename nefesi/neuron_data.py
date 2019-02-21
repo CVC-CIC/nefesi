@@ -4,7 +4,7 @@ from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
 from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron
-from .color_index import get_color_selectivity_index
+from .color_index import get_ivet_color_selectivity_index, get_color_selectivity_index
 from .orientation_index import get_orientation_index
 
 
@@ -229,7 +229,7 @@ class NeuronData(object):
         """
         self.selectivity_idx.pop(idx,None)
 
-    def color_selectivity_idx(self, model, layer_data, dataset):
+    def ivet_color_selectivity_idx(self, model, layer_data, dataset):
         """Returns the color selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
@@ -238,14 +238,41 @@ class NeuronData(object):
 
         :return: Float, value of color selectivity index.
         """
-        color_idx = self.selectivity_idx.get('color')
-        if color_idx is not None:
-            return color_idx
+        key = 'ivet_color'
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = get_ivet_color_selectivity_index(self, model,
+                                                     layer_data, dataset)
+        return self.selectivity_idx[key]
 
-        color_idx = get_color_selectivity_index(self, model,
-                                                layer_data, dataset)
-        self.selectivity_idx['color'] = color_idx
-        return color_idx
+    def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+        """Returns the color selectivity index for this neuron.
+
+        :param model: The `keras.models.Model` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+
+        :return: Float, value of color selectivity index.
+        """
+        key = 'color'+type+str(th)
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = get_color_selectivity_index(network_data=network_data,
+                                                                        layer_name=layer_name,
+                                                                        neuron_idx=neuron_idx,
+                                                                        type=type, th = th)
+            print('Color idx: '+layer_name+' '+str(neuron_idx)+'/'+
+                  str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
+
+        return self.selectivity_idx[key]
+
+    def color_population_code(self,network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+        return len(self.color_selectivity_idx(network_data=network_data, layer_name=layer_name,
+                                                neuron_idx=neuron_idx, type=type, th = th))
+
+    def single_color_selectivity_idx(self,network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+        color_idx = self.color_selectivity_idx(network_data=network_data, layer_name=layer_name,
+                                                neuron_idx=neuron_idx, type=type, th = th)
+        return (color_idx[0]['label'], round(np.sum(color_idx['value']),3))
+
 
     def orientation_selectivity_idx(self, model, layer_data, dataset, degrees_to_rotate = 15):
         """Returns the orientation selectivity index for this neuron.

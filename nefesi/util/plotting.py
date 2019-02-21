@@ -9,6 +9,7 @@ from sklearn.manifold import TSNE
 from matplotlib.widgets import RadioButtons,Button, Slider
 from scipy.interpolate import interp1d
 from ..class_index import get_concept_labels
+from .ColorNaming import colors as color_names
 import networkx as nx
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
@@ -286,8 +287,10 @@ def plot_nf_of_entities_in_pc(network_data, master = None, entity='class'):
     radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
     if entity == 'class':
         labels = np.sort(np.array(list(network_data.default_labels_dict.values())))
-    if entity == 'object':
+    elif entity == 'object':
         labels = np.sort(get_concept_labels(entity))
+    elif entity == 'color':
+        labels = np.sort(np.array(color_names))
 
     def updateslide(val):
         plt.suptitle(labels[int(val)],y=0.7,x=0.5)
@@ -504,6 +507,12 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
                                                   concept=entity) > 0:
                     layer_entity.append((i, tuple(neuron.concept_selectivity_idx(layer_data=layer_name,
                                                     network_data=network_data, neuron_idx=i,concept=entity)['label'])))
+        elif entity == 'color':
+            for i, neuron in enumerate(layer.neurons_data):
+                if neuron.color_population_code(network_data=network_data, layer_name=layer_name, neuron_idx=i) > 0:
+                    layer_entity.append((i, tuple(neuron.color_selectivity_idx(network_data=network_data,
+                                                                                 layer_name=layer_name,
+                                                                                 neuron_idx=i)['label'])))
         entity_info[layer.layer_id] = layer_entity
 
 

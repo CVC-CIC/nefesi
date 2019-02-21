@@ -77,7 +77,30 @@ def save_dataset_segmentation(dataset_path, save_path = '/datatmp/datasets/Brode
                                     scene=segment['scene'])
 
 
-
+def save_dataset_object_ocurrence(segmented_dataset_path = '/datatmp/datasets/ImageNetFusedSegmented'):
+    """
+    Save an identical structure of the dataset_path in 'save_path'. The files saved are a compressed numpys that saves
+    the same structure of the Segment_Images output. Can be opened with the same sintax than a dictionary.
+    For example: np.load('n2522224/image_00215p.JPEG.npz)['object'] for get the segmentation on object level
+    :param dataset_path:
+    :return:
+    """
+    objectVector = np.zeros(336, dtype=np.int)
+    materialVector = np.zeros(26, dtype=np.int)
+    labels = np.array(os.listdir(segmented_dataset_path))
+    for i, label in enumerate(labels):
+        class_path = os.path.join(segmented_dataset_path, label)
+        images_of_class = os.listdir(class_path)
+        image_paths = [os.path.join(class_path, im_name) for im_name in images_of_class]
+        for image in image_paths:
+            segmented = np.load(image)
+            objects = np.unique(segmented['object'])
+            materials = np.unique(segmented['material'])
+            objectVector[objects] += 1
+            materialVector[materials] += 1
+        print(str(i)+' labels done')
+    np.save('ObjectOcurrenceVector', objectVector)
+    np.save('MaterialVector', materialVector)
 
 def get_dataset_labes_and_freq(dataset_path):
     labels = np.array(os.listdir(dataset_path))

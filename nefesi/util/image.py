@@ -339,6 +339,7 @@ def image2max_gray(img):
     """
     x = img.reshape(-1, 3)
     M = (x - np.mean(x, axis=0))
+
     latent, coeff = np.linalg.eig(np.cov(M.T))
     res = np.dot(M, coeff[:, 0])
 

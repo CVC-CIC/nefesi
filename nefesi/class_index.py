@@ -245,7 +245,6 @@ def relative_freq_class(neuron_data, labels = None):
     #If the max activation is 0 not continue
     if np.isclose(neuron_data.activations[0], 0.0):
         return None
-        #return np.array([('n0000000', 'NoClass', 0, 0.0)])
 
 
     #------------------------INITS NEURON_DATA.TOP_LABELS IF NOT IS INITIALIZED---------------------------------
