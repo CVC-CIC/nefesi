@@ -499,7 +499,7 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
         layer_entity = []
         if entity=='class':
             for i, neuron in enumerate(layer.neurons_data):
-                if neuron.population_code_idx(labels = network_data.default_labels_dict) > 0:
+                if neuron.class_population_code(labels = network_data.default_labels_dict) > 0:
                     layer_entity.append((i, tuple(neuron.classes_in_pc(labels = network_data.default_labels_dict))))
         elif entity=='object':
             for i, neuron in enumerate(layer.neurons_data):

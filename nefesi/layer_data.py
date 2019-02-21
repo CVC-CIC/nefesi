@@ -143,7 +143,7 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
+                sel_idx[i] = self.neurons_data[i].class_population_code(labels, thr_pc)
         else:
             raise ValueError("The 'index_name' argument should be one "
                              "of theses: "+str(network_data.indexs_accepted))

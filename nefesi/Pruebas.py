@@ -30,7 +30,7 @@ def script_classes():
         print (layer_name)
         for id, neuron in enumerate(layer.neurons_data):
             class_selectivity = neuron.class_selectivity_idx(labels=model.default_labels_dict)
-            pc = neuron.population_code_idx(labels=model.default_labels_dict,threshold=0.1)
+            pc = neuron.class_population_code(labels=model.default_labels_dict, threshold=0.1)
             tree = get_hierarchical_population_code_idx(neuron, xml='imagenet_structure.xml', threshold_pc=0.1, population_code=pc,
                                                  class_sel=class_selectivity)
             children = tree.children
