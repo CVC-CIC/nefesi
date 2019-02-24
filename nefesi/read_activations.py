@@ -31,15 +31,13 @@ def get_activations(model, model_inputs, layers_data):
     funcs = K.function(inp+ [K.learning_phase()], outputs)
     # K.learning_phase flag = 1 (train mode)
     layer_outputs = funcs([model_inputs, 1])
-    locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
-    """
+    #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
     with ThreadPool(processes=None) as pool:  # use all cpu cores
         async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
         locations_and_max = [async_result.get() for async_result in async_results]
         pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...-
         pool.terminate()
         pool.join()
-    """
     return locations_and_max
 
 def get_argmax_and_max(layer):
