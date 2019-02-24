@@ -305,7 +305,7 @@ class NeuronData(object):
         :return: List of floats, values of symmetry selectivity index.
         """
         key= 'symmetry'+str(SYMMETRY_AXES)
-        if key not in self.selectivity_idx.get:
+        if key not in self.selectivity_idx:
             self.selectivity_idx[key] = sym.get_symmetry_index(self, model, layer_data, dataset)
 
         return self.selectivity_idx[key]

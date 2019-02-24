@@ -101,12 +101,12 @@ thrL = np.array([  0,  31,  42,  51,  66,  76, 150], dtype=np.uint8)
 #    RGB2LAB conversion
 # ***********************
 def RGB2Lab(Ima):
-
+    
     # RGB > XYZ transformation matrix (sRGB with D65)
     M = np.vstack(([0.412424, 0.357579, 0.180464],[0.212656, 0.715158, 0.0721856],[0.0193324, 0.119193, 0.950444]))
     Xn = 0.9505; Yn = 1.0000; Zn = 1.0891;
 
-    Ima = Ima/255.0
+    Ima = Ima/255.0    
     S = np.shape(Ima)
     #NF = S[0]; NC = S[1]; NCh = S[2]
 
@@ -114,7 +114,7 @@ def RGB2Lab(Ima):
     XYZ = np.zeros((3,1))
     #ImaLab = zeros((NF, NC, NCh))
     ImaLab = np.zeros_like(Ima,dtype=float)
-
+    
     #fRGB = vstack((reshape(Ima[:,:,0].T,(1,NF*NC)),reshape(Ima[:,:,1].T,(1,NF*NC)),reshape(Ima[:,:,2].T,(1,NF*NC))))
     fRGB = np.reshape(Ima,(-1,3)).T
     lRGB = (fRGB<=0.04045)*(fRGB/12.92)+(fRGB>0.04045)*(((fRGB+0.055)/1.055)**2.4)
@@ -132,10 +132,10 @@ def RGB2Lab(Ima):
 
     #ImaLab[:,:,0] = reshape(L2,(NC,NF)).T
     #ImaLab[:,:,1] = reshape(a2,(NC,NF)).T
-    #ImaLab[:,:,2] = reshape(b2,(NC,NF)).T
+    #ImaLab[:,:,2] = reshape(b2,(NC,NF)).T    
 
     return ImaLab
-
+    
 
 
 
@@ -143,12 +143,12 @@ def RGB2Lab(Ima):
 #    ColorName2rgb
 # ***********************
 def ColorName2rgb(colorIdx, Names):
-
+    
     nr = colorIdx.shape[0]
     n = colorIdx.shape[1]*nr
     r = range(np.size(colorIdx))
     colorIdx = colorIdx.flatten()
-
+    
     Red_idx    = [x for x in r if colorIdx[x]==Names.index('Red')]
     Orange_idx = [x for x in r if colorIdx[x]==Names.index('Orange')]
     Brown_idx  = [x for x in r if colorIdx[x]==Names.index('Brown')]
@@ -160,7 +160,7 @@ def ColorName2rgb(colorIdx, Names):
     Black_idx  = [x for x in r if colorIdx[x]==Names.index('Black')]
     Grey_idx   = [x for x in r if colorIdx[x]==Names.index('Grey')]
     White_idx  = [x for x in r if colorIdx[x]==Names.index('White')]
-
+    
     Red = np.zeros((n,1)); Red[Red_idx] = 1;
     Orange = np.zeros((n,1)); Orange[Orange_idx] = 1;
     Brown = np.zeros((n,1)); Brown[Brown_idx] = 1;
@@ -187,12 +187,11 @@ def ColorName2rgb(colorIdx, Names):
 
     return RGB.reshape((nr,-1,3))
 
-
+    
 # ***********************    
 #    Sigmoid
 # ***********************
 def Sigmoid(s,t,b):
-
     y = 1.0/(1.0+np.exp(-np.double(b)*(np.double(s)-np.double(t))))
 
     return y
@@ -224,10 +223,10 @@ def TripleSigmoid_E(s,tx,ty,alfa_x,alfa_y,bx,by,be,ex,ey,angle_e):
 #    SampleColorNaming
 # ***********************
 def SampleColorNaming(s):
-
+    
     if np.size(s)!=3:
         np.error('Error: s must be a 1 x 3 vector [R G B]');
-
+    
     # Constants
     #colors=['Red','Orange','Brown','Yellow','Green','Blue','Purple','Pink','Black','Grey','White']
     numColors=11                           # Number of colors
@@ -237,7 +236,7 @@ def SampleColorNaming(s):
     # Initializations
     numLevels = np.size(thrL)-1                   # Number of Lightness levels in the model
     CD = np.zeros((1,numColors))                 # Color descriptor to store results
-
+    
     Lab = RGB2Lab(np.double(np.reshape(s,(1,1,3))))
     L=Lab[:,:,0].flatten();
     a=Lab[:,:,1].flatten();
@@ -319,28 +318,28 @@ def ImColorNamingTSELabDescriptor(ima, positions=None, patchSize=1):
                     LabPatch[:,c,:]=Lab[positions[:,0]+y,positions[:,1]+x,:]
                     c += 1
             Lab=LabPatch
-
+            
     S = np.shape(Lab)
     if Lab.ndim==2:
         L=Lab[:,0].flatten()
         a=Lab[:,1].flatten()
-        b=Lab[:,2].flatten()
+        b=Lab[:,2].flatten()        
         nr = S[0]; nc = 1;                      # Image dimensions: rows, columns, and channels
     else:
         L=Lab[:,:,0].flatten()
         a=Lab[:,:,1].flatten()
-        b=Lab[:,:,2].flatten()
+        b=Lab[:,:,2].flatten()        
         nr = S[0]; nc = S[1];                      # Image dimensions: rows, columns, and channels
-
+        
     npix = nr*nc                                  # Number of pixels
     CD = np.zeros((npix,numColors))                 # Color descriptor to store results
 
     # Assignment of the sample to its corresponding level
     m = np.zeros(np.shape(L))
-    m[np.where(L==0)[0]] = 1    # Pixels with L=0 assigned to level 1
+    m[np.where(L==0)[0]] = 1    # Pixels with L=0 assigned to level 1    
     for k in range(1,numLevels+1):
         m = m + np.double(thrL[k-1]<L) * np.double(L<=thrL[k]) * np.double(k)
-
+    
     m = m.astype(int) - 1
 
     # Computing membership values to chromatic categories
@@ -348,15 +347,15 @@ def ImColorNamingTSELabDescriptor(ima, positions=None, patchSize=1):
         tx=np.reshape(parameters[k,0,m],(npix,1))
         ty=np.reshape(parameters[k,1,m],(npix,1))
         alfa_x=np.reshape(parameters[k,2,m],(npix,1))
-        alfa_y=np.reshape(parameters[k,3,m],(npix,1))
-        beta_x=np.reshape(parameters[k,4,m],(npix,1))
-        beta_y=np.reshape(parameters[k,5,m],(npix,1))
-        beta_e=np.reshape(parameters[k,6,m],(npix,1))
-        ex=np.reshape(parameters[k,7,m],(npix,1))
+        alfa_y=np.reshape(parameters[k,3,m],(npix,1)) 
+        beta_x=np.reshape(parameters[k,4,m],(npix,1))  
+        beta_y=np.reshape(parameters[k,5,m],(npix,1))  
+        beta_e=np.reshape(parameters[k,6,m],(npix,1))  
+        ex=np.reshape(parameters[k,7,m],(npix,1)) 
         ey=np.reshape(parameters[k,8,m],(npix,1))
-        angle_e=np.reshape(parameters[k,9,m],(npix,1)); #figure;plot(angle_e); show()
+        angle_e=np.reshape(parameters[k,9,m],(npix,1)); #figure;plot(angle_e); show()    
         CD[:,k] = (np.double(beta_e!=0.0) * TripleSigmoid_E(np.vstack((a,b)),tx,ty,alfa_x,alfa_y,beta_x,beta_y,beta_e,ex,ey,angle_e)).T
-
+            
     # Computing membership values to achromatic categories
     valueAchro = np.squeeze(np.maximum(1.0-np.reshape(np.sum(CD,axis=1),(npix,1)),np.zeros((npix,1))))
     CD[:,numChromatics+0] = valueAchro * Sigmoid(L,paramsAchro[0,0],paramsAchro[0,1])
@@ -370,7 +369,7 @@ def ImColorNamingTSELabDescriptor(ima, positions=None, patchSize=1):
     if patchSize>1:
         CD=np.sum(CD,axis=1)
         CD=CD/np.tile(np.sum(CD,axis=1).reshape(-1,1),(1,numColors))
-
+        
     if Lab.ndim==2:
         CD = np.reshape(CD, (-1,CD.shape[2]))
 
@@ -386,17 +385,18 @@ def ImColorNamingTSELab(ima):
     #colors=['Red','Orange','Brown','Yellow','Green','Blue','Purple','Pink','Black','Grey','White']
 
     CD = ImColorNamingTSELabDescriptor(ima)
-
+    
     # Output image with each pixel labelled with the colour of maximum membership value
     imaIndex = np.argmax(CD,axis=2)
     counter = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     for ii in np.nditer(imaIndex):
 	    counter[ii] += 1
-
-
+			
+         
    
     #imaRes = reshape(ColorName2rgb(imaIndex, colors),(CD.shape[0], CD.shape[1],3))
     imaRes = ColorName2rgb(imaIndex, colors)
 
     return CD, imaRes, imaIndex, counter
+
