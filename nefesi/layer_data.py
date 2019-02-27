@@ -49,7 +49,7 @@ class LayerData(object):
 
     def sort_neuron_data(self):
         for neuron in self.neurons_data:
-            neuron.sortResults()
+            neuron.sortResults(reduce_data=True)
 
     def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size,batches_to_buffer = 20):
         self.neurons_data = get_sorted_activations(file_names, images, model,

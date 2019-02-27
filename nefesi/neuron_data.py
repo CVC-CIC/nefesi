@@ -43,8 +43,6 @@ class NeuronData(object):
         self._max_activations = max_activations
         self._batch_size = batch_size
         self._buffer_size = self._max_activations + (self._batch_size*buffered_iterations)
-        # If is the final iteration reduce the size of activations, images_id and xy_locations to max_activations
-        self._reduce_data = True
         self.activations = np.zeros(shape=self._buffer_size)
         self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
         self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
@@ -71,16 +69,14 @@ class NeuronData(object):
         self.xy_locations[self._index:end_idx,:] = xy_locations
         self._index += len(activations)
         if self._index+len(activations) > self._buffer_size:
-            self._reduce_data = False
-            self.sortResults()
-            self._reduce_data = True
-            #self._index = self._max_activations #Is maded on function (in order to make more consistent on last iteration
+            self.sortResults(reduce_data=False)
+            #self._index = self._max_activations #Is made on function (in order to make more consistent on last iteration)
 
 
-    def sortResults(self):
+    def sortResults(self, reduce_data = False):
         idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
         self._index = self._max_activations
-        if self._reduce_data:
+        if reduce_data:
             self.activations = self.activations[idx]
             self.images_id = self.images_id[idx]
             self.xy_locations = self.xy_locations[idx,:]
