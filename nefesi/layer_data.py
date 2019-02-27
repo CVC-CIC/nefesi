@@ -529,9 +529,9 @@ class LayerData(object):
             max_act.append(f.activations[0])
 
         # get the activations for the patches
-        activations = get_activations(model, neuron_images,
-                                      print_shape_only=True,
-                                      layer_name=target_layer.layer_id)
+        xy_locations, activations = get_activations(model, neuron_images,
+                                      #print_shape_only=True,
+                                      layers_data=[target_layer.layer_id])
 
         activations = activations[0]
         # get the activations shape, where:

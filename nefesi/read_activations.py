@@ -10,7 +10,7 @@ from scipy.interpolate import RectBivariateSpline
 
 ACTIVATIONS_BATCH_SIZE = 200
 
-def get_activations(model, model_inputs, layers_data):
+def get_activations(model, model_inputs, layers_name):
     """Returns the output (activations) from the model.
 
     :param model: The `keras.models.Model` instance.
@@ -23,10 +23,13 @@ def get_activations(model, model_inputs, layers_data):
     inp = model.input
     if type(inp) is not list:
         inp = [inp]
+    if isinstance(layers_name, str):
+        layers_name = [layers_name]
+
     # uses .get_output_at() instead of .output. In case a layer is
     # connected to multiple inputs. Assumes the input at node index=0
     # is the input where the model inputs come from.
-    outputs = [model.get_layer(layer.layer_id).output for layer in layers_data]
+    outputs = [model.get_layer(layer).output for layer in layers_name]
     # evaluation functions
     funcs = K.function(inp+ [K.learning_phase()], outputs)
     # K.learning_phase flag = 1 (train mode)
@@ -39,6 +42,33 @@ def get_activations(model, model_inputs, layers_data):
         pool.terminate()
         pool.join()
     return locations_and_max
+
+def get_activations_for_layer(model, model_inputs, layer_name):
+    """Returns the output (activations) from the model.
+
+    :param model: The `keras.models.Model` instance.
+    :param model_inputs: List of inputs, the inputs expected by the network.
+    :param layer_name: String, name of the layer from which get the outputs.
+        If its None, returns the outputs from all the layers in the model.
+
+    :return: List of activations, one output for each given layer.
+    """
+    inp = model.input
+    if type(inp) is not list:
+        inp = [inp]
+    if isinstance(layer_name, str):
+        layers_name = [layer_name]
+
+    # uses .get_output_at() instead of .output. In case a layer is
+    # connected to multiple inputs. Assumes the input at node index=0
+    # is the input where the model inputs come from.
+    outputs = [model.get_layer(layer).output for layer in layers_name]
+    # evaluation functions
+    funcs = K.function(inp+ [K.learning_phase()], outputs)
+    # K.learning_phase flag = 1 (train mode)
+    layer_outputs = funcs([model_inputs, 1])
+    #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
+    return layer_outputs[0]
 
 def get_argmax_and_max(layer):
     if len(layer.shape) == 2: #Is not conv
@@ -123,7 +153,7 @@ def fill_all_layers_data_batch(file_names, images, model, layer_data):
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
-    activations = get_activations(model, images, layer_data)
+    activations = get_activations(model, images, layer_data.layer_id)
     for i, layer_activation in enumerate(activations):
         conv_layer = type(layer_activation) is tuple
         if conv_layer:
@@ -222,9 +252,6 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
     # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
     return activations
 
-def get_activation_mask(image, model, layer_name, idx_neuron):
-    total_activations = get_one_neuron_activations(model, image,
-                                                   idx_neuron=idx_neuron, layer_name=layer_name)[0]
 
 def get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1):
     """
