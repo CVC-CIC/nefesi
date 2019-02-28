@@ -112,66 +112,6 @@ def get_each_point_receptive_field(model, layer_name):
     image_points[:, :, [1, 3]] += 1
     return image_points
 
-def get2_each_point_receptive_field(model, layer_name):
-    """Takes `weight` and `height` (of a layer output)  and gets the map receptive_field_map of each pixel to the input layer
-    (usually same as input image size).
-    :param model: The `keras.models.Model` instance.
-    :param layer_name: String, name of the layer to get his receptive_field to input.
-    :return: The window location of the receptive field in the input image.
-    Numpy matrix (3-D) that contains for each point in matrix(i,j) --> [row_ini, row_fin, col_ini, col_fin].
-        output[i,j] = 4 points of rectangle or square that corresponds to pixel i,j on a neuron on layer layer name, to
-        on the input image. The exact position of the receptive field from an image.
-    """
-    current_layer_idx = find_layer_idx(model, layer_name=layer_name)
-    if len(model.layers[current_layer_idx].output_shape)>2:
-        _, w, h, _ = model.layers[current_layer_idx].output_shape
-    else:
-        h = 1
-        _, w = model.layers[current_layer_idx].output_shape
-    w_mesh, h_mesh = np.meshgrid(range(h), range(w))
-    # array order --> row_ini, row_fin, col_ini, col_fin
-    image_points = np.array([h_mesh.flatten(),h_mesh.flatten(), w_mesh.flatten(),w_mesh.flatten()],dtype=np.int32).\
-        T.reshape(w, h, 4)
-
-    # goes throw the current layer until the first input layer.
-    # (input shape of the network)
-    for i in range(current_layer_idx, -1, -1):
-        current_layer = model.layers[i]
-
-        #REVIEW IF W AND H ARE CORRECT!!!!!!!!!!!
-        if len(current_layer.input_shape) == 4:
-            _, current_size_w, current_size_h, _ = current_layer.input_shape
-        else:
-            current_size_w, current_size_h = (float('Inf'), float('Inf'))
-        #Checks to boundaries of the current layer shape.
-        image_points[:, :, [0,2]] = np.maximum(image_points[:,:,[0,2]],0)
-        image_points[:, :, 1] = np.minimum(image_points[:,:,1], current_size_w - 1)
-        image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h - 1)
-        # check if the current layer is a convolution layer or
-        # a pooling layer (both have to be 2D).
-        if isinstance(current_layer, Conv2D) or isinstance(current_layer, _Pooling2D):
-            # get some configuration parameters,
-            # padding, kernel_size, strides
-            config_params = current_layer.get_config()
-            padding = config_params['padding']
-            strides = np.array(config_params['strides'])
-            kernel_size = np.array(config_params.get('kernel_size', config_params.get('pool_size')))
-
-            if padding == 'same':
-                # padding = same, means input shape = output shape
-                padding = (kernel_size-1)//2
-            else:
-                padding = np.zeros(shape=2, dtype=np.int)
-            # calculate the window location applying the proper displacements.
-            image_points*=strides[[0,0,1,1]]
-            image_points[:, :, [1, 3]]+=(kernel_size-1)
-
-            # apply the padding on the receptive field window.
-            image_points-=padding[[0,0,1,1]]
-        #(is neccesary to add 1 in row_fin and col_fin due to behaviour of Numpy arrays.
-    image_points[:,:,[1,3]]+= 1
-    return image_points
-
 
 def recursive_receptive_field_per_location(model, current_layer, image_points):
     image_points = np.copy(image_points)
