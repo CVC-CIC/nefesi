@@ -386,11 +386,11 @@ def example1SaveModel(model_function, path_name):
 import os
 from keras.applications.xception import Xception, preprocess_input
 def load_and_eval(model_file_name, dataset_folder, save_folder=None):
+	if save_folder is None:
+		save_folder=os.path.join(os.path.split(os.path.abspath(model_file_name))[0],'')
+
 	model = load_model(model_file_name)
 	nefesiModel = NetworkData(model=model) #Instantiate the NetworkData object
-	if save_folder is None:
-		save_folder=os.path.join(os.path.split(os.path.abspath(save_folder))[0],'/')
-	print(save_folder)
 	nefesiModel.save_path = save_folder
 
 	nefesiModel.dataset = ImageDataset(src_dataset=dataset_folder, preprocessing_function=preprocess_input)

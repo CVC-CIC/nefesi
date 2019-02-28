@@ -48,11 +48,11 @@ class ImageDataset():
         if type(target_size) is tuple:
             if len(target_size) != 2:
                 raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
-            if target_size[0] is None and target_size[1] is None:
+            if target_size[0] is None or target_size[1] is None:
                 target_size = (224, 224)
             if type(target_size[0]) != int or type(target_size[1]) != int:
                 raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
-        elif type(target_size) is not None:
+        elif target_size is not None:
             raise ValueError("target_size must be a (height, width) tuple (or None). '"+str(type(target_size))+
                              "' type not admitted ")
         # Sets
@@ -70,8 +70,9 @@ class ImageDataset():
                 raise FileNotFoundError(src_dataset+" not exists or is not a directory")
             elif os.listdir(src_dataset) == []:
                 warnings.warn(src_dataset+" is an empty directory",FutureWarning)
+            src_dataset = os.path.join(src_dataset, '')
         # Sets
-        self._src_dataset = os.path.join(src_dataset, '')
+        self._src_dataset = src_dataset
 
     @property
     def src_segmentation_dataset(self):
@@ -86,8 +87,9 @@ class ImageDataset():
                 raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
             elif os.listdir(src_segmentation_dataset) == []:
                 warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
+            src_segmentation_dataset = os.path.join(src_segmentation_dataset, '')
         # Sets
-        self._src_segmentation_dataset = os.path.join(src_segmentation_dataset, '')
+        self._src_segmentation_dataset = src_segmentation_dataset
 
     @property
     def preprocessing_function(self):
@@ -107,8 +109,8 @@ class ImageDataset():
             else:
                 raise ValueError("preprocessing_function must be None or a function (that takes a numpy tensor 4D"
                              "(with a batch of images) as argument and returns a numpy tensor of same dimension")
-        # Sets
-        self._preprocessing_function = preprocessing_function
+            # Sets
+            self._preprocessing_function = preprocessing_function
 
 
     @property
