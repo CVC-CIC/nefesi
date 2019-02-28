@@ -8,7 +8,7 @@ from keras.models import load_model
 from .calculate_indexs import run_calculs
 import warnings
 import os
-import pickle
+import dill as pickle
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()

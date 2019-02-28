@@ -1,4 +1,4 @@
-import pickle
+import dill as pickle
 import os
 import time
 import datetime
@@ -755,9 +755,6 @@ class NetworkData(object):
             for file in os.listdir(self.save_path):
                 if 'PartialSave' in file:
                     os.remove(self.save_path+file)
-        #TODO: SOLVE THE TREATEMENT OF THE PREPROCESSING FUNCTION
-        self.dataset.preprocessing_function = None
-        print("REMEMBER TO SOLVE THE PREPROCESSING FUNCTION PROBLEM!!!!")
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         self.model = model

@@ -1,5 +1,5 @@
 import os
-import pickle
+import dill as pickle
 from nefesi.class_index import get_hierarchical_population_code_idx,get_class_selectivity_idx, get_population_code_idx
 from nefesi.util.general_functions import get_hierarchy_of_label
 import numpy as np

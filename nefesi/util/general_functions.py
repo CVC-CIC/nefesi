@@ -21,7 +21,7 @@ except ImportError:
 
 def have_all_imagenet_segmentation(dataset_path):
     from itertools import combinations
-    import pickle
+    import dill as pickle
     from .segmentation.Broden_analize import Segment_images
     labels = np.array(os.listdir(dataset_path))
     pairs = {'object':{}, 'material':{}, 'part':{}, 'scene':np.zeros(365,np.int)}
