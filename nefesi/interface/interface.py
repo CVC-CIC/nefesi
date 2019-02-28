@@ -63,6 +63,9 @@ class Interface():
         self.plot_general_index(index=None)
         self.set_menu_bar()
 
+        #network_data.layers_data[6].decomposition_nf(0, network_data.layers_data[7], network_data.model,
+         #                                            network_data.dataset)
+
         self.window.mainloop()
 
     @property

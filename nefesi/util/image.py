@@ -6,7 +6,7 @@ import warnings
 
 ACCEPTED_COLOR_MODES = ['rgb','grayscale']
 
-class ImageDataset(object):
+class ImageDataset():
     """This class stores the whole information about a dataset and provides
     some functions for load the images.
 
@@ -76,15 +76,16 @@ class ImageDataset(object):
 
     @src_segmentation_dataset.setter
     def src_segmentation_dataset(self,src_segmentation_dataset):
-        if type(src_segmentation_dataset) is not str:
-            raise ValueError("src_dataset attribute must be str")
-        elif not os.path.isdir(src_segmentation_dataset):
-            raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
-        elif os.listdir(src_segmentation_dataset) == []:
-            warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
-        if not src_segmentation_dataset.endswith('/'):
-            src_segmentation_dataset += '/'
-        # Sets
+        if src_segmentation_dataset is not None:
+            if type(src_segmentation_dataset) is not str:
+                raise ValueError("src_dataset attribute must be str")
+            elif not os.path.isdir(src_segmentation_dataset):
+                raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
+            elif os.listdir(src_segmentation_dataset) == []:
+                warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
+            if not src_segmentation_dataset.endswith('/'):
+                src_segmentation_dataset += '/'
+            # Sets
         self._src_segmentation_dataset = src_segmentation_dataset
 
     @property
@@ -96,10 +97,13 @@ class ImageDataset(object):
         if preprocessing_function is not None:
             #if function don't takes one non-default argument
             if callable(preprocessing_function):
+                """
                 if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
                     raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
                                      " (any number of default arguments also admitted) and must return a numpy tensor of same"
                                      "dimension.")
+                """
+                pass
             #if not is None or a function
             else:
                 raise ValueError("preprocessing_function must be None or a function (that takes a numpy tensor 4D"

@@ -136,7 +136,7 @@ def get_one_neuron_activations(model, model_inputs, idx_neuron, layer_name=None)
         warnings.warn("Layer outputs is a list of more than one element? REVIEW THIS CODE SECTION!",RuntimeWarning)
     return layer_outputs[0]
 
-def fill_all_layers_data_batch(file_names, images, model, layer_data):
+def fill_all_layers_data_batch(file_names, images, model, layers_data):
     """Returns the neurons with their maximum activations as the
     inputs (`images`) are processed.
 
@@ -153,7 +153,8 @@ def fill_all_layers_data_batch(file_names, images, model, layer_data):
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
-    activations = get_activations(model, images, layer_data.layer_id)
+    layer_names = [layer.layer_id for layer in layers_data]
+    activations = get_activations(model, images, layer_names)
     for i, layer_activation in enumerate(activations):
         conv_layer = type(layer_activation) is tuple
         if conv_layer:
@@ -161,13 +162,13 @@ def fill_all_layers_data_batch(file_names, images, model, layer_data):
             xy_locations, max_acts = layer_activation
             for idx_filter in range(num_filters):
                 #Add the results to his correspondent neuron
-                layer_data[i].neurons_data[idx_filter].add_activations(max_acts[:,idx_filter], file_names, xy_locations[idx_filter,:,:])
+                layers_data[i].neurons_data[idx_filter].add_activations(max_acts[:, idx_filter], file_names, xy_locations[idx_filter, :, :])
 
         else:
             num_images, num_filters = layer_activation.shape
             xy_locations = np.zeros((num_images, 2), dtype=np.int)
             for idx_filter in range(num_filters):
-                layer_data[i].neurons_data[idx_filter].add_activations(layer_activation[:,idx_filter], file_names, xy_locations)
+                layers_data[i].neurons_data[idx_filter].add_activations(layer_activation[:, idx_filter], file_names, xy_locations)
 
 
 def get_sorted_activations(file_names, images, model, layer_name,
