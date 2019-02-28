@@ -70,10 +70,8 @@ class ImageDataset():
                 raise FileNotFoundError(src_dataset+" not exists or is not a directory")
             elif os.listdir(src_dataset) == []:
                 warnings.warn(src_dataset+" is an empty directory",FutureWarning)
-            if not src_dataset.endswith('/'):
-                src_dataset += '/'
         # Sets
-        self._src_dataset = src_dataset
+        self._src_dataset = os.path.join(src_dataset, '')
 
     @property
     def src_segmentation_dataset(self):
@@ -88,10 +86,8 @@ class ImageDataset():
                 raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
             elif os.listdir(src_segmentation_dataset) == []:
                 warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
-            if not src_segmentation_dataset.endswith('/'):
-                src_segmentation_dataset += '/'
         # Sets
-        self._src_segmentation_dataset = src_segmentation_dataset
+        self._src_segmentation_dataset = os.path.join(src_segmentation_dataset, '')
 
     @property
     def preprocessing_function(self):
