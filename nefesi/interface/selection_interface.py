@@ -1,7 +1,7 @@
 import os
 from os.path import relpath
 
-from ..interface.calc_indexs_interface import CalcIndexsInterface
+from ..interface.calc_indexes_interface import CalcIndexesInterface
 
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
@@ -25,7 +25,7 @@ class SelectionInterface():
         self.window.title("Nefesi")
         #TOP Part with general info of viewing and some setteables
         self.set_make_analysis_frame()
-        self.set_make_indexs_calc_frame()
+        self.set_make_indexes_calc_frame()
         self.set_select_action_frame()
 
         #self.plot_general_index(index='orientation')
@@ -38,9 +38,9 @@ class SelectionInterface():
         label.grid (row=0, column=0, sticky=E, pady=(6,3), padx=(6,1))
         button.grid(row=0, column=1, sticky=W, pady=(6,3), padx=(1,6))
 
-    def set_make_indexs_calc_frame(self):
-        label = Label(master=self.window, text="Make script for calc indexs")
-        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexs_calcs_button)
+    def set_make_indexes_calc_frame(self):
+        label = Label(master=self.window, text="Make script for calc indexes")
+        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexes_calcs_button)
         label.grid (row=1, column=0, sticky=E, pady=(3,3), padx=(6,1))
         button.grid(row=1, column=1, sticky=W, pady=(3,3), padx=(1,6))
 
@@ -78,6 +78,6 @@ class SelectionInterface():
         MakeAnalysisInterface()
 
 
-    def _on_click_make_indexs_calcs_button(self):
+    def _on_click_make_indexes_calcs_button(self):
         self.window.destroy()
-        CalcIndexsInterface()
+        CalcIndexesInterface()

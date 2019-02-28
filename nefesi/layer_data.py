@@ -158,7 +158,7 @@ class LayerData(object):
         :param orientation_degrees:
         :param thr_pc:
         :param concept:
-        :param indexes: list of indexs to calc (or none for all)
+        :param indexes: list of indexes to calc (or none for all)
         accepted --> ['symmetry', 'orientation', 'color', 'class', 'population code', 'object']
         :return:
         """
@@ -185,7 +185,7 @@ class LayerData(object):
             symmetry[-1] = np.mean(symmetry[:-1])
             index['symmetry'] = symmetry
 
-        if 'color' or 'ivet_color' in indexes:
+        if 'color' in indexes or 'ivet_color' in indexes:
             index['color'] = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
                                                               neuron_idx=neuron_idx, th=thr_pc)
             index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
@@ -193,7 +193,7 @@ class LayerData(object):
         if 'class' in indexes:
             index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
 
-        if 'object':
+        if 'object' in indexes:
             index['object'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
                                                               neuron_idx=neuron_idx, concept='object', th=thr_pc)
 
@@ -618,7 +618,7 @@ class LayerData(object):
     def get_index_calculated_keys(self):
         keys = set()
         for neuron in self.neurons_data:
-            keys |= set(neuron.get_keys_of_indexs())
+            keys |= set(neuron.get_keys_of_indexes())
         return keys
 
     def erase_index(self, index_to_erase):
@@ -627,6 +627,6 @@ class LayerData(object):
 
     def is_not_calculated(self, key):
         for neuron in self.neurons_data:
-            if key not in neuron.get_keys_of_indexs():
+            if key not in neuron.get_keys_of_indexes():
                 return True
         return False

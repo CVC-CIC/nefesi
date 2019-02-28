@@ -418,5 +418,5 @@ class NeuronData(object):
             return len(class_idx)
         #population_code_idx = get_population_code_idx(self, labels, threshold)
 
-    def get_keys_of_indexs(self):
+    def get_keys_of_indexes(self):
         return self.selectivity_idx.keys()

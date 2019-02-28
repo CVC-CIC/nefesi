@@ -27,6 +27,7 @@ from .popup_windows.one_layer_popup_window import OneLayerPopupWindow
 from .popup_windows.neuron_window import NeuronWindow
 from .popup_windows.confirm_popup import ConfirmPopup
 from .popup_windows.erase_calculated_index_popup import EraseCalculatedIndexPopup
+from .popup_windows.select_index_window import SelectIndexWindow
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
@@ -38,7 +39,6 @@ class Interface():
     def __init__(self, network_data, title = 'Nefesi'):
         self.event_controller = events.EventController(self)
         self.network_data = network_data
-        #self.network_data.indexs_accepted = self.network_data.get_indexs_accepted()
         self.visible_plots_canvas = np.zeros(MAX_PLOTS_VISIBLES_IN_WINDOW,
                                 dtype=np.dtype([('canvas', np.object), ('used',np.bool),
                                                 ('index', 'U64'), ('special_value',np.object)]))
@@ -168,7 +168,7 @@ class Interface():
         config_menu.add_command(label="Set Label traduction", command=self.set_labels_dict)
         config_menu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
         config_menu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
-        config_menu.add_command(label='Update Indexs Accepted', command=self.update_indexs_accepted)
+        config_menu.add_command(label='Update Indexes Accepted', command=self.update_indexes_accepted)
         config_menu.add_command(label='Erase calculated index', command=self.erase_calculated_index)
         menubar.add_cascade(label="Configuration", menu=config_menu)
         plot_menu = Menu(menubar)
@@ -231,8 +231,12 @@ class Interface():
         popup = EraseCalculatedIndexPopup(master = self.window, network_data = self.network_data)
         self.window.wait_window(popup.top)
 
-    def update_indexs_accepted(self):
-        self.network_data.indexs_accepted = self.network_data.get_indexs_accepted()
+    def update_indexes_accepted(self):
+        popup = SelectIndexWindow(master=self.window, actual_indexes=self.network_data.indexs_accepted)
+        self.window.wait_window(popup.top)
+        if popup.new_indexes != -1:
+            self.network_data.indexs_accepted = popup.new_indexes
+
 
     def set_model(self):
         network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)")

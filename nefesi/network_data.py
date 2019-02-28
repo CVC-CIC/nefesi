@@ -48,7 +48,7 @@ class NetworkData(object):
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
                  default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
-                 default_thr_class_idx = .1, default_file_name = None):
+                 default_thr_class_idx = .1, default_file_name = None, indexes_accepted = ALL_INDEX_NAMES):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
@@ -59,7 +59,7 @@ class NetworkData(object):
         self.default_thr_pc = default_thr_pc
         #self.default_thr_class_idx = default_thr_class_idx
         self.default_file_name = default_file_name
-        self.indexs_accepted = self.get_indexs_accepted()
+        self.indexs_accepted = indexes_accepted
         self.MIN_PROCESS_TIME_TO_OVERWRITE = MIN_PROCESS_TIME_TO_OVERWRITE
 
 
@@ -356,7 +356,7 @@ class NetworkData(object):
             inside the class property `layers`.
         """
         start_time = time.time() #in order to update things if something new was be calculated
-        sel_idx_dict = dict()
+        sel_idx_dict = {}
 
         if sel_index in ['concept', 'object', 'parts', 'material']:
             if not self.addmits_concept_selectivity():
@@ -390,7 +390,7 @@ class NetworkData(object):
                     end_time = time.time()
                     if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
                         if verbose:
-                            print("Layer: "+l+" saving changes")
+                            print("Layer: "+l+" - Index: "+index_name+" saving changes")
                         # Update only the modelName.obj
                         self.save_to_disk(file_name=None, save_model=False)
                     start_time = end_time
@@ -829,7 +829,7 @@ class NetworkData(object):
         except:
             return False
 
-    def get_calculated_indexs_keys(self):
+    def get_calculated_indexes_keys(self):
         keys = set()
         for layer in self.layers_data:
             keys |= layer.get_index_calculated_keys()
@@ -854,8 +854,6 @@ class NetworkData(object):
     def erase_index_from_layers(self, layers, index_to_erase):
         for layer_name in layers:
             self.get_layer_by_name(layer_name).erase_index(index_to_erase)
-    def get_indexs_accepted(self):
-        return ALL_INDEX_NAMES+['object'] if self.addmits_concept_selectivity() else ALL_INDEX_NAMES
 
 
 def get_model_layer_names(model, regEx='.*'):

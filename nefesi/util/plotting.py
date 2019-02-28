@@ -541,7 +541,7 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     nf_size = network_data.get_neuron_of_layer(layer_name, 1).neuron_feature.size[0]
 
     pcs_of_layer = list(pc_dict[layer_name].keys())
-    pcs_of_layer.sort(reverse=True)
+    pcs_of_layer.sort()
     image_axes = np.zeros(len(pcs_of_layer), np.object)
     for k, j in enumerate(pcs_of_layer):
         pc_dict[layer_name][j] = np.sort(pc_dict[layer_name][j], order='value')[::-1]
