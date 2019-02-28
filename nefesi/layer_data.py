@@ -365,6 +365,7 @@ class LayerData(object):
             height = row_fin - row_ini
             width = col_fin - col_ini
             self.receptive_field_size = (width, height)
+        print(self.layer_id, self.receptive_field_size)
 
     def get_location_from_rf(self, location):
         """Given a pixel of an image (x, y), returns a location in the map

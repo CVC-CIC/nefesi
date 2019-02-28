@@ -862,3 +862,19 @@ def get_model_layer_names(model, regEx='.*'):
         regEx = re.compile(regEx)
         # Select the layerNames that satisfies RegEx
         return list(filter(regEx.match, [layer.name for layer in model.layers]))
+
+
+def get_layer_inputs(model, layer_id):
+    from keras.layers.wrappers import Wrapper
+    from keras.models import Model
+
+    inputs = []
+    layer = [l for l in model.layers if l.layer_id == layer_id]
+    layer = layer[0]
+    for i, node in enumerate(layer._inbound_nodes):
+        node_key = layer.name + '_ib-' + str(i)
+        if node_key in model._network_nodes:
+            for inbound_layer in node.inbound_layers:
+                if isinstance(inbound_layer, Wrapper) and isinstance(inbound_layer.layer, Model):
+                    inputs.append(inbound_layer)
+    return inputs

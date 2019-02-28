@@ -46,7 +46,11 @@ class ImageDataset(object):
 
         #Verify that is None or a valid formatted tuple
         if type(target_size) is tuple:
-            if len(target_size) != 2 or type(target_size[0]) != int or type(target_size[1]) != int:
+            if len(target_size) != 2:
+                raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
+            if target_size[0] is None and target_size[1] is None:
+                target_size = (224, 224)
+            if type(target_size[0]) != int or type(target_size[1]) != int:
                 raise ValueError("target_size must be a (height, width) tuple (or None). "+str(target_size)+" not valid.")
         elif type(target_size) is not None:
             raise ValueError("target_size must be a (height, width) tuple (or None). '"+str(type(target_size))+
@@ -59,14 +63,15 @@ class ImageDataset(object):
         return self._src_dataset
     @src_dataset.setter
     def src_dataset(self,src_dataset):
-        if type(src_dataset) is not str:
-            raise ValueError("src_dataset attribute must be str")
-        elif not os.path.isdir(src_dataset):
-            raise FileNotFoundError(src_dataset+" not exists or is not a directory")
-        elif os.listdir(src_dataset) == []:
-            warnings.warn(src_dataset+" is an empty directory",FutureWarning)
-        if not src_dataset.endswith('/'):
-            src_dataset += '/'
+        if src_dataset is not None:
+            if type(src_dataset) is not str:
+                raise ValueError("src_dataset attribute must be str")
+            elif not os.path.isdir(src_dataset):
+                raise FileNotFoundError(src_dataset+" not exists or is not a directory")
+            elif os.listdir(src_dataset) == []:
+                warnings.warn(src_dataset+" is an empty directory",FutureWarning)
+            if not src_dataset.endswith('/'):
+                src_dataset += '/'
         # Sets
         self._src_dataset = src_dataset
 
@@ -76,14 +81,15 @@ class ImageDataset(object):
 
     @src_segmentation_dataset.setter
     def src_segmentation_dataset(self,src_segmentation_dataset):
-        if type(src_segmentation_dataset) is not str:
-            raise ValueError("src_dataset attribute must be str")
-        elif not os.path.isdir(src_segmentation_dataset):
-            raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
-        elif os.listdir(src_segmentation_dataset) == []:
-            warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
-        if not src_segmentation_dataset.endswith('/'):
-            src_segmentation_dataset += '/'
+        if src_segmentation_dataset is not None:
+            if type(src_segmentation_dataset) is not str:
+                raise ValueError("src_dataset attribute must be str")
+            elif not os.path.isdir(src_segmentation_dataset):
+                raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
+            elif os.listdir(src_segmentation_dataset) == []:
+                warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
+            if not src_segmentation_dataset.endswith('/'):
+                src_segmentation_dataset += '/'
         # Sets
         self._src_segmentation_dataset = src_segmentation_dataset
 
@@ -96,10 +102,11 @@ class ImageDataset(object):
         if preprocessing_function is not None:
             #if function don't takes one non-default argument
             if callable(preprocessing_function):
-                if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
-                    raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
-                                     " (any number of default arguments also admitted) and must return a numpy tensor of same"
-                                     "dimension.")
+                pass
+                # if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
+                #     raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
+                #                      " (any number of default arguments also admitted) and must return a numpy tensor of same"
+                #                      "dimension.")
             #if not is None or a function
             else:
                 raise ValueError("preprocessing_function must be None or a function (that takes a numpy tensor 4D"

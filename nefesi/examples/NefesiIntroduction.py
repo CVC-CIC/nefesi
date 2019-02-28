@@ -3,11 +3,13 @@ This file contains a toy examples to have a first contact with Nefesi, and Keras
 This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2.0, and python 3.6 (with anaconda3 interpreter)
 """
 
-from keras.applications.vgg16 import VGG16, preprocess_input
+#from keras.applications.vgg16 import VGG16, preprocess_input
+from keras.applications.xception import Xception, preprocess_input
+# model.save(file_name)
 from keras.models import load_model #For load local keras models (h5 files)
-from ..util.general_functions import have_all_imagenet_segmentation
-#from nefesi.network_data import NetworkData
-#from nefesi.util.image import ImageDataset
+#from nefesi.util.general_functions import have_all_imagenet_segmentation
+from nefesi.network_data import NetworkData
+from nefesi.util.image import ImageDataset
 import numpy as np
 import time
 import pickle
@@ -19,14 +21,17 @@ gpu.assignGPU()
 def main():
 	start = time.time()
 	#example1SaveModel(VGG16) #Charge a standard model and save it locally
+	#example1SaveModel(Xception,'/home/ramon/work/nefesi/DataXception') #Charge a standard model and save it locally
 	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
+	#example2ChargeModel('/home/ramon/work/nefesi/DataXception/xception_weights_tf_dim_ordering_tf_kernels.h5')
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
-	#example5NetworkEvaluation('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/eric/Nefesi/Data/Vgg16Efficiency/')
+#	example5NetworkEvaluation('/home/eric/Nefesi/Data/vgg16.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
+	example5NetworkEvaluation('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	#print("TIME ELAPSED: "+str(time.time()-start))
-	have_all_imagenet_segmentation('/datatmp/datasets/ImageNetFused/')
+	#have_all_imagenet_segmentation('/datatmp/datasets/ImageNetFused/')
 	#tree = pickle.load(open('imagenet_tree.tree', 'rb'))
 	#names, freqs, leaf_info, first_class_id = gf.get_labels_and_freqs_for_tree_level(tree, level = 11)
 	#from nefesi.util import plotting as plt
@@ -261,7 +266,7 @@ def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 	#Take the instance (of previous example)
 	nefesiModel = example3NefesiInstance(model_file_name)
 	#Set the dataset that will be use in analisis
-	nefesiModel.dataset = chargeNefesiImageDataset(dataset_folder)
+	nefesiModel.dataset = chargeNefesiImageDataset(dataset_folder, target_size = nefesiModel.model.get_input_shape_at(0)[1:3])
 	print("Dataset saved correctly and assigned to Nefesi object (NetworkData) correctly")
 	#save_path atttribute save the path where results will be saved. This attribute (same as dataset) is optional, because
 	#can be initialized in function nefesiModel.eval_network(...) that will see in next example
@@ -281,7 +286,8 @@ def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 	An example of name list can be... ['block1_conv1', 'block2_pool', 'block5_conv3'] for analyze only thats 3 layers
 	"""
 	#Select to analyze first conv of block 1, 3 and 5 (init, middle & end)
-	nefesiModel.layers_data = "block(3|5)_conv(1)"
+	#nefesiModel.layers_data = "block(3|5)_conv(1)"
+	nefesiModel.layers_data = "conv2d_(1|2)"
 	#nefesiModel.layers_data = "fc2"
 	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze\n"
 															  "NetworkData object is full configured now")
@@ -290,7 +296,7 @@ def example4FullFillNefesiInstance(model_file_name, dataset_folder, save_folder)
 """
 Instantiate a NefesiImageDataset instance.
 """
-def chargeNefesiImageDataset(dataset_folder):
+def chargeNefesiImageDataset(dataset_folder, target_size=(224, 224)):
 	"""
 	Nefesi uses a ImageDataset to evaluate the features of the network. This Dataset is specified as an object, and have
 	 the preproces of each image (resize, crop... or specific function), in order to give to an heterogeneus dataset a list
@@ -303,16 +309,15 @@ def chargeNefesiImageDataset(dataset_folder):
 	ClassAFolder -> Img1, Img2, Img3...
 	ClassBFolder -> Img1, Img2, Img3...
 	"""
-	path = '../Datasets/TinyImagenet/trainSubset/'
+	#path = '../Datasets/TinyImagenet/trainSubset/'
 
 	#target_size is the size of the images will be resized and cropped before to put in the net, in this case the best
 	#option is to set as (224 (height), 224 (width)) cause this is the input size of VGG16.
-	targetSize = (224,224)
 	#the color mode selected ('rgb' or 'grayscale') is the color mode to READ the images, not the internal treatment colorMode.
 	#In the most cases it will be 'rgb', cause is the common input of the nets and have more info than 'grayscale'.
 	colorMode = 'rgb'
 	#Calls to constructor. Preprocess_input is the function that applies the preprocess with the VGG16 was trained.
-	dataset = ImageDataset(src_dataset=dataset_folder, target_size=targetSize, preprocessing_function=preprocess_input, color_mode=colorMode)
+	dataset = ImageDataset(src_dataset=dataset_folder, target_size=target_size, preprocessing_function=preprocess_input, color_mode=colorMode)
 
 	return dataset
 
@@ -339,12 +344,13 @@ def example2ChargeModel(file_name):
 		Imports needed: from keras.models import load_model
 	"""
 	print(f"Loading {file_name} model")
-
 	model = load_model(file_name)
 
 	print("Model loaded. \n Many times, when model is loaded, 'UserWarning: No training configuration found in save file' can be raised. "
 		  "This is because the model saved was not compiled (model.compile(...)). This warning is not rellevant if you "
 		  "don't want to train the model further.")
+	from keras.utils.vis_utils import plot_model
+	plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
 	return model
 
 """
@@ -361,8 +367,8 @@ def example1SaveModel(model_function, path_name):
 	# https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5)
 	print(f"Charging model {model_function.__name__}")
 
-	model = model_function()
-
+	model = model_function(include_top=True, weights='imagenet', input_tensor=None, input_shape=(299,299,3), pooling=None, classes=1000)
+	# model = Xception(include_top=True, weights='imagenet', input_tensor=None, input_shape=(299,299,3), pooling=None, classes=1000)
 
 	# Save the model locally on path+name.h5 file.
 	import os
