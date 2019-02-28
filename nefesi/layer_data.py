@@ -6,6 +6,7 @@ from .neuron_feature import compute_nf, get_each_point_receptive_field,find_laye
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 from .class_index import get_concept_labels
+from .util.ColorNaming import colors as color_names
 from itertools import permutations
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
@@ -48,7 +49,7 @@ class LayerData(object):
 
     def sort_neuron_data(self):
         for neuron in self.neurons_data:
-            neuron.sortResults()
+            neuron.sortResults(reduce_data=True)
 
     def evaluate_activations(self, file_names, images, model, num_max_activations, batch_size,batches_to_buffer = 20):
         self.neurons_data = get_sorted_activations(file_names, images, model,
@@ -95,7 +96,7 @@ class LayerData(object):
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].color_selectivity_idx(model, self, dataset)
+                sel_idx[i] = self.neurons_data[i].ivet_color_selectivity_idx(model, self, dataset)
         elif index_name.lower() == 'orientation':
             #Size is (number of neurons, number of rotations with not 0 + mean)
             sel_idx = np.zeros((len(self.neurons_data), int(math.ceil(360/degrees_orientation_idx))), dtype=np.float)
@@ -129,45 +130,73 @@ class LayerData(object):
                 sel_idx[i] = self.neurons_data[i].single_concept_selectivity_idx(network_data=network_data,
                                                                                  layer_data=self, neuron_idx=i,
                                                                                  concept='object', th=thr_pc)
+        elif index_name.lower() == 'homogeneized_color':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
+            for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
+                sel_idx[i] = self.neurons_data[i].single_color_selectivity_idx(network_data=network_data,
+                                                                                 layer_name=self.layer_id, neuron_idx=i,
+                                                                                 th=thr_pc)
         elif index_name.lower() == 'population code':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.int)
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
-                sel_idx[i] = self.neurons_data[i].population_code_idx(labels, thr_pc)
+                sel_idx[i] = self.neurons_data[i].class_population_code(labels, thr_pc)
         else:
             raise ValueError("The 'index_name' argument should be one "
                              "of theses: "+str(network_data.indexs_accepted))
         return sel_idx
 
-    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1, concept='object'):
+    def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1,
+                                  indexes = None):
+        """
+
+        :param network_data:
+        :param neuron_idx:
+        :param orientation_degrees:
+        :param thr_pc:
+        :param concept:
+        :param indexes: list of indexs to calc (or none for all)
+        accepted --> ['symmetry', 'orientation', 'color', 'class', 'population code', 'object']
+        :return:
+        """
         assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
         model = network_data.model
         import time
         start_time = time.time()
         dataset = network_data.dataset
         neuron = self.neurons_data[neuron_idx]
-        index = dict()
-        index['color'] = neuron.color_selectivity_idx(model, self, dataset)
-        orientation = np.zeros(int(math.ceil(360/orientation_degrees)), dtype=np.float)
-        orientation[:-1] = neuron.orientation_selectivity_idx(model, self, dataset,
-                                                         degrees_to_rotate=orientation_degrees)
-        orientation[-1] = np.mean(orientation[:-1])
-        index['orientation'] = orientation
-        symmetry = np.zeros(len(SYMMETRY_AXES)+1, dtype=np.float)
-        symmetry[:-1] = neuron.symmetry_selectivity_idx(model, self, dataset)
-        symmetry[-1] = np.mean(symmetry[:-1])
-        index['symmetry'] = symmetry
-        index['population code'] = neuron.population_code_idx(network_data.default_labels_dict, thr_pc)
-        index['class'] = neuron.single_class_selectivity_idx(network_data.default_labels_dict, thr_pc)
-        index['classes on pc'] = neuron.classes_in_pc(network_data.default_labels_dict,thr_pc)
-        if network_data.addmits_concept_selectivity():
-            index['concept'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
-                                                              neuron_idx=neuron_idx, concept=concept, th=thr_pc)
-            index['conceptpc'] = neuron.concept_population_code(layer_data=self, network_data=network_data,
-                                                              neuron_idx=neuron_idx, concept=concept, th=thr_pc)
-            index['simple concept'] = neuron.single_concept_selectivity_idx(layer_data=self, network_data=network_data,
-                                                              neuron_idx=neuron_idx, concept=concept, th=thr_pc)
+        index = {}
+        if indexes is None:
+            indexes = network_data.indexs_accepted
+
+        if 'orientation' in indexes:
+            orientation = np.zeros(int(math.ceil(360/orientation_degrees)), dtype=np.float)
+            orientation[:-1] = neuron.orientation_selectivity_idx(model, self, dataset,
+                                                             degrees_to_rotate=orientation_degrees)
+            orientation[-1] = np.mean(orientation[:-1])
+            index['orientation'] = orientation
+
+        if 'symmetry' in indexes:
+            symmetry = np.zeros(len(SYMMETRY_AXES)+1, dtype=np.float)
+            symmetry[:-1] = neuron.symmetry_selectivity_idx(model, self, dataset)
+            symmetry[-1] = np.mean(symmetry[:-1])
+            index['symmetry'] = symmetry
+
+        if 'color' or 'ivet_color' in indexes:
+            index['color'] = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
+                                                              neuron_idx=neuron_idx, th=thr_pc)
+            index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
+
+        if 'class' in indexes:
+            index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
+
+        if 'object':
+            index['object'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
+                                                              neuron_idx=neuron_idx, concept='object', th=thr_pc)
+
         if network_data.save_changes:
             end_time = time.time()
             if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
@@ -196,7 +225,8 @@ class LayerData(object):
             labels = list(dict_labels.values())
         elif entity == 'object':
             labels = list(get_concept_labels(entity))
-
+        elif entity == 'color':
+            labels = color_names
         if th is None:
             th = network_data.default_thr_pc
 
@@ -205,7 +235,10 @@ class LayerData(object):
             if entity == 'class':
                 selective_entities = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)
             elif entity == 'object':
-                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i)
+                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i,th=th)
+            elif entity == 'color':
+                selective_entities = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
+                                                                    neuron_idx=i,th=th)
             if selective_entities['label'][0] == 'None':
                 continue
             else:
@@ -254,6 +287,8 @@ class LayerData(object):
             labels = list(dict_labels.values())
         elif entity == 'object':
             labels = list(get_concept_labels(entity))
+        elif entity == 'color':
+            labels = color_names
 
         if th is None:
             th = network_data.default_thr_pc
@@ -264,7 +299,11 @@ class LayerData(object):
             if entity == 'class':
                 selective_entities = neuron.class_selectivity_idx(labels=dict_labels, threshold=th)
             elif entity == 'object':
-                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i)
+                selective_entities = neuron.concept_selectivity_idx(layer_data=self,network_data=network_data, neuron_idx=i, th=th)
+            elif entity == 'color':
+                selective_entities = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
+                                                                    neuron_idx=i,th=th)
+
             if selective_entities['label'][0] == 'None':
                 continue
             else:
@@ -491,9 +530,9 @@ class LayerData(object):
             max_act.append(f.activations[0])
 
         # get the activations for the patches
-        activations = get_activations(model, neuron_images,
-                                      print_shape_only=True,
-                                      layer_name=target_layer.layer_id)
+        xy_locations, activations = get_activations(model, neuron_images,
+                                      #print_shape_only=True,
+                                      layers_data=[target_layer.layer_id])
 
         activations = activations[0]
         # get the activations shape, where:

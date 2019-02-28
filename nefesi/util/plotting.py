@@ -9,6 +9,7 @@ from sklearn.manifold import TSNE
 from matplotlib.widgets import RadioButtons,Button, Slider
 from scipy.interpolate import interp1d
 from ..class_index import get_concept_labels
+from .ColorNaming import colors as color_names
 import networkx as nx
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
@@ -286,8 +287,10 @@ def plot_nf_of_entities_in_pc(network_data, master = None, entity='class'):
     radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
     if entity == 'class':
         labels = np.sort(np.array(list(network_data.default_labels_dict.values())))
-    if entity == 'object':
+    elif entity == 'object':
         labels = np.sort(get_concept_labels(entity))
+    elif entity == 'color':
+        labels = np.sort(np.array(color_names))
 
     def updateslide(val):
         plt.suptitle(labels[int(val)],y=0.7,x=0.5)
@@ -492,18 +495,22 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     #given a nefesimodel, a layer, and a dictionary of the population codes for a given class, plots the different neuron_features were the class appears
     # first we create a dictionary with all the classes above a threshold (here 0.1)
     entity_info = {}
+    #Detect all neurons with this entity_name in his population code (and sabes idx, entities and value of entity_name)
     for layer in network_data.layers_data:
         layer_entity = []
-        if entity=='class':
-            for i, neuron in enumerate(layer.neurons_data):
-                if neuron.population_code_idx(labels = network_data.default_labels_dict) > 0:
-                    layer_entity.append((i, tuple(neuron.classes_in_pc(labels = network_data.default_labels_dict))))
-        elif entity=='object':
-            for i, neuron in enumerate(layer.neurons_data):
-                if neuron.concept_population_code(layer_data=layer_name, network_data=network_data,neuron_idx=i,
-                                                  concept=entity) > 0:
-                    layer_entity.append((i, tuple(neuron.concept_selectivity_idx(layer_data=layer_name,
-                                                    network_data=network_data, neuron_idx=i,concept=entity)['label'])))
+        for i, neuron in enumerate(layer.neurons_data):
+            if entity == 'class':
+                ents = neuron.class_selectivity_idx(labels = network_data.default_labels_dict)
+            elif entity == 'object':
+                ents = neuron.concept_selectivity_idx(layer_data=layer_name,
+                                                      network_data=network_data, neuron_idx=i, concept=entity)
+            elif entity == 'color':
+                ents = neuron.color_selectivity_idx(network_data=network_data, layer_name=layer_name, neuron_idx=i)
+
+            if entity_name in ents['label']:
+                value = ents[ents['label'] == entity_name]['value'][0]
+                layer_entity.append((i, tuple(ents['label']),value))
+
         entity_info[layer.layer_id] = layer_entity
 
 
@@ -513,12 +520,19 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     for layername in entity_info.keys():
         pc_dict[layername] = {}
         for i, neuron in enumerate(entity_info[layername]):
-            if entity_name in neuron[1]:
-                pc_number = len(neuron[1])
-                if pc_number not in pc_dict[layername]:
-                    pc_dict[layername][pc_number] = [neuron]
-                else:
-                    pc_dict[layername][pc_number].append(neuron)
+            pc_number = len(neuron[1])
+            if pc_number not in pc_dict[layername]:
+                pc_dict[layername][pc_number] = [neuron]
+            else:
+                pc_dict[layername][pc_number].append(neuron)
+        #transform the layer info from list to an structured array, for make easier the sort by value
+        if layername == layer_name and len(list(pc_dict[layername].keys())) > 0:
+            for pc_number in pc_dict[layername].keys():
+                pc_dict[layername][pc_number] = np.array(pc_dict[layername][pc_number], dtype=[('idx', np.int),
+                                                                                               ('labels', np.object),
+                                                                                               ('value', np.float)])
+
+
 
 
 
@@ -530,7 +544,9 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     pcs_of_layer.sort(reverse=True)
     image_axes = np.zeros(len(pcs_of_layer), np.object)
     for k, j in enumerate(pcs_of_layer):
+        pc_dict[layer_name][j] = np.sort(pc_dict[layer_name][j], order='value')[::-1]
         neurons_num=len(pc_dict[layer_name][j])
+
         neuronfeature= Image.new('RGB',(nf_size*neurons_num,nf_size))
         for i in range(neurons_num):
             neuron_num= pc_dict[layer_name][j][i][0]

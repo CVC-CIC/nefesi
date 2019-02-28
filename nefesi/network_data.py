@@ -1,4 +1,4 @@
-import pickle
+import dill as pickle
 import os
 import time
 import datetime
@@ -15,6 +15,7 @@ from .layer_data import LayerData
 from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
+from .util.ColorNaming import colors as color_names
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -458,6 +459,8 @@ class NetworkData(object):
             labels = np.array(list(self.default_labels_dict.values()))
         elif entity == 'object':
             labels = get_concept_labels(entity)
+        elif entity == 'color':
+            labels =np.array(color_names)
 
         pairs_matrix = np.zeros((len(layers),len(labels),len(labels)),dtype=np.float)
 
@@ -481,7 +484,8 @@ class NetworkData(object):
             labels = np.array(list(self.default_labels_dict.values()))
         elif entity == 'object':
             labels = get_concept_labels(entity)
-
+        elif entity == 'color':
+            labels = np.array(color_names)
         representation_vector = np.zeros((len(layers),len(labels)),dtype=np.float)
 
         for l, layer in enumerate(layers):
@@ -795,7 +799,7 @@ class NetworkData(object):
             if layer_of_model.layer_id == layer:
                 return layer_of_model.neurons_data[neuron_idx]
         raise ValueError("Layer: " + layer + " doesn't exists")
-    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=None, thr_pc=None, concept = 'object' ):
+    def get_all_index_of_neuron(self, layer, neuron_idx,orientation_degrees=None, thr_pc=None):
         if orientation_degrees is None:
             orientation_degrees = self.default_degrees_orientation_idx
         if thr_pc is None:
@@ -806,7 +810,7 @@ class NetworkData(object):
         if layer is not None:
             return layer.get_all_index_of_a_neuron(network_data=self,neuron_idx=neuron_idx,
                                                                 orientation_degrees=orientation_degrees,
-                                                                thr_pc=thr_pc, concept=concept)
+                                                                thr_pc=thr_pc)
         else:
             raise ValueError("Layer: " + layer + " doesn't exists")
 

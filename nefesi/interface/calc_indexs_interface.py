@@ -9,7 +9,7 @@ try:
 except ImportError:
     from Tkinter import *
     from Tkinter import ttk
-import pickle
+import dill as pickle
 
 class CalcIndexsInterface():
     def __init__(self):

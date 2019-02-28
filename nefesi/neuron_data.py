@@ -4,7 +4,7 @@ from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
 from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron
-from .color_index import get_color_selectivity_index
+from .color_index import get_ivet_color_selectivity_index, get_color_selectivity_index
 from .orientation_index import get_orientation_index
 
 
@@ -43,8 +43,6 @@ class NeuronData(object):
         self._max_activations = max_activations
         self._batch_size = batch_size
         self._buffer_size = self._max_activations + (self._batch_size*buffered_iterations)
-        # If is the final iteration reduce the size of activations, images_id and xy_locations to max_activations
-        self._reduce_data = True
         self.activations = np.zeros(shape=self._buffer_size)
         self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
         self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
@@ -71,16 +69,14 @@ class NeuronData(object):
         self.xy_locations[self._index:end_idx,:] = xy_locations
         self._index += len(activations)
         if self._index+len(activations) > self._buffer_size:
-            self._reduce_data = False
-            self.sortResults()
-            self._reduce_data = True
-            #self._index = self._max_activations #Is maded on function (in order to make more consistent on last iteration
+            self.sortResults(reduce_data=False)
+            #self._index = self._max_activations #Is made on function (in order to make more consistent on last iteration)
 
 
-    def sortResults(self):
+    def sortResults(self, reduce_data = False):
         idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
         self._index = self._max_activations
-        if self._reduce_data:
+        if reduce_data:
             self.activations = self.activations[idx]
             self.images_id = self.images_id[idx]
             self.xy_locations = self.xy_locations[idx,:]
@@ -229,7 +225,7 @@ class NeuronData(object):
         """
         self.selectivity_idx.pop(idx,None)
 
-    def color_selectivity_idx(self, model, layer_data, dataset):
+    def ivet_color_selectivity_idx(self, model, layer_data, dataset):
         """Returns the color selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
@@ -238,14 +234,46 @@ class NeuronData(object):
 
         :return: Float, value of color selectivity index.
         """
-        color_idx = self.selectivity_idx.get('color')
-        if color_idx is not None:
-            return color_idx
+        key = 'ivet_color'
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = get_ivet_color_selectivity_index(self, model,
+                                                     layer_data, dataset)
+        return self.selectivity_idx[key]
 
-        color_idx = get_color_selectivity_index(self, model,
-                                                layer_data, dataset)
-        self.selectivity_idx['color'] = color_idx
-        return color_idx
+    def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+        """Returns the color selectivity index for this neuron.
+
+        :param model: The `keras.models.Model` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+
+        :return: Float, value of color selectivity index.
+        """
+        key = 'color'+type+str(th)
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = get_color_selectivity_index(network_data=network_data,
+                                                                        layer_name=layer_name,
+                                                                        neuron_idx=neuron_idx,
+                                                                        type=type, th = th)
+            print('Color idx: '+layer_name+' '+str(neuron_idx)+'/'+
+                  str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
+
+        return self.selectivity_idx[key]
+
+    def color_population_code(self,network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+        color_idx = self.color_selectivity_idx(network_data=network_data, layer_name=layer_name,
+                                                neuron_idx=neuron_idx, type=type, th = th)
+        if color_idx[0]['label'] == 'None':
+            return 0
+        else:
+            return len(color_idx)
+
+    def single_color_selectivity_idx(self,network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+        color_idx = self.color_selectivity_idx(network_data=network_data, layer_name=layer_name,
+                                                neuron_idx=neuron_idx, type=type, th = th)
+
+        return (color_idx[0]['label'], round(np.sum(color_idx['value']),3))
+
 
     def orientation_selectivity_idx(self, model, layer_data, dataset, degrees_to_rotate = 15):
         """Returns the orientation selectivity index for this neuron.
@@ -258,14 +286,10 @@ class NeuronData(object):
         :return: List of floats, values of orientation selectivity index.
         """
         key = 'orientation'+str(int(degrees_to_rotate))
-        orientation_idx = self.selectivity_idx.get(key)
-        if orientation_idx is not None:
-            return orientation_idx
-
-        orientation_idx = get_orientation_index(self, model,
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = get_orientation_index(self, model,
                                                 layer_data, dataset,degrees_to_rotate = degrees_to_rotate)
-        self.selectivity_idx[key] = orientation_idx
-        return orientation_idx
+        return self.selectivity_idx[key]
 
     def symmetry_selectivity_idx(self, model, layer_data, dataset):
         """Returns the symmetry selectivity index for this neuron.
@@ -277,13 +301,10 @@ class NeuronData(object):
         :return: List of floats, values of symmetry selectivity index.
         """
         key= 'symmetry'+str(SYMMETRY_AXES)
-        symmetry_idx = self.selectivity_idx.get(key)
-        if symmetry_idx is not None:
-            return symmetry_idx
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = sym.get_symmetry_index(self, model, layer_data, dataset)
 
-        symmetry_idx = sym.get_symmetry_index(self, model, layer_data, dataset)
-        self.selectivity_idx[key] = symmetry_idx
-        return symmetry_idx
+        return self.selectivity_idx[key]
 
     def concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1):
         """Returns the class selectivity index for this neuron.
@@ -297,16 +318,17 @@ class NeuronData(object):
         :raise:
             TypeError: If `labels` is None or not a dictionary.
         """
-        concept_idx = self.selectivity_idx.get('concept'+concept+str(th))
-        if concept_idx is not None:
-            return concept_idx
-        if not isinstance(layer_data,str):
-            layer_data = layer_data.layer_id
-        concept_idx = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data,
-                                                        neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1)
+        key = 'concept'+concept+str(th)
+        if key not in self.selectivity_idx:
+            if not isinstance(layer_data,str):
+                layer_data = layer_data.layer_id
 
-        self.selectivity_idx['concept'+concept+str(th)] = concept_idx
-        return concept_idx
+            self.selectivity_idx[key] = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data,
+                                                        neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1)
+            print('Color idx: ' + layer_data.layer_id + ' ' + str(neuron_idx) + '/' +
+                  str(len(layer_data.neurons_data)))
+
+        return self.selectivity_idx[key]
 
     def single_concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1):
         """Returns the class selectivity index for this neuron.
@@ -360,28 +382,23 @@ class NeuronData(object):
         :raise:
             TypeError: If `labels` is None or not a dictionary.
         """
-        class_idx = self.selectivity_idx.get('class'+str(threshold))
-        if class_idx is not None:
-            return class_idx
+        key = 'class'+str(threshold)
+        if key not in self.selectivity_idx:
+            #Labels always must to be a dictionary
+            if type(labels) is not dict and labels is not None:
+                raise TypeError("The 'labels' argument should be a dictionary if is specified")
+            self.selectivity_idx[key] = get_class_selectivity_idx(self, labels, threshold)
 
-        #Labels always must to be a dictionary
-        if type(labels) is not dict and labels is not None:
-            raise TypeError("The 'labels' argument should be a dictionary if is specified")
-
-        class_idx = get_class_selectivity_idx(self, labels, threshold)
-        self.selectivity_idx['class'+str(threshold)] = class_idx
-        return class_idx
+        return self.selectivity_idx[key]
 
     def single_class_selectivity_idx(self,labels=None, threshold=.1):
         class_idx = self.class_selectivity_idx(labels=labels, threshold=threshold)
         return (class_idx[0]['label'], round(np.sum(class_idx['value']), 3))
 
     def classes_in_pc(self, labels=None, threshold=.1):
-        class_idx = self.class_selectivity_idx(labels=labels, threshold=threshold)
+        return self.class_selectivity_idx(labels=labels, threshold=threshold)['label']
 
-        return class_idx['label']
-
-    def population_code_idx(self, labels=None, threshold=0.1):
+    def class_population_code(self, labels=None, threshold=0.1):
         """Returns the population code index for this neuron.
 
         :param labels: Dictionary, key: name class, value: label class.
@@ -394,15 +411,12 @@ class NeuronData(object):
         :raise:
             TypeError: If `labels` is None or not a dictionary.
         """
-        key = 'population code'+str(round(threshold,2))
-        population_code_idx = self.selectivity_idx.get(key)
-        if population_code_idx is not None:
-            return population_code_idx
-
-        population_code_idx = get_population_code_idx(self, labels, threshold)
-
-        self.selectivity_idx[key] = population_code_idx
-        return population_code_idx
+        class_idx = self.class_selectivity_idx(labels=labels, threshold=threshold)
+        if class_idx[0]['label'] == 'None':
+            return 0
+        else:
+            return len(class_idx)
+        #population_code_idx = get_population_code_idx(self, labels, threshold)
 
     def get_keys_of_indexs(self):
         return self.selectivity_idx.keys()

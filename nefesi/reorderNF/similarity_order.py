@@ -1,4 +1,4 @@
-import pickle
+import dill as pickle
 import sys
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = ''

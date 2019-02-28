@@ -6,7 +6,7 @@ import warnings
 
 ACCEPTED_COLOR_MODES = ['rgb','grayscale']
 
-class ImageDataset(object):
+class ImageDataset():
     """This class stores the whole information about a dataset and provides
     some functions for load the images.
 
@@ -90,7 +90,11 @@ class ImageDataset(object):
                 warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
             if not src_segmentation_dataset.endswith('/'):
                 src_segmentation_dataset += '/'
+<<<<<<< HEAD
         # Sets
+=======
+            # Sets
+>>>>>>> 7272eb514900bb9f32eda37a48ce52f71e634f19
         self._src_segmentation_dataset = src_segmentation_dataset
 
     @property
@@ -102,11 +106,21 @@ class ImageDataset(object):
         if preprocessing_function is not None:
             #if function don't takes one non-default argument
             if callable(preprocessing_function):
+<<<<<<< HEAD
                 pass
                 # if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
                 #     raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
                 #                      " (any number of default arguments also admitted) and must return a numpy tensor of same"
                 #                      "dimension.")
+=======
+                """
+                if ((preprocessing_function.__code__.co_argcount - len(preprocessing_function.__defaults__)) != 1):
+                    raise ValueError("preprocessing_function argument must take a a numpy tensor 4D as argument"
+                                     " (any number of default arguments also admitted) and must return a numpy tensor of same"
+                                     "dimension.")
+                """
+                pass
+>>>>>>> 7272eb514900bb9f32eda37a48ce52f71e634f19
             #if not is None or a function
             else:
                 raise ValueError("preprocessing_function must be None or a function (that takes a numpy tensor 4D"
@@ -346,6 +360,7 @@ def image2max_gray(img):
     """
     x = img.reshape(-1, 3)
     M = (x - np.mean(x, axis=0))
+
     latent, coeff = np.linalg.eig(np.cov(M.T))
     res = np.dot(M, coeff[:, 0])
 

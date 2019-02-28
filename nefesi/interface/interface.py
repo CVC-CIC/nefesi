@@ -1,7 +1,7 @@
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
-PLOTTABLE_ENTITIES = ['class', 'object']
+PLOTTABLE_ENTITIES = ['class', 'object', 'color']
 COOCURRENCE_OPTIONS = ['1/PC', '1/2', 'local selectivity sum']
 REPRESENTATION_OPTIONS = ['1/PC', '1', 'local selectivity']
 
@@ -62,6 +62,10 @@ class Interface():
         self.general_info_label.pack()
         self.plot_general_index(index=None)
         self.set_menu_bar()
+
+        #network_data.layers_data[6].decomposition_nf(0, network_data.layers_data[7], network_data.model,
+         #                                            network_data.dataset)
+
         self.window.mainloop()
 
     @property

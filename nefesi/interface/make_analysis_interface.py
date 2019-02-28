@@ -21,7 +21,7 @@ except ImportError:
     from Tkinter import ttk
 
 from keras.models import load_model
-import pickle
+import dill as pickle
 import warnings
 
 class MakeAnalysisInterface():
