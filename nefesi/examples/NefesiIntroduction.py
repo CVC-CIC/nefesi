@@ -383,4 +383,24 @@ def example1SaveModel(model_function, path_name):
 	# Save the model (model) locally
 	model.save(file_name)
 
+import os
+from keras.applications.xception import Xception, preprocess_input
+def load_and_eval(model_file_name, dataset_folder, save_folder=None):
+	model = load_model(model_file_name)
+	nefesiModel = NetworkData(model=model) #Instantiate the NetworkData object
+	if save_folder is None:
+		save_folder=os.path.join(os.path.split(os.path.abspath(save_folder))[0],'/')
+	print(save_folder)
+	nefesiModel.save_path = save_folder
+
+	nefesiModel.dataset = ImageDataset(src_dataset=dataset_folder, preprocessing_function=preprocess_input)
+	nefesiModel.dataset.target_size = nefesiModel.model.get_input_shape_at(0)[1:3]
+
+	nefesiModel.layers_data = "conv2d_(1|2)"
+	print("Layers "+str(nefesiModel.get_layer_names_to_analyze())+" selected to analyze")
+
+	nefesiModel.eval_network(verbose=True, batch_size=100)
+
+load_and_eval('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/')
+
 main()
