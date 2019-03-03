@@ -237,7 +237,7 @@ class NetworkData(object):
             self.dataset.src_dataset,
             target_size=self.dataset.target_size,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             color_mode=self.dataset.color_mode
         )
 
@@ -254,14 +254,14 @@ class NetworkData(object):
             for j in range(neurons_of_layer):
                 self.layers_data[i].neurons_data[j] = NeuronData(num_max_activations, batch_size, buffered_iterations=buffer_size)
 
-
+        file_names = np.array(data_batch.filenames)
         start = time.time()
         for n_batches, imgs in enumerate(data_batch):
             images = imgs[0]
             # Apply the preprocessing function to the inputs
-            file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
+            actual_file_names = file_names[data_batch.index_array[idx_start: idx_end]]
             # Search the maximum activations
-            fill_all_layers_data_batch(file_names, images, self.model, self.layers_data)
+            fill_all_layers_data_batch(actual_file_names, images, self.model, self.layers_data)
 
             if verbose:
                 img_sec = idx_end / (time.time() - start)

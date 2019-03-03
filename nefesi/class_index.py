@@ -3,6 +3,7 @@ import os
 from .util import general_functions as gf
 from . import read_activations as read_act
 from anytree import Node
+from PIL import Image
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
@@ -128,18 +129,25 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
         segmentation = Segment_images(full_image_names)
 
     if not type == 'activation':
-        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
+        #If receptive field is not only... 0 to n
+        complex_type = len(np.unique(receptive_field)) > 2
+        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx,
+                                                          complex_type=complex_type)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)
     """
     general_hist = {}
     norm_activations = neuron.norm_activations
-    for i in range(len(segmentation)):
+    for i, segment in enumerate(segmentation):
+        segment = segment[concept]
         #Crop for only use the receptive field
         ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
         ri, rf, ci, cf = abs(ri), abs(rf), abs(ci), abs(cf)
-        cropped_segmentation = segmentation[i][concept][ri:rf, ci:cf]
+        #Resize segmentation if necessary
+        if network_data.dataset.target_size != segment.shape:
+            segment = np.array(Image.fromarray(segment).resize(network_data.dataset.target_size, Image.NEAREST))
+        cropped_segmentation = segment[ri:rf, ci:cf]
         activation = norm_activations[i] if type=='activation' else activations_masks[i][ri:rf, ci:cf]
         #Make individual hist
         ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,

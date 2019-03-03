@@ -251,7 +251,8 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
     return positions
 
 
-def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, type=1, thr_mth = 1, thr = 0.005):
+def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, show_activation = False,
+                     thr_mth = 1, thr = 0.005):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
     neuron_idx of layer layer_name
@@ -264,15 +265,13 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
     :param thr_mth = take max from the image (1), take max from all activatiosn (0)
     :return: An image that is the original image with a mask of the activation camp superposed
     """
-    show_activation = False
-    if type >2:
-        type -= 2
-        show_activation = True
-
-    activation_upsampled = get_image_activation(network_data, [image_name], layer_name, neuron_idx, type)[0]
+    layer = network_data.get_layer_by_name(layer_name)
+    complex_type = len(np.unique(layer.receptive_field_map)) > 2
+    activation_upsampled = get_image_activation(network_data, [image_name], layer_name=layer_name, neuron_idx=neuron_idx,
+                                                complex_type=complex_type)[0]
 
     if thr_mth==0:
-        max_act = np.max(network_data.get_layer_by_name(layer_name).neurons_data[neuron_idx].activations)
+        max_act = np.max(layer.neurons_data[neuron_idx].activations)
     else:
         max_act = np.max(activation_upsampled)
     norm_activation_upsampled = activation_upsampled / max_act

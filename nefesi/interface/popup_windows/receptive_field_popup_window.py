@@ -64,15 +64,11 @@ class ReceptiveFieldPopupWindow(object):
         master.pack(side=TOP, fill=X, expand="yes")
         ttk.Radiobutton(master, text="Original", variable=self.method_value, value=0,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
-        ttk.Radiobutton(master, text="Torralba", variable=self.method_value, value=1,
+        ttk.Radiobutton(master, text="Overlap Act", variable=self.method_value, value=1,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
-        ttk.Radiobutton(master, text="Vedaldi", variable=self.method_value, value=2,
+        ttk.Radiobutton(master, text="Activation", variable=self.method_value, value=2,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
-        ttk.Radiobutton(master, text="Act Torr", variable=self.method_value, value=3,
-                        command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
-        ttk.Radiobutton(master, text="Act Ved", variable=self.method_value, value=4,
-                        command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
-        ttk.Radiobutton(master, text="Segmentation", variable=self.method_value, value=5,
+        ttk.Radiobutton(master, text="Segmentation", variable=self.method_value, value=3,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         # checkbox_value = BooleanVar(master=master, value=True)
         # ttk.Checkbutton(master=master, text="Receptive camp",
@@ -81,16 +77,19 @@ class ReceptiveFieldPopupWindow(object):
 
     def _on_checkbox_clicked(self):
         value = self.method_value.get()
-        if 0<value<5:
+        if 0<value<3:
             img = get_image_masked(network_data=self.network_data, image_name=self.image_name,
                                    layer_name=self.layer_name, neuron_idx=self.neuron_idx,
-                                   type=self.method_value.get(), thr_mth=self.thr_mth.get(), thr=self.thr.get()/100)
+                                   show_activation= value == 2, thr_mth=self.thr_mth.get(), thr=self.thr.get()/100)
         else:
             img = self.network_data.dataset._load_image(self.image_name)
-            if value == 5:
+            if value == 3:
                 if self.network_data.dataset.src_segmentation_dataset is not None:
                     image_path = os.path.join(self.network_data.dataset.src_segmentation_dataset, self.image_name)+'.npz'
                     segmentation = np.load(image_path)['object']
+                    if self.network_data.dataset.target_size != segmentation.shape:
+                        segmentation = np.array(
+                            Image.fromarray(segmentation).resize(self.network_data.dataset.target_size, Image.NEAREST))
                 else:
                     from ...util.segmentation.Broden_analize import Segment_images
                     image_path = os.path.join(self.network_data.dataset.src_dataset, self.image_name)

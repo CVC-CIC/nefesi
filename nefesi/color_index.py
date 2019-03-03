@@ -27,7 +27,9 @@ def get_color_selectivity_index(network_data, layer_name, neuron_idx,  type='mea
 
 
     if not type == 'activation':
-        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
+        complex_type = len(np.unique(receptive_field)) > 2
+        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx,
+                                                          complex_type=complex_type)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)
