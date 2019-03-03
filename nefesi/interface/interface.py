@@ -31,7 +31,8 @@ from .popup_windows.select_index_window import SelectIndexWindow
 from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
-from ..util.plotting import plot_nf_of_entities_in_pc, plot_coocurrence_graph, plot_entity_representation
+from ..util.plotting import plot_nf_of_entities_in_pc, plot_coocurrence_graph, plot_entity_representation,\
+    plot_similarity_graph,plot_similarity_tsne
 
 
 
@@ -63,8 +64,8 @@ class Interface():
         self.plot_general_index(index=None)
         self.set_menu_bar()
 
-        #network_data.layers_data[6].decomposition_nf(0, network_data.layers_data[7], network_data.model,
-         #                                            network_data.dataset)
+        #from nefesi.util.plotting import neurons_by_object_vs_ocurrences_in_imagenet
+        #neurons_by_object_vs_ocurrences_in_imagenet(self.network_data, entity='object',operation='1')
 
         self.window.mainloop()
 
@@ -176,6 +177,8 @@ class Interface():
         plot_menu.add_command(label="Entity Selective neurons", command=self.class_selective_plot)
         plot_menu.add_command(label="Entity Representation", command=self.entity_representation_plot)
         plot_menu.add_command(label="Entity Co-ocurrence Graph", command=self.coocurrence_plot)
+        plot_menu.add_command(label="Neuron Similarity Graph", command=self.similarity_graph)
+        plot_menu.add_command(label="Neuron Feature Similarity TSNE", command=self.similarity_TSNE)
         menubar.add_cascade(label="Plot", menu=plot_menu)
 
 
@@ -201,6 +204,38 @@ class Interface():
             if operation != -1:
                 plot_coocurrence_graph(self.network_data, layers=self.current_layers_in_view, interface=self,entity=entity,
                                    operation=operation)
+
+    def similarity_graph(self):
+        text = 'Select an entity for print on the node names'
+        entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
+        if entity != -1:
+            layer = self.current_layers_in_view
+            if type(layer) is not list:
+                # Compile the Regular expresion
+                regEx = re.compile(layer)
+                # Select the layerNames that satisfies RegEx
+                layer = list(filter(regEx.match, [layer for layer in self.network_data.get_layers_name()]))
+            if len(layer)>1:
+                text = 'Layer where plot similarity'
+                layer = [self.get_value_from_popup_combobox(values=layer, text=text)]
+                if layer[0] == -1:
+                    return
+            plot_similarity_graph(self.network_data, layer=layer, interface=self)
+
+    def similarity_TSNE(self):
+        layer = self.current_layers_in_view
+        if type(layer) is not list:
+            # Compile the Regular expresion
+            regEx = re.compile(layer)
+            # Select the layerNames that satisfies RegEx
+            layer = list(filter(regEx.match, [layer for layer in self.network_data.get_layers_name()]))
+        if len(layer)>1:
+            text = 'Layer where plot similarity TSNE'
+            layer = [self.get_value_from_popup_combobox(values=layer, text=text)]
+            if layer[0] == -1:
+                return
+        plot_similarity_tsne(layer_data=self.network_data.get_layer_by_name(layer[0]))
+
 
     def entity_representation_plot(self):
         text = 'Select an entity for make the plot'

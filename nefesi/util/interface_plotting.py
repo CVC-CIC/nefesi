@@ -8,7 +8,7 @@ from PIL.Image import ANTIALIAS
 from sklearn.manifold import TSNE
 from matplotlib import gridspec
 from ..symmetry_index import SYMMETRY_AXES
-from .general_functions import get_n_circles_well_distributed
+from .general_functions import get_n_circles_well_distributed, get_n_circles_TSNE
 from ..class_index import get_ntop_population_code
 import matplotlib.cbook as cbook
 
@@ -50,11 +50,11 @@ def plot_similar_neurons(network_data, layer, neuron_idx,min=0., max=1., conditi
 
 def similarity_neuron_plot(network_data,neuron_idx, sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                     min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
-                           annotate_index = False):
+                           annotate_index = False, similarity_idx = None):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
-        neuron_to_non_count=neuron_idx)
+        neuron_to_non_count=neuron_idx, similarity_matrix=similarity_idx)
     original_neuron_indexes = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=neuron_idx)
     hidden_annotations = np.zeros((len(hidden_annotations),2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
@@ -156,43 +156,43 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
     sel_idx = network_data.get_selectivity_idx(sel_index=index, layer_name=layer_to_evaluate,
                                                degrees_orientation_idx=special_value,thr_pc=special_value)[index][0]
 
-
+    similarity_idx = network_data.get_layer_by_name(layer_to_evaluate[0]).similarity_index
     if index == 'class':
         hidden_annotations, neurons_that_pass_filter = \
             class_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
-                                max_neurons=max_neurons, order=order, network_data=network_data)
+                                max_neurons=max_neurons, order=order, network_data=network_data,similarity_idx=similarity_idx)
     elif index == 'color':
         hidden_annotations, neurons_that_pass_filter = \
             color_neurons_plot(sel_idx,sel_idx_to_calcs=sel_idx, network_data=network_data, subplot=subplot,
                                layer_name=layer_to_evaluate, font_size=font_size + 2, min=min, max=max,
-                               condition1=condition1, condition2=condition2, max_neurons=max_neurons, order=order)
+                               condition1=condition1, condition2=condition2, max_neurons=max_neurons, order=order,similarity_idx=similarity_idx)
 
     elif index == 'orientation':
         hidden_annotations, neurons_that_pass_filter = \
             orientation_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx[:,-1],degrees_rotation=special_value, subplot=subplot,
                                      layer_name=layer_to_evaluate, font_size=font_size + 2,
                                min=min, max=max, condition1=condition1, condition2=condition2,
-                               max_neurons=max_neurons, order=order)
+                               max_neurons=max_neurons, order=order,similarity_idx=similarity_idx)
 
     elif index == 'symmetry':
         hidden_annotations, neurons_that_pass_filter = \
             symmetry_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx[:,-1], subplot=subplot,
                                      layer_name=layer_to_evaluate, font_size=font_size + 2,
                                min=min, max=max, condition1=condition1, condition2=condition2,
-                               max_neurons=max_neurons, order=order)
+                               max_neurons=max_neurons, order=order,similarity_idx=similarity_idx)
     elif index == 'population code':
         hidden_annotations, neurons_that_pass_filter = \
             population_code_neurons_plot(sel_idx=sel_idx, sel_idx_to_calcs=sel_idx, network_data=network_data,
                                          thr_pc=special_value, subplot=subplot,
                                       layer_name=layer_to_evaluate, font_size=font_size + 2,
                                       min=min, max=max, condition1=condition1, condition2=condition2,
-                                      max_neurons=max_neurons, order=order)
+                                      max_neurons=max_neurons, order=order,similarity_idx=similarity_idx)
     elif index == 'object':
         hidden_annotations, neurons_that_pass_filter = \
             object_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
-                                max_neurons=max_neurons, order=order, network_data=network_data)
+                                max_neurons=max_neurons, order=order, network_data=network_data,similarity_idx=similarity_idx)
 
 
     set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, index, layer_to_evaluate, max, min,
@@ -202,10 +202,11 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
 
 def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                     min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
-                       network_data=None, max_concept_labels=2):
+                       network_data=None, max_concept_labels=2, similarity_idx = None):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
+        similarity_matrix=similarity_idx)
     concept_selectivity = None
     """
     if network_data.addmits_concept_selectivity():
@@ -245,10 +246,11 @@ def class_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name
 
 def object_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                     min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
-                       network_data=None, max_concept_labels=2):
+                       network_data=None, max_concept_labels=2, similarity_idx = None):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
+        similarity_matrix=similarity_idx)
     hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         text = str(valids_idx[i]['label'])
@@ -305,10 +307,12 @@ def concept_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_na
 """
 
 def color_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, subplot, font_size, layer_name='default',
-                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
+                       similarity_idx = None):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot)
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
+        similarity_matrix=similarity_idx)
 
     for i in range(len(circles)):
         neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=valids_ids[i])
@@ -322,7 +326,8 @@ def color_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, subplot, font_si
     return hidden_annotations, neurons_that_pass_filter
 
 def orientation_neurons_plot(sel_idx, sel_idx_to_calcs, degrees_rotation,  subplot, font_size, layer_name='default',
-                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
+                             similarity_idx = None):
     """
 
     :param valids_idx:
@@ -336,7 +341,8 @@ def orientation_neurons_plot(sel_idx, sel_idx_to_calcs, degrees_rotation,  subpl
     :return:
     """
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot)
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot,
+        similarity_matrix=similarity_idx)
 
     std_between_rotations = np.round(np.std(valids_idx,axis=1),decimals=3)
     for i in range(len(circles)):
@@ -351,10 +357,11 @@ def orientation_neurons_plot(sel_idx, sel_idx_to_calcs, degrees_rotation,  subpl
     return hidden_annotations, neurons_that_pass_filter
 
 def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc, subplot, font_size, layer_name='default',
-                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet', similarity_idx = None):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot)
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot,
+        similarity_matrix=similarity_idx)
     n=5
     hidden_annotations = np.zeros((len(hidden_annotations), 2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
@@ -388,7 +395,8 @@ def population_code_neurons_plot(sel_idx, sel_idx_to_calcs, network_data, thr_pc
 
 
 def symmetry_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
-                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet'):
+                    min =0,max=1,condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
+                          similarity_idx = None):
     """
 
     :param valids_idx:
@@ -402,7 +410,8 @@ def symmetry_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_n
     :return:
     """
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot)
+        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,sel_idx_to_calcs, subplot,
+        similarity_matrix=similarity_idx)
 
     valids_idx = np.round(valids_idx,decimals=3)
     for i in range(len(circles)):
@@ -417,7 +426,7 @@ def symmetry_neurons_plot(sel_idx, sel_idx_to_calcs, subplot, font_size, layer_n
 
 
 def make_one_layer_base_subplot(color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx,
-                                sel_idx_to_calcs, subplot, neuron_to_non_count = None):
+                                sel_idx_to_calcs, subplot, neuron_to_non_count = None, similarity_matrix = None):
     if type(layer_name) is list:
         if len(layer_name) == 1:
             layer_name = layer_name[0]
@@ -429,8 +438,11 @@ def make_one_layer_base_subplot(color_map, condition1, condition2, layer_name, m
                                     condition_1=condition1, condition2=condition2, order=order, max_neurons=max_neurons,
                                     neuron_to_non_count = neuron_to_non_count)
 
-
-    circles = get_n_circles_well_distributed(valids_idx_values, color_map)
+    if similarity_matrix is None:
+        circles = get_n_circles_well_distributed(valids_idx_values, color_map)
+    else:
+        similarity_matrix = similarity_matrix[valids_ids][:,valids_ids]
+        circles = get_n_circles_TSNE(similarity_matrix, valids_idx_values, valids_ids, color_map)
     circles = circles[np.argsort(circles['y_center'])]
     for i in range(len(circles)):
         subplot.add_patch(circles[i]['circle'])
