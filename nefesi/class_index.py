@@ -3,12 +3,13 @@ import os
 from .util import general_functions as gf
 from . import read_activations as read_act
 from anytree import Node
-from PIL import Image
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1
 COUNT_POS = 2
 REL_FREQ_POS = 3
 CONCEPT_TRANSLATION_BASE_DIR = '../nefesi/util/segmentation/meta_file/'
+from keras.layers import Conv2D
+from keras.models import Sequential, Model
 
 """
 def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_level=5,
@@ -129,25 +130,18 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
         segmentation = Segment_images(full_image_names)
 
     if not type == 'activation':
-        #If receptive field is not only... 0 to n
-        complex_type = len(np.unique(receptive_field)) > 2
-        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx,
-                                                          complex_type=complex_type)
+        activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)
     """
     general_hist = {}
     norm_activations = neuron.norm_activations
-    for i, segment in enumerate(segmentation):
-        segment = segment[concept]
+    for i in range(len(segmentation)):
         #Crop for only use the receptive field
         ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
         ri, rf, ci, cf = abs(ri), abs(rf), abs(ci), abs(cf)
-        #Resize segmentation if necessary
-        if network_data.dataset.target_size != segment.shape:
-            segment = np.array(Image.fromarray(segment).resize(network_data.dataset.target_size, Image.NEAREST))
-        cropped_segmentation = segment[ri:rf, ci:cf]
+        cropped_segmentation = segmentation[i][concept][ri:rf, ci:cf]
         activation = norm_activations[i] if type=='activation' else activations_masks[i][ri:rf, ci:cf]
         #Make individual hist
         ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,
@@ -193,7 +187,42 @@ def get_concept_labels(concept='object'):
 
 
 
+def get_relevance_by_ablation(network_data,model,layer_analysis,neuron):
+    """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
+        :param network_data: Nefessi object
+        :param model: Original Keras model
+        :param layer_analysis: String with the layer to analyze
+        :param neuron: Int with the neuron to analyze
+        :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+        """
+
+    image_names = network_data.get_neuron_of_layer(layer_analysis, neuron).images_id
+    images = network_data.dataset.load_images(image_names=image_names, prep_function=True)
+    layer_names=[x.name for x in model.layers]
+    ablated_layer=layer_names[layer_names.index(layer_analysis)-1]
+    intermediate_layer_model = Model(inputs=model.input, outputs=model.get_layer(ablated_layer).output)
+    intermediate_output = intermediate_layer_model.predict(images)
+
+    layer_weights=model.get_layer(layer_analysis).get_weights()
+    model_output_shape=model.get_layer(layer_analysis).output_shape
+
+    small_model = Sequential()
+    small_model.add(Conv2D(model_output_shape[-1],layer_weights[0].shape[:2],activation='relu',input_shape=model_output_shape[1:],padding='same',weights=layer_weights))
+    small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
+
+    original_activations = network_data.get_neuron_of_layer(layer_analysis, neuron).activations
+    ablation_list=[]
+    for i in range(len(intermediate_output[0,0,0,:])):
+        intermediate_output2=np.copy(intermediate_output)
+        intermediate_output2[:, :, :, i] = np.zeros((intermediate_output2[:, :, :, 0].shape))
+        predictionsf=small_model.predict(intermediate_output2)
+        neuron_predictions_ablated=predictionsf[:,:,:,neuron]
+        max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
+        ablation_effect=sum(abs(original_activations-max_activations))
+        ablation_list.append(ablation_effect)
+
+    return ablation_list
 
 
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
@@ -382,3 +411,4 @@ def get_path_sep(image_name):
             path_sep = '\\'
     return path_sep
     return path_sep
+
