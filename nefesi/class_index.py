@@ -8,8 +8,6 @@ HUMAN_NAME_POS = 1
 COUNT_POS = 2
 REL_FREQ_POS = 3
 CONCEPT_TRANSLATION_BASE_DIR = '../nefesi/util/segmentation/meta_file/'
-from keras.layers import Conv2D
-from keras.models import Sequential, Model
 from PIL import Image
 
 """
@@ -188,47 +186,6 @@ def get_concept_labels(concept='object'):
     if concept == 'object':
         return np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
 
-
-
-
-
-
-def get_relevance_by_ablation(network_data,model,layer_analysis,neuron):
-    """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
-
-        :param network_data: Nefessi object
-        :param model: Original Keras model
-        :param layer_analysis: String with the layer to analyze
-        :param neuron: Int with the neuron to analyze
-        :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
-        """
-
-    image_names = network_data.get_neuron_of_layer(layer_analysis, neuron).images_id
-    images = network_data.dataset.load_images(image_names=image_names, prep_function=True)
-    layer_names=[x.name for x in model.layers]
-    ablated_layer=layer_names[layer_names.index(layer_analysis)-1]
-    intermediate_layer_model = Model(inputs=model.input, outputs=model.get_layer(ablated_layer).output)
-    intermediate_output = intermediate_layer_model.predict(images)
-
-    layer_weights=model.get_layer(layer_analysis).get_weights()
-    model_output_shape=model.get_layer(layer_analysis).output_shape
-
-    small_model = Sequential()
-    small_model.add(Conv2D(model_output_shape[-1],layer_weights[0].shape[:2],activation='relu',input_shape=model_output_shape[1:],padding='same',weights=layer_weights))
-    small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
-
-    original_activations = network_data.get_neuron_of_layer(layer_analysis, neuron).activations
-    ablation_list=[]
-    for i in range(len(intermediate_output[0,0,0,:])):
-        intermediate_output2=np.copy(intermediate_output)
-        intermediate_output2[:, :, :, i] = np.zeros((intermediate_output2[:, :, :, 0].shape))
-        predictionsf=small_model.predict(intermediate_output2)
-        neuron_predictions_ablated=predictionsf[:,:,:,neuron]
-        max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
-        ablation_effect=sum(abs(original_activations-max_activations))
-        ablation_list.append(ablation_effect)
-
-    return ablation_list
 
 
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):

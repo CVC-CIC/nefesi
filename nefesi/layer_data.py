@@ -211,6 +211,13 @@ class LayerData(object):
                                                                                   entity=entity,operation=operation)
         return self.entity_coocurrence[key]
 
+    def get_relevance_matrix(self,network_data, layer_to_ablate=''):
+        relevance_matrix = []
+        for i,neuron in enumerate(self.neurons_data):
+            relevance_matrix.append(neuron.get_relevance_idx(network_data= network_data, layer_name= self.layer_id,
+                                                             neuron_idx=i))
+        return np.array(relevance_matrix)
+
     def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class', operation='1/PC'):
         """
 

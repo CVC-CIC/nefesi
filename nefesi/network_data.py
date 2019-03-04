@@ -16,6 +16,8 @@ from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
+from keras.layers import Conv2D
+from keras.models import Sequential, Model
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -445,6 +447,77 @@ class NetworkData(object):
                     #Update only the modelName.obj
                     self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
+
+
+    def get_relevance_idx(self, layer_name = '.*', verbose=True):
+        relevance_idx = []
+        start_time = time.time()  # in order to update things if something new was be calculated
+        if type(layer_name) is not list:
+            # Compile the Regular expresion
+            regEx = re.compile(layer_name)
+            # Select the layerNames that satisfies RegEx
+            layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
+        if layer_name[0] == self.layers_data[0].layer_id:
+            layer_name = layer_name[1:]
+
+        for l in layer_name:
+            layer = next((layer_data for layer_data in
+                          self.layers_data if l in self.get_layers_name()
+                          and l == layer_data.layer_id), None)
+            if layer is None:
+                raise ValueError("The layer_id '{}' `layer_name` "
+                                 "argument, is not valid.".format(l))
+            else:
+                #layer_ablated don't have sense yet. It will have sense when update to relation with specific layer
+                relevance_idx.append(layer.get_relevance_matrix(network_data=self, layer_to_ablate='layer_ablated'))
+
+            if self.save_changes:
+                end_time = time.time()
+                if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                    # Update only the modelName.obj
+                    self.save_to_disk(file_name=None, save_model=False)
+                    if verbose:
+                        print(layer.layer_id+' relevance saved')
+        return relevance_idx
+
+
+    def get_relevance_by_ablation(self, layer_analysis, neuron):
+        """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
+
+            :param self: Nefesi object
+            :param model: Original Keras model
+            :param layer_analysis: String with the layer to analyze
+            :param neuron: Int with the neuron to analyze
+            :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+            """
+
+        image_names = self.get_neuron_of_layer(layer_analysis, neuron).images_id
+        images = self.dataset.load_images(image_names=image_names, prep_function=True)
+        layer_names = [x.name for x in self.model.layers]
+        ablated_layer = layer_names[layer_names.index(layer_analysis) - 1]
+        intermediate_layer_model = Model(inputs=self.model.input, outputs=self.model.get_layer(ablated_layer).output)
+        intermediate_output = intermediate_layer_model.predict(images)
+
+        layer_weights = self.model.get_layer(layer_analysis).get_weights()
+        model_output_shape = self.model.get_layer(layer_analysis).output_shape
+
+        small_model = Sequential()
+        small_model.add(Conv2D(model_output_shape[-1], layer_weights[0].shape[:2], activation='relu',
+                               input_shape=model_output_shape[1:], padding='same', weights=layer_weights))
+        small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
+
+        original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+        ablation_list = []
+        for i in range(len(intermediate_output[0, 0, 0, :])):
+            intermediate_output2 = np.copy(intermediate_output)
+            intermediate_output2[:, :, :, i] = np.zeros((intermediate_output2[:, :, :, 0].shape))
+            predictionsf = small_model.predict(intermediate_output2)
+            neuron_predictions_ablated = predictionsf[:, :, :, neuron]
+            max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
+            ablation_effect = sum(abs(original_activations - max_activations))
+            ablation_list.append(ablation_effect)
+
+        return np.array(ablation_list)
 
     def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:

@@ -47,7 +47,7 @@ class NeuronData(object):
         self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
         self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
         self.norm_activations = None
-
+        self.relevance_idx = {}
         self.selectivity_idx = dict()
         self._neuron_feature = None
         self.top_labels = None
@@ -239,6 +239,13 @@ class NeuronData(object):
             self.selectivity_idx[key] = get_ivet_color_selectivity_index(self, model,
                                                      layer_data, dataset)
         return self.selectivity_idx[key]
+
+    def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate='layer_ablated'):
+        if layer_to_ablate not in self.relevance_idx:
+            self.relevance_idx[layer_to_ablate] = network_data.get_relevance_by_ablation(layer_analysis=layer_name,
+                                                                                         neuron=neuron_idx)
+            print(layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
+        return self.relevance_idx[layer_to_ablate]
 
     def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
         """Returns the color selectivity index for this neuron.
