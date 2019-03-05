@@ -19,6 +19,7 @@ def get_activations(model, model_inputs, layers_name):
         If its None, returns the outputs from all the layers in the model.
 
     :return: List of activations, one output for each given layer.
+            xy_locations, activations = get_activations(.....)
     """
     inp = model.input
     if type(inp) is not list:

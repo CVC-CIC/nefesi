@@ -507,15 +507,18 @@ class NetworkData(object):
         small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
 
         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-        ablation_list = []
+        ablation_list = np.zeros((intermediate_output.shape[0],1))
         for i in range(len(intermediate_output[0, 0, 0, :])):
-            intermediate_output2 = np.copy(intermediate_output)
-            intermediate_output2[:, :, :, i] = np.zeros((intermediate_output2[:, :, :, 0].shape))
-            predictionsf = small_model.predict(intermediate_output2)
+            intermediate_output2 = intermediate_output[:, :, :, i]
+            intermediate_output[:, :, :, i] = 0
+            predictionsf = small_model.predict(intermediate_output)
+            intermediate_output[:, :, :, i] = intermediate_output2
+
             neuron_predictions_ablated = predictionsf[:, :, :, neuron]
-            max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
-            ablation_effect = sum(abs(original_activations - max_activations))
-            ablation_list.append(ablation_effect)
+            max_activations = np.amax(np.reshape(neuron_predictions_ablated, (neuron_predictions_ablated.shape[0], -1)))
+
+            #max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
+            ablation_list[i] = sum(abs(original_activations - max_activations))
 
         return np.array(ablation_list)
 
