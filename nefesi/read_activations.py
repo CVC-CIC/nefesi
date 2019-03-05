@@ -43,32 +43,6 @@ def get_activations(model, model_inputs, layers_name):
         pool.join()
     return locations_and_max
 
-def get_activations_for_layer(model, model_inputs, layer_name):
-    """Returns the output (activations) from the model.
-
-    :param model: The `keras.models.Model` instance.
-    :param model_inputs: List of inputs, the inputs expected by the network.
-    :param layer_name: String, name of the layer from which get the outputs.
-        If its None, returns the outputs from all the layers in the model.
-
-    :return: List of activations, one output for each given layer.
-    """
-    inp = model.input
-    if type(inp) is not list:
-        inp = [inp]
-    if isinstance(layer_name, str):
-        layers_name = [layer_name]
-
-    # uses .get_output_at() instead of .output. In case a layer is
-    # connected to multiple inputs. Assumes the input at node index=0
-    # is the input where the model inputs come from.
-    outputs = [model.get_layer(layer).output for layer in layers_name]
-    # evaluation functions
-    funcs = K.function(inp+ [K.learning_phase()], outputs)
-    # K.learning_phase flag = 1 (train mode)
-    layer_outputs = funcs([model_inputs, 1])
-    #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
-    return layer_outputs[0]
 
 def get_argmax_and_max(layer):
     if len(layer.shape) == 2: #Is not conv
