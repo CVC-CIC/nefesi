@@ -4,7 +4,9 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 """
 
 #from keras.applications.vgg16 import VGG16, preprocess_input
-from keras.applications.xception import Xception, preprocess_input
+#from keras.applications.xception import Xception, preprocess_input
+#from keras.applications.resnet50 import ResNet50, preprocess_input
+from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 # model.save(file_name)
 from keras.models import load_model #For load local keras models (h5 files)
 #from nefesi.util.general_functions import have_all_imagenet_segmentation
@@ -13,6 +15,7 @@ from nefesi.util.image import ImageDataset
 import numpy as np
 import time
 import pickle
+import os
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -21,13 +24,13 @@ gpu.assignGPU()
 def main():
 	start = time.time()
 	#example1SaveModel(VGG16) #Charge a standard model and save it locally
-	#example1SaveModel(Xception,'/home/ramon/work/nefesi/DataXception') #Charge a standard model and save it locally
-	#example2ChargeModel('../Data/VGG16.h5') #Charge a model locally
+	example1SaveModel(MobileNetV2,'/home/ramon/work/nefesi/Data') #Charge a standard model and save it locally
+	#example2ChargeModel('/home/ramon/work/nefesi/DataXception/Xception.h5') #Charge a model locally
 	#example2ChargeModel('/home/ramon/work/nefesi/DataXception/xception_weights_tf_dim_ordering_tf_kernels.h5')
 	#example3NefesiInstance('../Data/VGG16.h5')
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
 #	example5NetworkEvaluation('/home/eric/Nefesi/Data/vgg16.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
-	example5NetworkEvaluation('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
+#	example5NetworkEvaluation('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	#print("TIME ELAPSED: "+str(time.time()-start))
@@ -351,6 +354,7 @@ def example2ChargeModel(file_name):
 		  "don't want to train the model further.")
 	from keras.utils.vis_utils import plot_model
 	plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+
 	return model
 
 """
@@ -367,12 +371,12 @@ def example1SaveModel(model_function, path_name):
 	# https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5)
 	print(f"Charging model {model_function.__name__}")
 
-	model = model_function(include_top=True, weights='imagenet', input_tensor=None, input_shape=(299,299,3), pooling=None, classes=1000)
-	# model = Xception(include_top=True, weights='imagenet', input_tensor=None, input_shape=(299,299,3), pooling=None, classes=1000)
+	#xception
+	# model = model_function(include_top=True, weights='imagenet', input_tensor=None, input_shape=(299,299,3), pooling=None, classes=1000)
+	model = model_function(include_top=True, weights='imagenet', input_tensor=None, input_shape=(224,224,3), pooling=None, classes=1000)
 
 	# Save the model locally on path+name.h5 file.
-	import os
-	file_name = os.path.join(path_name, model_function.__name__)
+	file_name = os.path.join(path_name, model.name)
 	if not file_name.endswith('.h5'):
 		file_name = file_name+'.h5'
 	print(f"Model charged, saving model at {file_name}")
@@ -382,6 +386,9 @@ def example1SaveModel(model_function, path_name):
 	"""
 	# Save the model (model) locally
 	model.save(file_name)
+	from keras.utils.vis_utils import plot_model
+	plot_model(model, to_file=os.path.join(path_name, 'model_plot_'+model.name+'.png'),
+			   show_shapes=True, show_layer_names=True)
 
 import os
 from keras.applications.xception import Xception, preprocess_input
@@ -401,6 +408,6 @@ def load_and_eval(model_file_name, dataset_folder, save_folder=None):
 
 	nefesiModel.eval_network(verbose=True, batch_size=100)
 
-load_and_eval('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/')
+#load_and_eval('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/')
 
 main()
