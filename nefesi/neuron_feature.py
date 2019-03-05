@@ -1,24 +1,6 @@
 import numpy as np
 
 from keras.preprocessing import image
-from keras.layers.convolutional import Conv2D
-from keras.layers.pooling import _Pooling2D
-
-# from nefesi.network_data import get_layer_inputs
-
-def get_layer_inputs(model, layer):
-    from keras.layers.wrappers import Wrapper
-    from keras.models import Model
-
-    inputs = []
-    for i, node in enumerate(layer._inbound_nodes):
-        node_key = layer.name + '_ib-' + str(i)
-        if node_key in model._network_nodes:
-            for inbound_layer in node.inbound_layers:
-                # if not (isinstance(inbound_layer, Wrapper) and isinstance(inbound_layer.layer, Model)):
-                inputs.append(inbound_layer)
-    return inputs, layer
-
 
 def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False, mode = 1,threshold_to_noncount = 0.1):
     """This function build the neuron features (NF) for all neurons
@@ -83,174 +65,71 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False
             neuron.neuron_feature = None
 
 
-def get_each_point_receptive_field(model, layer_name):
-    """Takes `weight` and `height` (of a layer output)  and gets the map receptive_field_map of each pixel to the input layer
-    (usually same as input image size).
+# def get_image_receptive_field(x, y, model, layer_name):
+#     """This function takes `x` and `y` position from the map activation generated
+#     on the output in the layer `layer_name`, and returns the window location
+#     of the receptive field in the input image.
+#
+#     :param x: Integer, row position in the map activation.
+#     :param y: Integer, column position in the map activation.
+#     :param model: The `keras.models.Model` instance.
+#     :param layer_name: String, name of the layer.
+#
+#     :return: Tuple of integers, (x1, x2, y1, y2).
+#         The exact position of the receptive field from an image.
+#     """
+#     current_layer_idx = find_layer_idx(model, layer_name=layer_name)
+#
+#     row_ini, row_fin = x, x
+#     col_ini, col_fin = y, y
+#
+#     # goes throw the current layer until the first input layer.
+#     # (input shape of the network)
+#     for i in range(current_layer_idx, -1, -1):
+#         current_layer = model.layers[i]
+#
+#         # print current_layer.name
+#         # print current_layer.input_shape
+#
+#         if len(current_layer.input_shape) == 4:
+#             _, current_size, _, _ = current_layer.input_shape
+#
+#         # some checks to boundaries of the current layer shape.
+#         if row_ini < 0:
+#             row_ini = 0
+#         if col_ini < 0:
+#             col_ini = 0
+#         if row_fin > current_size - 1:
+#             row_fin = current_size - 1
+#         if col_fin > current_size - 1:
+#             col_fin = current_size - 1
+#
+#         # check if the current layer is a convolution layer or
+#         # a pooling layer (both have to be 2D).
+#         if isinstance(current_layer, Conv2D) or isinstance(current_layer, _Pooling2D):
+#             # get some configuration parameters,
+#             # padding, kernel_size, strides
+#             config_params = current_layer.get_config()
+#             padding = config_params['padding']
+#             strides = config_params['strides']
+#             kernel_size = config_params.get('kernel_size', config_params.get('pool_size'))
+#
+#             if padding == 'same':
+#                 # padding = same, means input shape = output shape
+#                 padding = (kernel_size[0] - 1) / 2, (kernel_size[1] - 1) / 2
+#             else:
+#                 padding = (0, 0)
+#             # calculate the window location applying the proper displacements.
+#             row_ini = row_ini*strides[0]
+#             col_ini = col_ini*strides[1]
+#             row_fin = row_fin*strides[0] + kernel_size[0]-1
+#             col_fin = col_fin*strides[1] + kernel_size[1]-1
+#
+#             # apply the padding on the receptive field window.
+#             row_ini -= padding[0]
+#             col_ini -= padding[1]
+#             row_fin -= padding[0]
+#             col_fin -= padding[1]
+#
+#     return row_ini, row_fin, col_ini, col_fin
 
-    :param model: The `keras.models.Model` instance.
-    :param layer_name: String, name of the layer to get his receptive_field to input.
-
-    :return: The window location of the receptive field in the input image.
-    Numpy matrix (3-D) that contains for each point in matrix(i,j) --> [row_ini, row_fin, col_ini, col_fin].
-        output[i,j] = 4 points of rectangle or square that corresponds to pixel i,j on a neuron on layer layer name, to
-        on the input image. The exact position of the receptive field from an image.
-    """
-    current_layer_idx = find_layer_idx(model, layer_name=layer_name)
-    if len(model.layers[current_layer_idx].output_shape)>2:
-        _, w, h, _ = model.layers[current_layer_idx].output_shape
-    else:
-        h = 1
-        _, w = model.layers[current_layer_idx].output_shape
-    w_mesh, h_mesh = np.meshgrid(range(h), range(w))
-    # array order --> row_ini, row_fin, col_ini, col_fin
-    image_points = np.array([h_mesh.flatten(),h_mesh.flatten(), w_mesh.flatten(),w_mesh.flatten()],dtype=np.int32).\
-        T.reshape(w, h, 4)
-
-    image_points = recursive_receptive_field_per_location(model, model.layers[current_layer_idx], image_points)
-
-    # (is neccesary to add 1 in row_fin and col_fin due to behaviour of Numpy arrays.
-    image_points[:, :, [1, 3]] += 1
-    return image_points
-
-
-def recursive_receptive_field_per_location(model, current_layer, image_points):
-    image_points = np.copy(image_points)
-    # REVIEW IF W AND H ARE CORRECT!!!!!!!!!!!
-    if len(current_layer.input_shape) == 4:
-        _, current_size_w, current_size_h, _ = current_layer.input_shape
-    else:
-        current_size_w, current_size_h = (float('Inf'), float('Inf'))
-
-    # Checks to boundaries of the current layer shape.
-    image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
-    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w - 1)
-    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h - 1)
-    # check if the current layer is a convolution layer or
-    # a pooling layer (both have to be 2D).
-    config_params = current_layer.get_config()
-
-    kernel_size = np.ones(shape=2, dtype=np.int)
-    pool_size = np.ones(shape=2, dtype=np.int)
-    if 'kernel_size' in config_params:
-        kernel_size = np.array(config_params.get('kernel_size'))
-    if 'pool_size' in config_params:
-        pool_size = config_params.get('pool_size')
-    kernel_size = np.maximum(kernel_size, pool_size)
-
-    padding = np.zeros(shape=2, dtype=np.int)
-    if 'padding' in config_params:
-        padding = config_params['padding']
-        if padding == 'same':
-            # padding = same, means input shape = output shape
-            padding = (kernel_size - 1) // 2
-        else:
-            padding = np.zeros(shape=2, dtype=np.int)
-
-    strides = np.ones(shape=2, dtype=np.int)
-    if 'strides' in config_params:
-        strides = np.array(config_params['strides'])
-
-    image_points *= strides[[0, 0, 1, 1]]
-    image_points[:, :, [1, 3]] += (kernel_size - 1)
-
-    # apply the padding on the receptive field window.
-    image_points -= padding[[0, 0, 1, 1]]
-
-    input_layers, _ = get_layer_inputs(model, current_layer)
-    im_points = np.copy(image_points)
-    if len(input_layers) > 0:
-        image_points = recursive_receptive_field_per_location(model, input_layers[0], im_points)
-        for input_layer in input_layers[1:]:
-            im2_points = recursive_receptive_field_per_location(model, input_layer, im_points)
-            image_points[:, :, [0, 2]] = np.minimum(image_points[:, :, [0, 2]], im2_points[:, :, [0, 2]])
-            image_points[:, :, [1, 3]] = np.maximum(image_points[:, :, [1, 3]], im2_points[:, :, [1, 3]])
-
-    return image_points
-
-
-def get_image_receptive_field(x, y, model, layer_name):
-    """This function takes `x` and `y` position from the map activation generated
-    on the output in the layer `layer_name`, and returns the window location
-    of the receptive field in the input image.
-
-    :param x: Integer, row position in the map activation.
-    :param y: Integer, column position in the map activation.
-    :param model: The `keras.models.Model` instance.
-    :param layer_name: String, name of the layer.
-
-    :return: Tuple of integers, (x1, x2, y1, y2).
-        The exact position of the receptive field from an image.
-    """
-    current_layer_idx = find_layer_idx(model, layer_name=layer_name)
-
-    row_ini, row_fin = x, x
-    col_ini, col_fin = y, y
-
-    # goes throw the current layer until the first input layer.
-    # (input shape of the network)
-    for i in range(current_layer_idx, -1, -1):
-        current_layer = model.layers[i]
-
-        # print current_layer.name
-        # print current_layer.input_shape
-
-        if len(current_layer.input_shape) == 4:
-            _, current_size, _, _ = current_layer.input_shape
-
-        # some checks to boundaries of the current layer shape.
-        if row_ini < 0:
-            row_ini = 0
-        if col_ini < 0:
-            col_ini = 0
-        if row_fin > current_size - 1:
-            row_fin = current_size - 1
-        if col_fin > current_size - 1:
-            col_fin = current_size - 1
-
-        # check if the current layer is a convolution layer or
-        # a pooling layer (both have to be 2D).
-        if isinstance(current_layer, Conv2D) or isinstance(current_layer, _Pooling2D):
-            # get some configuration parameters,
-            # padding, kernel_size, strides
-            config_params = current_layer.get_config()
-            padding = config_params['padding']
-            strides = config_params['strides']
-            kernel_size = config_params.get('kernel_size', config_params.get('pool_size'))
-
-            if padding == 'same':
-                # padding = same, means input shape = output shape
-                padding = (kernel_size[0] - 1) / 2, (kernel_size[1] - 1) / 2
-            else:
-                padding = (0, 0)
-            # calculate the window location applying the proper displacements.
-            row_ini = row_ini*strides[0]
-            col_ini = col_ini*strides[1]
-            row_fin = row_fin*strides[0] + kernel_size[0]-1
-            col_fin = col_fin*strides[1] + kernel_size[1]-1
-
-            # apply the padding on the receptive field window.
-            row_ini -= padding[0]
-            col_ini -= padding[1]
-            row_fin -= padding[0]
-            col_fin -= padding[1]
-
-    return row_ini, row_fin, col_ini, col_fin
-
-
-def find_layer_idx(model, layer_name):
-    """Returns the layer index corresponding to `layer_name` from `model`.
-
-    :param model: The `keras.models.Model` instance.
-    :param layer_name: String, name of the layer to lookup.
-
-    :return: Integer, the layer index.
-
-    :raise
-        ValueError: If there isn't a layer with layer id = `layer_name`
-            in the model.
-    """
-    for idx, layer in enumerate(model.layers):
-        if layer.name == layer_name:
-            return idx
-    else:
-        raise ValueError("No layer with layer_id '{}' within the model".format(layer_name))

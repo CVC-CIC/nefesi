@@ -34,6 +34,7 @@ def get_activations(model, model_inputs, layers_name):
     # K.learning_phase flag = 1 (train mode)
     #funcs = K.function(inp+ [K.learning_phase()], outputs) #modifies learning parameters
     #layer_outputs = funcs([model_inputs, 1])
+    K.learning_phase = 0
     funcs = K.function(inp, outputs)
     layer_outputs = funcs([model_inputs])
     #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
