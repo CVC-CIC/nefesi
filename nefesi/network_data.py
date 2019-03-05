@@ -504,7 +504,7 @@ class NetworkData(object):
         small_model = Sequential()
         small_model.add(Conv2D(model_output_shape[-1], layer_weights[0].shape[:2], activation='relu',
                                input_shape=model_output_shape[1:], padding='same', weights=layer_weights))
-        small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
+        #small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
 
         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
         ablation_list = np.zeros((intermediate_output.shape[0],1))
