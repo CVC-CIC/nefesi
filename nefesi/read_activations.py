@@ -31,9 +31,11 @@ def get_activations(model, model_inputs, layers_name):
     # is the input where the model inputs come from.
     outputs = [model.get_layer(layer).output for layer in layers_name]
     # evaluation functions
-    funcs = K.function(inp+ [K.learning_phase()], outputs)
     # K.learning_phase flag = 1 (train mode)
-    layer_outputs = funcs([model_inputs, 1])
+    #funcs = K.function(inp+ [K.learning_phase()], outputs) #modifies learning parameters
+    #layer_outputs = funcs([model_inputs, 1])
+    funcs = K.function(inp, outputs)
+    layer_outputs = funcs([model_inputs])
     #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
     with ThreadPool(processes=None) as pool:  # use all cpu cores
         async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
