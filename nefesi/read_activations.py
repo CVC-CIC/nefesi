@@ -254,7 +254,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
     return activations
 
 
-def get_image_activation(network_data, image_names, layer_name, neuron_idx, type=1):
+def get_image_activation(network_data, image_names, layer_name, neuron_idx, complex_type = True):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
     neuron_idx of layer layer_name
@@ -262,7 +262,7 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, type
     :param image_name: the name of the image to analyze
     :param layer_name: the name of the layer of the network where is the neuron to analyze
     :param neuron_idx: the index of the neuron to analyze
-    :param type: 1 as torralba, 2 as vedaldi  (falta posar referencies)
+    :param complex_type: True as torralba, False as vedaldi  (falta posar referencies)
     :return: An image that is activation on a neuron but in the original image size
     """
     #input = network_data.dataset._load_image(image_name, as_numpy=True,
@@ -272,15 +272,16 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, type
     activations = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
                                              layer_name=layer_name, idx_neuron=neuron_idx)
     activations_upsampleds = []
-    if type == 1 or type == 3:
+    if complex_type:
         rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
         rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
         rec_field_map_2 = np.zeros(rec_field_map.shape, dtype=np.int32)
     for input, activation in zip (inputs, activations):
         sz_img = input.shape[0:2]
-        if type == 2:
+        if not complex_type:
             activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
-        elif type ==1 or type==3:
+
+        else:
             pos = np.zeros(list(activation.shape)[::-1]+[2])
             # Generates the Mask that defines the data that need to be operate
             rec_field_map_mask = np.full(rec_field_map.shape, [0, sz_img[0], 0 , sz_img[1]], dtype=np.int32) == rec_field_map
@@ -304,9 +305,8 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, type
 
             activations_upsampled = spline(np.arange(sz_img[0]), np.arange(sz_img[1]))
 
-            activations_upsampled[activations_upsampled<0] = 0
 
-
+        activations_upsampled[activations_upsampled<0] = 0
         activations_upsampleds.append(activations_upsampled)
 
     return activations_upsampleds

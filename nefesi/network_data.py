@@ -16,6 +16,8 @@ from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
+from keras.layers import Conv2D
+from keras.models import Sequential, Model
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -48,7 +50,7 @@ class NetworkData(object):
 
     def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
                  default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
-                 default_thr_class_idx = .1, default_file_name = None):
+                 default_thr_class_idx = .1, default_file_name = None, indexes_accepted = ALL_INDEX_NAMES):
         self.model = model
         self.layers_data = layer_data
         self.save_path = save_path
@@ -59,7 +61,7 @@ class NetworkData(object):
         self.default_thr_pc = default_thr_pc
         #self.default_thr_class_idx = default_thr_class_idx
         self.default_file_name = default_file_name
-        self.indexs_accepted = self.get_indexs_accepted()
+        self.indexs_accepted = indexes_accepted
         self.MIN_PROCESS_TIME_TO_OVERWRITE = MIN_PROCESS_TIME_TO_OVERWRITE
 
 
@@ -237,7 +239,7 @@ class NetworkData(object):
             self.dataset.src_dataset,
             target_size=self.dataset.target_size,
             batch_size=batch_size,
-            shuffle=False,
+            shuffle=True,
             color_mode=self.dataset.color_mode
         )
 
@@ -254,14 +256,14 @@ class NetworkData(object):
             for j in range(neurons_of_layer):
                 self.layers_data[i].neurons_data[j] = NeuronData(num_max_activations, batch_size, buffered_iterations=buffer_size)
 
-
+        file_names = np.array(data_batch.filenames)
         start = time.time()
         for n_batches, imgs in enumerate(data_batch):
             images = imgs[0]
             # Apply the preprocessing function to the inputs
-            file_names = np.array(data_batch.filenames[idx_start: idx_end], dtype='U128')
+            actual_file_names = file_names[data_batch.index_array[idx_start: idx_end]]
             # Search the maximum activations
-            fill_all_layers_data_batch(file_names, images, self.model, self.layers_data)
+            fill_all_layers_data_batch(actual_file_names, images, self.model, self.layers_data)
 
             if verbose:
                 img_sec = idx_end / (time.time() - start)
@@ -356,7 +358,7 @@ class NetworkData(object):
             inside the class property `layers`.
         """
         start_time = time.time() #in order to update things if something new was be calculated
-        sel_idx_dict = dict()
+        sel_idx_dict = {}
 
         if sel_index in ['concept', 'object', 'parts', 'material']:
             if not self.addmits_concept_selectivity():
@@ -390,7 +392,7 @@ class NetworkData(object):
                     end_time = time.time()
                     if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
                         if verbose:
-                            print("Layer: "+l+" saving changes")
+                            print("Layer: "+l+" - Index: "+index_name+" saving changes")
                         # Update only the modelName.obj
                         self.save_to_disk(file_name=None, save_model=False)
                     start_time = end_time
@@ -445,6 +447,77 @@ class NetworkData(object):
                     #Update only the modelName.obj
                     self.save_to_disk(file_name=None, save_model=False)
         return sim_idx
+
+
+    def get_relevance_idx(self, layer_name = '.*', verbose=True):
+        relevance_idx = []
+        start_time = time.time()  # in order to update things if something new was be calculated
+        if type(layer_name) is not list:
+            # Compile the Regular expresion
+            regEx = re.compile(layer_name)
+            # Select the layerNames that satisfies RegEx
+            layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
+        if layer_name[0] == self.layers_data[0].layer_id:
+            layer_name = layer_name[1:]
+
+        for l in layer_name:
+            layer = next((layer_data for layer_data in
+                          self.layers_data if l in self.get_layers_name()
+                          and l == layer_data.layer_id), None)
+            if layer is None:
+                raise ValueError("The layer_id '{}' `layer_name` "
+                                 "argument, is not valid.".format(l))
+            else:
+                #layer_ablated don't have sense yet. It will have sense when update to relation with specific layer
+                relevance_idx.append(layer.get_relevance_matrix(network_data=self, layer_to_ablate='layer_ablated'))
+
+            if self.save_changes:
+                end_time = time.time()
+                if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                    # Update only the modelName.obj
+                    self.save_to_disk(file_name=None, save_model=False)
+                    if verbose:
+                        print(layer.layer_id+' relevance saved')
+        return relevance_idx
+
+
+    def get_relevance_by_ablation(self, layer_analysis, neuron):
+        """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
+
+            :param self: Nefesi object
+            :param model: Original Keras model
+            :param layer_analysis: String with the layer to analyze
+            :param neuron: Int with the neuron to analyze
+            :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+            """
+
+        image_names = self.get_neuron_of_layer(layer_analysis, neuron).images_id
+        images = self.dataset.load_images(image_names=image_names, prep_function=True)
+        layer_names = [x.name for x in self.model.layers]
+        ablated_layer = layer_names[layer_names.index(layer_analysis) - 1]
+        intermediate_layer_model = Model(inputs=self.model.input, outputs=self.model.get_layer(ablated_layer).output)
+        intermediate_output = intermediate_layer_model.predict(images)
+
+        layer_weights = self.model.get_layer(layer_analysis).get_weights()
+        model_output_shape = self.model.get_layer(layer_analysis).output_shape
+
+        small_model = Sequential()
+        small_model.add(Conv2D(model_output_shape[-1], layer_weights[0].shape[:2], activation='relu',
+                               input_shape=model_output_shape[1:], padding='same', weights=layer_weights))
+        small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
+
+        original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+        ablation_list = []
+        for i in range(len(intermediate_output[0, 0, 0, :])):
+            intermediate_output2 = np.copy(intermediate_output)
+            intermediate_output2[:, :, :, i] = np.zeros((intermediate_output2[:, :, :, 0].shape))
+            predictionsf = small_model.predict(intermediate_output2)
+            neuron_predictions_ablated = predictionsf[:, :, :, neuron]
+            max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
+            ablation_effect = sum(abs(original_activations - max_activations))
+            ablation_list.append(ablation_effect)
+
+        return np.array(ablation_list)
 
     def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:
@@ -829,7 +902,7 @@ class NetworkData(object):
         except:
             return False
 
-    def get_calculated_indexs_keys(self):
+    def get_calculated_indexes_keys(self):
         keys = set()
         for layer in self.layers_data:
             keys |= layer.get_index_calculated_keys()
@@ -854,8 +927,6 @@ class NetworkData(object):
     def erase_index_from_layers(self, layers, index_to_erase):
         for layer_name in layers:
             self.get_layer_by_name(layer_name).erase_index(index_to_erase)
-    def get_indexs_accepted(self):
-        return ALL_INDEX_NAMES+['object'] if self.addmits_concept_selectivity() else ALL_INDEX_NAMES
 
 
 def get_model_layer_names(model, regEx='.*'):

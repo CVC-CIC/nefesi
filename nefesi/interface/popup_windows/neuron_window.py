@@ -269,7 +269,7 @@ class NeuronWindow(object):
             rows+=1
             Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows)
 
-        if indexes['class']['label'][0] != 'None':
+        if indexes['class']['label'][0] != 'None' and plot_wordnet_tree:
             try:
                 tree = get_hierarchical_population_code_idx(
                     self.network_data.get_neuron_of_layer(layer=self.layer_to_evaluate,
@@ -318,10 +318,10 @@ class NeuronWindow(object):
             orientation_degrees = self.network_data.default_degrees_orientation_idx
         if thr_pc is None:
             thr_pc = self.network_data.default_thr_pc
-        indexs = self.network_data.get_all_index_of_neuron(layer=self.layer_data, neuron_idx=self.neuron_idx,
+        indexes = self.network_data.get_all_index_of_neuron(layer=self.layer_data, neuron_idx=self.neuron_idx,
                                                            orientation_degrees=orientation_degrees,
                                                            thr_pc=thr_pc)
-        return indexs
+        return indexes
 
     def add_figure_to_frame(self, master_canvas=None, figure=None, default_value=None):
         self.combo_frame = Frame(master=master_canvas)

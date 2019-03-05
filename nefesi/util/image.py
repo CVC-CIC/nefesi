@@ -84,7 +84,8 @@ class ImageDataset():
             if type(src_segmentation_dataset) is not str:
                 raise ValueError("src_dataset attribute must be str")
             elif not os.path.isdir(src_segmentation_dataset):
-                raise FileNotFoundError(src_segmentation_dataset+" not exists or is not a directory")
+                warnings.warn(src_segmentation_dataset+" not exists or is not a directory."
+                                                       " Remember to create it before analyzing object sel.",ResourceWarning)
             elif os.listdir(src_segmentation_dataset) == []:
                 warnings.warn(src_segmentation_dataset+" is an empty directory",FutureWarning)
             src_segmentation_dataset = os.path.join(src_segmentation_dataset, '')
@@ -294,9 +295,9 @@ class ImageDataset():
 def get_correspondences_array_in_ADE20K(image_segmented):
     image_segmented = np.array(image_segmented)
     labels_idx = np.unique(image_segmented[:, :, 2])
-    indexs_array = np.zeros(np.max(labels_idx)+1, dtype=np.uint8)
-    indexs_array[labels_idx] = np.arange(0,len(labels_idx))
-    return indexs_array
+    indexes_array = np.zeros(np.max(labels_idx)+1, dtype=np.uint8)
+    indexes_array[labels_idx] = np.arange(0,len(labels_idx))
+    return indexes_array
 
 def get_image_segmented(segmented_image, crop_pos):
     correspondence_list = get_correspondences_array_in_ADE20K(segmented_image)

@@ -25,45 +25,45 @@ class EraseCalculatedIndexPopup(object):
         self.ok_button = Button(master = self.top, text='Erase', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.layers_last_selection = (0,)
-        indexs_frame = Frame(master=self.top)
-        self.set_indexs_lstbox(master=indexs_frame)
-        indexs_frame.pack(side=LEFT)
+        indexes_frame = Frame(master=self.top)
+        self.set_indexes_lstbox(master=indexes_frame)
+        indexes_frame.pack(side=LEFT)
         lstbox_layer_frame = Frame(master=self.top)
         self.set_layers_listbox(master=lstbox_layer_frame)
         self.ok_button.pack(side=RIGHT)
         lstbox_layer_frame.pack(side=RIGHT)
 
     def cleanup(self):
-        index_to_erase = self.lstbox_last_selection  # indexs
+        index_to_erase = self.lstbox_last_selection  # indexes
         layers = get_listbox_selection(self.layers_lstbox, selection=self.layers_last_selection)
         print('Erased index: '+index_to_erase+'. From: '+str(layers))
         self.network_data.erase_index_from_layers(layers=layers,index_to_erase=index_to_erase)
-        self.update_indexs_lstbox()
+        self.update_indexes_lstbox()
 
 
-    def set_indexs_lstbox(self, master):
-        combo_title = ttk.Label(master, text="Indexs")
+    def set_indexes_lstbox(self, master):
+        combo_title = ttk.Label(master, text="Indexes")
         combo_title.pack(side=TOP, expand=False)
         lstbox_frame = Frame(master=master)
         lstbox_frame.pack(side=BOTTOM)
         scrollbar = tk.Scrollbar(master=lstbox_frame, orient="vertical")
-        self.indexs_lstbox = Listbox(master=lstbox_frame, selectmode=SINGLE, yscrollcommand=scrollbar.set,
-                                     height=MAX_VALUES_VISIBLES_IN_LISTBOX, width=25)
-        values = np.array(list(self.network_data.get_calculated_indexs_keys()))
+        self.indexes_lstbox = Listbox(master=lstbox_frame, selectmode=SINGLE, yscrollcommand=scrollbar.set,
+                                      height=MAX_VALUES_VISIBLES_IN_LISTBOX, width=25)
+        values = np.array(list(self.network_data.get_calculated_indexes_keys()))
         values = np.sort(values)
         for item in values:
-            self.indexs_lstbox.insert(END, item)
-        scrollbar.config(command=self.indexs_lstbox.yview)
-        self.indexs_lstbox.bind('<<ListboxSelect>>', self._on_change_index_lstbox)
-        self.indexs_lstbox.pack(side=LEFT)
+            self.indexes_lstbox.insert(END, item)
+        scrollbar.config(command=self.indexes_lstbox.yview)
+        self.indexes_lstbox.bind('<<ListboxSelect>>', self._on_change_index_lstbox)
+        self.indexes_lstbox.pack(side=LEFT)
         scrollbar.pack(side=RIGHT, fill="y")
 
-    def update_indexs_lstbox(self):
-        self.indexs_lstbox.delete(0,END)
-        values = np.array(list(self.network_data.get_calculated_indexs_keys()))
+    def update_indexes_lstbox(self):
+        self.indexes_lstbox.delete(0, END)
+        values = np.array(list(self.network_data.get_calculated_indexes_keys()))
         values = np.sort(values)
         for item in values:
-            self.indexs_lstbox.insert(END, item)
+            self.indexes_lstbox.insert(END, item)
         self.layers_lstbox.delete(0,END)
         self.ok_button['state'] = 'disabled'
 
@@ -93,10 +93,10 @@ class EraseCalculatedIndexPopup(object):
         """
 
     def _on_change_index_lstbox(self, event):
-        selection = self.indexs_lstbox.curselection()
+        selection = self.indexes_lstbox.curselection()
         if selection is not ():
             selection = selection[0]
-            selection = self.indexs_lstbox.get(selection)
+            selection = self.indexes_lstbox.get(selection)
             self.update_layers_lstbox(selection)
             self.ok_button['state'] = 'normal'
             self.lstbox_last_selection = selection

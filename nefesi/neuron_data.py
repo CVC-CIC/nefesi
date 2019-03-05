@@ -47,7 +47,7 @@ class NeuronData(object):
         self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
         self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
         self.norm_activations = None
-
+        self.relevance_idx = {}
         self.selectivity_idx = dict()
         self._neuron_feature = None
         self.top_labels = None
@@ -240,6 +240,13 @@ class NeuronData(object):
                                                      layer_data, dataset)
         return self.selectivity_idx[key]
 
+    def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate='layer_ablated'):
+        if layer_to_ablate not in self.relevance_idx:
+            self.relevance_idx[layer_to_ablate] = network_data.get_relevance_by_ablation(layer_analysis=layer_name,
+                                                                                         neuron=neuron_idx)
+            print(layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
+        return self.relevance_idx[layer_to_ablate]
+
     def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
         """Returns the color selectivity index for this neuron.
 
@@ -320,12 +327,11 @@ class NeuronData(object):
         """
         key = 'concept'+concept+str(th)
         if key not in self.selectivity_idx:
-            if not isinstance(layer_data,str):
-                layer_data = layer_data.layer_id
-
-            self.selectivity_idx[key] = get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data,
-                                                        neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1)
-            print('Color idx: ' + layer_data.layer_id + ' ' + str(neuron_idx) + '/' +
+            self.selectivity_idx[key] = get_concept_selectivity_of_neuron(network_data=network_data,
+                                                                          layer_name=layer_data.layer_id,
+                                                                          neuron_idx=neuron_idx,
+                                                                          type=type, concept=concept, th = 0.1)
+            print(concept.capitalize()+' idx: ' + layer_data.layer_id + ' ' + str(neuron_idx) + '/' +
                   str(len(layer_data.neurons_data)))
 
         return self.selectivity_idx[key]
@@ -418,5 +424,5 @@ class NeuronData(object):
             return len(class_idx)
         #population_code_idx = get_population_code_idx(self, labels, threshold)
 
-    def get_keys_of_indexs(self):
+    def get_keys_of_indexes(self):
         return self.selectivity_idx.keys()

@@ -5,7 +5,7 @@ This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2
 
 #from keras.applications.vgg16 import preprocess_input
 from keras.models import load_model
-from .calculate_indexs import run_calculs
+from .calculate_indexes import run_calculs
 import warnings
 import os
 import dill as pickle
@@ -31,18 +31,22 @@ class EvaluationWithConfig:
 			run_calculs(network_data=self.network_data,verbose=self.verbose)
 
 	def set_preprocess_function(self):
-		if self.network_data.model.name == 'vgg16':
+		if self.network_data.model.name.lower() == 'vgg16':
 			from keras.applications.vgg16 import preprocess_input
-			self.network_data.dataset.preprocessing_function = preprocess_input
-		elif self.network_data.model.name == 'resnet50':
+		elif self.network_data.model.name.lower() == 'resnet50':
 			from keras.applications.resnet50 import preprocess_input
-			self.network_data.dataset.preprocessing_function = preprocess_input
-		elif self.network_data.model.name == 'vgg19':
+		elif self.network_data.model.name.lower() == 'vgg19':
 			from keras.applications.vgg19 import preprocess_input
-			self.network_data.dataset.preprocessing_function = preprocess_input
+		elif self.network_data.model.name.lower() == 'xception':
+			from keras.applications.xception import preprocess_input
+		elif self.network_data.model.name.lower() == 'mobilenetv2_1.00_224':
+			from keras.applications.mobilenetv2 import preprocess_input
+
 		else:
+			preprocess_input = None
 			warnings.warn("Preprocess function is "+str(self.network_data.dataset.preprocessing_function)+". Please be sure "
 							"that you don't need a specific preprocess_input function for this network")
+		self.network_data.dataset.preprocessing_function = preprocess_input
 
 
 def main():

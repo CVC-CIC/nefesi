@@ -370,6 +370,71 @@ def plot_entity_representation(network_data, layers, entity='class', interface=N
 
     plt.show()
 
+def neurons_by_object_vs_ocurrences_in_imagenet(network_data, layers='.*', entity='class', interface=None, th=0,operation='1/PC'):
+    if type(layers) is not list:
+        layers = network_data.get_layers_analyzed_that_match_regEx(layers)
+
+    entity_representation, xlabels = network_data.get_entinty_representation_vector(layers=layers, entity=entity,
+                                                                                    operation=operation)
+    total_entity_representation = np.sum(entity_representation, axis=0)
+
+    if interface is not None:
+        entity_non_zero_mask = total_entity_representation > 0.000001
+        if entity_non_zero_mask.max():
+            entity_non_zero_vector = total_entity_representation[entity_non_zero_mask]
+            maxim = round(entity_non_zero_vector.max(), 2)
+            non_zero_mean = round(np.mean(entity_non_zero_vector), 2)
+            minim = round(entity_non_zero_vector.min(), 2)
+            values, counts = np.unique(entity_non_zero_vector, return_counts=True)
+            mode = round(values[np.argmax(counts)], 2)
+            std = round(np.std(entity_non_zero_vector), 2)
+            text = "Set the threshold for consider a significant " + entity + " .\n " \
+                                                                              "min = " + str(minim) + " max = " + str(
+                maxim) + "\n" \
+                         " mode = " + str(mode) + "mean = " + str(non_zero_mean) + " std = " + str(std)
+            start = round(min(non_zero_mean + std, maxim - minim), 2)
+            th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
+            if th == -1:
+                return
+
+    entity_mask = total_entity_representation > th
+    total_entity_representation = total_entity_representation[entity_mask]
+    xlabels = xlabels[entity_mask]
+
+    args_sorted = total_entity_representation.argsort()[::-1]
+    object_ocurrence_vector = np.load('ObjectOcurrenceVector.npy')
+    object_ocurrence_vector = object_ocurrence_vector[entity_mask]
+    object_ocurrence_vector = object_ocurrence_vector[args_sorted]
+    object_ocurrence_vector = object_ocurrence_vector.astype(np.float)/(np.max(object_ocurrence_vector.astype(np.float))/np.max(total_entity_representation))
+    entity_representation = entity_representation[:, entity_mask]
+    entity_representation, xlabels = entity_representation[:, args_sorted], xlabels[args_sorted]
+    bars = []
+    color_map = plt.cm.get_cmap('autumn')
+    if len(layers) == 1:
+        color_map = [color_map(0.0)]
+    else:
+        color_map = [color_map(i / (len(layers) - 1)) for i in range(len(layers))][::-1]
+    for layer in range(len(layers)):
+        floor_of_bar = np.sum(entity_representation[:layer, ...], axis=0)
+        bars.append(plt.bar(xlabels, entity_representation[layer],
+                            bottom=floor_of_bar, color=color_map[layer])[0])
+    plt.plot(xlabels, object_ocurrence_vector, '-')
+
+    plt.xticks(rotation=90, fontsize=10)
+    plt.ylabel("Total Representation ")
+    plt.margins(x=0.005)
+    plt.gcf().subplots_adjust(bottom=0.3)
+    plt.legend(bars[::-1], layers[::-1])
+
+    non_represented_entities = 0#len(entity_non_zero_mask) - np.count_nonzero(entity_non_zero_mask)
+    represented_below_th_entities = len(entity_mask) - (np.count_nonzero(entity_mask) + non_represented_entities)
+    plt.title(entity.capitalize() + " Representation (Total " + entity + ": "
+              + str(len(entity_mask)) + ") [th=" + str(round(th, 2)) + "]  \n"
+                                                                       "Non-represented " + entity + ": " + str(
+        non_represented_entities) + " - Represented " + entity
+              + " below th: " + str(represented_below_th_entities))
+
+    plt.show()
 
 def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0, max_degree=None,
                            operation='1/PC'):
@@ -490,6 +555,123 @@ def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=
     plt.show()
 
 
+def plot_similarity_graph(network_data, layer, interface=None, th=0, max_degree=None, entity = 'class'):
+    similiarity_matrix = network_data.similarity_idx(layer)[0]
+    #Axis 0 = Layers
+    # Make 0's the diagonal for make the matrix a graph adyacecy matrix
+    similiarity_matrix[range(similiarity_matrix.shape[0]), range(similiarity_matrix.shape[1])] = 0
+    if interface is not None:
+        non_zero_matrix = similiarity_matrix[similiarity_matrix > 0.0001]
+        if len(non_zero_matrix) != 0:
+            maxim = round(non_zero_matrix.max(),2)
+            non_zero_mean = round(np.mean(non_zero_matrix),2)
+            minim = round(non_zero_matrix.min(),2)
+            values,counts = np.unique(non_zero_matrix,return_counts=True)
+            mode = round(values[np.argmax(counts)],2)
+            std = round(np.std(non_zero_matrix), 2)
+            text = "Set the threshold for consider a significant similarity relation.\n " \
+                    "min = "+str(minim)+" max = "+str(maxim)+"\n" \
+                    "mean = "+str(non_zero_mean)+ " mode = "+str(mode) + " std = "+str(std)
+            start = round(min(non_zero_mean+std, maxim-minim),2)
+            th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
+            if th == -1:
+                return
+
+
+    # strange dict with keys equals to his index. Sames that is the one that needs 'relabel_nodes'
+    layer_data = network_data.get_layer_by_name(layer[0])
+    label_names = {}
+    for i in range(len(similiarity_matrix)):
+        neuron = layer_data.neurons_data[i]
+        if entity == 'class':
+            ents = neuron.class_selectivity_idx(labels=network_data.default_labels_dict)
+        elif entity == 'object':
+            ents = neuron.concept_selectivity_idx(layer_data=layer_data,
+                                                  network_data=network_data, neuron_idx=i, concept=entity)
+        elif entity == 'color':
+            ents = neuron.color_selectivity_idx(network_data=network_data, layer_name=layer_data.layer_id, neuron_idx=i)
+        name = str(i)
+        if ents[0]['label'] != 'None':
+            name += ' ('+ents[0]['label'] +' - PC:'+str(len(ents))+')'
+        label_names[i] = name
+    similiarity_matrix[similiarity_matrix < 0.0001] = 0
+    entitys_without_relations = np.count_nonzero(np.max(similiarity_matrix,axis=0) < 0.001)
+    similiarity_matrix[similiarity_matrix < th] = 0
+    entitys_with_relations_below_th = np.count_nonzero(np.max(similiarity_matrix, axis=0) < 0.001)-entitys_without_relations
+
+    G = nx.DiGraph(similiarity_matrix)
+    G = nx.relabel_nodes(G, label_names)
+    G.remove_nodes_from(list(nx.isolates(G)))
+
+    outdeg = np.array(G.out_degree(), dtype=[('name', np.object),('degree',np.int)])
+
+    #The user select the max degree for clean
+    if interface is not None:
+        degrees = outdeg['degree']
+        if len(degrees) != 0:
+            maxim = int(np.max(degrees))
+            mean = round(np.mean(degrees),2)
+            minim = degrees.min()
+            values,counts = np.unique(degrees,return_counts=True)
+            mode = values[np.argmax(counts)]
+            std = round(np.std(degrees), 2)
+            text = "Set the max degree of node for be represented.\n " \
+                    "min = "+str(minim)+" max = "+str(maxim)+"\n" \
+                    "mean = "+str(mean)+ " mode = "+str(mode) + " std = "+str(std)+".\n" \
+                    "[Value included (max for show all nodes)]"
+            max_degree = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=maxim)
+            if max_degree == -1:
+                return
+    elif max_degree is None:
+        max_degree = np.max(outdeg['degree'])
+
+    #Remove the nodes with degree over the threshold
+    G.remove_nodes_from(outdeg[outdeg['degree']>max_degree]['name'])
+
+    #graphs = list(nx.strongly_connected_component_subgraphs(G))
+    #label_names = list(graphs[0])
+    # import xml.etree.ElementTree
+    # tree = xml.etree.ElementTree.parse('/home/guillem/Nefesi/nefesi_old/nefesi/imagenet_structure.xml').getroot()
+
+    # gf.get_hierarchy_of_label(labels=label_names, freqs=freqs, xml='/home/guillem/Nefesi/nefesi_old/nefesi/imagenet_structure.xml',population_code=len(label_names))
+
+
+    # ---------- Plot the graph ---------------
+    nodes_in_order = list(G.degree._nodes.keys())
+
+    #set the list of edge weight
+    edges_weight = np.array(list(nx.get_edge_attributes(G, 'weight').values()))
+    interpolator = interp1d ([th,edges_weight.max()], [1.,4.])
+    edges_weight = interpolator(edges_weight)
+
+
+    title = 'Symilarity in Network [th='+str(round(th,2))+"] \n "+\
+            "Neurons without relations: "+str(entitys_without_relations)+" - "+\
+            "Neurons with all relations below th: "+str(entitys_with_relations_below_th)
+    #append a little summary of the cropped nodes
+    if max_degree != np.max(outdeg['degree']):
+        nodes_cropped = np.count_nonzero(outdeg['degree']>max_degree)
+        title += "\n Nodes with deg>"+str(int(max_degree))+" (not plotted): "+str(nodes_cropped)
+        if nodes_cropped != 0:
+            cropped_nodes = outdeg[outdeg['degree'] > max_degree]
+            cropped_nodes = np.sort(cropped_nodes,order = 'degree')[::-1]
+            title+= " ["
+            for i, (node, degree) in enumerate(cropped_nodes):
+                title+=node+"("+str(degree)+")"
+                if i>=NODES_CROPPED_IN_SUMMARY-1:
+                    title+="..."
+                    break
+                else:
+                    title+=", "
+            else:
+                title = title[:-len(', ')] #erase the last ", "
+            title+="]"
+    #plot
+    plt.title(title)
+    nx.draw(G, with_labels=True,
+            cmap=plt.cm.cool, alpha=0.95, width=edges_weight)
+    plt.show()
+
 def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entity='class'):
     plt.figure()
     #given a nefesimodel, a layer, and a dictionary of the population codes for a given class, plots the different neuron_features were the class appears
@@ -541,10 +723,15 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     nf_size = network_data.get_neuron_of_layer(layer_name, 1).neuron_feature.size[0]
 
     pcs_of_layer = list(pc_dict[layer_name].keys())
-    pcs_of_layer.sort(reverse=True)
+    pcs_of_layer.sort()
     image_axes = np.zeros(len(pcs_of_layer), np.object)
     for k, j in enumerate(pcs_of_layer):
-        pc_dict[layer_name][j] = np.sort(pc_dict[layer_name][j], order='value')[::-1]
+        if len(pc_dict[layer_name][j])>1:
+            x = network_data.get_layer_by_name(layer_name).get_similarity_idx(neurons_idx=pc_dict[layer_name][j]['idx'])
+            x_result = TSNE(n_components=1, metric='euclidean',
+                            random_state=0).fit_transform(x)
+            pc_dict[layer_name][j] = pc_dict[layer_name][j][np.argsort(x_result[::-1,0])]
+
         neurons_num=len(pc_dict[layer_name][j])
 
         neuronfeature= Image.new('RGB',(nf_size*neurons_num,nf_size))
@@ -804,7 +991,7 @@ def plot_similarity_tsne(layer_data, n=None):
 
     size_fig = fig.get_size_inches()
     nf_size = nf[0].size
-    zoom = (size_fig[0] + size_fig[1]) / nf_size[0]
+    zoom = (size_fig[0] + size_fig[1])*2 / nf_size[0]
 
     for i, x, y in zip(range(num_neurons), x_result[:, 0], x_result[:, 1]):
         imscatter(x, y, nf[i], zoom=zoom, ax=ax, label=str(i))

@@ -1,4 +1,4 @@
-from ..evaluation_scripts.calculate_indexs import CalculateIndexs
+from ..evaluation_scripts.calculate_indexes import CalculateIndexes, ALL_INDEX_NAMES
 from .popup_windows.confirm_popup import ConfirmPopup
 from os.path import relpath
 
@@ -11,16 +11,26 @@ except ImportError:
     from Tkinter import ttk
 import dill as pickle
 
-class CalcIndexsInterface():
+
+MAX_VALUES_VISIBLES_IN_LISTBOX = 6
+
+class CalcIndexesInterface():
     def __init__(self):
         self.window = Tk()
         self.window.title("Nefesi")
         self.network_data_file = None
         self.model_file = None
         self.verbose =False
+        self.lstbox_last_selection = [0]
         self.select_parameters_frame = Frame(master=self.window, borderwidth=1)
         self.set_parameters_frame(master=self.select_parameters_frame)
         self.select_parameters_frame.pack()
+        self.index_to_calc = Frame(master=self.window)
+        self.set_index_listbox(self.index_to_calc)
+        self.index_to_calc.pack()
+        self.verbose_frame = Frame(master=self.window)
+        self.set_verbose_check_box(self.verbose_frame)
+        self.verbose_frame.pack()
         self.ok_button = Button(self.window, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.ok_button.pack(pady=(8, 5), ipadx=10)
@@ -32,15 +42,47 @@ class CalcIndexsInterface():
             network_data_file = self.network_data_file
             model_file = self.model_file
             verbose = self.verbose.get()
+            if len(self.lstbox_last_selection) == 1 and self.lstbox_last_selection[0] == 0:
+                sel_indexes = ALL_INDEX_NAMES
+            else:
+                sel_indexes = [ALL_INDEX_NAMES[i-1] for i in self.lstbox_last_selection]
             self.window.destroy()
-            indexs_eval = CalculateIndexs(network_data_file=network_data_file,model_file=model_file, verbose=verbose)
-            with open('../nefesi/evaluation_scripts/indexs_config.cfg', 'wb') as f:
-	            pickle.dump(indexs_eval, f)
+            indexes_eval = CalculateIndexes(network_data_file=network_data_file, model_file=model_file,
+                                           sel_indexes=sel_indexes, verbose=verbose)
+            with open('../nefesi/evaluation_scripts/indexes_config.cfg', 'wb') as f:
+	            pickle.dump(indexes_eval, f)
+
+    def set_index_listbox(self, master):
+        scrollbar = Scrollbar(master=master, orient="vertical")
+        self.index_to_calc_lstbox = Listbox(master=master, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
+                                            height=MAX_VALUES_VISIBLES_IN_LISTBOX)
+        scrollbar.config(command=self.index_to_calc_lstbox.yview)
+        self.index_to_calc_lstbox.pack(side=LEFT)
+        scrollbar.pack(side=RIGHT, fill="y")
+        self.index_to_calc_lstbox.delete(0,END)
+        self.index_to_calc_lstbox.insert(END, 'all')
+        for item in ALL_INDEX_NAMES:
+            self.index_to_calc_lstbox.insert(END, item)
+        self.index_to_calc_lstbox.select_set(0)
+        self.index_to_calc_lstbox.\
+            bind('<<ListboxSelect>>', lambda event: self._on_listbox_change_selection(event, self.index_to_calc_lstbox))
+        return self.index_to_calc_lstbox
+
+    def _on_listbox_change_selection(self,event,lstbox):
+        selection = lstbox.curselection()
+        if len(selection) <= 0:
+            selection = self.lstbox_last_selection
+            for idx in self.lstbox_last_selection:
+                lstbox.select_set(idx)
+        #'all' not have sense to be selected with more layer_names
+        if 0 in selection and len(selection)>1:
+            lstbox.select_clear(selection[1],END)
+        self.lstbox_last_selection = selection
 
     def set_footers(self, master):
         frame = Frame(master=master)
-        label = Label(master=frame, text='*(calculate indexs) Nefesi/main>>'
-                                         ' nohup python calculate_indexs.py &', font=("Times New Roman", 8))
+        label = Label(master=frame, text='*(calculate indexes) Nefesi/main>>'
+                                         ' nohup python calculate_indexes.py &', font=("Times New Roman", 8))
         label.grid(row=0)
         frame.pack(side=BOTTOM)
 
@@ -54,20 +96,19 @@ class CalcIndexsInterface():
             return True
 
     def get_override_text(self):
-
-        text = 'This action will override the following files:\n'
         try:
-            f = open('../nefesi/evaluation_scripts/indexs_config.cfg', 'rb')
-            indexs = pickle.load(f)
-            f.close()
+            text = 'This action will override the following files:\n'
+            with  open('../nefesi/evaluation_scripts/indexes_config.cfg', 'rb') as f:
+                indexes = pickle.load(f)
+            text += '\n' \
+                    '../nefesi/evaluation_scripts/indexes_config.cfg\n' \
+                    'model = ' + indexes.model_file + '\n' \
+                                                      'network_data = ' + indexes.network_data_file + '\n' \
+                                                      'verbose = ' + str(indexes.verbose) + '\n'
+            return text
         except:
-            indexs = None
-        text += '\n' \
-                '../nefesi/evaluation_scripts/indexs_config.cfg\n' \
-                'model = ' + indexs.model_file + '\n'\
-                'network_data = ' + indexs.network_data_file + '\n' \
-                'verbose = ' + str(indexs.verbose) + '\n'
-        return text
+            return None
+
 
 
     def update_ok_button_state(self):
@@ -91,9 +132,6 @@ class CalcIndexsInterface():
         model_frame = Frame(master=master)
         self.set_model_frame(model_frame)
         model_frame.pack()
-        verbose = Frame(master=master)
-        self.set_verbose_check_box(verbose)
-        verbose.pack()
 
     def set_verbose_check_box(self,master):
         self.verbose = BooleanVar(master=master,value=False)

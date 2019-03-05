@@ -31,6 +31,7 @@ def main():
 	#example4FullFillNefesiInstance('/home/eric/Nefesi/Data/VGG16.h5', '/home/eric/Nefesi/Datasets/TinyImagenet/trainSubset/', '/home/ramon/work/nefesi/Data2/')
 #	example5NetworkEvaluation('/home/eric/Nefesi/Data/vgg16.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
 #	example5NetworkEvaluation('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/ramon/work/nefesi/DataXception/')
+	example5NetworkEvaluation('/home/eric/Nefesi/Data/DataXception/xception.h5', '/home/eric/Nefesi/Datasets/Tiny/', '/home/eric/Nefesi/Data/DataXception/')
 	#example6LoadingResults()
 	#example7AnalyzingResults()
 	#print("TIME ELAPSED: "+str(time.time()-start))
@@ -409,5 +410,6 @@ def load_and_eval(model_file_name, dataset_folder, save_folder=None):
 	nefesiModel.eval_network(verbose=True, batch_size=100)
 
 #load_and_eval('/home/ramon/work/nefesi/DataXception/Xception.h5', '/home/eric/Nefesi/Datasets/Tiny/')
+load_and_eval('/home/eric/Nefesi/Data/DataXception/xception.h5', '/home/eric/Nefesi/Datasets/Tiny/')
 
-main()
+#main()

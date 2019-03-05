@@ -250,8 +250,39 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
 
     return positions
 
+def get_n_circles_TSNE(similarity_matrix, idx_values, ids, color_map='jet', diameter=100):
+    from sklearn.manifold import TSNE
+    cmap = plt.cm.get_cmap(color_map)
+    bins, count = np.histogram(idx_values,bins='fd')
+    bins, count = bins[::-1],count[::-1] #Gets better distribution
 
-def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, type=1, thr_mth = 1, thr = 0.005):
+    every_bin_y_size = (np.sqrt(bins) * diameter).astype(np.int)
+    regions = np.zeros((len(bins), 2), dtype=np.int)
+    regions[0,1] = every_bin_y_size[0]
+    for i in range(1, len(every_bin_y_size)):
+        regions[i,0] = regions[i-1,1]-min(every_bin_y_size[i] // 2, regions[i-1,1] // 2, (diameter // 2) + 1)
+        regions[i,1] = regions[i,0]+every_bin_y_size[i]
+
+    positions = np.zeros(len(idx_values),dtype=np.dtype([('circle',np.object),
+                                                     ('x0', np.float),('x1',np.float),('y0',np.float),('y1',np.float),
+                                                         ('x_center',np.float), ('y_center',np.float), ('id', np.int)]))
+    radius = diameter / 2
+    x_result = TSNE(n_components=2, metric='euclidean',
+                    random_state=0).fit_transform(similarity_matrix)
+    for i, id_i in enumerate(ids):
+        x_place, y_place = x_result[i]
+        y0 = y_place-radius
+        x0 = x_place-radius
+        x1 = x_place+radius
+        y1 = y_place + radius
+        circle = plt.Circle((x_place, y_place), radius=radius, alpha=0.6,
+                            color=cmap(i/float(len(regions))), linewidth=3)
+        positions[i] = (circle,x0,x1,y0,y1,x_place,y_place, id_i)
+    return positions
+
+
+def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, show_activation = False,
+                     thr_mth = 1, thr = 0.005):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
     neuron_idx of layer layer_name
@@ -264,15 +295,13 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
     :param thr_mth = take max from the image (1), take max from all activatiosn (0)
     :return: An image that is the original image with a mask of the activation camp superposed
     """
-    show_activation = False
-    if type >2:
-        type -= 2
-        show_activation = True
-
-    activation_upsampled = get_image_activation(network_data, [image_name], layer_name, neuron_idx, type)[0]
+    layer = network_data.get_layer_by_name(layer_name)
+    complex_type = len(np.unique(layer.receptive_field_map)) > 2
+    activation_upsampled = get_image_activation(network_data, [image_name], layer_name=layer_name, neuron_idx=neuron_idx,
+                                                complex_type=complex_type)[0]
 
     if thr_mth==0:
-        max_act = np.max(network_data.get_layer_by_name(layer_name).neurons_data[neuron_idx].activations)
+        max_act = np.max(layer.neurons_data[neuron_idx].activations)
     else:
         max_act = np.max(activation_upsampled)
     norm_activation_upsampled = activation_upsampled / max_act
