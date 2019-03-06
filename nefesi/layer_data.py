@@ -2,7 +2,7 @@ import numpy as np
 
 import math
 from .read_activations import get_sorted_activations, get_activations
-from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
+from .neuron_feature import compute_nf
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 from .class_index import get_concept_labels

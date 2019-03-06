@@ -64,8 +64,7 @@ class Interface():
         self.plot_general_index(index=None)
         self.set_menu_bar()
 
-        #from nefesi.util.plotting import neurons_by_object_vs_ocurrences_in_imagenet
-        #neurons_by_object_vs_ocurrences_in_imagenet(self.network_data, entity='object',operation='1')
+        #self.network_data.get_relevance_idx(layer_name='block5_conv3')
 
         self.window.mainloop()
 
