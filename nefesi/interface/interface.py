@@ -64,7 +64,7 @@ class Interface():
         self.plot_general_index(index=None)
         self.set_menu_bar()
 
-        #self.network_data.get_relevance_idx(layer_name='block5_conv3')
+        self.network_data.get_relevance_idx()
 
         self.window.mainloop()
 
