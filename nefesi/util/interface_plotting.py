@@ -63,7 +63,8 @@ def plot_relevant_neurons(network_data, layer, layer_to_ablate, neuron_idx,min=0
         neuron_with_all_indexes_plot(network_data=network_data, sel_idx=relevant_row, sel_idx_to_calcs=relevant_row, subplot=subplot,
                                      font_size=font_size + 2, layer_name=layer,
                                      min=min, max=max, condition1=condition1, condition2=condition2,
-                                     max_neurons=max_neurons, order=order, neuron_idx=neuron_idx)
+                                     max_neurons=max_neurons, order=order, neuron_idx=neuron_idx,
+                                     layer_to_ablate=layer_to_ablate)
     set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, 'relevance', layer, max, min,
                                 network_data, neurons_that_pass_filter, order, subplot, neuron=neuron_idx,
                                 layer_to_ablate=layer_to_ablate)
@@ -72,12 +73,13 @@ def plot_relevant_neurons(network_data, layer, layer_to_ablate, neuron_idx,min=0
 
 def neuron_with_all_indexes_plot(network_data, neuron_idx, sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                                  min =0, max=1, condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
-                                 annotate_index = False, similarity_idx = None):
+                                 annotate_index = False, similarity_idx = None, layer_to_ablate=None):
 
     circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
         color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
         neuron_to_non_count=neuron_idx, similarity_matrix=similarity_idx)
     original_neuron_indexes = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=neuron_idx)
+    layer_name = layer_name if layer_to_ablate is None else layer_to_ablate
     hidden_annotations = np.zeros((len(hidden_annotations),2), dtype=hidden_annotations.dtype)
     for i in range(len(circles)):
         text = 'Neuron '+str(neuron_idx)+' vs Neuron '+str(valids_ids[i])
