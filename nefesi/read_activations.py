@@ -49,7 +49,7 @@ def get_activations(model, model_inputs, layers_name):
 
 
 def get_argmax_and_max(layer):
-    if len(layer.shape) == 2: #Is not conv
+    if len(layer.shape) == 2: #Is FC
         return layer
     #The height and width of the image
     unravel_shape = layer.shape[1:-1]
