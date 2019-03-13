@@ -6,7 +6,7 @@ MAX_CONCEPTS_TO_SHOW = 4
 
 IMAGE_BIG_DEFAULT_SIZE = (800,800)
 IMAGE_SMALL_DEFAULT_SIZE = (450,450)
-ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons']
+ADVANCED_CHARTS = ['Activation Curve', 'Similar Neurons', 'Relevant Neurons']
 TREE_THRESHOLD = 50
 #That have with images of A are the column of A
 
@@ -17,7 +17,8 @@ from skimage.draw import line_aa
 import math
 
 from ...class_index import get_path_sep,get_hierarchical_population_code_idx
-from ...util.interface_plotting import get_one_neuron_plot, plot_similar_neurons
+from ...util.interface_plotting import get_one_neuron_plot, plot_similar_neurons, plot_relevant_neurons
+from .combobox_popup_window import ComboboxPopupWindow
 
 try:
     from tkinter import *
@@ -350,8 +351,10 @@ class NeuronWindow(object):
         Gets a general button to select wich graphic to plot
         :return: A select button with each index possible, and the event to plot it when called
         """
-
-        combo = ttk.Combobox(master=master, values=ADVANCED_CHARTS, state='readonly',justify=CENTER,width=15)
+        charts_to_show = ADVANCED_CHARTS
+        if self.layer_to_evaluate == self.network_data.layers_data[0].layer_id:
+            charts_to_show.remove('Relevant Neurons')
+        combo = ttk.Combobox(master=master, values=charts_to_show, state='readonly',justify=CENTER,width=15)
         combo.bind("<<ComboboxSelected>>",lambda event: self._on_general_plot_selector_changed(event, combo))
         if default_value is not None:
             combo.set(default_value)
@@ -363,7 +366,7 @@ class NeuronWindow(object):
         selected = combo.get()
         if selected.lower() == 'similar neurons':
             min, condition1, max, condition2, order, max_neurons = \
-                self.get_similarity_params_from_popup(layer_to_evaluate=self.layer_to_evaluate)
+                self.get_params_from_popup(layer_to_evaluate=self.layer_to_evaluate)
             if min is None or condition1 is None or order is None or max_neurons is None:
                 hidden_annotations, figure = None, None
             else:
@@ -371,20 +374,46 @@ class NeuronWindow(object):
                                                                     layer=self.layer_to_evaluate,
                                           neuron_idx=self.neuron_idx,min=min, max=max, condition1=condition1,
                                           condition2=condition2, order=order, max_neurons=max_neurons)
-        else:
+        elif selected.lower() == 'activation curve':
             figure = get_one_neuron_plot(network_data=self.network_data,layer=self.layer_to_evaluate,
                                      neuron_idx=self.neuron_idx, chart=selected)
             hidden_annotations = None
+        elif selected.lower() == 'relevant neurons':
+            min, condition1, max, condition2, order, max_neurons = \
+                self.get_params_from_popup(layer_to_evaluate=self.layer_to_evaluate,index='relevance')
+
+            if min is None or condition1 is None or order is None or max_neurons is None:
+                hidden_annotations, figure = None, None
+            else:
+                ablatable_layers= self.network_data.get_ablatable_layers(actual_layer=self.layer_to_evaluate)
+
+                layer_to_ablate = self.get_value_from_popup_combobox(values=ablatable_layers,
+                                                                     text='Select objective layer',
+                                                                     default = ablatable_layers[-1])
+
+                figure, hidden_annotations = plot_relevant_neurons(network_data=self.network_data,
+                                                                  layer=self.layer_to_evaluate,
+                                                                  layer_to_ablate=layer_to_ablate,
+                                                                  neuron_idx=self.neuron_idx, min=min, max=max,
+                                                                  condition1=condition1,
+                                                                  condition2=condition2, order=order,
+                                                                  max_neurons=max_neurons)
+
         self.put_figure_plot(master=self.figure_frame,figure=figure, hidden_annotations=hidden_annotations)
 
 
-    def get_similarity_params_from_popup(self,index='similarity',layer_to_evaluate='unknow'):
+    def get_params_from_popup(self, index='similarity', layer_to_evaluate='unknow'):
         if type(layer_to_evaluate) is list:
             layer_to_evaluate = layer_to_evaluate[0]
         popup_window = OneLayerPopupWindow(self.window, layer_to_evaluate=layer_to_evaluate, index=index)
         self.window.wait_window(popup_window.top)
         return popup_window.value1,popup_window.condition1,popup_window.value2,popup_window.condition2,\
                popup_window.order, popup_window.neurons_to_show
+
+    def get_value_from_popup_combobox(self, values, text, default=None):
+        popup_window = ComboboxPopupWindow(self.window, values=values, text=text, default = default)
+        self.window.wait_window(popup_window.top)
+        return popup_window.value
 
     def raise_neuron_window(self, layer, neuron_idx):
         NeuronWindow(master=self.window, network_data=self.network_data, layer_to_evaluate=layer, neuron_idx=neuron_idx)

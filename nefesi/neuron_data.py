@@ -243,8 +243,9 @@ class NeuronData(object):
     def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate='layer_ablated'):
         if layer_to_ablate not in self.relevance_idx:
             self.relevance_idx[layer_to_ablate] = network_data.get_relevance_by_ablation(layer_analysis=layer_name,
-                                                                                         neuron=neuron_idx)
-            print(layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
+                                                                                         neuron=neuron_idx,
+                                                                                         layer_to_ablate=layer_to_ablate)
+            print('Relevance: '+layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
         return self.relevance_idx[layer_to_ablate]
 
     def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1):

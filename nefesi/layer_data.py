@@ -2,7 +2,7 @@ import numpy as np
 
 import math
 from .read_activations import get_sorted_activations, get_activations
-from .neuron_feature import compute_nf, get_each_point_receptive_field,find_layer_idx
+from .neuron_feature import compute_nf
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 from .class_index import get_concept_labels
@@ -211,11 +211,11 @@ class LayerData(object):
                                                                                   entity=entity,operation=operation)
         return self.entity_coocurrence[key]
 
-    def get_relevance_matrix(self,network_data, layer_to_ablate=''):
+    def get_relevance_matrix(self,network_data, layer_to_ablate='layer_to_ablate'):
         relevance_matrix = []
         for i,neuron in enumerate(self.neurons_data):
             relevance_matrix.append(neuron.get_relevance_idx(network_data= network_data, layer_name= self.layer_id,
-                                                             neuron_idx=i))
+                                                             neuron_idx=i,layer_to_ablate=layer_to_ablate))
         return np.array(relevance_matrix)
 
     def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class', operation='1/PC'):

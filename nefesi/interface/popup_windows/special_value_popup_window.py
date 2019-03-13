@@ -37,6 +37,10 @@ class SpecialValuePopupWindow(object):
                                      '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
             default_entry = network_data.default_thr_pc
             text = POPULATION_CODE_TEXT
+        elif index.lower() == 'relevance':
+            self.validate_command = (master.register(self._on_entry_updated_check_orientation_index_in_range_0_1),
+                                     '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+            default_entry = start
         elif index.lower() == 'entity':
             if type(max) is int and type(start) is int:
                 self.validate_command = (master.register(self._on_entry_updated_check_index_in_range_0_n_int),

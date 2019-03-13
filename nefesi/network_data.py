@@ -449,7 +449,7 @@ class NetworkData(object):
         return sim_idx
 
 
-    def get_relevance_idx(self, layer_name = '.*', verbose=True):
+    def get_relevance_idx(self, layer_name = '.*', layer_to_ablate = None, verbose=True):
         relevance_idx = []
         start_time = time.time()  # in order to update things if something new was be calculated
         if type(layer_name) is not list:
@@ -459,8 +459,9 @@ class NetworkData(object):
             layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
         if layer_name[0] == self.layers_data[0].layer_id:
             layer_name = layer_name[1:]
-
-        for l in layer_name:
+        if layer_to_ablate is not None and type(layer_to_ablate) is not list:
+            layer_to_ablate = [layer_to_ablate]
+        for i, l in enumerate(layer_name):
             layer = next((layer_data for layer_data in
                           self.layers_data if l in self.get_layers_name()
                           and l == layer_data.layer_id), None)
@@ -468,8 +469,12 @@ class NetworkData(object):
                 raise ValueError("The layer_id '{}' `layer_name` "
                                  "argument, is not valid.".format(l))
             else:
+                if layer_to_ablate is None:
+                    layer_ablated = self.get_ablatable_layers(layer.layer_id)[-1]
+                else:
+                    layer_ablated = layer_to_ablate[i]
                 #layer_ablated don't have sense yet. It will have sense when update to relation with specific layer
-                relevance_idx.append(layer.get_relevance_matrix(network_data=self, layer_to_ablate='layer_ablated'))
+                relevance_idx.append(layer.get_relevance_matrix(network_data=self, layer_to_ablate=layer_ablated))
 
             if self.save_changes:
                 end_time = time.time()
@@ -481,7 +486,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate = 'layer_ablated'):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -490,8 +495,9 @@ class NetworkData(object):
             :param neuron: Int with the neuron to analyze
             :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
             """
-
-        image_names = self.get_neuron_of_layer(layer_analysis, neuron).images_id
+        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
+        xy_locations = neuron_data.xy_locations
+        image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)
         layer_names = [x.name for x in self.model.layers]
         ablated_layer = layer_names[layer_names.index(layer_analysis) - 1]
@@ -507,20 +513,19 @@ class NetworkData(object):
         #small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
 
         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-        ablation_list = np.zeros((intermediate_output.shape[0],1))
+        ablation_list = np.zeros(intermediate_output.shape[-1])
         for i in range(len(intermediate_output[0, 0, 0, :])):
-            intermediate_output2 = intermediate_output[:, :, :, i]
+            intermediate_output2 = intermediate_output[:, :, :, i]*1
             intermediate_output[:, :, :, i] = 0
             predictionsf = small_model.predict(intermediate_output)
             intermediate_output[:, :, :, i] = intermediate_output2
-
             neuron_predictions_ablated = predictionsf[:, :, :, neuron]
-            max_activations = np.amax(np.reshape(neuron_predictions_ablated, (neuron_predictions_ablated.shape[0], -1)))
+            #get the activation on the same point
+            max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
 
-            #max_activations = np.amax(np.amax(neuron_predictions_ablated, axis=-1), axis=-1)
-            ablation_list[i] = sum(abs(original_activations - max_activations))
+            ablation_list[i] = np.sum(abs(original_activations - max_activations))
 
-        return np.array(ablation_list)
+        return ablation_list
 
     def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:
@@ -890,6 +895,10 @@ class NetworkData(object):
         else:
             raise ValueError("Layer: " + layer + " doesn't exists")
 
+    def get_ablatable_layers(self,actual_layer):
+        all_layer_names = self.get_layer_names_to_analyze()
+        idx = all_layer_names.index(actual_layer)
+        return all_layer_names[:idx]
     def get_layer_by_name(self, layer):
         for layer_of_model in self.layers_data:
             if layer_of_model.layer_id  == layer:

@@ -64,8 +64,7 @@ class Interface():
         self.plot_general_index(index=None)
         self.set_menu_bar()
 
-        #from nefesi.util.plotting import neurons_by_object_vs_ocurrences_in_imagenet
-        #neurons_by_object_vs_ocurrences_in_imagenet(self.network_data, entity='object',operation='1')
+        #self.network_data.get_relevance_idx()
 
         self.window.mainloop()
 
@@ -193,7 +192,9 @@ class Interface():
         text = 'Select an entity for make the plot'
         entity = self.get_value_from_popup_combobox(values=PLOTTABLE_ENTITIES, text=text)
         if entity != -1:
-            plot_nf_of_entities_in_pc(self.network_data, master = self.window, entity=entity)
+            first_layer_in_view = self.current_layers_in_view[0]
+            plot_nf_of_entities_in_pc(self.network_data, master = self.window, entity=entity,
+                                      layer_selected=first_layer_in_view)
 
     def coocurrence_plot(self):
         text = 'Select an entity for make the graph'

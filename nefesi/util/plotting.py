@@ -11,6 +11,8 @@ from scipy.interpolate import interp1d
 from ..class_index import get_concept_labels
 from .ColorNaming import colors as color_names
 import networkx as nx
+from ..interface.popup_windows.combobox_popup_window import ComboboxPopupWindow
+from ..interface.popup_windows.special_value_popup_window import SpecialValuePopupWindow
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
 NODES_CROPPED_IN_SUMMARY = 2
@@ -280,11 +282,16 @@ def plot_activation_curve(network_data, layer_data, neuron_idx, num_images=5):
     plt.show()
 
 
-def plot_nf_of_entities_in_pc(network_data, master = None, entity='class'):
+def plot_nf_of_entities_in_pc(network_data, master = None, layer_selected = '.*', entity='class'):
     axcolor = 'lightgoldenrodyellow'
     rax = plt.axes([0.005, 0.2, 0.15, 0.55], facecolor=axcolor)
     rax2 = plt.axes([0.16, 0.5, 0.8, 0.05], facecolor=axcolor)
-    radio = RadioButtons(rax, network_data.get_layer_names_to_analyze())
+    layers_to_analyze = network_data.get_layer_names_to_analyze()
+    try:
+        layer_selected = layers_to_analyze.index(layer_selected)
+    except:
+        layer_selected = 0
+    radio = RadioButtons(rax, layers_to_analyze, active=layer_selected)
     if entity == 'class':
         labels = np.sort(np.array(list(network_data.default_labels_dict.values())))
     elif entity == 'object':
@@ -773,7 +780,8 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
             plt.gcf().subplots_adjust(bottom=0.3)
 
 
-    plt.gcf().canvas.mpl_connect('button_press_event', lambda event: _on_click_image(event,master,network_data, layer_name, image_axes))
+    plt.gcf().canvas.mpl_connect('button_press_event', lambda event: _on_click_image(event,master,network_data,
+                                                                                     layer_name, image_axes, entity))
     plt.suptitle(layer_name, y=0.96)
 
     layers_neurons = []
@@ -816,13 +824,113 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     plt.subplots_adjust(wspace=0.5, hspace=0.8)
     plt.show()
 
+def plot_relevant_nf(network_data, layer_name, neuron_idx, layer_to_ablate, master = None, entity='class', th = 0.5):
+    plt.figure()
+    #given a nefesimodel, a layer, and a dictionary of the population codes for a given class, plots the different neuron_features were the class appears
+    # first we create a dictionary with all the classes above a threshold (here 0.1)
+    entity_info = {}
+    #Detect all neurons with this entity_name in his population code (and sabes idx, entities and value of entity_name)
+    objective_neuron = network_data.get_neuron_of_layer(layer=layer_name, neuron_idx=neuron_idx)
+    relevance_idx = objective_neuron.get_relevance_idx(network_data=network_data, layer_name=layer_name,
+                                             neuron_idx=neuron_idx, layer_to_ablate=layer_to_ablate)
+
+    relevant_neurons = np.where(relevance_idx >= np.max(relevance_idx)*th)[0]
+    relevant_neurons = relevant_neurons[relevance_idx[relevant_neurons].argsort()][::-1]
+
+    relevant_neurons_data = []
+    for relevant_neuron_idx in relevant_neurons:
+        neuron = network_data.get_neuron_of_layer(layer=layer_to_ablate, neuron_idx=relevant_neuron_idx)
+        if entity == 'class':
+            ents = neuron.class_selectivity_idx(labels=network_data.default_labels_dict)
+        elif entity == 'object':
+            ents = neuron.concept_selectivity_idx(layer_data=layer_to_ablate,
+                                                  network_data=network_data, neuron_idx=relevant_neuron_idx, concept=entity)
+        elif entity == 'color':
+            ents = neuron.color_selectivity_idx(network_data=network_data, layer_name=layer_to_ablate,
+                                                neuron_idx=relevant_neuron_idx)
+
+        relevant_neurons_data.append((relevant_neuron_idx, tuple(ents['label']), relevance_idx[relevant_neuron_idx]))
+
+
+
+# then we create the dictionary with the layers and pc where class_name appears
+    pc_dict = {}
+    for i, neuron in enumerate(relevant_neurons_data):
+        pc_number = 0 if neuron[1][0] == 'None' else len(neuron[1])
+        if pc_number not in pc_dict:
+            pc_dict[pc_number] = [neuron]
+        else:
+            pc_dict[pc_number].append(neuron)
+
+
+
+
+
+
+#finally we plot the result (neuron features of neurons of layer_name, activated by class_name)
+
+    nf_size = network_data.get_neuron_of_layer(layer_to_ablate, 1).neuron_feature.size[0]
+
+    pcs_of_layer = list(pc_dict.keys())
+    pcs_of_layer.sort()
+    image_axes = np.zeros(len(pcs_of_layer), np.object)
+    for k, j in enumerate(pcs_of_layer):
+        neurons_num=len(pc_dict[j])
+
+        neuronfeature= Image.new('RGB',(nf_size*neurons_num,nf_size))
+        for i in range(neurons_num):
+            neuron_num= pc_dict[j][i][0]
+            neuronfeature.paste(network_data.get_neuron_of_layer(layer_to_ablate, neuron_num).neuron_feature,(i*nf_size,0))
+
+            sub_axis = plt.subplot(len(pcs_of_layer),1,k+1)
+
+            image_axes[k] = (pc_dict[j][i][0], sub_axis, pc_dict[j])
+            plt.imshow(neuronfeature,shape=(200,200))
+
+            plt.subplots_adjust(hspace=.001)
+
+            plt.xticks([])
+            plt.yticks([])
+
+            label=''
+            for name in pc_dict[j][i][1]:
+                label+=str(name).split(',')[0]+'\n'
+            label += 'Rel: '+str(round(pc_dict[j][i][2],2))
+
+            font_size = int(interp1d([1,3],[12,6], bounds_error=False, fill_value=6)(len(pcs_of_layer)))
+            plt.text(0.01+i/neurons_num, -0.1, label, {'fontsize': font_size},
+                     horizontalalignment='left',
+                     verticalalignment='top',
+                     rotation=0,
+                     clip_on=False,
+                     transform=plt.gca().transAxes)
+
+            plt.text(0.01 + i / neurons_num, 0.9,pc_dict[j][i][0], {'fontsize': font_size},
+                     horizontalalignment='left',
+                     verticalalignment='top',
+                     rotation=0,
+                     clip_on=False,
+                     transform=plt.gca().transAxes)
+
+            plt.ylabel(' PC = %d ' %(j))
+            plt.gcf().subplots_adjust(bottom=0.3)
+
+
+    plt.gcf().canvas.mpl_connect('button_press_event', lambda event: _on_click_image(event,master,network_data,
+                                                                                     layer_to_ablate, image_axes, entity))
+    plt.suptitle('Relevant neurons for '+ layer_name+'-'+str(neuron_idx)+' in '+layer_to_ablate+' [th = '+str(th)+']',
+                 y=0.96)
+
+    plt.subplots_adjust(wspace=0.5, hspace=0.8)
+    plt.show()
+
 
 def _on_click_another_layer(event, network_data, entity_name, axes_list, master=None, entity='class'):
     for axe, layer_name in axes_list:
         if axe == event.inaxes:
             plot_pc_of_class(network_data, layer_name, entity_name, master=master, entity=entity)
 
-def _on_click_image(event,master, network_data, layer_name, axes):
+def _on_click_image(event,master, network_data, layer_name, axes, entity):
     from ..interface.popup_windows.neuron_window import NeuronWindow
     if event.xdata != None and event.ydata != None and event.dblclick:
         for ax in axes:
@@ -833,14 +941,43 @@ def _on_click_image(event,master, network_data, layer_name, axes):
                 for i in range(images):
                     if each_image_width*i<event.xdata<each_image_width*(i+1):
                         neuron_idx = ax[2][i][0]
-                        print('Opening Neuron '+str(neuron_idx)+ ' of layer '+layer_name)
-                        neuron_window = NeuronWindow(master, network_data=network_data, layer_to_evaluate=layer_name,
+                        possible_plots = ['Neuron Info', 'Relevant Neurons']
+                        to_plot = possible_plots[0] if layer_name == network_data.layers_data[0].layer_id else \
+                            get_value_from_popup_combobox(master = master, values = possible_plots,
+                                                          text = 'Select the plot to open')
+                        if to_plot == possible_plots[0]:
+                            print('Opening Neuron ' + str(neuron_idx) + ' of layer ' + layer_name)
+                            neuron_window = NeuronWindow(master, network_data=network_data, layer_to_evaluate=layer_name,
                                      neuron_idx=neuron_idx)
-                        master.wait_window(neuron_window.window)
+                            master.wait_window(neuron_window.window) #Because of this is blocked when you open one
+                        elif to_plot == possible_plots[1]:
+                            ablatable_layers = network_data.get_ablatable_layers(layer_name)
+                            text = 'Select the layer where want relevant neurons'
+                            layer_to_ablate = get_value_from_popup_combobox(master, values = ablatable_layers,
+                                                                            text = text, default = ablatable_layers[-1])
+                            if layer_to_ablate != -1:
+                                th = get_value_from_popup_entry(master=master, network_data=network_data,
+                                                                index='relevance',maxim=1.0, start=0.75,
+                                        text= '% over max relevance to consider relevant')
+                                if th != -1:
+                                    plot_relevant_nf(network_data=network_data, layer_name=layer_name,
+                                                 neuron_idx=neuron_idx, layer_to_ablate=layer_to_ablate,
+                                                 master=master, entity=entity,th=th)
+
+
                         break
                 break
 
+def get_value_from_popup_combobox(master, values, text, default= None):
+    popup_window = ComboboxPopupWindow(master, values=values, text=text, default=default)
+    master.wait_window(popup_window.top)
+    return popup_window.value
 
+def get_value_from_popup_entry(master,network_data,index,maxim=1.0,start=0.75,text='Entry value'):
+    popup_window = SpecialValuePopupWindow(master=master, network_data=network_data, index=index,max=maxim,
+                                           start=start,text=text)
+    master.wait_window(popup_window.top)
+    return popup_window.value
 def plot_pixel_decomposition(activations, neurons, img, loc, rows=1):
     """Plots the neuron features that provokes the maximum
     activations on specific pixel from an image.

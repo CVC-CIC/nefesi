@@ -107,9 +107,9 @@ def get_one_neuron_activations(model, model_inputs, idx_neuron, layer_name=None)
                layer.name == layer_name or layer_name is None]
 
     # evaluation functions
-    funcs = K.function(inp + [K.learning_phase()], outputs)
-    # K.learning_phase flag = 1 (train mode)
-    layer_outputs = funcs([model_inputs, 1])
+    K.learning_phase = 0
+    funcs = K.function(inp, outputs)
+    layer_outputs = funcs([model_inputs])
     if len(layer_outputs) > 1:
         warnings.warn("Layer outputs is a list of more than one element? REVIEW THIS CODE SECTION!",RuntimeWarning)
     return layer_outputs[0]
