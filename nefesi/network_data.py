@@ -8,6 +8,8 @@ import warnings
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
+from keras.layers import Input
+from keras.models import Model
 
 from .neuron_data import NeuronData
 from .util.general_functions import get_key_of_index
@@ -16,8 +18,6 @@ from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
-from keras.layers import Conv2D
-from keras.models import Sequential, Model
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -485,8 +485,7 @@ class NetworkData(object):
                         print(layer.layer_id+' relevance saved')
         return relevance_idx
 
-
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate = 'layer_ablated'):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -500,28 +499,27 @@ class NetworkData(object):
         image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)
         layer_names = [x.name for x in self.model.layers]
-        ablated_layer = layer_names[layer_names.index(layer_analysis) - 1]
-        intermediate_layer_model = Model(inputs=self.model.input, outputs=self.model.get_layer(ablated_layer).output)
+        numb_ablated = layer_names.index(layer_to_ablate)
+        numb_analysis = layer_names.index(layer_analysis) + 1
+        intermediate_layer_model = Model(inputs=self.model.input, outputs=self.model.get_layer(layer_to_ablate).output)
         intermediate_output = intermediate_layer_model.predict(images)
 
-        layer_weights = self.model.get_layer(layer_analysis).get_weights()
-        model_output_shape = self.model.get_layer(layer_analysis).output_shape
-
-        small_model = Sequential()
-        small_model.add(Conv2D(model_output_shape[-1], layer_weights[0].shape[:2], activation='relu',
-                               input_shape=model_output_shape[1:], padding='same', weights=layer_weights))
-        #small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
-
+        DL_input = Input(self.model.layers[numb_ablated + 1].input_shape[1:])
+        DL_model = DL_input
+        for layer in self.model.layers[numb_ablated + 1:numb_analysis]:
+            DL_model = layer(DL_model)
+        DL_model = Model(inputs=DL_input, outputs=DL_model)
+        DL_model.summary()
         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
         ablation_list = np.zeros(intermediate_output.shape[-1])
         for i in range(len(intermediate_output[0, 0, 0, :])):
-            intermediate_output2 = intermediate_output[:, :, :, i]*1
+            intermediate_output2 = intermediate_output[:, :, :, i] * 1
             intermediate_output[:, :, :, i] = 0
-            predictionsf = small_model.predict(intermediate_output)
+            predictionsf = DL_model.predict(intermediate_output)
             intermediate_output[:, :, :, i] = intermediate_output2
             neuron_predictions_ablated = predictionsf[:, :, :, neuron]
-            #get the activation on the same point
-            max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+            # get the activation on the same point
+            max_activations = neuron_predictions_ablated[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
 
             ablation_list[i] = np.sum(abs(original_activations - max_activations))
 

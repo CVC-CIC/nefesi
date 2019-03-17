@@ -443,8 +443,8 @@ def neurons_by_object_vs_ocurrences_in_imagenet(network_data, layers='.*', entit
 
     plt.show()
 
-def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th=0, max_degree=None,
-                           operation='1/PC'):
+def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=None, th_low=0, max_degree=None,
+                           operation='1/PC', th_superior = None):
     class_matrix, labels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity,operation=operation)
     #Axis 0 = Layers
     class_matrix = np.sum(class_matrix, axis=0)
@@ -460,20 +460,30 @@ def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=
             values,counts = np.unique(non_zero_matrix,return_counts=True)
             mode = round(values[np.argmax(counts)],2)
             std = round(np.std(non_zero_matrix), 2)
-            text = "Set the threshold for consider a significant "+ entity + " relation.\n " \
+            text = "Set the low threshold for consider a significant "+ entity + " relation.\n " \
                     "min = "+str(minim)+" max = "+str(maxim)+"\n" \
                     "mean = "+str(non_zero_mean)+ " mode = "+str(mode) + " std = "+str(std)
             start = round(min(non_zero_mean+std, maxim-minim),2)
-            th = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
-            if th == -1:
+            th_low = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=start)
+            if th_low == -1:
                 return
-
-
+            text = "Set the superior threshold for show " + entity + " relation.\n " \
+                                                                                  "min = " + str(
+                minim) + " max = " + str(maxim) + "\n" \
+                                                  "mean = " + str(non_zero_mean) + " mode = " + str(
+                mode) + " std = " + str(std)
+            th_superior = interface.get_value_from_popup(index='entity', text=text, max=maxim, start=maxim)
+            if th_superior == -1:
+                return
     # strange dict with keys equals to his index. Sames that is the one that needs 'relabel_nodes'
     label_names = {key: value for key, value in enumerate(labels)}
     class_matrix[class_matrix < 0.0001] = 0
+
     entitys_without_relations = np.count_nonzero(np.max(class_matrix,axis=0) < 0.001)
-    class_matrix[class_matrix < th] = 0
+    class_matrix[class_matrix < th_low] = 0
+    if th_superior is not None:
+        class_matrix[class_matrix > th_superior] = 0
+
     entitys_with_relations_below_th = np.count_nonzero(np.max(class_matrix, axis=0) < 0.001)-entitys_without_relations
 
     G = nx.DiGraph(class_matrix)
@@ -527,13 +537,13 @@ def plot_coocurrence_graph(network_data, layers=None, entity='class', interface=
 
     #set the list of edge weight
     edges_weight = np.array(list(nx.get_edge_attributes(G, 'weight').values()))
-    interpolator = interp1d ([th,edges_weight.max()], [1.,4.])
+    interpolator = interp1d ([th_low, edges_weight.max()], [1., 4.])
     edges_weight = interpolator(edges_weight)
 
 
-    title = entity.capitalize() + ' correlation in Network [th='+str(round(th,2))+"] \n "+\
-            entity.capitalize()+" without relations: "+str(entitys_without_relations)+" - "+\
-            entity.capitalize()+" with all relations below th: "+str(entitys_with_relations_below_th)
+    title = entity.capitalize() + ' correlation in Network [th_low=' + str(round(th_low, 2)) + "] \n " + \
+            entity.capitalize() +" without relations: " + str(entitys_without_relations) +" - " + \
+            entity.capitalize() +" with all relations below th_low: " + str(entitys_with_relations_below_th)
     #append a little summary of the cropped nodes
     if max_degree != np.max(outdeg['degree']):
         nodes_cropped = np.count_nonzero(outdeg['degree']>max_degree)
@@ -823,6 +833,30 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
 
     plt.subplots_adjust(wspace=0.5, hspace=0.8)
     plt.show()
+
+def plot_enitity_one_repetition(network_data, layers=None, entity='class'):
+    class_matrix, labels = network_data.get_entinty_co_ocurrence_matrix(layers=layers,entity=entity,operation='1/2')
+    #Axis 0 = Layers
+    class_matrix[:, range(class_matrix.shape[1]), range(class_matrix.shape[2])] = 0
+    class_matrix[class_matrix < 0.0001] = 0
+    one_rep = []
+    more_than_one_rep = []
+    for i in range(len(class_matrix)):
+
+        one_rep.append(float(np.sum((class_matrix[i]<0.6) & (class_matrix[i]>0.1)))
+                       / len(network_data.get_layer_by_name(layer=layers[i]).neurons_data))
+        more_than_one_rep.append(np.sum(class_matrix[i] > 0.75)
+                                 / len(network_data.get_layer_by_name(layer=layers[i]).neurons_data))
+
+    plt.title('Pairs PC/#Neurons of layer on '+network_data.model.name)
+    plt.plot(layers,one_rep, label='Only one repeated pair')
+    plt.plot(layers, more_than_one_rep, label='More than one repeated pairs')
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.show()
+
+
+
 
 def plot_relevant_nf(network_data, layer_name, neuron_idx, layer_to_ablate, master = None, entity='class', th = 0.5):
     plt.figure()
