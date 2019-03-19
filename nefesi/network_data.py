@@ -17,7 +17,7 @@ from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
 from keras.layers import Conv2D, Input
-from keras.models import Sequential, Model
+from keras.models import Sequential, Model, clone_model
 
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -499,17 +499,19 @@ class NetworkData(object):
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)
-        layer_names = [x.name for x in self.model.layers]
+        cloned_model= clone_model(self.model)
+
+        layer_names = [x.name for x in cloned_model.layers]
         numb_ablated=layer_names.index(ablated_layer)
         numb_analysis=layer_names.index(layer_analysis)+1
-        intermediate_layer_model = Model(inputs=self.model.input, outputs=self.model.get_layer(ablated_layer).output)
+        intermediate_layer_model = Model(inputs=cloned_model.input, outputs=cloned_model.get_layer(ablated_layer).output)
         intermediate_output = intermediate_layer_model.predict(images)
 
-        DL_input = Input(self.model.layers[numb_ablated+1].input_shape[1:],name=ablated_layer)
+        DL_input = Input(cloned_model.layers[numb_ablated+1].input_shape[1:],name=ablated_layer)
 
         mymodel_layers=[DL_input]
         mymodel_layer_names=[ablated_layer]
-        for layer in self.model.layers[numb_ablated+1:numb_analysis]:
+        for layer in cloned_model.layers[numb_ablated+1:numb_analysis]:
             if type(layer.input) == list:
                 list_inputs_names=[x.name.split('/')[0] for x in layer.input]
                 list_inputs_nubers=[mymodel_layer_names.index(x) for x in list_inputs_names]
