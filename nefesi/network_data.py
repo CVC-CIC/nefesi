@@ -8,7 +8,7 @@ import warnings
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
-
+from keras.backend import clear_session
 from .neuron_data import NeuronData
 from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
@@ -18,7 +18,7 @@ from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
 from keras.layers import Conv2D, Input
 from keras.models import Sequential, Model, clone_model
-
+from tensorflow import Session
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 
@@ -486,7 +486,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, ablated_layer = 'layer_ablated'):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate = 'layer_ablated',path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5'):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -499,45 +499,52 @@ class NetworkData(object):
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)
-        cloned_model= clone_model(self.model)
+        clear_session()
+        new_keras_sess= Session()
+        with new_keras_sess.as_default():
+            cloned_model= load_model(path_model)
 
-        layer_names = [x.name for x in cloned_model.layers]
-        numb_ablated=layer_names.index(ablated_layer)
-        numb_analysis=layer_names.index(layer_analysis)+1
-        intermediate_layer_model = Model(inputs=cloned_model.input, outputs=cloned_model.get_layer(ablated_layer).output)
-        intermediate_output = intermediate_layer_model.predict(images)
+            layer_names = [x.name for x in cloned_model.layers]
+            numb_ablated=layer_names.index(layer_to_ablate)
+            numb_analysis=layer_names.index(layer_analysis)+1
+            intermediate_layer_model = Model(inputs=cloned_model.input, outputs=cloned_model.get_layer(layer_to_ablate).output)
+            intermediate_output = intermediate_layer_model.predict(images)
 
-        DL_input = Input(cloned_model.layers[numb_ablated+1].input_shape[1:],name=ablated_layer)
+            DL_input = Input(cloned_model.layers[numb_ablated+1].input_shape[1:],name=layer_to_ablate)
 
-        mymodel_layers=[DL_input]
-        mymodel_layer_names=[ablated_layer]
-        for layer in cloned_model.layers[numb_ablated+1:numb_analysis]:
-            if type(layer.input) == list:
-                list_inputs_names=[x.name.split('/')[0] for x in layer.input]
-                list_inputs_nubers=[mymodel_layer_names.index(x) for x in list_inputs_names]
-                list_input_layers=[mymodel_layers[x] for x in list_inputs_nubers]
-                new_layer=layer(list_input_layers)
+            mymodel_layers=[DL_input]
+            mymodel_layer_names=[layer_to_ablate]
+            for layer in cloned_model.layers[numb_ablated+1:numb_analysis]:
+                if type(layer.input) == list:
+                    list_inputs_names=[x.name.split('/')[0] for x in layer.input]
+                    list_inputs_nubers=[mymodel_layer_names.index(x) for x in list_inputs_names]
+                    list_input_layers=[mymodel_layers[x] for x in list_inputs_nubers]
+                    new_layer=layer(list_input_layers)
 
-            else:
-                new_layer=layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
+                else:
+                    new_layer=layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
 
-            mymodel_layer_names.append(layer.name)
-            mymodel_layers.append(new_layer)
+                mymodel_layer_names.append(layer.name)
+                mymodel_layers.append(new_layer)
 
 
-        DL_model = Model(inputs=mymodel_layers[0],outputs=mymodel_layers[-1])
-        original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-        ablation_list = np.zeros(intermediate_output.shape[-1])
-        for i in range(len(intermediate_output[0, 0, 0, :])):
-            intermediate_output2 = intermediate_output[:, :, :, i]*1
-            intermediate_output[:, :, :, i] = 0
-            predictionsf = DL_model.predict(intermediate_output)
-            intermediate_output[:, :, :, i] = intermediate_output2
-            neuron_predictions_ablated = predictionsf[:, :, :, neuron]
-            #get the activation on the same point
-            max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+            DL_model = Model(inputs=mymodel_layers[0],outputs=mymodel_layers[-1])
+            original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+            ablation_list = np.zeros(intermediate_output.shape[-1])
+            for i in range(len(intermediate_output[0, 0, 0, :])):
+                intermediate_output2 = intermediate_output[:, :, :, i]*1
+                intermediate_output[:, :, :, i] = 0
+                predictionsf = DL_model.predict(intermediate_output)
+                intermediate_output[:, :, :, i] = intermediate_output2
+                neuron_predictions_ablated = predictionsf[:, :, :, neuron]
+                #get the activation on the same point
+                max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
 
-            ablation_list[i] = np.sum(abs(original_activations - max_activations))
+                ablation_list[i] = np.sum(abs(original_activations - max_activations))
+            clear_session()
+        self.model = load_model(path_model)
+
+
 
         return ablation_list
 
