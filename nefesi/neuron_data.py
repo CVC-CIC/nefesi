@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from PIL import ImageOps
 from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
@@ -242,9 +243,11 @@ class NeuronData(object):
 
     def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate='layer_ablated'):
         if layer_to_ablate not in self.relevance_idx:
+            default_path_of_model = os.path.join(network_data.save_path,network_data.model.name+'.h5')
             self.relevance_idx[layer_to_ablate] = network_data.get_relevance_by_ablation(layer_analysis=layer_name,
                                                                                          neuron=neuron_idx,
-                                                                                         layer_to_ablate=layer_to_ablate)
+                                                                                         layer_to_ablate=layer_to_ablate,
+                                                                                        path_model=default_path_of_model)
             print('Relevance: '+layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
         return self.relevance_idx[layer_to_ablate]
 
