@@ -213,7 +213,7 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
                                       layer_name=layer_to_evaluate, font_size=font_size + 2,
                                       min=min, max=max, condition1=condition1, condition2=condition2,
                                       max_neurons=max_neurons, order=order,similarity_idx=similarity_idx)
-    elif index == 'object':
+    elif index in ['object', 'part']:
         hidden_annotations, neurons_that_pass_filter = \
             object_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
@@ -625,7 +625,7 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", spec
                                                                   layer_name=layer_name, font_size=font_size+2)
             x_axis_labels[pos] = layer_name + " \n" \
                                            "μ=" + str(mean) + " σ=" + str(std)
-        elif index == 'object':
+        elif index in ['object', 'part']:
             mean, std, hidden_annotations[pos] = object_layer_bars(sel_idx_of_layer, pos, subplot, colors,
                                                                   different_bars,
                                                                   layer_name=layer_name, font_size=font_size + 2)

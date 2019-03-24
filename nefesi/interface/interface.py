@@ -1,7 +1,7 @@
 STATES = ['init']
 MAX_PLOTS_VISIBLES_IN_WINDOW = 4
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
-PLOTTABLE_ENTITIES = ['class', 'object', 'color']
+PLOTTABLE_ENTITIES = ['class', 'object', 'color', 'part']
 COOCURRENCE_OPTIONS = ['1/PC', '1/2', 'local selectivity sum']
 REPRESENTATION_OPTIONS = ['1/PC', '1', 'local selectivity']
 

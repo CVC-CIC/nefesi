@@ -10,7 +10,7 @@ import pickle
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 
-ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object']
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object', 'part']
 
 class CalculateIndexes:
 	def __init__(self, network_data_file, model_file, sel_indexes = ALL_INDEX_NAMES, verbose=True, degrees_orientation_idx= None):

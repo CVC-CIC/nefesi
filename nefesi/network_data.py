@@ -24,8 +24,7 @@ gpu.assignGPU()
 
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
-#'concept' is special, (non all datasets accept it)
-ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object', 'part']
 
 class NetworkData(object):
     """This is the main class of nefesi package.
@@ -359,11 +358,6 @@ class NetworkData(object):
         """
         start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = {}
-
-        if sel_index in ['concept', 'object', 'parts', 'material']:
-            if not self.addmits_concept_selectivity():
-                raise ValueError("Dataset in -> "+self.dataset._src_dataset+" doesn't addmits concept selectivity")
-
         if labels is None:
             labels=self.default_labels_dict
         if thr_pc is None:
