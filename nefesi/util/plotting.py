@@ -318,14 +318,16 @@ def plot_nf_of_entities_in_pc(network_data, master = None, layer_selected = '.*'
         else:
             opcions=[x for x in labels if x.startswith(text)]
             if len(opcions)>10:
-                opcions=opcions[:10].append('...')
+                opcions=opcions[:9]
+                opcions.append('...')
 
-            opcions=' ,'.join(opcions)
+            if len(opcions)>1:
+                opcions=' ,'.join(opcions)
 
             plt.suptitle(opcions,y=0.7,x=0.5)
 
     axbox = plt.axes([0.3, 0.4, 0.45, 0.075])
-    text_box = TextBox(axbox, 'Label', initial='Input Label')
+    text_box = TextBox(axbox, 'Label', initial='')
     text_box.on_submit(submit)
 
     axcut = plt.axes([0.45, 0.05, 0.1, 0.075])
