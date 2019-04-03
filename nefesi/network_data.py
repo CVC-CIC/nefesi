@@ -534,7 +534,7 @@ class NetworkData(object):
                 #get the activation on the same point
                 max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
 
-                ablation_list[i] = np.sum(abs(original_activations - max_activations))
+                ablation_list[i] = np.sum(abs(original_activations - max_activations)/original_activations)
             clear_session()
         self.model = load_model(path_model)
 
