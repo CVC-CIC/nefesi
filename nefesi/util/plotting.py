@@ -6,7 +6,7 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import math
 from PIL import ImageDraw
 from sklearn.manifold import TSNE
-from matplotlib.widgets import RadioButtons,Button, Slider
+from matplotlib.widgets import RadioButtons,Button, Slider,TextBox
 from scipy.interpolate import interp1d
 from ..class_index import get_concept_labels
 from .ColorNaming import colors as color_names
@@ -293,14 +293,16 @@ def plot_nf_of_entities_in_pc(network_data, master = None, layer_selected = '.*'
         layer_selected = 0
     radio = RadioButtons(rax, layers_to_analyze, active=layer_selected)
     if entity == 'class':
-        labels = np.sort(np.array(list(network_data.default_labels_dict.values())))
+        labels = list(np.sort(np.array(list(network_data.default_labels_dict.values()))))
     elif entity == 'object':
-        labels = np.sort(get_concept_labels(entity))
+        labels = list(np.sort(get_concept_labels(entity)))
     elif entity == 'color':
-        labels = np.sort(np.array(color_names))
+        labels = list(np.sort(np.array(color_names)))
 
     def updateslide(val):
         plt.suptitle(labels[int(val)],y=0.7,x=0.5)
+
+
 
     slid= Slider(rax2,'',0, len(labels)-1,valinit=int(len(labels)/2),valfmt='%d')
     slid.on_changed(updateslide)
@@ -309,7 +311,22 @@ def plot_nf_of_entities_in_pc(network_data, master = None, layer_selected = '.*'
         entity_name=labels[int(slid.val)]
         plot_pc_of_class(network_data,radio.value_selected,entity_name, master=master, entity=entity)
 
+    def submit(text):
+        plt.suptitle(text, y=0.7, x=0.5)
+        if text in labels:
+            slid.set_val(labels.index(text))
+        else:
+            opcions=[x for x in labels if x.startswith(text)]
+            if len(opcions)>10:
+                opcions=opcions[:10].append('...')
 
+            opcions=' ,'.join(opcions)
+
+            plt.suptitle(opcions,y=0.7,x=0.5)
+
+    axbox = plt.axes([0.3, 0.4, 0.45, 0.075])
+    text_box = TextBox(axbox, 'Label', initial='Input Label')
+    text_box.on_submit(submit)
 
     axcut = plt.axes([0.45, 0.05, 0.1, 0.075])
     bcut = Button(axcut, 'Go', color='red', hovercolor='green')
