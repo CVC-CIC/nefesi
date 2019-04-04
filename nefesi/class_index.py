@@ -139,14 +139,23 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     general_hist = {}
     norm_activations = neuron.norm_activations
     for i, segment in enumerate(segmentation):
-        segment = segment[concept]
+        object_segment = segment['object']
+        if concept == 'part':
+            part_segment = segment['part']
         #Crop for only use the receptive field
         ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
         ri, rf, ci, cf = abs(ri), abs(rf), abs(ci), abs(cf)
         #Resize segmentation if necessary
-        if network_data.dataset.target_size != segment.shape:
-            segment = np.array(Image.fromarray(segment).resize(network_data.dataset.target_size, Image.NEAREST))
-        cropped_segmentation = segment[ri:rf, ci:cf]
+        if network_data.dataset.target_size != object_segment.shape:
+            object_segment = np.array(Image.fromarray(object_segment).resize(network_data.dataset.target_size, Image.NEAREST))
+            if concept == 'part':
+                #Resize all part
+                part_segment = np.array(list((map(lambda part: np.array(Image.fromarray(part).
+                                    resize(network_data.dataset.target_size, Image.NEAREST)),list(part_segment)))))
+
+        cropped_segmentation = object_segment[ri:rf, ci:cf]
+        if concept == 'part':
+            cropped_segmentation = create_parts_from_object(cropped_segmentation, part_segment[:, ri:rf, ci:cf])
         activation = norm_activations[i] if type=='activation' else activations_masks[i][ri:rf, ci:cf]
         #Make individual hist
         ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,
@@ -167,6 +176,8 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     #Normalized
     general_hist['value'] /= np.sum(general_hist['value'])
     general_hist = general_hist[general_hist['value'] >= th]
+    #Erase the NonConcept label and his value
+    general_hist = general_hist[general_hist['label'] != 0]
     if len(general_hist) is 0:
         return np.array([('None', 0.0)], dtype = [('label', np.object), ('value',np.float)])
     else:
@@ -174,6 +185,22 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
         general_hist = translate_concept_hist(general_hist, concept)
         return general_hist
 
+def create_parts_from_object(object_segmentation, part_from_object):
+    origin_shape = object_segmentation.shape
+    hierarchy_dict = get_concept_labels(concept='object_part')
+    object_segmentation = object_segmentation.reshape(-1)
+    part_from_object = list(part_from_object.reshape((77, -1)))
+    objects = np.unique(object_segmentation)
+    parts_segmentation = np.zeros(object_segmentation.shape, dtype=np.int16)
+    keys = list(hierarchy_dict.keys())
+    for object in objects:
+        if object in hierarchy_dict:
+            part = part_from_object[keys.index(object)]
+            parts_dict = hierarchy_dict[object]
+            poses = np.where(np.array(object_segmentation) == object)[0]
+            parts_segmentation[poses] = list(map(lambda pos: parts_dict[part[pos]],poses))
+
+    return parts_segmentation.reshape(origin_shape)
 
 def translate_concept_hist(hist, concept):
     # Charge without index (redundant with pos) and without header
@@ -183,9 +210,15 @@ def translate_concept_hist(hist, concept):
 
 def get_concept_labels(concept='object'):
     concept = concept.lower()
-    if concept == 'object':
-        return np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
-
+    if concept in ['object', 'part']:
+        correspondences =  np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR+concept+'.csv', delimiter=',', dtype=np.str)[1:,1]
+    elif concept == 'object_part':
+        correspondences = np.genfromtxt(CONCEPT_TRANSLATION_BASE_DIR + concept + '.csv', delimiter=',', dtype=np.str)[1:]
+        #Dictionary that have: For each key (wich is the object key) a Dictionary of indexs of parts (wich have for each
+        #part key, the name of the part)
+        correspondences =  {int(object_id) : [int(i) for i in parts_ids.split(';')]
+                            for object_id, object_name, parts_ids, parts_names in correspondences}
+    return correspondences
 
 
 def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):

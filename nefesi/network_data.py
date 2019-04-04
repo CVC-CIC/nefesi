@@ -8,7 +8,7 @@ import warnings
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
-
+from keras.backend import clear_session
 from .neuron_data import NeuronData
 from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
@@ -16,16 +16,15 @@ from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
-from keras.layers import Conv2D
-from keras.models import Sequential, Model
-
+from keras.layers import Conv2D, Input
+from keras.models import Sequential, Model, clone_model
+from tensorflow import Session
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
-#'concept' is special, (non all datasets accept it)
-ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'population code']
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object', 'part']
 
 class NetworkData(object):
     """This is the main class of nefesi package.
@@ -359,11 +358,6 @@ class NetworkData(object):
         """
         start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = {}
-
-        if sel_index in ['concept', 'object', 'parts', 'material']:
-            if not self.addmits_concept_selectivity():
-                raise ValueError("Dataset in -> "+self.dataset._src_dataset+" doesn't addmits concept selectivity")
-
         if labels is None:
             labels=self.default_labels_dict
         if thr_pc is None:
@@ -486,7 +480,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate = 'layer_ablated'):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate = 'layer_ablated',path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5'):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -499,31 +493,52 @@ class NetworkData(object):
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)
-        layer_names = [x.name for x in self.model.layers]
-        ablated_layer = layer_names[layer_names.index(layer_analysis) - 1]
-        intermediate_layer_model = Model(inputs=self.model.input, outputs=self.model.get_layer(ablated_layer).output)
-        intermediate_output = intermediate_layer_model.predict(images)
+        clear_session()
+        new_keras_sess= Session()
+        with new_keras_sess.as_default():
+            cloned_model= load_model(path_model)
 
-        layer_weights = self.model.get_layer(layer_analysis).get_weights()
-        model_output_shape = self.model.get_layer(layer_analysis).output_shape
+            layer_names = [x.name for x in cloned_model.layers]
+            numb_ablated=layer_names.index(layer_to_ablate)
+            numb_analysis=layer_names.index(layer_analysis)+1
+            intermediate_layer_model = Model(inputs=cloned_model.input, outputs=cloned_model.get_layer(layer_to_ablate).output)
+            intermediate_output = intermediate_layer_model.predict(images)
 
-        small_model = Sequential()
-        small_model.add(Conv2D(model_output_shape[-1], layer_weights[0].shape[:2], activation='relu',
-                               input_shape=model_output_shape[1:], padding='same', weights=layer_weights))
-        #small_model.compile(loss='categorical_crossentropy', optimizer='SGD')
+            DL_input = Input(cloned_model.layers[numb_ablated+1].input_shape[1:],name=layer_to_ablate)
 
-        original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-        ablation_list = np.zeros(intermediate_output.shape[-1])
-        for i in range(len(intermediate_output[0, 0, 0, :])):
-            intermediate_output2 = intermediate_output[:, :, :, i]*1
-            intermediate_output[:, :, :, i] = 0
-            predictionsf = small_model.predict(intermediate_output)
-            intermediate_output[:, :, :, i] = intermediate_output2
-            neuron_predictions_ablated = predictionsf[:, :, :, neuron]
-            #get the activation on the same point
-            max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+            mymodel_layers=[DL_input]
+            mymodel_layer_names=[layer_to_ablate]
+            for layer in cloned_model.layers[numb_ablated+1:numb_analysis]:
+                if type(layer.input) == list:
+                    list_inputs_names=[x.name.split('/')[0] for x in layer.input]
+                    list_inputs_nubers=[mymodel_layer_names.index(x) for x in list_inputs_names]
+                    list_input_layers=[mymodel_layers[x] for x in list_inputs_nubers]
+                    new_layer=layer(list_input_layers)
 
-            ablation_list[i] = np.sum(abs(original_activations - max_activations))
+                else:
+                    new_layer=layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
+
+                mymodel_layer_names.append(layer.name)
+                mymodel_layers.append(new_layer)
+
+
+            DL_model = Model(inputs=mymodel_layers[0],outputs=mymodel_layers[-1])
+            original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+            ablation_list = np.zeros(intermediate_output.shape[-1])
+            for i in range(len(intermediate_output[0, 0, 0, :])):
+                intermediate_output2 = intermediate_output[:, :, :, i]*1
+                intermediate_output[:, :, :, i] = 0
+                predictionsf = DL_model.predict(intermediate_output)
+                intermediate_output[:, :, :, i] = intermediate_output2
+                neuron_predictions_ablated = predictionsf[:, :, :, neuron]
+                #get the activation on the same point
+                max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+
+                ablation_list[i] = np.sum(abs(original_activations - max_activations)/original_activations)
+            clear_session()
+        self.model = load_model(path_model)
+
+
 
         return ablation_list
 

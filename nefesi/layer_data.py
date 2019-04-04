@@ -122,14 +122,12 @@ class LayerData(object):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].single_class_selectivity_idx(labels, thr_pc)
-        elif index_name.lower() == 'object':
+        elif index_name.lower() in ['object', 'part']:
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
             for i in range(len(self.neurons_data)):
-                if verbose:
-                    print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].single_concept_selectivity_idx(network_data=network_data,
                                                                                  layer_data=self, neuron_idx=i,
-                                                                                 concept='object', th=thr_pc)
+                                                                                 concept=index_name.lower(), th=thr_pc)
         elif index_name.lower() == 'homogeneized_color':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
             for i in range(len(self.neurons_data)):
@@ -196,6 +194,9 @@ class LayerData(object):
         if 'object' in indexes:
             index['object'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
                                                               neuron_idx=neuron_idx, concept='object', th=thr_pc)
+        if 'part' in indexes:
+            index['part'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
+                                                             neuron_idx=neuron_idx, concept='part', th=thr_pc)
 
         if network_data.save_changes:
             end_time = time.time()
@@ -526,7 +527,7 @@ class LayerData(object):
         # get the activations for the patches
         xy_locations, activations = get_activations(model, neuron_images,
                                       #print_shape_only=True,
-                                      layers_data=[target_layer.layer_id])
+                                      layers_name=[target_layer.layer_id])
 
         activations = activations[0]
         # get the activations shape, where:

@@ -8,7 +8,7 @@ except ImportError:
 
 from ...util.general_functions import get_image_masked
 from ...util.segmentation.utils import maskrcnn_colorencode
-from ...class_index import concept_selectivity_of_image, translate_concept_hist
+from ...class_index import concept_selectivity_of_image, translate_concept_hist,create_parts_from_object
 from PIL import ImageTk,Image
 import os
 import numpy as np
@@ -68,7 +68,9 @@ class ReceptiveFieldPopupWindow(object):
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         ttk.Radiobutton(master, text="Activation", variable=self.method_value, value=2,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
-        ttk.Radiobutton(master, text="Segmentation", variable=self.method_value, value=3,
+        ttk.Radiobutton(master, text="Segmentation Object", variable=self.method_value, value=3,
+                        command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
+        ttk.Radiobutton(master, text="Segmentation Part", variable=self.method_value, value=4,
                         command=lambda: self._on_checkbox_clicked()).pack(side=TOP, anchor="w", padx=10)
         # checkbox_value = BooleanVar(master=master, value=True)
         # ttk.Checkbutton(master=master, text="Receptive camp",
@@ -83,17 +85,24 @@ class ReceptiveFieldPopupWindow(object):
                                    show_activation= value == 2, thr_mth=self.thr_mth.get(), thr=self.thr.get()/100)
         else:
             img = self.network_data.dataset._load_image(self.image_name)
-            if value == 3:
+            if value in [3,4]:
+                concept = 'object' if value == 3 else 'part'
                 if self.network_data.dataset.src_segmentation_dataset is not None:
                     image_path = os.path.join(self.network_data.dataset.src_segmentation_dataset, self.image_name)+'.npz'
-                    segmentation = np.load(image_path)['object']
+                    segmentation = np.load(image_path)
+                    if concept == 'part':
+                        segmentation = create_parts_from_object(segmentation['object'], segmentation['part'])
+                    elif concept == 'object':
+                        segmentation = segmentation['object']
                     if self.network_data.dataset.target_size != segmentation.shape:
                         segmentation = np.array(
                             Image.fromarray(segmentation).resize(self.network_data.dataset.target_size, Image.NEAREST))
+
+
                 else:
                     from ...util.segmentation.Broden_analize import Segment_images
                     image_path = os.path.join(self.network_data.dataset.src_dataset, self.image_name)
-                    segmentation = Segment_images([image_path])[0]['object']
+                    segmentation = Segment_images([image_path])[0][concept]
                 if self.color_list is None:
                     self.color_list = np.random.rand(1000, 3) * .7 + .3
                 img = maskrcnn_colorencode(np.asarray(img), segmentation, self.color_list)
@@ -102,7 +111,8 @@ class ReceptiveFieldPopupWindow(object):
                         self.neuron.xy_locations[self.actual_idx, 0], self.neuron.xy_locations[self.actual_idx, 1]]
                     ri, rf, ci, cf = abs(ri),abs(rf),abs(ci),abs(cf)
                     segmentation = segmentation[ri:rf, ci:cf]
-                    self.set_labels_frame(master=self.receptive_camp_frame, segment=segmentation, color_list=self.color_list)
+                    self.set_labels_frame(master=self.receptive_camp_frame, segment=segmentation,
+                                          color_list=self.color_list,concept=concept)
                     self.labels_printed = True
 
         img = self.interface.draw_rectangle_on_image(np.array(img), self.x0, self.x1, self.y0, self.y1)
@@ -126,11 +136,11 @@ class ReceptiveFieldPopupWindow(object):
         self.thr.set(5)
         self.thr.pack(side=TOP)
 
-    def set_labels_frame(self, master, segment, color_list):
+    def set_labels_frame(self, master, segment, color_list, concept = 'object'):
         ids, freqs = concept_selectivity_of_image(activations_mask=None, segmented_image=segment, type='percent')
         arr = [(id, freq, tuple(color_list[id])) for id, freq in zip(ids, freqs)]
         arr = np.array(arr, dtype=[('label', np.int), ('value', np.float), ('color', np.object)])
-        arr_transl = translate_concept_hist(arr, 'object')
+        arr_transl = translate_concept_hist(arr, concept=concept)
         arr_comp = np.zeros(len(arr), dtype=[('label', np.object), ('value', np.float), ('color', np.object)])
         arr_comp['label'], arr_comp['value'], arr_comp['color'] = arr_transl['label'], arr_transl['value'], arr['color']
         arr_comp = np.sort(arr_comp, order = 'value')[::-1]

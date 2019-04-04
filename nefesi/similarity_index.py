@@ -46,7 +46,7 @@ def get_row_of_similarity_index(neuron, neuron_activations, norm_activations_sum
 
     :return: numpy of Float, index similarity value.
     """
-
+    #THIS INDEX MUST BE REVISED, IS NOT WORKING
     if not np.isclose(max(neuron_activations), 0.0):
         images = neuron.images_id
         images = dataset.load_images(images)

@@ -10,7 +10,7 @@ import pickle
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 
-ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object']
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object', 'part']
 
 class CalculateIndexes:
 	def __init__(self, network_data_file, model_file, sel_indexes = ALL_INDEX_NAMES, verbose=True, degrees_orientation_idx= None):
@@ -30,8 +30,8 @@ def run_calculs(network_data, degrees_orientation_idx=None, sel_indexes = ALL_IN
 	network_data.indexs_accepted = sel_indexes
 	network_data.get_selectivity_idx(sel_index=sel_indexes, layer_name='.*',
 									 degrees_orientation_idx=degrees_orientation_idx, verbose=verbose)
-	network_data.similarity_idx(layer_name='.*')
 	network_data.get_relevance_idx(layer_name='.*')
+	network_data.similarity_idx(layer_name='.*')
 
 def main():
 	with open("../nefesi/evaluation_scripts/indexes_config.cfg", "rb") as f:

@@ -132,7 +132,7 @@ def fill_all_layers_data_batch(file_names, images, model, layers_data):
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
     layer_names = [layer.layer_id for layer in layers_data]
-    activations = get_activations(model, images, layer_names)
+    activations = get_activations(model, images, layers_name)
     for i, layer_activation in enumerate(activations):
         conv_layer = type(layer_activation) is tuple
         if conv_layer:
@@ -167,7 +167,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
-    activations = get_activations(model, images, layer_name=None)#layer_name)
+    activations = get_activations(model, images, layers_name=None)#layer_name)
     for layer_activation in activations:
         conv_layer = type(layer_activation) is tuple
         if neurons_data is None:
@@ -219,7 +219,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
         activations = np.zeros(shape=(len(images),neurons_of_layer), dtype=np.float)
         #Get the activation of all neuron
         for i in range(1,len(batches)):
-            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layer_name=layer_name)[0]
+            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layers_name=layer_name)[0]
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)),
                                                                        pos[batches[i - 1]:batches[i],0],
                                                                        pos[batches[i - 1]:batches[i],1]]
@@ -243,8 +243,12 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, comp
     :param complex_type: True as torralba, False as vedaldi  (falta posar referencies)
     :return: An image that is activation on a neuron but in the original image size
     """
-    #input = network_data.dataset._load_image(image_name, as_numpy=True,
+    #input = network_data.dataset._load_image(image_name, as_numpy=True,0
     #                                              prep_function=True)[np.newaxis, ...]
+
+    complex_type = False
+
+
     inputs = network_data.dataset.load_images(image_names=image_names, prep_function=True)
 
     activations = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,

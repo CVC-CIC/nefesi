@@ -43,7 +43,8 @@ def plot_similar_neurons(network_data, layer, neuron_idx,min=0., max=1., conditi
         neuron_with_all_indexes_plot(network_data=network_data, sel_idx=similarity_row, sel_idx_to_calcs=similarity_row, subplot=subplot,
                                      font_size=font_size + 2, layer_name=layer,
                                      min=min, max=max, condition1=condition1, condition2=condition2,
-                                     max_neurons=max_neurons, order=order, neuron_idx=neuron_idx)
+                                     max_neurons=max_neurons, order=order, neuron_idx=neuron_idx,
+                                     neuron_to_non_count=neuron_idx)
     set_texts_of_one_layer_plot(condition1, condition2, hidden_annotations, 'similarity', layer, max, min,
                                 network_data, neurons_that_pass_filter, order, subplot, neuron=neuron_idx)
     return figure, hidden_annotations
@@ -52,11 +53,9 @@ def plot_relevant_neurons(network_data, layer, layer_to_ablate, neuron_idx,min=0
                          order=ORDER[0], max_neurons=15):
     figure = plt.figure(figsize=(12, 18))
     subplot = figure.add_subplot(gridspec.GridSpec(12, 18)[:-1, :-2])
-    # Review is this is correct or needs to take the column
     relevant_row = network_data.get_neuron_of_layer(layer=layer, neuron_idx=neuron_idx).\
         get_relevance_idx(network_data=network_data, layer_name=layer,neuron_idx=neuron_idx,
                           layer_to_ablate=layer_to_ablate)
-
     font_size = FONTSIZE_BY_LAYERS[1]
 
     hidden_annotations, neurons_that_pass_filter = \
@@ -73,11 +72,11 @@ def plot_relevant_neurons(network_data, layer, layer_to_ablate, neuron_idx,min=0
 
 def neuron_with_all_indexes_plot(network_data, neuron_idx, sel_idx, sel_idx_to_calcs, subplot, font_size, layer_name='default',
                                  min =0, max=1, condition1='<=', condition2=None, max_neurons=15, order=ORDER[0], color_map='jet',
-                                 annotate_index = False, similarity_idx = None, layer_to_ablate=None):
-
-    circles, hidden_annotations, layer_name, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
-        color_map, condition1, condition2, layer_name, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
-        neuron_to_non_count=neuron_idx, similarity_matrix=similarity_idx)
+                                 annotate_index = False, similarity_idx = None, layer_to_ablate=None, neuron_to_non_count = None):
+    layer_of_subplot = layer_name if layer_to_ablate is None else layer_to_ablate
+    circles, hidden_annotations, layer_of_subplot, neurons_that_pass_filter, valids_ids, valids_idx = make_one_layer_base_subplot(
+        color_map, condition1, condition2, layer_of_subplot, max, max_neurons, min, order, sel_idx, sel_idx_to_calcs, subplot,
+        neuron_to_non_count=neuron_to_non_count, similarity_matrix=similarity_idx)
     original_neuron_indexes = network_data.get_all_index_of_neuron(layer=layer_name, neuron_idx=neuron_idx)
     layer_name = layer_name if layer_to_ablate is None else layer_to_ablate
     hidden_annotations = np.zeros((len(hidden_annotations),2), dtype=hidden_annotations.dtype)
@@ -214,7 +213,7 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
                                       layer_name=layer_to_evaluate, font_size=font_size + 2,
                                       min=min, max=max, condition1=condition1, condition2=condition2,
                                       max_neurons=max_neurons, order=order,similarity_idx=similarity_idx)
-    elif index == 'object':
+    elif index in ['object', 'part']:
         hidden_annotations, neurons_that_pass_filter = \
             object_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
@@ -626,7 +625,7 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", spec
                                                                   layer_name=layer_name, font_size=font_size+2)
             x_axis_labels[pos] = layer_name + " \n" \
                                            "μ=" + str(mean) + " σ=" + str(std)
-        elif index == 'object':
+        elif index in ['object', 'part']:
             mean, std, hidden_annotations[pos] = object_layer_bars(sel_idx_of_layer, pos, subplot, colors,
                                                                   different_bars,
                                                                   layer_name=layer_name, font_size=font_size + 2)

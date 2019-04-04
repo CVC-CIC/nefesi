@@ -9,7 +9,7 @@ except ImportError:
 
 
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
-ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object']
+ALL_INDEX_NAMES = ['symmetry', 'orientation', 'color', 'class', 'object', 'part']
 
 class SelectIndexWindow():
     def __init__(self, master, actual_indexes):
