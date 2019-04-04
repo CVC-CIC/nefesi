@@ -397,20 +397,8 @@ class LayerData(object):
             return
 
         if self.receptive_field_map is None:
-            self.receptive_field_map = get_each_point_receptive_field(model, self.layer_id)
+            self.receptive_field_map, self.receptive_field_size = get_each_point_receptive_field(model, self.layer_id)
 
-        # calculate the size of receptive field
-        if self.receptive_field_size is None:
-            if len(model.layers[layer_idx].output_shape) == 4:
-                _, w, h, _ = model.layers[layer_idx].output_shape
-            else:
-                raise ValueError("You're trying to get the receptive field of a NON Convolutional layer? --> "+self.layer_id)
-            row = int(w // 2)
-            col = int(h // 2)
-            row_ini, row_fin, col_ini, col_fin = self.receptive_field_map[row, col]
-            height = row_fin - row_ini
-            width = col_fin - col_ini
-            self.receptive_field_size = (width, height)
 
     def get_location_from_rf(self, location):
         """Given a pixel of an image (x, y), returns a location in the map
@@ -665,7 +653,27 @@ def get_each_point_receptive_field(model, layer_name):
 
     # (is neccesary to add 1 in row_fin and col_fin due to behaviour of Numpy arrays.
     image_points[:, :, [1, 3]] += 1
-    return image_points
+
+    _, current_size_w, current_size_h, _ = model.layers[0].input_shape
+
+    # calculate the size of receptive field
+    if len(model.layers[current_layer_idx].output_shape) == 4:
+        _, w, h, _ = model.layers[current_layer_idx].output_shape
+    else:
+        raise ValueError(
+            "You're trying to get the receptive field of a NON Convolutional layer? --> " + self.layer_id)
+    row = int(w // 2)
+    col = int(h // 2)
+    row_ini, row_fin, col_ini, col_fin = image_points[row, col]
+    height = row_fin - row_ini
+    width = col_fin - col_ini
+    receptive_field_size = (width, height)
+
+    image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
+    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w - 1)
+    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h - 1)
+
+    return image_points, receptive_field_size
 
 
 def recursive_receptive_field_per_location(model, current_layer, image_points):
@@ -677,9 +685,9 @@ def recursive_receptive_field_per_location(model, current_layer, image_points):
         current_size_w, current_size_h = (float('Inf'), float('Inf'))
 
     # Checks to boundaries of the current layer shape.
-    image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
-    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w - 1)
-    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h - 1)
+    # image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
+    # image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w - 1)
+    # image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h - 1)
     # check if the current layer is a convolution layer or
     # a pooling layer (both have to be 2D).
     config_params = current_layer.get_config()

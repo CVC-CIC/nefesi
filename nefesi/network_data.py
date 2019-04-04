@@ -495,7 +495,7 @@ class NetworkData(object):
             :param neuron: Int with the neuron to analyze
             :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
             """
-        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
+        neuron_data = self.get_neuron_of_layer(layerF_analysis, neuron)
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)

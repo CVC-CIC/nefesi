@@ -141,8 +141,10 @@ class NeuronData(object):
             patches = np.zeros(shape = (self._max_activations,)+size,dtype=np.float)
         else:
             patches = np.zeros(shape = (self._max_activations), dtype=np.object)
+
         if return_mask:
             masks = np.zeros(shape = (self._max_activations,)+rf_size,dtype=np.bool)
+
         for i in range(self._max_activations):
             mask = None
             crop_pos = crop_positions[i]
@@ -153,9 +155,9 @@ class NeuronData(object):
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
-            if  rf_size is not None and rf_size != patch.size:
+            if rf_size is not None and rf_size != patch.size:
                 if return_mask:
-                    patch,mask = self._adjust_patch_size(patch,crop_pos, rf_size,returns_mask=return_mask)
+                    patch, mask = self._adjust_patch_size(patch,crop_pos, rf_size,returns_mask=return_mask)
                 else:
                     patch = self._adjust_patch_size(patch,crop_pos, rf_size)
             if as_numpy:
@@ -163,8 +165,9 @@ class NeuronData(object):
             patches[i] = patch
             if mask is not None:
                 masks[i] = mask
+
         if return_mask:
-            return patches,masks
+            return patches, masks
         else:
             return patches
 

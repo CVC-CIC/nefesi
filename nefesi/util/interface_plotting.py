@@ -1499,7 +1499,6 @@ def main():
     # plot_symmetry_distribution_summary(sel_idx)
     # plot_similarity_circle(t.layers[1], t.layers[1].filters[45])
     # plot_activation_curve(t, t.layers[1], 34)
-    # compute_nf(my_net, text_label, text_label.get_filters())
     # plot_neuron_features(text_label)
     # print selective_neurons.values()[0].keys()
 
