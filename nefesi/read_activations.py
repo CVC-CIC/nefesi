@@ -10,7 +10,7 @@ from scipy.interpolate import RectBivariateSpline
 
 ACTIVATIONS_BATCH_SIZE = 200
 
-def get_activations(model, model_inputs, layers_name):
+def get_activations(model, model_inputs, layers_name, only_max_and_argmax = True):
     """Returns the output (activations) from the model.
 
     :param model: The `keras.models.Model` instance.
@@ -38,18 +38,21 @@ def get_activations(model, model_inputs, layers_name):
     K.learning_phase = 0
     funcs = K.function(inp, outputs)
     layer_outputs = funcs([model_inputs])
-    #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
-    with ThreadPool(processes=None) as pool:  # use all cpu cores
-        async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
-        locations_and_max = [async_result.get() for async_result in async_results]
-        pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...-
-        pool.terminate()
-        pool.join()
-    return locations_and_max
+    if not only_max_and_argmax:
+        return layer_outputs
+    else:
+        #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
+        with ThreadPool(processes=None) as pool:  # use all cpu cores
+            async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
+            locations_and_max = [async_result.get() for async_result in async_results]
+            pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...-
+            pool.terminate()
+            pool.join()
+        return locations_and_max
 
 
 def get_argmax_and_max(layer):
-    if len(layer.shape) == 2: #Is FC
+    if len(layer.shape) == 2: #Is not conv
         return layer
     #The height and width of the image
     unravel_shape = layer.shape[1:-1]
@@ -219,7 +222,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
         activations = np.zeros(shape=(len(images),neurons_of_layer), dtype=np.float)
         #Get the activation of all neuron
         for i in range(1,len(batches)):
-            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layers_name=layer_name)[0]
+            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layers_name=layer_name, only_max_and_argmax=False)[0]
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)),
                                                                        pos[batches[i - 1]:batches[i],0],
                                                                        pos[batches[i - 1]:batches[i],1]]
