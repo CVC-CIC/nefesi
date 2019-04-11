@@ -617,11 +617,16 @@ class LayerData(object):
         keys = set()
         for neuron in self.neurons_data:
             keys |= set(neuron.get_keys_of_indexes())
+            if len(neuron.relevance_idx.keys()):
+                keys.add('Relevance')
         return keys
 
     def erase_index(self, index_to_erase):
         for neuron in self.neurons_data:
-            neuron.remove_selectivity_idx(idx=index_to_erase)
+            if index_to_erase.lower() == 'relevance':
+                neuron.relevance_idx = {}
+            else:
+                neuron.remove_selectivity_idx(idx=index_to_erase)
 
     def is_not_calculated(self, key):
         for neuron in self.neurons_data:

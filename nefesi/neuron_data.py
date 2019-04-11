@@ -55,6 +55,7 @@ class NeuronData(object):
         # index used for ordering activations.
         self._index = 0
         self.mean_activation = 0.
+        self.mean_norm_activation = 0.
         self.images_analyzed = 0
 
     def add_activations(self,activations, image_ids, xy_locations):

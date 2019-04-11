@@ -480,7 +480,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate = 'layer_ablated',path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5'):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5'):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -489,7 +489,7 @@ class NetworkData(object):
             :param neuron: Int with the neuron to analyze
             :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
             """
-        neuron_data = self.get_neuron_of_layer(layerF_analysis, neuron)
+        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
         images = self.dataset.load_images(image_names=image_names, prep_function=True)
@@ -534,7 +534,7 @@ class NetworkData(object):
                 #get the activation on the same point
                 max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
 
-                ablation_list[i] = np.sum(abs(original_activations - max_activations)/original_activations)
+                ablation_list[i] = np.sum(abs(original_activations - max_activations))/np.sum(original_activations)
             clear_session()
         self.model = load_model(path_model)
 
