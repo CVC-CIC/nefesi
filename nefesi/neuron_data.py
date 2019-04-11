@@ -54,6 +54,8 @@ class NeuronData(object):
         self.top_labels = None
         # index used for ordering activations.
         self._index = 0
+        self.mean_activation = 0.
+        self.images_analyzed = 0
 
     def add_activations(self,activations, image_ids, xy_locations):
         """Set the information of n activation. When the assigned
@@ -65,6 +67,8 @@ class NeuronData(object):
 					in the map activation.
 				"""
         end_idx = self._index+len(activations)
+        self.mean_activation += np.sum(activations)
+        self.images_analyzed += len(activations)
         self.activations[self._index:end_idx] = activations
         self.images_id[self._index:end_idx] = image_ids
         self.xy_locations[self._index:end_idx,:] = xy_locations

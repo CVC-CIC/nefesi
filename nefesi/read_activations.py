@@ -135,7 +135,7 @@ def fill_all_layers_data_batch(file_names, images, model, layers_data):
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
     layer_names = [layer.layer_id for layer in layers_data]
-    activations = get_activations(model, images, layers_name)
+    activations = get_activations(model, images, layer_names)
     for i, layer_activation in enumerate(activations):
         conv_layer = type(layer_activation) is tuple
         if conv_layer:

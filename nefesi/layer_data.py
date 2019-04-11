@@ -46,6 +46,8 @@ class LayerData(object):
     def set_max_activations(self):
         for f in self.neurons_data:
             f.set_max_activations()
+            f.mean_activation /= f.images_analyzed
+            f.mean_norm_activation = f.mean_activation/f.activations[0]
 
     def sort_neuron_data(self):
         for neuron in self.neurons_data:
