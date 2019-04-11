@@ -11,7 +11,7 @@ from nefesi.util.image import rgb2opp, image2max_gray
 
 
 
-def get_color_selectivity_index(network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+def get_color_selectivity_index(network_data, layer_name, neuron_idx,  type='mean', th = 0.1, activations_masks=None):
 
     neuron = network_data.get_neuron_of_layer(layer_name, neuron_idx)
     layer_data = network_data.get_layer_by_name(layer_name)
@@ -26,7 +26,7 @@ def get_color_selectivity_index(network_data, layer_name, neuron_idx,  type='mea
     images = network_data.dataset.load_images(image_names, prep_function=False)
 
 
-    if not type == 'activation':
+    if not type == 'activation' and activations_masks is None:
         complex_type = len(np.unique(receptive_field)) > 2
         activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx,
                                                           complex_type=complex_type)

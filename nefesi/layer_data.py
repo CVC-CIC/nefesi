@@ -207,6 +207,71 @@ class LayerData(object):
                 network_data.save_to_disk(file_name=None, save_model=False)
         return index
 
+    def calculate_all_index_of_a_neuron(self, network_data, neuron_idx, norm_act, orientation_degrees=90, thr_pc=0.1,
+                                  indexes = None, activations_masks = None, type='mean'):
+        """
+
+        :param network_data:
+        :param neuron_idx:
+        :param orientation_degrees:
+        :param thr_pc:
+        :param concept:
+        :param indexes: list of indexes to calc (or none for all)
+        accepted --> ['symmetry', 'orientation', 'color', 'class', 'population code', 'object']
+        :return:
+        """
+        assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
+        model = network_data.model
+        import time
+        start_time = time.time()
+        dataset = network_data.dataset
+        neuron = self.neurons_data[neuron_idx]
+        index = {}
+        if indexes is None:
+            indexes = network_data.indexs_accepted
+
+        if 'orientation' in indexes:
+            orientation = np.zeros(int(math.ceil(360/orientation_degrees)), dtype=np.float)
+            orientation[:-1] = neuron.orientation_selectivity_idx(model, self, dataset,
+                                                             degrees_to_rotate=orientation_degrees)
+            orientation[-1] = np.mean(orientation[:-1])
+            index['orientation'] = orientation
+
+        if 'symmetry' in indexes:
+            symmetry = np.zeros(len(SYMMETRY_AXES)+1, dtype=np.float)
+            symmetry[:-1] = neuron.symmetry_selectivity_idx(model, self, dataset)
+            symmetry[-1] = np.mean(symmetry[:-1])
+            index['symmetry'] = symmetry
+        from nefesi.color_index import get_color_selectivity_index
+        if 'color' in indexes or 'ivet_color' in indexes:
+
+            index['color'] = get_color_selectivity_index(network_data=network_data,
+                                        layer_name=self.layer_id,
+                                        neuron_idx=neuron_idx,
+                                        type=type, th=thr_pc, activations_masks=activations_masks)
+            #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
+        from nefesi.class_index import get_class_selectivity_idx
+        if 'class' in indexes:
+            get_class_selectivity_idx(neuron, network_data.default_labels_dict, thr_pc, norm_act=norm_act)
+            index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
+
+
+        from nefesi.class_index import get_concept_selectivity_of_neuron
+        if 'object' in indexes:
+            index['object'] = get_concept_selectivity_of_neuron(network_data=network_data,
+                                                                          layer_name=self.layer_id,
+                                                                          neuron_idx=neuron_idx,
+                                                                          type=type, concept='object', th = thr_pc,
+                                                              activations_masks=activations_masks)
+        if 'part' in indexes:
+            index['part'] = get_concept_selectivity_of_neuron(network_data=network_data,
+                                                                          layer_name=self.layer_id,
+                                                                          neuron_idx=neuron_idx,
+                                                                          type=type, concept='part', th = thr_pc,
+                                                              activations_masks=activations_masks)
+
+        return index
+
     def get_entity_coocurrence_matrix(self,network_data, th=None, entity='class',operation='1/PC'):
         key = entity+'coocurrence-th:'+str(th)+'-op:'+operation
         if key not in self.entity_coocurrence:

@@ -489,6 +489,7 @@ class NetworkData(object):
             :param neuron: Int with the neuron to analyze
             :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
             """
+        current_layer = self.get_layer_by_name(layer_analysis)
         neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
@@ -524,23 +525,28 @@ class NetworkData(object):
 
             DL_model = Model(inputs=mymodel_layers[0],outputs=mymodel_layers[-1])
             original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-            ablation_list = np.zeros(intermediate_output.shape[-1])
-            for i in range(len(intermediate_output[0, 0, 0, :])):
-                intermediate_output2 = intermediate_output[:, :, :, i]*1
-                intermediate_output[:, :, :, i] = 0
+            relevance_idx = np.zeros(intermediate_output.shape[-1])
+            for i in range(intermediate_output.shape[-1]):
+                intermediate_output2 = intermediate_output[..., i]*1 #To copy
+                intermediate_output[..., i] = 0
                 predictionsf = DL_model.predict(intermediate_output)
-                intermediate_output[:, :, :, i] = intermediate_output2
-                neuron_predictions_ablated = predictionsf[:, :, :, neuron]
+                intermediate_output[..., i] = intermediate_output2
+                ablated_neurons_predictions = predictionsf[..., neuron]
                 #get the activation on the same point
-                max_activations = neuron_predictions_ablated[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+                max_activations = ablated_neurons_predictions[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+                relevance_idx[i] = np.sum(abs(original_activations - max_activations))/np.sum(original_activations)
+                #RECALCULATE ALL INDEXES
+                original_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
+                post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self, neuron_idx=neuron, norm_act=max_activations/original_activations[0],
+                                                activations_masks = ablated_neurons_predictions)
+                #TODO: The decrease coeficient here
 
-                ablation_list[i] = np.sum(abs(original_activations - max_activations))/np.sum(original_activations)
             clear_session()
         self.model = load_model(path_model)
 
 
 
-        return ablation_list
+        return relevance_idx
 
     def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:
