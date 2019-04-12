@@ -1,11 +1,11 @@
 import numpy as np
 
 import math
-from .read_activations import get_sorted_activations, get_activations
+from .read_activations import get_sorted_activations, get_activations, get_one_neuron_activations
 from .neuron_feature import compute_nf
 from .similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
-from .class_index import get_concept_labels
+from .class_index import get_concept_labels, get_class_selectivity_idx, get_concept_selectivity_of_neuron
 from .util.ColorNaming import colors as color_names
 from itertools import permutations
 
@@ -149,8 +149,24 @@ class LayerData(object):
                              "of theses: "+str(network_data.indexs_accepted))
         return sel_idx
 
+    def get_all_index_of_all_neurons(self, network_data, orientation_degrees=90, thr_pc=0.1,
+                                  indexes = None, is_first_time=False):
+        index_list = []
+        if not is_first_time:
+            activations_masks = None
+        for i in range(len(self.neurons_data)):
+            if is_first_time:
+                inputs = network_data.dataset.load_images(image_names=self.neurons_data[i].images_id, prep_function=True)
+                activations_masks = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
+                                                               layer_name=self.layer_id, idx_neuron=i)
+
+            index_list.append(self.get_all_index_of_a_neuron(self, network_data=network_data, neuron_idx=i,
+                                           orientation_degrees=orientation_degrees, thr_pc=thr_pc,indexes=indexes,
+                                                          activations_masks = activations_masks))
+
+        return index_list
     def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1,
-                                  indexes = None):
+                                  indexes = None, activations_masks = None):
         """
 
         :param network_data:
@@ -168,6 +184,7 @@ class LayerData(object):
         start_time = time.time()
         dataset = network_data.dataset
         neuron = self.neurons_data[neuron_idx]
+
         index = {}
         if indexes is None:
             indexes = network_data.indexs_accepted
@@ -187,7 +204,8 @@ class LayerData(object):
 
         if 'color' in indexes or 'ivet_color' in indexes:
             index['color'] = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
-                                                              neuron_idx=neuron_idx, th=thr_pc)
+                                                              neuron_idx=neuron_idx, th=thr_pc,
+                                                          activations_masks=activations_masks)
             index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
 
         if 'class' in indexes:
@@ -195,10 +213,12 @@ class LayerData(object):
 
         if 'object' in indexes:
             index['object'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
-                                                              neuron_idx=neuron_idx, concept='object', th=thr_pc)
+                                                              neuron_idx=neuron_idx, concept='object', th=thr_pc,
+                                                             activations_masks=activations_masks)
         if 'part' in indexes:
             index['part'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
-                                                             neuron_idx=neuron_idx, concept='part', th=thr_pc)
+                                                             neuron_idx=neuron_idx, concept='part', th=thr_pc,
+                                                           activations_masks=activations_masks)
 
         if network_data.save_changes:
             end_time = time.time()
@@ -250,13 +270,11 @@ class LayerData(object):
                                         neuron_idx=neuron_idx,
                                         type=type, th=thr_pc, activations_masks=activations_masks)
             #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
-        from nefesi.class_index import get_class_selectivity_idx
+
         if 'class' in indexes:
             get_class_selectivity_idx(neuron, network_data.default_labels_dict, thr_pc, norm_act=norm_act)
             index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
 
-
-        from nefesi.class_index import get_concept_selectivity_of_neuron
         if 'object' in indexes:
             index['object'] = get_concept_selectivity_of_neuron(network_data=network_data,
                                                                           layer_name=self.layer_id,
@@ -279,11 +297,12 @@ class LayerData(object):
                                                                                   entity=entity,operation=operation)
         return self.entity_coocurrence[key]
 
-    def get_relevance_matrix(self,network_data, layer_to_ablate='layer_to_ablate'):
+    def get_relevance_matrix(self,network_data, layer_to_ablate):
         relevance_matrix = []
-        for i,neuron in enumerate(self.neurons_data):
+        for i, neuron in enumerate(self.neurons_data):
             relevance_matrix.append(neuron.get_relevance_idx(network_data= network_data, layer_name= self.layer_id,
-                                                             neuron_idx=i,layer_to_ablate=layer_to_ablate))
+                                                             neuron_idx=i,layer_to_ablate=layer_to_ablate,
+                                                             return_decreasing=False))
         return np.array(relevance_matrix)
 
     def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class', operation='1/PC'):

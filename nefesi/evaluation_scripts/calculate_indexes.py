@@ -29,7 +29,8 @@ def run_calculs(network_data, degrees_orientation_idx=None, sel_indexes = ALL_IN
 	network_data.save_changes=True
 	network_data.indexs_accepted = sel_indexes
 	network_data.get_selectivity_idx(sel_index=sel_indexes, layer_name='.*',
-									 degrees_orientation_idx=degrees_orientation_idx, verbose=verbose)
+									 degrees_orientation_idx=degrees_orientation_idx, verbose=verbose,
+									 only_calc = True)
 	network_data.get_relevance_idx(layer_name='.*')
 	network_data.similarity_idx(layer_name='.*')
 

@@ -333,7 +333,7 @@ class NetworkData(object):
 
     def get_selectivity_idx(self, sel_index, layer_name, degrees_orientation_idx = None,
                             labels=None,
-                            thr_pc=None, verbose = True):
+                            thr_pc=None, verbose = True, only_calc = False):
         """Returns the selectivity indexes in `sel_index` for each layer
         in `layer_name`.
 
@@ -377,10 +377,13 @@ class NetworkData(object):
             sel_idx_dict[index_name] = []
             for l in layer_name:
                 layer = self.get_layer_by_name(layer=l)
-
-                sel_idx_dict[index_name].append(layer.selectivity_idx(
-                    self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
-                    labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
+                if not only_calc:
+                    sel_idx_dict[index_name].append(layer.selectivity_idx(
+                        self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
+                        labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
+                else:
+                    layer.get_all_index_of_all_neurons(self, orientation_degrees=degrees_orientation_idx, thr_pc=thr_pc,
+                                  indexes = None, is_first_time=True)
 
                 if self.save_changes:
                     end_time = time.time()
@@ -480,7 +483,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5'):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5', return_decreasing = False):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -525,7 +528,10 @@ class NetworkData(object):
 
             DL_model = Model(inputs=mymodel_layers[0],outputs=mymodel_layers[-1])
             original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-            relevance_idx = np.zeros(intermediate_output.shape[-1])
+            relevance_idx = []
+            if return_decreasing:
+                max_concept_decreasing, max_type_decreasing = [], []
+            pre_ablation_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
             for i in range(intermediate_output.shape[-1]):
                 intermediate_output2 = intermediate_output[..., i]*1 #To copy
                 intermediate_output[..., i] = 0
@@ -534,19 +540,71 @@ class NetworkData(object):
                 ablated_neurons_predictions = predictionsf[..., neuron]
                 #get the activation on the same point
                 max_activations = ablated_neurons_predictions[range(0,100),xy_locations[:,0], xy_locations[:,1]]
-                relevance_idx[i] = np.sum(abs(original_activations - max_activations))/np.sum(original_activations)
-                #RECALCULATE ALL INDEXES
-                original_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
-                post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self, neuron_idx=neuron, norm_act=max_activations/original_activations[0],
-                                                activations_masks = ablated_neurons_predictions)
-                #TODO: The decrease coeficient here
+                relevance_idx.append(np.sum(abs(original_activations - max_activations))/np.sum(original_activations))
+                if return_decreasing:
+                    post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
+                                                                                          neuron_idx=neuron,
+                                                    norm_act=max_activations/original_activations[0],
+                                                    activations_masks = ablated_neurons_predictions, thr_pc=0.0)
+
+                    max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
+                                                           post_indexes=post_ablation_indexes)
+                    max_concept_decreasing.append(max_concept)
+                    max_type_decreasing.append(max_type)
 
             clear_session()
         self.model = load_model(path_model)
+        relevance_idx = np.array(relevance_idx)
+        if return_decreasing:
+            max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(max_type_decreasing)
+            return (relevance_idx, max_concept_decreasing, max_type_decreasing)
+        else:
+            return relevance_idx
+
+    def most_decreased_index(self, pre_indexes, post_indexes):
+        indexes_decreased = self.indexes_decreasing(pre_indexes=pre_indexes, post_indexes=post_indexes)
+        index_decreasing_by_key = np.array(list(map(lambda key:
+                                                    (key, np.sum(indexes_decreased[key]['value'])), indexes_decreased)),
+                                           dtype=[('label', 'U64'), ('value', np.float)])
+
+        max_concept = index_decreasing_by_key[np.argmax(index_decreasing_by_key['value'])]
+        if np.isclose(max_concept['value'],0.0):
+            max_concept['label'] = 'None'
+
+        max_type_by_index = np.array(list(map(lambda key:
+                                         indexes_decreased[key][np.argmax(indexes_decreased[key]['value'])],
+                                         indexes_decreased)))
+
+        max_type = max_type_by_index[np.argmax(max_type_by_index['value'])]
+
+        if np.isclose(max_type['value'],0.0):
+            max_type['label'] = 'None'
 
 
+        return (max_concept, max_type)
 
-        return relevance_idx
+
+    def indexes_decreasing(self, pre_indexes, post_indexes):
+        indexes_decreased = {}
+        for key in post_indexes.keys():
+            pre_index, post_index = pre_indexes[key], post_indexes[key]
+            labels = list(set(pre_index['label']) | set(post_index['label'])) #Take all labels in two
+            decreasing_list = []
+            for label in labels:
+                if label in pre_index['label'] and label in post_index['label']:
+                    decreasing = np.clip(pre_index[pre_index['label'] == [label]]['value'] - \
+                                 post_index[post_index['label'] == [label]]['value'], 0.0, 1.0)
+
+                elif label in pre_index['label']:
+                    decreasing = np.clip(pre_index[pre_index['label'] == [label]]['value'],0.0,1.0)
+                else:
+                    #let's use 0 and not a negative for be coheren with use 0.0 as thr_pc on post_index (We are wanting the max, not min)
+                    #decreasing = -post_index[post_index['label'] == [label]]['value']
+                    decreasing = 0.0
+                decreasing_list.append((label, decreasing))
+            indexes_decreased[key] = np.array(decreasing_list, dtype=[('label', 'U64'), ('value', np.float)])
+        return indexes_decreased
+
 
     def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:

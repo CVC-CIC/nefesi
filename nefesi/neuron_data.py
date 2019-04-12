@@ -49,6 +49,8 @@ class NeuronData(object):
         self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
         self.norm_activations = None
         self.relevance_idx = {}
+        self.most_relevant_concept = {}
+        self.most_relevant_type = {}
         self.selectivity_idx = dict()
         self._neuron_feature = None
         self.top_labels = None
@@ -249,17 +251,21 @@ class NeuronData(object):
                                                      layer_data, dataset)
         return self.selectivity_idx[key]
 
-    def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate='layer_ablated'):
+    def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate='layer_ablated', return_decreasing=False):
         if layer_to_ablate not in self.relevance_idx:
             default_path_of_model = os.path.join(network_data.save_path,network_data.model.name+'.h5')
-            self.relevance_idx[layer_to_ablate] = network_data.get_relevance_by_ablation(layer_analysis=layer_name,
-                                                                                         neuron=neuron_idx,
-                                                                                         layer_to_ablate=layer_to_ablate,
-                                                                                        path_model=default_path_of_model)
+            self.relevance_idx[layer_to_ablate], self.concept_decreasing[layer_to_ablate], self.type_decreasing[layer_to_ablate] =\
+                network_data.get_relevance_by_ablation(layer_analysis=layer_name, neuron=neuron_idx,
+                                                        layer_to_ablate=layer_to_ablate, path_model=default_path_of_model,
+                                                       return_decreasing=True)
             print('Relevance: '+layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
-        return self.relevance_idx[layer_to_ablate]
+        if not return_decreasing:
+            return self.relevance_idx[layer_to_ablate]
+        else:
+            return self.relevance_idx[layer_to_ablate], self.concept_decreasing[layer_to_ablate], self.type_decreasing[layer_to_ablate]
 
-    def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
+    def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1,
+                              activations_masks=None):
         """Returns the color selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
@@ -273,7 +279,8 @@ class NeuronData(object):
             self.selectivity_idx[key] = get_color_selectivity_index(network_data=network_data,
                                                                         layer_name=layer_name,
                                                                         neuron_idx=neuron_idx,
-                                                                        type=type, th = th)
+                                                                        type=type, th = th,
+                                                                    activations_masks=activations_masks)
             print('Color idx: '+layer_name+' '+str(neuron_idx)+'/'+
                   str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
 
@@ -325,7 +332,8 @@ class NeuronData(object):
 
         return self.selectivity_idx[key]
 
-    def concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1):
+    def concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1,
+                                activations_masks = None):
         """Returns the class selectivity index for this neuron.
 
         :param labels: Dictionary, key: name class, value: label class.
@@ -342,7 +350,8 @@ class NeuronData(object):
             self.selectivity_idx[key] = get_concept_selectivity_of_neuron(network_data=network_data,
                                                                           layer_name=layer_data.layer_id,
                                                                           neuron_idx=neuron_idx,
-                                                                          type=type, concept=concept, th = 0.1)
+                                                                          type=type, concept=concept, th = 0.1,
+                                                                          activations_masks=activations_masks)
             print(concept.capitalize()+' idx: ' + layer_data.layer_id + ' ' + str(neuron_idx) + '/' +
                   str(len(layer_data.neurons_data)))
 

@@ -127,11 +127,11 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
         from .util.segmentation.Broden_analize import Segment_images
         segmentation = Segment_images(full_image_names)
 
-    if not type == 'activation' and activations_masks is None:
+    if not type == 'activation':
         #If receptive field is not only... 0 to n
         complex_type = len(np.unique(receptive_field)) > 2
         activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx,
-                                                          complex_type=complex_type)
+                                                          complex_type=complex_type, activations=activations_masks)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)

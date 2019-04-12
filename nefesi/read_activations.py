@@ -235,7 +235,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
     return activations
 
 
-def get_image_activation(network_data, image_names, layer_name, neuron_idx, complex_type = True):
+def get_image_activation(network_data, image_names, layer_name, neuron_idx, complex_type = True, activations = None):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
     neuron_idx of layer layer_name
@@ -250,19 +250,18 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, comp
     #                                              prep_function=True)[np.newaxis, ...]
 
     complex_type = False
-
-
-    inputs = network_data.dataset.load_images(image_names=image_names, prep_function=True)
-
-    activations = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
+    if activations is None:
+        inputs = network_data.dataset.load_images(image_names=image_names, prep_function=True)
+        activations = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
                                              layer_name=layer_name, idx_neuron=neuron_idx)
     activations_upsampleds = []
     if complex_type:
         rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
         rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
         rec_field_map_2 = np.zeros(rec_field_map.shape, dtype=np.int32)
-    for input, activation in zip (inputs, activations):
-        sz_img = input.shape[0:2]
+
+    sz_img = network_data.dataset.target_size
+    for activation in activations:
         if not complex_type:
             activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
 
