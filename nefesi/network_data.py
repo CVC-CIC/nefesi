@@ -247,7 +247,7 @@ class NetworkData(object):
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
         #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-        buffer_size = 10
+        buffer_size = 4
         #Init all neuron_data attributes of all layers
         for i in range(len(self.layers_data)):
             neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
@@ -281,7 +281,6 @@ class NetworkData(object):
             elif n_batches%1000==0 and n_batches!=0:
                 self.save_to_disk(file_name=self.model.name+'PartialSave'+str(int((idx_start/data_batch.samples)*100))+
                                             'PerCent',erase_partials=True)
-
         if verbose:
             print("Analysis ended. Sorting results")
         for layer in self.layers_data:
@@ -295,6 +294,7 @@ class NetworkData(object):
             # Build the neuron features
             for layer in self.layers_data:
                 layer.build_neuron_feature(self)
+                self.save_to_disk(file_name=file_name, erase_partials=True)
         # Save all data
         self.save_to_disk(file_name=file_name,erase_partials=True)
 

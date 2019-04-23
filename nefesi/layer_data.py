@@ -160,7 +160,7 @@ class LayerData(object):
                 activations_masks = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
                                                                layer_name=self.layer_id, idx_neuron=i)
 
-            index_list.append(self.get_all_index_of_a_neuron(self, network_data=network_data, neuron_idx=i,
+            index_list.append(self.get_all_index_of_a_neuron(network_data=network_data, neuron_idx=i,
                                            orientation_degrees=orientation_degrees, thr_pc=thr_pc,indexes=indexes,
                                                           activations_masks = activations_masks))
 

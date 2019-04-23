@@ -1,11 +1,8 @@
 import numpy as np
 import warnings
 import keras.backend as K
-import mxnet as mx
-#from .neuron_data import NeuronData
-from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
+from multiprocessing.pool import Pool as ThreadPool  # ThreadPool don't have documentation :( But uses threads
 import PIL
-import time
 from scipy.interpolate import RectBivariateSpline
 
 ACTIVATIONS_BATCH_SIZE = 200
