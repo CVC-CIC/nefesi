@@ -1,16 +1,13 @@
 import numpy as np
 import warnings
 import keras.backend as K
-import mxnet as mx
-#from .neuron_data import NeuronData
-from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
+from multiprocessing.pool import Pool as ThreadPool  # ThreadPool don't have documentation :( But uses threads
 import PIL
-import time
 from scipy.interpolate import RectBivariateSpline
 
 ACTIVATIONS_BATCH_SIZE = 200
 
-def get_activations(model, model_inputs, layers_name):
+def get_activations(model, model_inputs, layers_name, only_max_and_argmax = True):
     """Returns the output (activations) from the model.
 
     :param model: The `keras.models.Model` instance.
@@ -38,18 +35,21 @@ def get_activations(model, model_inputs, layers_name):
     K.learning_phase = 0
     funcs = K.function(inp, outputs)
     layer_outputs = funcs([model_inputs])
-    #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
-    with ThreadPool(processes=None) as pool:  # use all cpu cores
-        async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
-        locations_and_max = [async_result.get() for async_result in async_results]
-        pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...-
-        pool.terminate()
-        pool.join()
-    return locations_and_max
+    if not only_max_and_argmax:
+        return layer_outputs
+    else:
+        #locations_and_max = [get_argmax_and_max(layer) for layer in layer_outputs]
+        with ThreadPool(processes=None) as pool:  # use all cpu cores
+            async_results = [pool.apply_async(get_argmax_and_max, (layer,)) for layer in layer_outputs]
+            locations_and_max = [async_result.get() for async_result in async_results]
+            pool.close()#if don't close pickle not allows to save :( 'with' seems have nothing...-
+            pool.terminate()
+            pool.join()
+        return locations_and_max
 
 
 def get_argmax_and_max(layer):
-    if len(layer.shape) == 2: #Is FC
+    if len(layer.shape) == 2: #Is not conv
         return layer
     #The height and width of the image
     unravel_shape = layer.shape[1:-1]
@@ -132,7 +132,7 @@ def fill_all_layers_data_batch(file_names, images, model, layers_data):
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
     layer_names = [layer.layer_id for layer in layers_data]
-    activations = get_activations(model, images, layers_name)
+    activations = get_activations(model, images, layer_names)
     for i, layer_activation in enumerate(activations):
         conv_layer = type(layer_activation) is tuple
         if conv_layer:
@@ -219,7 +219,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
         activations = np.zeros(shape=(len(images),neurons_of_layer), dtype=np.float)
         #Get the activation of all neuron
         for i in range(1,len(batches)):
-            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layers_name=layer_name)[0]
+            total_activations = get_activations(model, images[batches[i-1]:batches[i]], layers_name=layer_name, only_max_and_argmax=False)[0]
             activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)),
                                                                        pos[batches[i - 1]:batches[i],0],
                                                                        pos[batches[i - 1]:batches[i],1]]
@@ -232,7 +232,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
     return activations
 
 
-def get_image_activation(network_data, image_names, layer_name, neuron_idx, complex_type = True):
+def get_image_activation(network_data, image_names, layer_name, neuron_idx, complex_type = True, activations = None):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
     neuron_idx of layer layer_name
@@ -247,19 +247,18 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, comp
     #                                              prep_function=True)[np.newaxis, ...]
 
     complex_type = False
-
-
-    inputs = network_data.dataset.load_images(image_names=image_names, prep_function=True)
-
-    activations = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
+    if activations is None:
+        inputs = network_data.dataset.load_images(image_names=image_names, prep_function=True)
+        activations = get_one_neuron_activations(model=network_data.model, model_inputs=inputs,
                                              layer_name=layer_name, idx_neuron=neuron_idx)
     activations_upsampleds = []
     if complex_type:
         rec_field_map = network_data.get_layer_by_name(layer_name).receptive_field_map
         rec_field_sz = network_data.get_layer_by_name(layer_name).receptive_field_size
         rec_field_map_2 = np.zeros(rec_field_map.shape, dtype=np.int32)
-    for input, activation in zip (inputs, activations):
-        sz_img = input.shape[0:2]
+
+    sz_img = network_data.dataset.target_size
+    for activation in activations:
         if not complex_type:
             activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
 

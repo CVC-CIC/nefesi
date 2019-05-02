@@ -101,7 +101,7 @@ def concept_selectivity_of_image(activations_mask, segmented_image, type='mean')
     return ids, histogram
 
 
-def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object', th = 0.1):
+def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object', th = 0.1, activations_masks = None):
     """
     :param network_data:
     :param layer_name:
@@ -131,7 +131,7 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
         #If receptive field is not only... 0 to n
         complex_type = len(np.unique(receptive_field)) > 2
         activations_masks = read_act.get_image_activation(network_data, image_names, layer_name, neuron_idx,
-                                                          complex_type=complex_type)
+                                                          complex_type=complex_type, activations=activations_masks)
     """
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)
@@ -221,7 +221,7 @@ def get_concept_labels(concept='object'):
     return correspondences
 
 
-def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
+def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2, norm_act = None):
     """Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
@@ -231,7 +231,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
     :return: A tuple with: label class and class index value.
     """
     num_max_activations = len(neuron_data.activations)
-    rel_freq = relative_freq_class(neuron_data, labels)
+    rel_freq = relative_freq_class(neuron_data, labels, norm_act=norm_act)
 
     if rel_freq is None:
         return np.array([("None", 0.0)],dtype=[('label','U64'),('value',np.float)])
@@ -261,7 +261,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2):
 
 
 
-def relative_freq_class(neuron_data, labels = None):
+def relative_freq_class(neuron_data, labels = None, norm_act = None):
     """Calculates the relative frequencies of appearance of each class among
     the TOP scoring images from `neuron_data`.
 
@@ -284,7 +284,8 @@ def relative_freq_class(neuron_data, labels = None):
     if neuron_data.top_labels is None:
         _fill_top_labels(neuron_data)
     #-----------------------INITS THE PARAMETERS THAT WILL BE USEFUL TO MAKE CALCULS-----------------------------
-    norm_act = neuron_data.norm_activations
+    if norm_act is None:
+        norm_act = neuron_data.norm_activations
     norm_activation_total = np.sum(norm_act)
     classes, classes_idx, classes_counts =  np.unique(neuron_data.top_labels, return_inverse=True, return_counts=True)
     rel_freq = np.zeros(len(classes),dtype=[('label_name','U64'),('label','U64'),('count',np.int), ('value',np.float)])
