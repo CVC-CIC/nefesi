@@ -156,6 +156,8 @@ class NeuronData(object):
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
+
+
             if rf_size is not None and rf_size != patch.size:
                 if return_mask:
                     patch, mask = self._adjust_patch_size(patch,crop_pos, rf_size,returns_mask=return_mask)

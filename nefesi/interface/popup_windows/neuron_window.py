@@ -69,7 +69,7 @@ class NeuronWindow(object):
 
 
     def update_images_size(self):
-        self.set_nf_panel(option=self.combo_nf_option.get())
+        self.set_nf_panel()
         self.update_decomposition_panel(panel=self.panel_image)
 
     def set_nf_frame(self, master):
@@ -177,12 +177,12 @@ class NeuronWindow(object):
 
     #TODO: Tracts to resize dinamically
     def set_neuron_feature_frame(self, master):
-        options = ['Neuron Feature', 'Images Mosaic']
-        self.combo_nf_option = ttk.Combobox(master=master, values=options, state='readonly', width=15, justify=CENTER)
-        self.combo_nf_option.set(options[0])
-        # When selection is changed, calls the function _on_number_of_plots_to_show_changed
-        self.combo_nf_option.bind("<<ComboboxSelected>>", lambda event: self.event_controller._on_nf_changed(event, self.combo_nf_option))
-        self.combo_nf_option.pack(side=TOP)
+        # options = ['Neuron Feature', 'Images Mosaic']
+        # self.combo_nf_option = ttk.Combobox(master=master, values=options, state='readonly', width=15, justify=CENTER)
+        # self.combo_nf_option.set(options[0])
+        # # When selection is changed, calls the function _on_number_of_plots_to_show_changed
+        # self.combo_nf_option.bind("<<ComboboxSelected>>", lambda event: self.event_controller._on_nf_changed(event, self.combo_nf_option))
+        # self.combo_nf_option.pack(side=TOP)
         self.panel_nf = Label(master=master)
         self.set_nf_panel()
 
@@ -200,24 +200,18 @@ class NeuronWindow(object):
             self.update_decomposition_panel(panel=self.panel_image)
 
 
-    def set_nf_panel(self,option='images mosaic'):
-        option= option.lower()
-        if option=='neuron feature':
-            img = self.neuron._neuron_feature
+    def set_nf_panel(self):
+        if self.mosaic != None:
+            img = self.mosaic.resize(self.image_actual_size, Image.ANTIALIAS)
+        else:
+            img = mosaic_n_images(self.neuron.get_patches(network_data=self.network_data,
+                                        layer_data=self.network_data.get_layer_by_name(self.layer_to_evaluate)))
+            img = Image.fromarray(img.astype('uint8'),'RGB')
             img = img.resize(self.image_actual_size, Image.ANTIALIAS)
-            self.panel_nf.unbind('<Double-Button-1>')
-        elif option=='images mosaic':
-            if self.mosaic != None:
-                img = self.mosaic.resize(self.image_actual_size, Image.ANTIALIAS)
-            else:
-                img = mosaic_n_images(self.neuron.get_patches(network_data=self.network_data,
-                                            layer_data=self.network_data.get_layer_by_name(self.layer_to_evaluate)))
-                img = Image.fromarray(img.astype('uint8'),'RGB')
-                img = img.resize(self.image_actual_size, Image.ANTIALIAS)
-                img = np.array(img)
-                img = add_red_separations(img, math.ceil(math.sqrt(len(self.neuron.activations))))
-                self.mosaic = img = Image.fromarray(img.astype('uint8'), 'RGB')
-            self.panel_nf.bind('<Double-Button-1>', self._on_mosaic_click)
+            img = np.array(img)
+            img = add_red_separations(img, math.ceil(math.sqrt(len(self.neuron.activations))))
+            self.mosaic = img = Image.fromarray(img.astype('uint8'), 'RGB')
+        self.panel_nf.bind('<Double-Button-1>', self._on_mosaic_click)
 
         img = ImageTk.PhotoImage(img)
         self.panel_nf.configure(image=img)
