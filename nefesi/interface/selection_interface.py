@@ -18,7 +18,7 @@ except ImportError:
 from ..network_data import NetworkData
 from ..interface.interface import Interface
 from ..interface.make_analysis_interface import MakeAnalysisInterface
-STYLE = 'clam'
+STYLE = 'default'#'clam'
 class SelectionInterface():
     def __init__(self):
         self.window = Tk()

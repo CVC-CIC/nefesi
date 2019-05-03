@@ -162,24 +162,38 @@ class Interface():
         menubar = Menu(master=self.window)
         self.window.config(menu=menubar)
         file_name = Menu(menubar)
-        file_name.add_command(label="Force to save", command=self.force_to_save)
-        file_name.add_command(label='Change analysis object', command=self.set_model)
+        file_name.add_command(label='Open Another', command=self.set_model)
+        file_name.add_command(label="Force to Save", command=self.force_to_save)
         menubar.add_cascade(label="File", menu=file_name)
         config_menu = Menu(menubar)
-        config_menu.add_command(label="Set Label traduction", command=self.set_labels_dict)
-        config_menu.add_command(label='Set Orientation Degrees', command=self.set_orientation_default_degrees)
-        config_menu.add_command(label='Set Threshold Population Code', command=self.set_default_thr_pc)
-        config_menu.add_command(label='Update Indexes Accepted', command=self.update_indexes_accepted)
-        config_menu.add_command(label='Erase calculated index', command=self.erase_calculated_index)
+        index_metadata = Menu(config_menu)
+        config_menu.add_cascade(label="Set Indexes Metadata", menu=index_metadata)
+        index_metadata.add_command(label="Class Index Dictionary", command=self.set_labels_dict)
+        index_metadata.add_command(label='Orientation Index Rotation', command=self.set_orientation_default_degrees)
+        index_metadata.add_command(label='Population Code Threshold', command=self.set_default_thr_pc)
+        indexes_in_use = Menu(config_menu)
+        config_menu.add_cascade(label="Indexes in Use", menu=indexes_in_use)
+        indexes_in_use.add_command(label='Accepted Indexes', command=self.update_indexes_accepted)
+        indexes_in_use.add_command(label='Erase Calculated Index', command=self.erase_calculated_index)
         menubar.add_cascade(label="Configuration", menu=config_menu)
         plot_menu = Menu(menubar)
-        plot_menu.add_command(label="Select Neuron plot", command=self.plot_specific_neuron)
-        plot_menu.add_command(label="Entity Selective neurons", command=self.class_selective_plot)
-        plot_menu.add_command(label="Entity Representation", command=self.entity_representation_plot)
-        plot_menu.add_command(label="Entity Co-ocurrence Graph", command=self.coocurrence_plot)
-        plot_menu.add_command(label="Neuron Similarity Graph", command=self.similarity_graph)
-        plot_menu.add_command(label="Neuron Feature Similarity TSNE", command=self.similarity_TSNE)
-        menubar.add_cascade(label="Plot", menu=plot_menu)
+
+        show_neurons_menu = Menu(plot_menu)
+        plot_menu.add_cascade(label="Show Neurons", menu=show_neurons_menu)
+        show_neurons_menu.add_command(label="Show Neuron by Index", command=self.plot_specific_neuron)
+        show_neurons_menu.add_command(label="Show Neuron by Entity Selectivity", command=self.class_selective_plot)
+
+        network_plots = Menu(plot_menu)
+        plot_menu.add_cascade(label="Selected Layers Plots", menu=network_plots)
+        network_plots.add_command(label="Entity Representation Summary", command=self.entity_representation_plot)
+        network_plots.add_command(label="Entity Co-ocurrence Graph", command=self.coocurrence_plot)
+
+        layer_plots = Menu(plot_menu)
+        plot_menu.add_cascade(label="One Layer Plots", menu=layer_plots)
+        layer_plots.add_command(label="Neuron Similarity Graph", command=self.similarity_graph)
+        layer_plots.add_command(label="Neuron Similarity TSNE", command=self.similarity_TSNE)
+
+        menubar.add_cascade(label="Inspect Network", menu=plot_menu)
 
 
 
@@ -303,17 +317,17 @@ class Interface():
     def set_info_to_show_listbox(self, master):
         # Title just in top of selector
         lstbox_frame = ttk.Frame(master=master)
-        lstbox_tittle = ttk.Label(master=lstbox_frame, text="Layers to show")
+        lstbox_tittle = ttk.Label(master=lstbox_frame, text="Layers Selected")
         list_values = [layer.layer_id for layer in self.network_data.layers_data]
         scrollbar = ttk.Scrollbar(master=lstbox_frame, orient="vertical")
         lstbox = Listbox(master=lstbox_frame, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
-                         height=min(len(list_values)+2,MAX_VALUES_VISIBLES_IN_LISTBOX))
+                         height=min(len(list_values)+2,MAX_VALUES_VISIBLES_IN_LISTBOX), width=17)
         scrollbar.config(command=lstbox.yview)
         self.update_layers_lstbox(lstbox=lstbox, list_values=list_values)
         self.lstbox_last_selection = (0,)
         lstbox.bind('<<ListboxSelect>>',lambda event: self.event_controller._on_listbox_change_selection(event, lstbox))
         lstbox.selection_set(0)
-        ok_button = ttk.Button(master=master, text="Apply on all",
+        ok_button = ttk.Button(master=master, text="Update Plots",
                                command=self.event_controller._on_click_proceed_button)
         lstbox_frame.pack()
         lstbox_tittle.pack(side=TOP)
@@ -334,7 +348,7 @@ class Interface():
 
     def set_save_changes_check_box(self,master):
         checkbox_value = tk.BooleanVar(master=master,value=self.network_data.save_changes)
-        checkbox = ttk.Checkbutton(master=master, text="Save all index updated", variable=checkbox_value,
+        checkbox = ttk.Checkbutton(master=master, text="Save index on update", variable=checkbox_value,
                                     command= lambda: self._on_checkbox_clicked(checkbox_value))
         checkbox.pack()
 

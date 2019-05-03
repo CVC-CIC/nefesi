@@ -44,12 +44,16 @@ class OpenSelectedNeuronPlot(object):
         neurons_to_show_label.pack(side=LEFT)
         self.neurons_to_show_entry.pack(side=RIGHT)
         self.ok_button.pack(side=BOTTOM)
+        self.top.bind('<Return>', self.on_click_enter)
 
     def cleanup(self):
         self.layer = self.current_layer
         self.neuron = self.neuron_selected
         self.top.destroy()
 
+    def on_click_enter(self, event):
+        if self.ok_button['state'].string == 'normal':
+            self.cleanup()
     def entry_update(self, new_value):
         self.neurons_to_show_entry.delete(0,END)
         for i in reversed(range(len(new_value))):
@@ -128,10 +132,9 @@ class OpenSelectedNeuronPlot(object):
         sel_idx = self.network_data.get_selectivity_idx(sel_index=selection,layer_name=layer_selected)[selection][0]
         if selection in ['symmetry', 'orientation']:
             sel_idx = sel_idx[:,-1]
-        elif selection == 'class':
+        else:
             sel_idx = sel_idx['value']
-        elif selection == 'concept':
-            sel_idx = np.array([neuron_concept[0]['count'][0] for neuron_concept in sel_idx])
+
         self.neuron_lstbox.delete(0,END)
         args_sorted = np.argsort(sel_idx)
         sel_idx = sel_idx[args_sorted]
