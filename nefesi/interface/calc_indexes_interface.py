@@ -15,23 +15,24 @@ import dill as pickle
 MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 
 class CalcIndexesInterface():
-    def __init__(self):
+    def __init__(self, window_style = 'default'):
         self.window = Tk()
+        ttk.Style().theme_use(window_style)
         self.window.title("Nefesi")
         self.network_data_file = None
         self.model_file = None
         self.verbose =False
         self.lstbox_last_selection = [0]
-        self.select_parameters_frame = Frame(master=self.window, borderwidth=1)
+        self.select_parameters_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_parameters_frame(master=self.select_parameters_frame)
         self.select_parameters_frame.pack()
-        self.index_to_calc = Frame(master=self.window)
+        self.index_to_calc = ttk.Frame(master=self.window)
         self.set_index_listbox(self.index_to_calc)
         self.index_to_calc.pack()
-        self.verbose_frame = Frame(master=self.window)
+        self.verbose_frame = ttk.Frame(master=self.window)
         self.set_verbose_check_box(self.verbose_frame)
         self.verbose_frame.pack()
-        self.ok_button = Button(self.window, text='Ok', command=self.cleanup)
+        self.ok_button = ttk.Button(self.window, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.ok_button.pack(pady=(8, 5), ipadx=10)
         self.set_footers(master=self.window)
@@ -53,7 +54,7 @@ class CalcIndexesInterface():
 	            pickle.dump(indexes_eval, f)
 
     def set_index_listbox(self, master):
-        scrollbar = Scrollbar(master=master, orient="vertical")
+        scrollbar = ttk.Scrollbar(master=master, orient="vertical")
         self.index_to_calc_lstbox = Listbox(master=master, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
                                             height=MAX_VALUES_VISIBLES_IN_LISTBOX)
         scrollbar.config(command=self.index_to_calc_lstbox.yview)
@@ -80,8 +81,8 @@ class CalcIndexesInterface():
         self.lstbox_last_selection = selection
 
     def set_footers(self, master):
-        frame = Frame(master=master)
-        label = Label(master=frame, text='*(calculate indexes) Nefesi/main>>'
+        frame = ttk.Frame(master=master)
+        label = ttk.Label(master=frame, text='*(calculate indexes) Nefesi/main>>'
                                          ' nohup python calculate_indexes.py &', font=("Times New Roman", 8))
         label.grid(row=0)
         frame.pack(side=BOTTOM)
@@ -118,18 +119,18 @@ class CalcIndexesInterface():
             self.ok_button['state'] = 'disabled'
 
     def set_model_frame(self, master):
-        label = Label(master=master, text="Select the model")
-        label_selection = Label(master=master, text="No model selected")
-        button = Button(master=master, text="Select file", command=lambda : self._on_click_set_model(label_selection) )
+        label = ttk.Label(master=master, text="Select the model")
+        label_selection = ttk.Label(master=master, text="No model selected")
+        button = ttk.Button(master=master, text="Select file", command=lambda : self._on_click_set_model(label_selection) )
         label.pack(side=LEFT)
         label_selection.pack(side=RIGHT)
         button.pack(side=RIGHT)
 
     def set_parameters_frame(self, master):
-        save_network_data_file_frame = Frame(master=master)
+        save_network_data_file_frame = ttk.Frame(master=master)
         self.set_network_data_file(save_network_data_file_frame)
         save_network_data_file_frame.pack()
-        model_frame = Frame(master=master)
+        model_frame = ttk.Frame(master=master)
         self.set_model_frame(model_frame)
         model_frame.pack()
 
@@ -139,9 +140,9 @@ class CalcIndexesInterface():
         checkbox.pack()
 
     def set_network_data_file(self, master):
-        label = Label(master=master, text="Select network_data file")
-        label_selection = Label(master=master, text="No .obj selected")
-        button = Button(master=master, text="Select file",
+        label = ttk.Label(master=master, text="Select network_data file")
+        label_selection = ttk.Label(master=master, text="No .obj selected")
+        button = ttk.Button(master=master, text="Select file",
                         command=lambda: self._on_click_set_network_data_file(label_selection))
         label.pack(side=LEFT)
         label_selection.pack(side=RIGHT)

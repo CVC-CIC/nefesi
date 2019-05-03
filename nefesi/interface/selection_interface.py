@@ -9,8 +9,8 @@ MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 
 try:
     from tkinter import *
-    from tkinter import ttk
     from tkinter import filedialog
+    import tkinter.ttk as ttk
 except ImportError:
     from Tkinter import *
     from Tkinter import ttk
@@ -18,10 +18,11 @@ except ImportError:
 from ..network_data import NetworkData
 from ..interface.interface import Interface
 from ..interface.make_analysis_interface import MakeAnalysisInterface
-
+STYLE = 'clam'
 class SelectionInterface():
     def __init__(self):
         self.window = Tk()
+        ttk.Style().theme_use(STYLE)
         self.window.title("Nefesi")
         #TOP Part with general info of viewing and some setteables
         self.set_make_analysis_frame()
@@ -33,20 +34,20 @@ class SelectionInterface():
 
 
     def set_make_analysis_frame(self):
-        label = Label(master=self.window, text="Make script for do an analysis")
-        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_analysis_button)
+        label = ttk.Label(master=self.window, text="Make script for do an analysis")
+        button = ttk.Button(master=self.window, text="Select Parameters", command=self._on_click_make_analysis_button)
         label.grid (row=0, column=0, sticky=E, pady=(6,3), padx=(6,1))
         button.grid(row=0, column=1, sticky=W, pady=(6,3), padx=(1,6))
 
     def set_make_indexes_calc_frame(self):
-        label = Label(master=self.window, text="Make script for calc indexes")
-        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexes_calcs_button)
+        label = ttk.Label(master=self.window, text="Make script for calc indexes")
+        button = ttk.Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexes_calcs_button)
         label.grid (row=1, column=0, sticky=E, pady=(3,3), padx=(6,1))
         button.grid(row=1, column=1, sticky=W, pady=(3,3), padx=(1,6))
 
     def set_select_action_frame(self):
-        label = Label(master=self.window, text="Visualize an existent analysis")
-        button = Button(master=self.window, text="Select file", command=self._on_click_visualize_analysis_button)
+        label = ttk.Label(master=self.window, text="Visualize an existent analysis")
+        button = ttk.Button(master=self.window, text="Select file", command=self._on_click_visualize_analysis_button)
         label.grid (row=2, column=0, sticky=E, pady=(3,6), padx=(6,1))
         button.grid(row=2, column=1, sticky=W, pady=(3,6), padx=(1,6))
 
@@ -71,13 +72,13 @@ class SelectionInterface():
             network_data.save_path = network_data_file[:last_dir_pos]
             network_data.default_file_name = network_data_file[last_dir_pos+1:network_data_file.rfind('.')]
             self.window.destroy()
-            Interface(network_data=network_data)
+            Interface(network_data=network_data, window_style = STYLE)
 
     def _on_click_make_analysis_button(self):
         self.window.destroy()
-        MakeAnalysisInterface()
+        MakeAnalysisInterface(window_style=STYLE)
 
 
     def _on_click_make_indexes_calcs_button(self):
         self.window.destroy()
-        CalcIndexesInterface()
+        CalcIndexesInterface(window_style=STYLE)

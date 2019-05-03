@@ -35,10 +35,10 @@ from ..util.plotting import plot_nf_of_entities_in_pc, plot_coocurrence_graph, p
     plot_similarity_graph,plot_similarity_tsne
 
 
-
 class Interface():
-    def __init__(self, network_data, title = 'Nefesi'):
+    def __init__(self, network_data, window_style='default', title = 'Nefesi'):
         self.event_controller = events.EventController(self)
+        self.window_style = window_style
         self.network_data = network_data
         self.visible_plots_canvas = np.zeros(MAX_PLOTS_VISIBLES_IN_WINDOW,
                                 dtype=np.dtype([('canvas', np.object), ('used',np.bool),
@@ -46,19 +46,18 @@ class Interface():
         self.current_layers_in_view = '.*'
         #Window element
         self.window = tk.Tk()
+        ttk.Style().theme_use(self.window_style)
         self.window.title(title)
         #Style, defined here all common styles of buttons, frames....
-        self.style = ttk.Style()
-        self.style.configure("TButton", foreground="black", background="white")
         #TOP Part with general info of viewing and some setteables
-        self.general_info_frame = Frame(master=self.window, borderwidth=1)
+        self.general_info_frame = ttk.Frame(master=self.window, borderwidth=1)
         #LEFT-BOTTOM part with all graphics and plots
         #self.plots_frame = Frame(master=self.window, borderwidth=1)
         self.plots_canvas = Canvas(master=self.window, background='white')
         #RIGHT part with general buttons of interface
-        self.general_buttons_frame = Frame(master=self.window, borderwidth=1)
+        self.general_buttons_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_general_buttons_frame()
-        self.general_info_label = tk.Label(self.general_info_frame)
+        self.general_info_label = ttk.Label(self.general_info_frame)
         self.update_general_info_label()
         self.general_info_label.pack()
         self.plot_general_index(index=None)
@@ -303,10 +302,10 @@ class Interface():
 
     def set_info_to_show_listbox(self, master):
         # Title just in top of selector
-        lstbox_frame = Frame(master=master)
+        lstbox_frame = ttk.Frame(master=master)
         lstbox_tittle = ttk.Label(master=lstbox_frame, text="Layers to show")
         list_values = [layer.layer_id for layer in self.network_data.layers_data]
-        scrollbar = tk.Scrollbar(master=lstbox_frame, orient="vertical")
+        scrollbar = ttk.Scrollbar(master=lstbox_frame, orient="vertical")
         lstbox = Listbox(master=lstbox_frame, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
                          height=min(len(list_values)+2,MAX_VALUES_VISIBLES_IN_LISTBOX))
         scrollbar.config(command=lstbox.yview)
@@ -314,7 +313,7 @@ class Interface():
         self.lstbox_last_selection = (0,)
         lstbox.bind('<<ListboxSelect>>',lambda event: self.event_controller._on_listbox_change_selection(event, lstbox))
         lstbox.selection_set(0)
-        ok_button = ttk.Button(master=master, text="Apply on all", style="TButton",
+        ok_button = ttk.Button(master=master, text="Apply on all",
                                command=self.event_controller._on_click_proceed_button)
         lstbox_frame.pack()
         lstbox_tittle.pack(side=TOP)
@@ -468,7 +467,7 @@ class Interface():
         return combo
 
     def get_erase_plot_button(self, master):
-        button = ttk.Button(master=master, text="X", style="TButton")
+        button = ttk.Button(master=master, text="X")
         button.bind('<Button-1>', self.event_controller._on_click_destroy_subplot)
         return button
 

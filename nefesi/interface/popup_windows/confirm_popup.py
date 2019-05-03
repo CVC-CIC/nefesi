@@ -12,12 +12,12 @@ class ConfirmPopup(object):
         self.value = False
         self.top=Toplevel(master)
         self.top.title('Confirm selection')
-        self.text_label=Label(self.top, text=text)
+        self.text_label= ttk.Label(self.top, text=text)
         self.text_label.pack(side=TOP)
-        buttons_frame = Frame(master = self.top)
+        buttons_frame = ttk.Frame(master = self.top)
         buttons_frame.pack(side=BOTTOM)
-        self.ok_button = Button(buttons_frame, text='Confirm', command=self.cleanup_ok)
-        self.cancel_button = Button(buttons_frame, text='Cancel', command=self.cleanup_cancel)
+        self.ok_button = ttk.Button(buttons_frame, text='Confirm', command=self.cleanup_ok)
+        self.cancel_button = ttk.Button(buttons_frame, text='Cancel', command=self.cleanup_cancel)
         self.ok_button.pack(side=LEFT,pady=(8, 5),padx=3, ipadx=5)
         self.cancel_button.pack(side=RIGHT,pady=(8, 5),padx=3, ipadx=5)
 

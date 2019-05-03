@@ -26,10 +26,10 @@ except ImportError:
 from keras.models import load_model
 import dill as pickle
 import warnings
-
 class MakeAnalysisInterface():
-    def __init__(self):
+    def __init__(self, window_style = 'default'):
         self.window = Tk()
+        ttk.Style().theme_use(window_style)
         self.window.title("Nefesi")
         self.model = None
         self.dataset_dir = None
@@ -37,19 +37,19 @@ class MakeAnalysisInterface():
         self.lstbox_last_selection = [0]
         self.default_labels_dict = None
         #TOP Part with general info of viewing and some setteables
-        self.select_model_frame = Frame(master=self.window, borderwidth=1)
+        self.select_model_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_model_frame(master=self.select_model_frame)
         self.select_model_frame.pack()
-        self.select_parameters_frame = Frame(master=self.window, borderwidth=1)
+        self.select_parameters_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_parameters_frame(master=self.select_parameters_frame)
         self.select_parameters_frame.pack()
-        self.select_dataset_frame = Frame(master=self.window, borderwidth=1)
+        self.select_dataset_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_select_dataset_frame(master=self.select_dataset_frame)
         self.select_dataset_frame.pack()
-        self.layers_and_options_frame = Frame(master=self.window, borderwidth=1)
+        self.layers_and_options_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_layers_and_options_frame(master=self.layers_and_options_frame)
         self.layers_and_options_frame.pack()
-        self.ok_button = Button(self.window, text='Ok', command=self.cleanup)
+        self.ok_button = ttk.Button(self.window, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.ok_button.pack(pady=(8, 5), ipadx=10)
         self.set_footers(master=self.window)
@@ -86,11 +86,11 @@ class MakeAnalysisInterface():
                 pickle.dump(indexes_eval, f)
 
     def set_footers(self, master):
-        frame = Frame(master=master)
-        label = Label(master=frame, text='*(eval network) Nefesi/main>> nohup python evaluate_with_config.py &',
+        frame = ttk.Frame(master=master)
+        label = ttk.Label(master=frame, text='*(eval network) Nefesi/main>> nohup python evaluate_with_config.py &',
                       font=("Times New Roman", 8))
         label.grid(row=0)
-        label = Label(master=frame, text='**(calculate indexes) Nefesi/main>>'
+        label = ttk.Label(master=frame, text='**(calculate indexes) Nefesi/main>>'
                                          ' nohup python calculate_indexes.py &', font=("Times New Roman", 8))
         label.grid(row=1)
         frame.pack(side=BOTTOM)
@@ -144,27 +144,27 @@ class MakeAnalysisInterface():
         else:
             self.ok_button['state'] = 'disabled'
     def set_model_frame(self, master):
-        label = Label(master=master, text="Select the model")
-        label_selection = Label(master=master, text="No model selected")
-        button = Button(master=master, text="Select file", command=lambda : self._on_click_set_model(label_selection) )
+        label = ttk.Label(master=master, text="Select the model")
+        label_selection = ttk.Label(master=master, text="No model selected")
+        button = ttk.Button(master=master, text="Select file", command=lambda : self._on_click_set_model(label_selection) )
         label.pack(side=LEFT)
         label_selection.pack(side=RIGHT)
         button.pack(side=RIGHT)
 
     def set_parameters_frame(self, master):
-        save_path_frame = Frame(master=master)
+        save_path_frame = ttk.Frame(master=master)
         self.set_save_path_dir(save_path_frame)
         save_path_frame.pack()
 
 
     def set_layers_and_options_frame(self, master):
-        layers_to_evaluate = Frame(master=master)
+        layers_to_evaluate = ttk.Frame(master=master)
         self.set_layers_to_evaluate(layers_to_evaluate)
         layers_to_evaluate.pack()
-        also_calc_index = Frame(master=master)
+        also_calc_index = ttk.Frame(master=master)
         self.set_calc_index_check_box(also_calc_index)
         also_calc_index.pack()
-        verbose = Frame(master=master)
+        verbose = ttk.Frame(master=master)
         self.set_verbose_check_box(verbose)
         verbose.pack()
 
@@ -180,21 +180,21 @@ class MakeAnalysisInterface():
 
 
     def set_default_labels_dict_dir(self, master):
-        label = Label(master=master, text="Select default Labels Dict")
-        label_selection = Label(master=master, text="No translation dict")
-        button = Button(master=master, text="Select file",
+        label = ttk.Label(master=master, text="Select default Labels Dict")
+        label_selection = ttk.Label(master=master, text="No translation dict")
+        button = ttk.Button(master=master, text="Select file",
                         command=lambda: self._on_click_select_labels_dict_dir(label_selection))
         label.pack(side=LEFT)
         label_selection.pack(side=RIGHT)
         button.pack(side=RIGHT)
 
     def set_layers_to_evaluate(self, master):
-        label = Label(master=master, text="Select layers to evaluate")
+        label = ttk.Label(master=master, text="Select layers to evaluate")
         label.pack(side=LEFT)
         self.set_layers_listbox(master=master)
 
     def set_layers_listbox(self, master):
-        scrollbar = Scrollbar(master=master, orient="vertical")
+        scrollbar = ttk.Scrollbar(master=master, orient="vertical")
         self.layers_to_evaluate_lstbox = Listbox(master=master, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
                          height=MAX_VALUES_VISIBLES_IN_LISTBOX)
         scrollbar.config(command=self.layers_to_evaluate_lstbox.yview)
@@ -224,9 +224,9 @@ class MakeAnalysisInterface():
         self.layers_to_evaluate_lstbox.select_set(0)
 
     def set_save_path_dir(self, master):
-        label = Label(master=master, text="Select Save Directory")
+        label = ttk.Label(master=master, text="Select Save Directory")
         label_selection = Label(master=master, text="No directory selected")
-        button = Button(master=master, text="Select dir",
+        button = ttk.Button(master=master, text="Select dir",
                         command=lambda: self._on_click_select_save_path_dir(label_selection))
         label.pack(side=LEFT)
         label_selection.pack(side=RIGHT)
@@ -236,44 +236,44 @@ class MakeAnalysisInterface():
 
 
     def set_select_dataset_frame(self, master):
-        directory_frame = Frame(master=master)
+        directory_frame = ttk.Frame(master=master)
         self.set_dataset_dir(directory_frame)
         directory_frame.pack()
-        default_labels_dict_frame = Frame(master=master)
+        default_labels_dict_frame = ttk.Frame(master=master)
         self.set_default_labels_dict_dir(default_labels_dict_frame)
         default_labels_dict_frame.pack()
-        images_size_frame = Frame(master=master)
+        images_size_frame = ttk.Frame(master=master)
         self.set_select_images_size(images_size_frame)
         images_size_frame.pack()
-        color_mode_frame = Frame(master=master)
+        color_mode_frame = ttk.Frame(master=master)
         self.set_color_mode_frame(color_mode_frame)
         color_mode_frame.pack()
 
     def set_color_mode_frame(self, master):
-        label = Label(master=master, text="Select ColorMode")
+        label = ttk.Label(master=master, text="Select ColorMode")
         self.combo_color_mode = ttk.Combobox(master=master, values=['rgb', 'grayscale'], state='readonly', width=9, justify=CENTER)
         self.combo_color_mode.set('rgb')
         label.pack(side=LEFT)
         self.combo_color_mode.pack(side=RIGHT)
 
     def set_dataset_dir(self, master):
-        label = Label(master=master, text="Select Dataset Directory")
-        label_selection = Label(master=master, text="No model selected")
-        button = Button(master=master, text="Select dir",
+        label = ttk.Label(master=master, text="Select Dataset Directory")
+        label_selection = ttk.Label(master=master, text="No model selected")
+        button = ttk.Button(master=master, text="Select dir",
                         command=lambda: self._on_click_select_dataset_dir(label_selection))
         label.pack(side=LEFT)
         label_selection.pack(side=RIGHT)
         button.pack(side=RIGHT)
 
     def set_select_images_size(self, master):
-        Label(master=master, text="Select images size").pack(side=LEFT)
+        ttk.Label(master=master, text="Select images size").pack(side=LEFT)
         validate_command = (master.register(self._on_entry_updated_check_validity),
                             '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-        Label(master=master, text=" H:").pack(side=LEFT)
+        ttk.Label(master=master, text=" H:").pack(side=LEFT)
         self.entry_h = Entry(master=master, validate='key', validatecommand=validate_command,
                                            textvariable=StringVar(master=self.window), justify=CENTER, width=5)
         self.entry_h.pack(side=LEFT)
-        Label(master=master, text=" W:").pack(side=LEFT)
+        ttk.Label(master=master, text=" W:").pack(side=LEFT)
         self.entry_w = Entry(master=master, validate='key', validatecommand=validate_command,
                         textvariable=StringVar(master=self.window), justify=CENTER, width=5)
         self.entry_w.pack(side=RIGHT)
