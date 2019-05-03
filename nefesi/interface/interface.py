@@ -147,11 +147,12 @@ class Interface():
             self.general_info_label.configure(text = "No model selected")
         else:
             if self.network_data.model is not None:
-                network_name = self.network_data.model.name
+                network_name = self.network_data.model.name.capitalize()
             elif file_name is not None:
-                network_name = file_name[file_name.rfind('/')+1:file_name.rfind('.')]
+                network_name = file_name[file_name.rfind('/')+1:file_name.rfind('.')].capitalize()
             else:
-                network_name = self.network_data.save_path
+                file_name = self.network_data.save_path
+                network_name = self.network_data.save_path[file_name.rfind('/')+1:file_name.rfind('.')].capitalize()
             self.general_info_label.configure(text="Network: "+network_name+"   ---   "
                                             " Dataset: "+self.network_data.dataset.src_dataset)
 

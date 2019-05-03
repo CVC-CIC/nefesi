@@ -50,7 +50,12 @@ class NeuronWindow(object):
         self.neuron = self.network_data.get_neuron_of_layer(layer=layer_to_evaluate, neuron_idx=neuron_idx)
         self.window = Toplevel(master=master)
         self.basic_frame = ttk.Frame(master=self.window)
-        self.window.title(str(layer_to_evaluate) + ' Neuron: '+str(neuron_idx))
+        if self.network_data.model is not None:
+            network_name = self.network_data.model.name.capitalize()
+        else:
+            file_name = self.network_data.save_path
+            network_name = self.network_data.save_path[file_name.rfind('/')+1:file_name.rfind('.')].capitalize()
+        self.window.title('Network: '+network_name+' - Layer: '+str(layer_to_evaluate) + ' - Neuron: '+str(neuron_idx))
         self.index_info = ttk.Frame(master=self.basic_frame)
         self.set_index_info(master=self.index_info)
         self.images_frame = ttk.Frame(master=self.basic_frame)
