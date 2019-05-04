@@ -247,7 +247,7 @@ class NetworkData(object):
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
         #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-        buffer_size = 4
+        buffer_size = 3
         #Init all neuron_data attributes of all layers
         for i in range(len(self.layers_data)):
             neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]

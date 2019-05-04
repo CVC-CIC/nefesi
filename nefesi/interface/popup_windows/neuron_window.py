@@ -119,7 +119,7 @@ class NeuronWindow(object):
         activation = self.neuron.activations[self.actual_img_index]
         norm_activation = self.neuron.norm_activations[self.actual_img_index]
         label = self.get_current_image_class()
-        ttk.Label(master=text_frame, text="Image", font='Helvetica 10').pack(side=LEFT)
+        ttk.Label(master=text_frame, text="TopScoring", font='Helvetica 10').pack(side=LEFT)
         self.image_num_label = ttk.Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
         self.image_num_label.pack(side=LEFT)
         ttk.Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
