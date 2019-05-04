@@ -18,20 +18,16 @@ class CalcIndexesInterface():
     def __init__(self, window_style = 'default'):
         self.window = Tk()
         ttk.Style().theme_use(window_style)
-        self.window.title("Nefesi")
+        self.window.title("Nefesi - Prepare Index Calculation")
         self.network_data_file = None
         self.model_file = None
         self.verbose =False
         self.lstbox_last_selection = [0]
         self.select_parameters_frame = ttk.Frame(master=self.window, borderwidth=1)
         self.set_parameters_frame(master=self.select_parameters_frame)
+        self.set_index_listbox(self.select_parameters_frame)
+        self.set_verbose_check_box(self.select_parameters_frame)
         self.select_parameters_frame.pack()
-        self.index_to_calc = ttk.Frame(master=self.window)
-        self.set_index_listbox(self.index_to_calc)
-        self.index_to_calc.pack()
-        self.verbose_frame = ttk.Frame(master=self.window)
-        self.set_verbose_check_box(self.verbose_frame)
-        self.verbose_frame.pack()
         self.ok_button = ttk.Button(self.window, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.ok_button.pack(pady=(8, 5), ipadx=10)
@@ -54,9 +50,12 @@ class CalcIndexesInterface():
 	            pickle.dump(indexes_eval, f)
 
     def set_index_listbox(self, master):
-        scrollbar = ttk.Scrollbar(master=master, orient="vertical")
-        self.index_to_calc_lstbox = Listbox(master=master, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
-                                            height=MAX_VALUES_VISIBLES_IN_LISTBOX)
+        label = ttk.Label(master=master, text="Indexes to Calculate: ")
+        label.grid(row=2, column=0, sticky=E, pady=2, padx=(1, 2))
+        index_listbox_frame = ttk.Frame(master=master)
+        scrollbar = ttk.Scrollbar(master=index_listbox_frame, orient="vertical")
+        self.index_to_calc_lstbox = Listbox(master=index_listbox_frame, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
+                                            height=MAX_VALUES_VISIBLES_IN_LISTBOX, width=20)
         scrollbar.config(command=self.index_to_calc_lstbox.yview)
         self.index_to_calc_lstbox.pack(side=LEFT)
         scrollbar.pack(side=RIGHT, fill="y")
@@ -67,6 +66,7 @@ class CalcIndexesInterface():
         self.index_to_calc_lstbox.select_set(0)
         self.index_to_calc_lstbox.\
             bind('<<ListboxSelect>>', lambda event: self._on_listbox_change_selection(event, self.index_to_calc_lstbox))
+        index_listbox_frame.grid(row=2, column=1, sticky=W, columnspan=2)
         return self.index_to_calc_lstbox
 
     def _on_listbox_change_selection(self,event,lstbox):
@@ -119,34 +119,29 @@ class CalcIndexesInterface():
             self.ok_button['state'] = 'disabled'
 
     def set_model_frame(self, master):
-        label = ttk.Label(master=master, text="Select the model")
-        label_selection = ttk.Label(master=master, text="No model selected")
-        button = ttk.Button(master=master, text="Select file", command=lambda : self._on_click_set_model(label_selection) )
-        label.pack(side=LEFT)
-        label_selection.pack(side=RIGHT)
-        button.pack(side=RIGHT)
-
-    def set_parameters_frame(self, master):
-        save_network_data_file_frame = ttk.Frame(master=master)
-        self.set_network_data_file(save_network_data_file_frame)
-        save_network_data_file_frame.pack()
-        model_frame = ttk.Frame(master=master)
-        self.set_model_frame(model_frame)
-        model_frame.pack()
-
-    def set_verbose_check_box(self,master):
-        self.verbose = BooleanVar(master=master,value=False)
-        checkbox = ttk.Checkbutton(master=master, text="Verbose", variable=self.verbose)
-        checkbox.pack()
+        label = ttk.Label(master=master, text="Model: ")
+        label_selection = ttk.Label(master=master, text="No Model Selected")
+        button = ttk.Button(master=master, text="Select File", command=lambda : self._on_click_set_model(label_selection) )
+        label.grid(row=0, column=0, sticky=E, pady=2)
+        button.grid(row=0, column=1, sticky=E, pady=2)
+        label_selection.grid(row=0, column=2, sticky=W, pady=2)
 
     def set_network_data_file(self, master):
-        label = ttk.Label(master=master, text="Select network_data file")
-        label_selection = ttk.Label(master=master, text="No .obj selected")
-        button = ttk.Button(master=master, text="Select file",
+        label = ttk.Label(master=master, text="Nefesi File: ")
+        label_selection = ttk.Label(master=master, text="No File Selected")
+        button = ttk.Button(master=master, text="Select File",
                         command=lambda: self._on_click_set_network_data_file(label_selection))
-        label.pack(side=LEFT)
-        label_selection.pack(side=RIGHT)
-        button.pack(side=RIGHT)
+        label.grid(row=1, column=0, sticky=E, pady=2)
+        button.grid(row=1, column=1, sticky=E, pady=2)
+        label_selection.grid(row=1, column=2, sticky=W, pady=2)
+
+    def set_parameters_frame(self, master):
+        self.set_network_data_file(master)
+        self.set_model_frame(master)
+    def set_verbose_check_box(self,master):
+        self.verbose = BooleanVar(master=master,value=True)
+        checkbox = ttk.Checkbutton(master=master, text="Verbose", variable=self.verbose)
+        checkbox.grid(row=3, column=1, sticky=W, pady=2, columnspan=3)
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,

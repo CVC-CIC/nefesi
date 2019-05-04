@@ -18,7 +18,7 @@ except ImportError:
 from ..network_data import NetworkData
 from ..interface.interface import Interface
 from ..interface.make_analysis_interface import MakeAnalysisInterface
-STYLE = 'default'#'clam'
+STYLE = 'clam'
 class SelectionInterface():
     def __init__(self):
         self.window = Tk()
@@ -34,27 +34,27 @@ class SelectionInterface():
 
 
     def set_make_analysis_frame(self):
-        label = ttk.Label(master=self.window, text="Make script for do an analysis")
-        button = ttk.Button(master=self.window, text="Select Parameters", command=self._on_click_make_analysis_button)
+        label = ttk.Label(master=self.window, text="Prepare Analysis: ")
+        button = ttk.Button(master=self.window, text="Select Parameters",width=15, command=self._on_click_make_analysis_button)
         label.grid (row=0, column=0, sticky=E, pady=(6,3), padx=(6,1))
         button.grid(row=0, column=1, sticky=W, pady=(6,3), padx=(1,6))
 
     def set_make_indexes_calc_frame(self):
-        label = ttk.Label(master=self.window, text="Make script for calc indexes")
-        button = ttk.Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexes_calcs_button)
+        label = ttk.Label(master=self.window, text="Prepare Indexes Calc.: ")
+        button = ttk.Button(master=self.window, text="Select Parameters",width=15, command=self._on_click_make_indexes_calcs_button)
         label.grid (row=1, column=0, sticky=E, pady=(3,3), padx=(6,1))
         button.grid(row=1, column=1, sticky=W, pady=(3,3), padx=(1,6))
 
     def set_select_action_frame(self):
-        label = ttk.Label(master=self.window, text="Visualize an existent analysis")
-        button = ttk.Button(master=self.window, text="Select file", command=self._on_click_visualize_analysis_button)
+        label = ttk.Label(master=self.window, text="Visualize Analysis: ")
+        button = ttk.Button(master=self.window, text="Select File", width=15, command=self._on_click_visualize_analysis_button)
         label.grid (row=2, column=0, sticky=E, pady=(3,6), padx=(6,1))
         button.grid(row=2, column=1, sticky=W, pady=(3,6), padx=(1,6))
 
 
 
 
-    def ask_for_file(self, title="Select file", type='obj', initialdir=None, initialfile=None):
+    def ask_for_file(self, title="Select File", type='obj', initialdir=None, initialfile=None):
         filename = filedialog.askopenfilename(title=title,
                                               filetypes=((type, '*.' + type), ("all files", "*.*")),
                                               initialdir=initialdir, initialfile=initialfile)
@@ -63,9 +63,9 @@ class SelectionInterface():
 
 
     def _on_click_visualize_analysis_button(self):
-        network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)", initialdir = '/home/eric/Nefesi/Data/WithImageNet', initialfile='vgg16Copy.obj')
+        network_data_file = self.ask_for_file(title="Select Nefesi object (.obj)", initialdir = '/home/eric/Nefesi/Data/WithImageNet', initialfile='vgg16Copy.obj')
         if network_data_file != '':
-            model_file = self.ask_for_file(title="Select model (.h5 file)", type="h5", initialfile='vgg16.h5')
+            model_file = self.ask_for_file(title="Select Model (.h5)", type="h5", initialfile='vgg16.h5')
             model_file = model_file if model_file != '' else None
             network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
             last_dir_pos = network_data_file.rfind(os.path.sep)
