@@ -248,7 +248,7 @@ class NetworkData(object):
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
         #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-        buffer_size = 3
+        buffer_size = 4
         #Init all neuron_data attributes of all layers
         for i in range(len(self.layers_data)):
             neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
@@ -906,8 +906,8 @@ class NetworkData(object):
 
         model_name = self.model.name
         if self.save_path is not None:
-            file_name = self.save_path + file_name
-            model_name = self.save_path + self.model.name
+            file_name = os.path.join(self.save_path, file_name)
+            model_name = os.path.join(self.save_path, self.model.name)
         #If directory not exists create it recursively
         os.makedirs(name=self.save_path, exist_ok=True)
         model = self.model
@@ -923,8 +923,7 @@ class NetworkData(object):
             pickle.dump(self, f)
         self.model = model
 
-    @staticmethod
-    def load_from_disk(file_name, model_file=None):
+    def load_from_disk(self, file_name, model_file=None):
         """Load a file with all results.
 
         :param file_name: String, path and file name.
@@ -933,7 +932,17 @@ class NetworkData(object):
 
         :return: The `nefesi.network_data.NetworkData` instance.
         """
-        with open(file_name, 'rb') as f:
+        save_path = os.path.dirname(file_name)
+        file_name = os.path.basename(file_name)
+
+        if file_name is None or file_name is '':
+            file_name = self.default_file_name
+        if not file_name.endswith('.obj'):
+            file_name += '.obj'
+        if save_path is not None and save_path is not '':
+            self.save_path = save_path
+
+        with open(os.path.join(save_path, file_name), 'rb') as f:
             my_net = pickle.load(f)
         """
         TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
