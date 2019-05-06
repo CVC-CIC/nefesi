@@ -95,8 +95,10 @@ def tree_of_ImageNet():
 
 from nefesi.network_data import NetworkData
 def redo_NF():
-    nefesiModel = NetworkData.load_from_disk(file_name="/home/eric/Nefesi/Data/WithImageNet/vgg16Copy.obj", model_file="/home/eric/Nefesi/Data/WithImageNet/vgg16.h5")
-    nefesiModel.recalculateNF(file_name='/home/eric/Nefesi/Data/WithImageNet/vgg16CopyNew.obj')
+    # nefesiModel = NetworkData.load_from_disk(file_name="/home/eric/Nefesi/Data/WithImageNet/vgg16Copy.obj", model_file="/home/eric/Nefesi/Data/WithImageNet/vgg16.h5")
+    # nefesiModel.recalculateNF(file_name='/home/eric/Nefesi/Data/WithImageNet/vgg16CopyNew.obj')
+    nefesiModel = NetworkData.load_from_disk(file_name='/home/ramon/work/nefesi/Data/xception.obj', model_file="/home/ramon/work/nefesi/Data/xception.h5")
+    nefesiModel.recalculateNF(file_name='/home/ramon/work/nefesi/Data/xceptionNew.obj')
 
 if __name__ == '__main__':
     #fuse_imageNet(imagenet_base_path='./',dataset_base_path='./')

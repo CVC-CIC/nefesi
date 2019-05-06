@@ -12,6 +12,7 @@ from keras.backend import clear_session
 from .neuron_data import NeuronData
 from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
+from .neuron_feature import compute_nf
 from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
@@ -293,24 +294,23 @@ class NetworkData(object):
                 print("Sort ended. Building neuron features")
             # Build the neuron features
             for layer in self.layers_data:
-                layer.build_neuron_feature(self)
+                compute_nf(self, layer)
                 self.save_to_disk(file_name=file_name, erase_partials=True)
         # Save all data
         self.save_to_disk(file_name=file_name,erase_partials=True)
 
-    def recalculateNF(self,file_name=None, layers = None):
-
+    def recalculateNF(self, file_name=None, layers=None):
         if layers is None:
             layers = self.layers_data
         else:
             layers = [l for l in self.layers_data if l.layer_id in layers]
-            
+
         for layer in layers:
             print(layer.layer_id)
-            layer.build_neuron_feature(self)
+            layer.receptive_field_map = None
+            compute_nf(self, layer)
 
-        save_path, file_name = os.path.split(file_name)
-        self.save_to_disk(file_name=file_name, save_path=save_path, save_model=False)
+        self.save_to_disk(file_name=file_name, save_model=False)
 
 
     def get_layers_name(self):
@@ -881,7 +881,7 @@ class NetworkData(object):
 
         return res_act, res_neurons, res_loc, res_nf
 
-    def save_to_disk(self, file_name=None, save_path=None, save_model=True, erase_partials=False):
+    def save_to_disk(self, file_name=None, save_model=True, erase_partials=False):
         """Save all results. The file saved will contain the
         `nefesi.network_data.NetworkData` object and the rest
          of containing objects.
@@ -893,6 +893,10 @@ class NetworkData(object):
         :param save_model: If its True, the model will be saved
             as a HDF5 file.
         """
+
+        save_path = os.path.dirname(file_name)
+        file_name = os.path.basename(file_name )
+
         if file_name is None or file_name is '':
             file_name = self.default_file_name
         if not file_name.endswith('.obj'):

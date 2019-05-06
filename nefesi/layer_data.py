@@ -58,8 +58,6 @@ class LayerData(object):
                                                    self.layer_id, self.neurons_data,
                                                    num_max_activations, batch_size,batches_to_buffer=batches_to_buffer)
 
-    def build_neuron_feature(self, network_data):
-        compute_nf(network_data, self)
 
     def remove_selectivity_idx(self, idx):
         """Removes de idx selectivity index from the neurons of the layer.
@@ -484,7 +482,7 @@ class LayerData(object):
             return
 
         if self.receptive_field_map is None:
-            self.receptive_field_map, self.receptive_field_size = get_each_point_receptive_field(model, self.layer_id)
+            self.receptive_field_map, self.receptive_field_size, self.input_locations = get_each_point_receptive_field(model, self.layer_id)
 
 
     def get_location_from_rf(self, location):
@@ -494,14 +492,18 @@ class LayerData(object):
 
         :param location: Tuple of integers, pixel location from the image.
         :return: Integer tuple, a location of the map activation.
-        """
-        row, col = location
-        ri, rf, ci, cf = self.receptive_field_map[0, 0]
-        ri2, rf2, ci2, cf2 = self.receptive_field_map[1, 1]
-        stride_r = rf2 - rf
-        stride_c = cf2 - cf
+        )"""
+        idx = np.argmin(((self.input_locations.reshape(-1,2)-location)**2).sum(axis=1).sqrt())
+        r, c = ind2sub(self.input_locations.shape, [idx])
+        return self.input_locations[r, c]
 
-        return row / stride_r, col / stride_c
+        # row, col = location
+        # ri, rf, ci, cf = self.receptive_field_map[0, 0]
+        # ri2, rf2, ci2, cf2 = self.receptive_field_map[1, 1]
+        # stride_r = rf2 - rf
+        # stride_c = cf2 - cf
+        #
+        # return row / stride_r, col / stride_c
 
     def decomposition_image(self, model, img):
         """Calculates the decomposition of an image in this layer
@@ -740,6 +742,7 @@ def get_each_point_receptive_field(model, layer_name):
     # array order --> row_ini, row_fin, col_ini, col_fin
     image_points = np.array([h_mesh.flatten(),h_mesh.flatten(), w_mesh.flatten(),w_mesh.flatten()],dtype=np.int32).\
         T.reshape(w, h, 4)
+    input_locations = np.zeros((w, h, 2))
 
     image_points = recursive_receptive_field_per_location(model, model.layers[current_layer_idx], image_points)
 
@@ -753,19 +756,22 @@ def get_each_point_receptive_field(model, layer_name):
         _, w, h, _ = model.layers[current_layer_idx].output_shape
     else:
         raise ValueError(
-            "You're trying to get the receptive field of a NON Convolutional layer? --> " + self.layer_id)
+            "You're trying to get the receptive field of a NON Convolutional layer? --> " + current_layer_idx)
     row = int(w // 2)
     col = int(h // 2)
     row_ini, row_fin, col_ini, col_fin = image_points[row, col]
-    height = row_fin - row_ini
-    width = col_fin - col_ini
+    height = row_fin - row_ini + 1
+    width = col_fin - col_ini + 1
     receptive_field_size = (width, height)
 
-    image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
-    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w - 1)
-    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h - 1)
+    input_locations[..., 0] = (image_points[..., 3] + image_points[..., 2]) / 2
+    input_locations[..., 1] = (image_points[..., 1] + image_points[..., 0]) / 2
 
-    return image_points, receptive_field_size
+    image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
+    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w)
+    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h)
+
+    return image_points, receptive_field_size, input_locations
 
 
 def recursive_receptive_field_per_location(model, current_layer, image_points):
@@ -852,3 +858,9 @@ def get_layer_inputs(model, layer):
                 inputs.append(inbound_layer)
     return inputs, layer
 
+def ind2sub(array_shape, ind):
+    ind[ind < 0] = -1
+    ind[ind >= array_shape[0]*array_shape[1]] = -1
+    rows = (ind.astype('int') / array_shape[1])
+    cols = ind % array_shape[1]
+    return (rows, cols)

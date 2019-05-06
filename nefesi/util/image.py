@@ -173,7 +173,7 @@ class ImageDataset():
         if crop_pos is None:
             return img
 
-        im_crop = crop_img(img,crop_pos)
+        im_crop = crop_img(img, crop_pos)
         return im_crop
 
 

@@ -43,7 +43,7 @@ class ReceptiveFieldPopupWindow(object):
         self.put_image(master=self.complete_image_frame, img=None, isComplete=True)
         self.put_image(master=self.cropped_image_frame, img=image_cropped)
         self.receptive_camp_frame = Frame(master=self.window)
-        self.set_receptive_camp_frame(master=self.receptive_camp_frame)
+        self.set_select_visualization_frame(master=self.receptive_camp_frame)
         self.set_threshold_frame(master=self.receptive_camp_frame)
         self.set_false_labels_frame(master=self.receptive_camp_frame)
         self.complete_image_frame.pack(side=LEFT)
@@ -58,7 +58,7 @@ class ReceptiveFieldPopupWindow(object):
         if isComplete:
             self.panel_complete_img = panel
 
-    def set_receptive_camp_frame(self, master):
+    def set_select_visualization_frame(self, master):
         self.method_value = DoubleVar(master=master, value=1)
         master = LabelFrame(master, text="Overlap", padx=2, pady=2)
         master.pack(side=TOP, fill=X, expand="yes")

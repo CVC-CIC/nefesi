@@ -13,6 +13,7 @@ from .ColorNaming import colors as color_names
 import networkx as nx
 from ..interface.popup_windows.combobox_popup_window import ComboboxPopupWindow
 from ..interface.popup_windows.special_value_popup_window import SpecialValuePopupWindow
+from keras.preprocessing import image
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
 NODES_CROPPED_IN_SUMMARY = 2
@@ -199,7 +200,9 @@ def plot_top_scoring_images(network_data, layer_data, neuron_idx, n_max=50):
     if layer_name is None:
         raise ValueError("No layer {} in the model.".format(layer_data.layer_id))
 
-    images = neuron.get_patches(network_data, layer_data, as_numpy=False)
+    images = neuron.get_patches(network_data, layer_data)
+    images = [image.array_to_img(p) for p in images]
+
     activations = neuron.norm_activations
     images = images[:n_max]
     activations = activations[:n_max]
