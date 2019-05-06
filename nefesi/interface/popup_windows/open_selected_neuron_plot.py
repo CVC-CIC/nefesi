@@ -21,19 +21,19 @@ class OpenSelectedNeuronPlot(object):
         self.neuron = None
         self.top=Toplevel(master)
         self.top.title('Select layer and Neuron')
-        lstbox_layer_frame = Frame(master=self.top)
-        lstbox_neuron_frame = Frame(master=self.top)
-        entry_neuron_frame = Frame(master=self.top)
+        lstbox_layer_frame = ttk.Frame(master=self.top)
+        lstbox_neuron_frame = ttk.Frame(master=self.top)
+        entry_neuron_frame = ttk.Frame(master=self.top)
         self.set_layers_listbox(master=lstbox_layer_frame)
         self.set_neurons_lstbox(master=lstbox_neuron_frame)
-        self.ok_button = Button(entry_neuron_frame, text='Ok', command=self.cleanup)
+        self.ok_button = ttk.Button(entry_neuron_frame, text='Ok', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         validate_command = (master.register(self._on_entry_updated_check_validity),
                             '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-        self.actual_info_label = Label(master = entry_neuron_frame, text = "No layer selected: ")
-        entry_and_label_frame = Frame(master=entry_neuron_frame)
-        neurons_to_show_label = Label(master=entry_and_label_frame, text = "Neuron: ")
-        self.neurons_to_show_entry = Entry(master=entry_and_label_frame, validate='key', validatecommand=validate_command,
+        self.actual_info_label = ttk.Label(master = entry_neuron_frame, text = "No layer selected: ")
+        entry_and_label_frame = ttk.Frame(master=entry_neuron_frame)
+        neurons_to_show_label = ttk.Label(master=entry_and_label_frame, text = "Neuron: ")
+        self.neurons_to_show_entry = ttk.Entry(master=entry_and_label_frame, validate='key', validatecommand=validate_command,
                                            textvariable=StringVar(master=self.top), justify=CENTER, width=7)
         self.neurons_to_show_entry['state'] = 'disabled'
         entry_neuron_frame.pack(side=RIGHT)
@@ -44,12 +44,16 @@ class OpenSelectedNeuronPlot(object):
         neurons_to_show_label.pack(side=LEFT)
         self.neurons_to_show_entry.pack(side=RIGHT)
         self.ok_button.pack(side=BOTTOM)
+        self.top.bind('<Return>', self.on_click_enter)
 
     def cleanup(self):
         self.layer = self.current_layer
         self.neuron = self.neuron_selected
         self.top.destroy()
 
+    def on_click_enter(self, event):
+        if self.ok_button['state'].string == 'normal':
+            self.cleanup()
     def entry_update(self, new_value):
         self.neurons_to_show_entry.delete(0,END)
         for i in reversed(range(len(new_value))):
@@ -59,7 +63,7 @@ class OpenSelectedNeuronPlot(object):
         # Title just in top of selector
         lstbox_tittle = ttk.Label(master=master, text="Select Layer")
         list_values = [layer.layer_id for layer in self.network_data.layers_data]
-        scrollbar = tk.Scrollbar(master=master, orient="vertical")
+        scrollbar = ttk.Scrollbar(master=master, orient="vertical")
         lstbox = Listbox(master=master, selectmode=SINGLE, yscrollcommand=scrollbar.set,
                          height=min(len(list_values)+2,MAX_VALUES_VISIBLES_IN_LISTBOX))
         scrollbar.config(command=lstbox.yview)
@@ -72,7 +76,7 @@ class OpenSelectedNeuronPlot(object):
         return lstbox
 
     def set_neurons_lstbox(self,master):
-        title_frame = Frame(master=master)
+        title_frame = ttk.Frame(master=master)
         combo_title = ttk.Label(title_frame, text="Order by:")
         combo_title.pack(side=LEFT, expand=False)
         # Options will be 1,2,3,4
@@ -83,9 +87,9 @@ class OpenSelectedNeuronPlot(object):
         self.order_combo.bind("<<ComboboxSelected>>", lambda event: self._on_order_by_selection_changed(event, self.order_combo))
         self.order_combo.pack(side=LEFT, expand=False)
         title_frame.pack(side=TOP)
-        lstbox_frame = Frame(master=master)
+        lstbox_frame = ttk.Frame(master=master)
         lstbox_frame.pack(side=BOTTOM)
-        scrollbar = tk.Scrollbar(master=lstbox_frame, orient="vertical")
+        scrollbar = ttk.Scrollbar(master=lstbox_frame, orient="vertical")
         self.neuron_lstbox = Listbox(master=lstbox_frame, selectmode=SINGLE, yscrollcommand=scrollbar.set,
                          height=MAX_VALUES_VISIBLES_IN_LISTBOX, width=25)
         scrollbar.config(command=self.neuron_lstbox.yview)
@@ -128,10 +132,9 @@ class OpenSelectedNeuronPlot(object):
         sel_idx = self.network_data.get_selectivity_idx(sel_index=selection,layer_name=layer_selected)[selection][0]
         if selection in ['symmetry', 'orientation']:
             sel_idx = sel_idx[:,-1]
-        elif selection == 'class':
+        else:
             sel_idx = sel_idx['value']
-        elif selection == 'concept':
-            sel_idx = np.array([neuron_concept[0]['count'][0] for neuron_concept in sel_idx])
+
         self.neuron_lstbox.delete(0,END)
         args_sorted = np.argsort(sel_idx)
         sel_idx = sel_idx[args_sorted]

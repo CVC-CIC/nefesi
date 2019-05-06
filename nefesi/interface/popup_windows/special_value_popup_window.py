@@ -56,11 +56,11 @@ class SpecialValuePopupWindow(object):
         else:
             self.top.title(index.title() + ' Coocurrence threshold')
         self.max = max
-        self.text_label=Label(self.top, text=text)
+        self.text_label= ttk.Label(master= self.top, text=text)
         self.text_label.pack()
-        self.ok_button = Button(self.top, text='Ok', command=self.cleanup)
+        self.ok_button = ttk.Button(master= self.top, text='Ok', command=self.cleanup)
         self.value_entry = None
-        self.value_entry=Entry(self.top, validate ='key', validatecommand=self.validate_command,
+        self.value_entry= Entry(self.top, validate ='key', validatecommand=self.validate_command,
                                textvariable=StringVar(master=self.top,value=default_entry),width=20, justify=CENTER)
         self.value_entry.pack()
         self.ok_button.pack()

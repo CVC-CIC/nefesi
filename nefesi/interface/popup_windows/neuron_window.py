@@ -48,17 +48,22 @@ class NeuronWindow(object):
         self.selector = None
         self.advanced_plots_frame = None
         self.neuron = self.network_data.get_neuron_of_layer(layer=layer_to_evaluate, neuron_idx=neuron_idx)
-        self.window = Toplevel(master)
-        self.basic_frame = Frame(master=self.window)
-        self.window.title(str(layer_to_evaluate) + ' Neuron: '+str(neuron_idx))
-        self.index_info = Frame(master=self.basic_frame)
+        self.window = Toplevel(master=master)
+        self.basic_frame = ttk.Frame(master=self.window)
+        if self.network_data.model is not None:
+            network_name = self.network_data.model.name.capitalize()
+        else:
+            file_name = self.network_data.save_path
+            network_name = self.network_data.save_path[file_name.rfind('/')+1:file_name.rfind('.')].capitalize()
+        self.window.title('Network: '+network_name+' - Layer: '+str(layer_to_evaluate) + ' - Neuron: '+str(neuron_idx))
+        self.index_info = ttk.Frame(master=self.basic_frame)
         self.set_index_info(master=self.index_info)
-        self.images_frame = Frame(master=self.basic_frame)
-        self.neuron_feature_frame = Frame(master=self.images_frame)
-        self.decomposition_frame = Frame(master=self.images_frame)
+        self.images_frame = ttk.Frame(master=self.basic_frame)
+        self.neuron_feature_frame = ttk.Frame(master=self.images_frame)
+        self.decomposition_frame = ttk.Frame(master=self.images_frame)
         self.set_neuron_feature_frame(master=self.neuron_feature_frame)
         self.neuron_feature_frame.pack(side=LEFT, fill=BOTH, expand=True)
-        self.decomposition_frame = Frame(self.basic_frame)
+        self.decomposition_frame = ttk.Frame(self.basic_frame)
         self.set_decomposition_frame(self.decomposition_frame)
         self.set_nf_frame(self.decomposition_frame)
         self.images_frame.pack(side=LEFT,padx=5)
@@ -69,18 +74,18 @@ class NeuronWindow(object):
 
 
     def update_images_size(self):
-        self.set_nf_panel()
+        self.set_nf_panel(option=self.combo_nf_option.get())
         self.update_decomposition_panel(panel=self.panel_image)
 
     def set_nf_frame(self, master):
-        image_frame2 = Frame(master=master)
+        image_frame2 = ttk.Frame(master=master)
 
         current_image2 = self.neuron._neuron_feature
         current_image2 = current_image2.resize((int(self.image_actual_size[0] / 2), int(self.image_actual_size[1] / 2)),
                                                Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(current_image2)
 
-        self.panel_image2 = Label(master=image_frame2, image=img)
+        self.panel_image2 = ttk.Label(master=image_frame2, image=img)
         self.panel_image2.image = img
         self.panel_image2.pack(side=BOTTOM)
         image_frame2.pack(side=BOTTOM)
@@ -89,7 +94,7 @@ class NeuronWindow(object):
 
 
     def set_decomposition_frame(self, master):
-        image_frame = Frame(master=master)
+        image_frame = ttk.Frame(master=master)
         image_num_label, activation_label, norm_activation_label, class_label = self.set_decomposition_label(master)
         current_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
@@ -97,12 +102,12 @@ class NeuronWindow(object):
         current_image = current_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(current_image)
 
-        self.panel_image = Label(master=image_frame, image=img)
+        self.panel_image = ttk.Label(master=image_frame, image=img)
         self.panel_image.image = img
         self.panel_image.bind("<Double-Button-1>",lambda event: self.event_controller._on_image_click(event, self.layer_to_evaluate, self.neuron_idx))
-        decrease_button = Button(master=image_frame, text='<', command=lambda: self.event_controller._on_decrease_click(self.panel_image,
+        decrease_button = ttk.Button(master=image_frame, text='<', width=1, command=lambda: self.event_controller._on_decrease_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
-        increase_button = Button(master=image_frame, text='>', command=lambda: self.event_controller._on_increase_click(self.panel_image,
+        increase_button = ttk.Button(master=image_frame, text='>', width=1, command=lambda: self.event_controller._on_increase_click(self.panel_image,
                                         image_num_label,activation_label,norm_activation_label,class_label))
         increase_button.pack(side=RIGHT, fill='y')
         decrease_button.pack(side=LEFT,fill='y')
@@ -110,22 +115,22 @@ class NeuronWindow(object):
         image_frame.pack(side=TOP)
 
     def set_decomposition_label(self, master):
-        text_frame = Frame(master=master)
+        text_frame = ttk.Frame(master=master)
         activation = self.neuron.activations[self.actual_img_index]
         norm_activation = self.neuron.norm_activations[self.actual_img_index]
         label = self.get_current_image_class()
-        Label(master=text_frame, text="Image", font='Helvetica 10').pack(side=LEFT)
-        self.image_num_label = Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
+        ttk.Label(master=text_frame, text="TopScoring", font='Helvetica 10').pack(side=LEFT)
+        self.image_num_label = ttk.Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
         self.image_num_label.pack(side=LEFT)
-        Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
-        self.class_label = Label(master=text_frame, text=label,
+        ttk.Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
+        self.class_label = ttk.Label(master=text_frame, text=label,
                                       font='Helvetica 10 bold')
         self.class_label.pack(side=LEFT)
-        Label(master=text_frame, text="Act.:", font='Helvetica 10').pack(side=LEFT)
-        self.activation_label = Label(master=text_frame, text=str(round(activation, ndigits=2)), font='Helvetica 10 bold')
+        ttk.Label(master=text_frame, text="Act.:", font='Helvetica 10').pack(side=LEFT)
+        self.activation_label = ttk.Label(master=text_frame, text=str(round(activation, ndigits=2)), font='Helvetica 10 bold')
         self.activation_label.pack(side=LEFT)
-        Label(master=text_frame, text="Norm. Act.:", font='Helvetica 10').pack(side=LEFT)
-        self.norm_activation_label = Label(master=text_frame, text=str(round(norm_activation, ndigits=2)),
+        ttk.Label(master=text_frame, text="Norm. Act.:", font='Helvetica 10').pack(side=LEFT)
+        self.norm_activation_label = ttk.Label(master=text_frame, text=str(round(norm_activation, ndigits=2)),
                                  font='Helvetica 10 bold')
         self.norm_activation_label.pack(side=LEFT)
         text_frame.pack(side=TOP)
@@ -246,7 +251,7 @@ class NeuronWindow(object):
 
         indexes = self.get_index_info(orientation_degrees=orientation_degrees, thr_pc=thr_pc)
 
-        Label(master=master, text='Selectivity Indexes: ').grid(column=0, row=0)
+        ttk.Label(master=master, text='Selectivity Indexes: ').grid(column=0, row=0)
         rows = 0
         for i, (label, idx) in enumerate(indexes.items()):
             if label == 'color':
@@ -262,7 +267,7 @@ class NeuronWindow(object):
             else:
                 continue
             rows+=1
-            Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows)
+            ttk.Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows)
 
         if indexes['class']['label'][0] != 'None' and plot_wordnet_tree:
             try:
@@ -281,7 +286,7 @@ class NeuronWindow(object):
                     text += treestr.ljust(TREE_THRESHOLD) + ' ' + str(node.rep) + ' (' + str(
                         round(node.freq, 2)) + ')\n'
                 text += '\n'
-                Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows+1)
+                ttk.Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows+1)
             except:
                 pass
 
@@ -319,8 +324,8 @@ class NeuronWindow(object):
         return indexes
 
     def add_figure_to_frame(self, master_canvas=None, figure=None, default_value=None):
-        self.combo_frame = Frame(master=master_canvas)
-        self.figure_frame = Frame(master=master_canvas)
+        self.combo_frame = ttk.Frame(master=master_canvas)
+        self.figure_frame = ttk.Frame(master=master_canvas)
         if figure is not None:
             self.put_figure_plot(master=self.figure_frame, figure=figure)
         self.selector = self.get_index_button_general(self.combo_frame, default_value=default_value)

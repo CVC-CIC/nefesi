@@ -57,16 +57,16 @@ class OneLayerPopupWindow(object):
         header_text = index.title()+" selectivity of layer "+layer_to_evaluate+":\n" \
                     "Define the chart constraints, to filter\n" \
                         " the neurons that will be showed"
-        self.text_label=Label(self.top, text=header_text,height=5)
-        self.ok_button = Button(self.top, text='Ok', command=self.cleanup)
-        self.selection_type_selector_frame = Frame(self.top)
+        self.text_label= Label(self.top, text=header_text,height=5)
+        self.ok_button = ttk.Button(self.top, text='Ok', command=self.cleanup)
+        self.selection_type_selector_frame = ttk.Frame(self.top)
         self.set_selection_type_selector(master=self.selection_type_selector_frame)
         self._type_selector_last_value = SELECTOR_OPTIONS[0]
-        self.conditions_frame = Frame(self.top)
+        self.conditions_frame = ttk.Frame(self.top)
         self.set_conditions_selector(master=self.conditions_frame)
-        self.order_selector_frame = Frame(master=self.top)
+        self.order_selector_frame = ttk.Frame(master=self.top)
         self.set_order_selector(self.order_selector_frame)
-        self.max_naurons_to_show_frame = Frame(master=self.top)
+        self.max_naurons_to_show_frame = ttk.Frame(master=self.top)
         self.set_max_neurons_to_show_entry(master=self.max_naurons_to_show_frame)
         self.text_label.pack()
         self.selection_type_selector_frame.pack()
@@ -77,10 +77,10 @@ class OneLayerPopupWindow(object):
         self.set_footers(master=self.top)
 
     def set_footers(self, master):
-        frame = Frame(master=master)
-        label = Label(master=frame, text=self.footer1,font=("Times New Roman", 8))
+        frame = ttk.Frame(master=master)
+        label = ttk.Label(master=frame, text=self.footer1,font=("Times New Roman", 8))
         label.grid(row=0,padx=(75,0))
-        label = Label(master=frame, text="** Accepted range [" + str(NEURONS_TO_SHOW_RANGE[0]) + ", " + \
+        label = ttk.Label(master=frame, text="** Accepted range [" + str(NEURONS_TO_SHOW_RANGE[0]) + ", " + \
                                           str(NEURONS_TO_SHOW_RANGE[-1]) + "]", font=("Times New Roman", 8))
         label.grid(row=1,padx=(75,0))
         frame.pack(side=BOTTOM)
@@ -99,18 +99,18 @@ class OneLayerPopupWindow(object):
         self.top.destroy()
 
     def set_max_neurons_to_show_entry(self, master):
-        label = Label(master=master, text=NEURONS_TO_SHOW_TEXT)
+        label = ttk.Label(master=master, text=NEURONS_TO_SHOW_TEXT)
         validate_command = (master.register(self._on_entry_updated_check_max_neurons_validity),
                              '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
         self.neurons_to_show_entry = Entry(master, validate='key', validatecommand=validate_command,
                            textvariable=StringVar(master=self.top, value=15),justify=CENTER,width = 5)
         label.grid(column=0,row=0)
         self.neurons_to_show_entry.grid(column=1,row=0)
-        label = Label(master=master, text="**")
+        label = ttk.Label(master=master, text="**")
         label.grid(column=2,row=0)
 
     def set_order_selector(self, master):
-        label = Label(master=master, text=ORDER_FRAME_TEXT)
+        label = ttk.Label(master=master, text=ORDER_FRAME_TEXT)
         self.order_combo = ttk.Combobox(master=master, values=ORDER, state='readonly', width=8, justify=CENTER)
         self.order_combo.set(ORDER[0])
         self.order_combo.bind("<<ComboboxSelected>>", self._on_order_or_condition_selector_changed)
@@ -120,7 +120,7 @@ class OneLayerPopupWindow(object):
 
     def set_conditions_selector(self, master, default1='>=', default2=None):
         assert((default1 in CONDITIONS) or (default2 in CONDITIONS))
-        values_frame = Frame(master=master)
+        values_frame = ttk.Frame(master=master)
         if default1 == None or default2 == None:
             if default1 == None:
                 default1 = default2
@@ -144,7 +144,7 @@ class OneLayerPopupWindow(object):
             self.entry2.grid(column=4,row=0,padx=2)
             label_column, combo1_column, entry1_column = 2, 1, 0
 
-        label = Label(master=values_frame, text = self.range_label_text)
+        label = ttk.Label(master=values_frame, text = self.range_label_text)
         if self.combo1 is not None:
             self.combo1.destroy()
             self.combo1 = None
@@ -160,12 +160,12 @@ class OneLayerPopupWindow(object):
         self.combo1.grid(column=combo1_column,row=0,padx=2)
         self.entry1.grid(column=entry1_column,row=0,padx=2)
 
-        label_explication= Label(master=master, text=CONDITIONS_TEXT)
+        label_explication= ttk.Label(master=master, text=CONDITIONS_TEXT)
         label_explication.pack(side=TOP,padx=(0,75))
         values_frame.pack(side=BOTTOM,padx=5)
 
     def set_selection_type_selector(self, master):
-        label = Label(master=master,text="Select constraints: ")
+        label = ttk.Label(master=master,text="Select constraints: ")
         self.type_combo = ttk.Combobox(master=master, values=SELECTOR_OPTIONS, state='readonly',width=9, justify=CENTER)
         self.type_combo.bind("<<ComboboxSelected>>", self._on_type_selector_changed)
         self.type_combo.set(SELECTOR_OPTIONS[0])

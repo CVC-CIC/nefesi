@@ -16,11 +16,11 @@ class SelectIndexWindow():
         self.top = Toplevel(master)
         self.top.title("Select the indexes to use")
         self.new_indexes = -1
-        Label(master=self.top, text="Indexes to take into account: ").pack()
+        ttk.Label(master=self.top, text="Indexes to take into account: ").pack()
         self.ok_button = Button(self.top, text='Ok', command=self.cleanup)
         self.boolean_vars = []
         for index in ALL_INDEX_NAMES:
-            checkbox_frame= Frame(master=self.top)
+            checkbox_frame= ttk.Frame(master=self.top)
             self.boolean_vars.append(self.set_check_box(checkbox_frame, text=index, value =index in actual_indexes))
             checkbox_frame.pack()
 

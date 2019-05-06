@@ -25,10 +25,10 @@ class EraseCalculatedIndexPopup(object):
         self.ok_button = Button(master = self.top, text='Erase', command=self.cleanup)
         self.ok_button['state'] = 'disabled'
         self.layers_last_selection = (0,)
-        indexes_frame = Frame(master=self.top)
+        indexes_frame = ttk.Frame(master=self.top)
         self.set_indexes_lstbox(master=indexes_frame)
         indexes_frame.pack(side=LEFT)
-        lstbox_layer_frame = Frame(master=self.top)
+        lstbox_layer_frame = ttk.Frame(master=self.top)
         self.set_layers_listbox(master=lstbox_layer_frame)
         self.ok_button.pack(side=RIGHT)
         lstbox_layer_frame.pack(side=RIGHT)
@@ -44,7 +44,7 @@ class EraseCalculatedIndexPopup(object):
     def set_indexes_lstbox(self, master):
         combo_title = ttk.Label(master, text="Indexes")
         combo_title.pack(side=TOP, expand=False)
-        lstbox_frame = Frame(master=master)
+        lstbox_frame = ttk.Frame(master=master)
         lstbox_frame.pack(side=BOTTOM)
         scrollbar = tk.Scrollbar(master=lstbox_frame, orient="vertical")
         self.indexes_lstbox = Listbox(master=lstbox_frame, selectmode=SINGLE, yscrollcommand=scrollbar.set,
@@ -70,7 +70,7 @@ class EraseCalculatedIndexPopup(object):
     def set_layers_listbox(self, master):
         # Title just in top of selector
         lstbox_tittle = ttk.Label(master=master, text="Select Layer")
-        scrollbar = tk.Scrollbar(master=master, orient="vertical")
+        scrollbar = ttk.Scrollbar(master=master, orient="vertical")
         self.layers_lstbox = Listbox(master=master, selectmode=EXTENDED, yscrollcommand=scrollbar.set,
                          height=MAX_VALUES_VISIBLES_IN_LISTBOX)
         scrollbar.config(command=self.layers_lstbox.yview)

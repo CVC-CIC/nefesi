@@ -9,8 +9,8 @@ MAX_VALUES_VISIBLES_IN_LISTBOX = 6
 
 try:
     from tkinter import *
-    from tkinter import ttk
     from tkinter import filedialog
+    import tkinter.ttk as ttk
 except ImportError:
     from Tkinter import *
     from Tkinter import ttk
@@ -18,10 +18,11 @@ except ImportError:
 from ..network_data import NetworkData
 from ..interface.interface import Interface
 from ..interface.make_analysis_interface import MakeAnalysisInterface
-
+STYLE = 'clam'
 class SelectionInterface():
     def __init__(self):
         self.window = Tk()
+        ttk.Style().theme_use(STYLE)
         self.window.title("Nefesi")
         #TOP Part with general info of viewing and some setteables
         self.set_make_analysis_frame()
@@ -33,27 +34,27 @@ class SelectionInterface():
 
 
     def set_make_analysis_frame(self):
-        label = Label(master=self.window, text="Make script for do an analysis")
-        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_analysis_button)
+        label = ttk.Label(master=self.window, text="Prepare Analysis: ")
+        button = ttk.Button(master=self.window, text="Select Parameters",width=15, command=self._on_click_make_analysis_button)
         label.grid (row=0, column=0, sticky=E, pady=(6,3), padx=(6,1))
         button.grid(row=0, column=1, sticky=W, pady=(6,3), padx=(1,6))
 
     def set_make_indexes_calc_frame(self):
-        label = Label(master=self.window, text="Make script for calc indexes")
-        button = Button(master=self.window, text="Select Parameters", command=self._on_click_make_indexes_calcs_button)
+        label = ttk.Label(master=self.window, text="Prepare Indexes Calc.: ")
+        button = ttk.Button(master=self.window, text="Select Parameters",width=15, command=self._on_click_make_indexes_calcs_button)
         label.grid (row=1, column=0, sticky=E, pady=(3,3), padx=(6,1))
         button.grid(row=1, column=1, sticky=W, pady=(3,3), padx=(1,6))
 
     def set_select_action_frame(self):
-        label = Label(master=self.window, text="Visualize an existent analysis")
-        button = Button(master=self.window, text="Select file", command=self._on_click_visualize_analysis_button)
+        label = ttk.Label(master=self.window, text="Visualize Analysis: ")
+        button = ttk.Button(master=self.window, text="Select File", width=15, command=self._on_click_visualize_analysis_button)
         label.grid (row=2, column=0, sticky=E, pady=(3,6), padx=(6,1))
         button.grid(row=2, column=1, sticky=W, pady=(3,6), padx=(1,6))
 
 
 
 
-    def ask_for_file(self, title="Select file", type='obj', initialdir=None, initialfile=None):
+    def ask_for_file(self, title="Select File", type='obj', initialdir=None, initialfile=None):
         filename = filedialog.askopenfilename(title=title,
                                               filetypes=((type, '*.' + type), ("all files", "*.*")),
                                               initialdir=initialdir, initialfile=initialfile)
@@ -62,22 +63,22 @@ class SelectionInterface():
 
 
     def _on_click_visualize_analysis_button(self):
-        network_data_file = self.ask_for_file(title="Select NetworkData object (.obj file)", initialdir = '/home/eric/Nefesi/Data/WithImageNet', initialfile='vgg16Copy.obj')
+        network_data_file = self.ask_for_file(title="Select Nefesi object (.obj)", initialdir = '/home/eric/Nefesi/Data/WithImageNet', initialfile='vgg16Copy.obj')
         if network_data_file != '':
-            model_file = self.ask_for_file(title="Select model (.h5 file)", type="h5", initialfile='vgg16.h5')
+            model_file = self.ask_for_file(title="Select Model (.h5)", type="h5", initialfile='vgg16.h5')
             model_file = model_file if model_file != '' else None
             network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
             last_dir_pos = network_data_file.rfind(os.path.sep)
             network_data.save_path = network_data_file[:last_dir_pos]
             network_data.default_file_name = network_data_file[last_dir_pos+1:network_data_file.rfind('.')]
             self.window.destroy()
-            Interface(network_data=network_data)
+            Interface(network_data=network_data, window_style = STYLE)
 
     def _on_click_make_analysis_button(self):
         self.window.destroy()
-        MakeAnalysisInterface()
+        MakeAnalysisInterface(window_style=STYLE)
 
 
     def _on_click_make_indexes_calcs_button(self):
         self.window.destroy()
-        CalcIndexesInterface()
+        CalcIndexesInterface(window_style=STYLE)
