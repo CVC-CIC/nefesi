@@ -477,20 +477,16 @@ class LayerData(object):
         :param model: The `keras.models.Model` instance.
         :raise ValueError: If this layer is apparently non convolutional
         """
-        if self.receptive_field_map is None:
-<<<<<<< HEAD
-            self.receptive_field_map, self.receptive_field_size, self.input_locations = get_each_point_receptive_field(model, self.layer_id)
 
-=======
+        if self.receptive_field_map is None:
             layer_idx = find_layer_idx(model, self.layer_id)
             if len(model.layers[layer_idx].output_shape) != 4:
                 _, h, w, _ = model.input_shape
-                self.receptive_field_size = (h,w)
-                self.receptive_field_map = np.zeros((h,w,4), dtype=np.int32)
+                self.receptive_field_size = (h, w)
+                self.receptive_field_map = np.zeros((h, w, 4), dtype=np.int32)
                 self.receptive_field_map[:] = [0, h, 0, w]
             else:
-                self.receptive_field_map, self.receptive_field_size = get_each_point_receptive_field(model, self.layer_id)
->>>>>>> f0db2ea28c760cbf91524d907b0c53181b4325b9
+                self.receptive_field_map, self.receptive_field_size, self.input_locations = get_each_point_receptive_field(model, self.layer_id)
 
     def get_location_from_rf(self, location):
         """Given a pixel of an image (x, y), returns a location in the map
