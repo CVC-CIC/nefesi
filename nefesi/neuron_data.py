@@ -7,7 +7,7 @@ from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron
 from .color_index import get_ivet_color_selectivity_index, get_color_selectivity_index
 from .orientation_index import get_orientation_index
-
+from .util.image import crop_center
 
 class NeuronData(object):
     """This class contains all the results related with a neuron (filter) already
@@ -40,7 +40,7 @@ class NeuronData(object):
         neuron_feature: PIL image instance.
     """
 
-    def __init__(self, max_activations, batch_size,buffered_iterations = 20):
+    def __init__(self, max_activations, batch_size, buffered_iterations = 20):
         self._max_activations = max_activations
         self._batch_size = batch_size
         self._buffer_size = self._max_activations + (self._batch_size*buffered_iterations)
@@ -145,7 +145,10 @@ class NeuronData(object):
             crop_positions = [None]*self.xy_locations.shape[0]
 
         patch = image.img_to_array(image_dataset.get_patch(self.images_id[0], crop_positions[0]))
-        size = rf_size+(patch.shape[-1],) if len(patch.shape) == 3 else rf_size
+        size = rf_size
+        # size = np.minimum(size, network_data.model.layers[0].input_shape)
+        size = size+(patch.shape[-1],) if len(patch.shape) == 3 else rf_size
+
         patches = np.zeros(shape=(self._max_activations,)+size, dtype=np.float)
 
         for i in range(self._max_activations):
@@ -157,11 +160,8 @@ class NeuronData(object):
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
-            if i==19:
-                a=3
-            if rf_size is not None and rf_size != patch.size:
-                patch = self._adjust_patch_size(patch, crop_pos, rf_size, input_locations[i])
-            patches[i] = image.img_to_array(patch)
+            patch = self._adjust_patch_size(patch, crop_pos, rf_size, input_locations[i])
+            patches[i] = image.img_to_array(crop_center(patch, size))
 
         return patches
 
@@ -174,9 +174,10 @@ class NeuronData(object):
         #First iteration of for, maded first in order to set the output array size
         patch = image_dataset.get_patch(self.images_id[i], crop_position)
 
-        if rf_size != patch.size:
-            patch = self._adjust_patch_size(patch, crop_position, rf_size, input_locations)
-        return patch
+        patch = self._adjust_patch_size(patch, crop_position, rf_size, input_locations)
+        size = patch.size[:2]
+        # size = np.minimum(size, network_data.model.layers[0].input_shape)
+        return crop_center(patch, size)
 
 
     def get_patches_mask(self, network_data, layer_data):
@@ -195,7 +196,10 @@ class NeuronData(object):
         else:
             crop_positions = [None]*self.xy_locations.shape[0]
 
-        masks = np.ones(shape = (self._max_activations,)+rf_size,dtype=np.bool)
+        size = rf_size
+        # size = np.minimum(size, network_data.model.layers[0].input_shape)
+        masks = np.ones(shape = (self._max_activations,)+size,dtype=np.bool)
+        mask = np.ones(rf_size, dtype=np.bool)
 
         for i in range(self._max_activations):
             crop_pos = crop_positions[i]
@@ -206,7 +210,9 @@ class NeuronData(object):
 
             if rf_size is not None:
                 bl, bu, br, bd = self._get_mask_borders(crop_pos, rf_size, input_locations[i])
-                masks[i, bu:rf_size[1] - bd, bl:rf_size[0] - br] = False
+                mask = True
+                mask[bu:rf_size[1] - bd, bl:rf_size[0] - br] = False
+                masks[i] = crop_center(mask, size)
 
         return masks
 
@@ -239,6 +245,9 @@ class NeuronData(object):
         return int(bl), int(bu), int(br), int(bd)
 
     def _adjust_patch_size(self, patch, crop_position, rf_size, input_location=None):
+        if rf_size is None or rf_size == patch.size:
+            return patch
+
         bl, bu, br, bd = self._get_mask_borders(crop_position, rf_size, input_location)
         im = ImageOps.expand(patch, (bl, bu, br, bd), fill=0)
 

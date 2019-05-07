@@ -357,7 +357,9 @@ def image2max_gray(img):
     return res
 
 
-def crop_image(img, crop_x, crop_y):
+def crop_center(img, crop):
+    crop_y = crop[0]
+    crop_x = crop[1]
 
     y, x, _ = img.shape
     start_x = x // 2 - (crop_x // 2)
@@ -401,7 +403,7 @@ def rotate_images(images, degrees, pos, layer_data):
             # apply the rotation function
             img = rotate(new_shape, current_degrees, reshape=False)
             # build back the origin image with the receptive field rotated
-            images_rotated[deg_pos, i, row_ini:row_fin, col_ini:col_fin] = crop_image(img, h, w)
+            images_rotated[deg_pos, i, row_ini:row_fin, col_ini:col_fin] = crop_center(img, [h, w])
 
     return images_rotated
 
