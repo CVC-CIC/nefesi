@@ -1,13 +1,12 @@
 import numpy as np
 import os
-from PIL import ImageOps
 from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
 from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron
 from .color_index import get_ivet_color_selectivity_index, get_color_selectivity_index
 from .orientation_index import get_orientation_index
-from .util.image import crop_center
+from .util.image import crop_center, expand_im
 
 class NeuronData(object):
     """This class contains all the results related with a neuron (filter) already
@@ -143,11 +142,12 @@ class NeuronData(object):
             input_locations = layer_data.input_locations[self.xy_locations[:, 0], self.xy_locations[:, 1]]
         else:
             crop_positions = [None]*self.xy_locations.shape[0]
+            input_locations = [rf_size]*self.xy_locations.shape[0]
 
-        patch = image.img_to_array(image_dataset.get_patch(self.images_id[0], crop_positions[0]))
+        patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
         size = rf_size
-        # size = np.minimum(size, network_data.model.layers[0].input_shape)
-        size = size+(patch.shape[-1],) if len(patch.shape) == 3 else rf_size
+        size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        size = size+(patch.shape[-1],) if len(patch.shape) == 3 else size
 
         patches = np.zeros(shape=(self._max_activations,)+size, dtype=np.float)
 
@@ -155,13 +155,13 @@ class NeuronData(object):
             crop_pos = crop_positions[i]
             # crop the origin image with previous location
             patch = image_dataset.get_patch(self.images_id[i], crop_pos)
-
+            cc = patch.shape
             # add a black padding to a patch that not match with the receptive
             # field size.
             # This is due that some receptive fields has padding
             # that come of the network architecture.
             patch = self._adjust_patch_size(patch, crop_pos, rf_size, input_locations[i])
-            patches[i] = image.img_to_array(crop_center(patch, size))
+            patches[i] = crop_center(patch, size)
 
         return patches
 
@@ -176,7 +176,7 @@ class NeuronData(object):
 
         patch = self._adjust_patch_size(patch, crop_position, rf_size, input_locations)
         size = patch.size[:2]
-        # size = np.minimum(size, network_data.model.layers[0].input_shape)
+        size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
         return crop_center(patch, size)
 
 
@@ -195,9 +195,11 @@ class NeuronData(object):
             input_locations = layer_data.input_locations[self.xy_locations[:, 0], self.xy_locations[:, 1]]
         else:
             crop_positions = [None]*self.xy_locations.shape[0]
+            input_locations = [rf_size]*self.xy_locations.shape[0]
 
         size = rf_size
-        # size = np.minimum(size, network_data.model.layers[0].input_shape)
+        size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+
         masks = np.ones(shape = (self._max_activations,)+size,dtype=np.bool)
         mask = np.ones(rf_size, dtype=np.bool)
 
@@ -210,7 +212,7 @@ class NeuronData(object):
 
             if rf_size is not None:
                 bl, bu, br, bd = self._get_mask_borders(crop_pos, rf_size, input_locations[i])
-                mask = True
+                mask[:, :] = True
                 mask[bu:rf_size[1] - bd, bl:rf_size[0] - br] = False
                 masks[i] = crop_center(mask, size)
 
@@ -249,7 +251,8 @@ class NeuronData(object):
             return patch
 
         bl, bu, br, bd = self._get_mask_borders(crop_position, rf_size, input_location)
-        im = ImageOps.expand(patch, (bl, bu, br, bd), fill=0)
+        im = expand_im(patch, (bl, bu, br, bd))
+        # im = ImageOps.expand(patch, (bl, bu, br, bd), fill=0)
 
         return im
 

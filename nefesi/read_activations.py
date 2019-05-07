@@ -243,8 +243,7 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, comp
     :param complex_type: True as torralba, False as vedaldi  (falta posar referencies)
     :return: An image that is activation on a neuron but in the original image size
     """
-    #input = network_data.dataset._load_image(image_name, as_numpy=True,0
-    #                                              prep_function=True)[np.newaxis, ...]
+    #input = network_data.dataset._load_image(image_name, prep_function=True)[np.newaxis, ...]
 
     complex_type = False
     if activations is None:

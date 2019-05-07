@@ -144,7 +144,6 @@ class ImageDataset():
         """
         #Have the first to generalize channel shapes (in order to don't need to recode if new color_modes will be accepted)
         img = self._load_image(image_names[0])
-        img = image.img_to_array(img)
         #Gets the output shape in order to assing a shape to images matrix
         outputShape = [len(image_names)]
         outputShape.extend(list(img.shape))
@@ -153,7 +152,6 @@ class ImageDataset():
         images[0] = img #assign de first
         for i in range(1,len(image_names)):
             img = self._load_image(image_names[i])
-            images[i] = image.img_to_array(img)
 
         if self.preprocessing_function is not None and prep_function is True:
             images = self.preprocessing_function(images, data_format='channels_last') #np.asarray(images)) #Now are array right since the beginning
@@ -173,12 +171,10 @@ class ImageDataset():
         if crop_pos is None:
             return img
 
-        im_crop = crop_img(img, crop_pos)
-        return im_crop
+        return img[crop_pos[0]:crop_pos[1], crop_pos[2]:crop_pos[3]]
 
 
-
-    def _load_image(self, img_name, as_numpy = False, prep_function=False):
+    def _load_image(self, img_name, prep_function=False):
         """Loads an image into PIL format.
 
         :param img_name: String, name of the image.
@@ -190,16 +186,10 @@ class ImageDataset():
         img = image.load_img(self.src_dataset + img_name,
                        grayscale=grayscale,
                        target_size=self.target_size)
+        img = np.asarray(img)
 
         if self.preprocessing_function is not None and prep_function:
-            img = np.array(img)
             img = self.preprocessing_function(img)
-            if as_numpy:
-                return img
-            else:
-                img = image.fromarray(img)
-        if as_numpy:
-            img = np.array(img)
         return img
 
 
@@ -293,7 +283,6 @@ class ImageDataset():
                           self.preprocessing_function)
 
 def get_correspondences_array_in_ADE20K(image_segmented):
-    image_segmented = np.array(image_segmented)
     labels_idx = np.unique(image_segmented[:, :, 2])
     indexes_array = np.zeros(np.max(labels_idx)+1, dtype=np.uint8)
     indexes_array[labels_idx] = np.arange(0,len(labels_idx))
@@ -302,7 +291,7 @@ def get_correspondences_array_in_ADE20K(image_segmented):
 def get_image_segmented(segmented_image, crop_pos):
     correspondence_list = get_correspondences_array_in_ADE20K(segmented_image)
     ri, rf, ci, cf = crop_pos
-    segmented_image = np.array(segmented_image.crop((ci, ri, cf, rf)))[:, :, 2]
+    segmented_image = segmented_image[ri:rf, ci:cf, 2]
     uniques = np.unique(segmented_image)
     for i in uniques:
         segmented_image[segmented_image == i] = correspondence_list[i]
@@ -361,10 +350,20 @@ def crop_center(img, crop):
     crop_y = crop[0]
     crop_x = crop[1]
 
-    y, x, _ = img.shape
+    y = img.shape[0]
+    x = img.shape[1]
     start_x = x // 2 - (crop_x // 2)
     start_y = y // 2 - (crop_y // 2)
+
     return img[start_y:start_y + crop_y, start_x:start_x + crop_x]
+
+def expand_im(im, margins): #margins (bl, bu, br, bd))
+    sz = list(im.shape)
+    sz[0] = sz[0] + margins[1] + margins[3]
+    sz[1] = sz[1] + margins[0] + margins[2]
+    out = np.zeros(sz, dtype=im.dtype)
+    out[margins[1]:sz[0]-margins[3], margins[0]:sz[1]-margins[2]] = im
+    return out
 
 
 def rotate_images(images, degrees, pos, layer_data):
@@ -435,10 +434,6 @@ def rotate_images_axis(images, rot_axis, layer_data, pos):
             rot_images[axis_pos, i, row_ini:row_fin, col_ini:col_fin] = rotated_receptive_field
     return rot_images
 
-def crop_img(img, crop_pos):
-    ri, rf, ci, cf = crop_pos
-    im_crop = img.crop((ci, ri, cf, rf))
-    return im_crop
 
 def rotate_rf(img, rot_axis):
     if rot_axis == 0:

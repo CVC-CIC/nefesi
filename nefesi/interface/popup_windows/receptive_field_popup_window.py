@@ -105,7 +105,7 @@ class ReceptiveFieldPopupWindow(object):
                     segmentation = Segment_images([image_path])[0][concept]
                 if self.color_list is None:
                     self.color_list = np.random.rand(1000, 3) * .7 + .3
-                img = maskrcnn_colorencode(np.asarray(img), segmentation, self.color_list)
+                img = maskrcnn_colorencode(img, segmentation, self.color_list)
                 if not self.labels_printed:
                     ri, rf, ci, cf = self.receptive_field[
                         self.neuron.xy_locations[self.actual_idx, 0], self.neuron.xy_locations[self.actual_idx, 1]]
@@ -115,7 +115,7 @@ class ReceptiveFieldPopupWindow(object):
                                           color_list=self.color_list,concept=concept)
                     self.labels_printed = True
 
-        img = self.interface.draw_rectangle_on_image(np.array(img), self.x0, self.x1, self.y0, self.y1)
+        img = self.interface.draw_rectangle_on_image(img, self.x0, self.x1, self.y0, self.y1)
         img = Image.fromarray(img.astype('uint8'))
         img = img.resize(self.actual_size, Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)

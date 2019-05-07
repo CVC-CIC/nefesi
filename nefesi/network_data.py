@@ -48,19 +48,20 @@ class NetworkData(object):
         dataset: The `nefesi.util.image.ImageDataset` instance.
     """
 
-    def __init__(self, model,layer_data = '.*', save_path = None, dataset = None, save_changes = False,
+    def __init__(self, model=None, layer_data = '.*', save_path = None, dataset = None, save_changes = False,
                  default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
                  default_thr_class_idx = .1, default_file_name = None, indexes_accepted = ALL_INDEX_NAMES):
         self.model = model
-        self.layers_data = layer_data
+        self.default_file_name = default_file_name
         self.save_path = save_path
+
+        self.layers_data = layer_data
         self.dataset = dataset
         self.save_changes = save_changes
         self.default_labels_dict = default_labels_dict
         self.default_degrees_orientation_idx = default_degrees_orientation_idx
         self.default_thr_pc = default_thr_pc
         #self.default_thr_class_idx = default_thr_class_idx
-        self.default_file_name = default_file_name
         self.indexs_accepted = indexes_accepted
         self.MIN_PROCESS_TIME_TO_OVERWRITE = MIN_PROCESS_TIME_TO_OVERWRITE
 
@@ -923,7 +924,8 @@ class NetworkData(object):
             pickle.dump(self, f)
         self.model = model
 
-    def load_from_disk(self, file_name, model_file=None):
+    @staticmethod
+    def load_from_disk(file_name, model_file=None):
         """Load a file with all results.
 
         :param file_name: String, path and file name.
@@ -934,13 +936,8 @@ class NetworkData(object):
         """
         save_path = os.path.dirname(file_name)
         file_name = os.path.basename(file_name)
-
-        if file_name is None or file_name is '':
-            file_name = self.default_file_name
         if not file_name.endswith('.obj'):
             file_name += '.obj'
-        if save_path is not None and save_path is not '':
-            self.save_path = save_path
 
         with open(os.path.join(save_path, file_name), 'rb') as f:
             my_net = pickle.load(f)
@@ -952,6 +949,12 @@ class NetworkData(object):
             my_net.model = load_model(model_file)
         if my_net.model is None:
             warnings.warn("The model was *not* loaded. Load it manually.")
+
+        if file_name is None or file_name is '':
+            file_name = my_net.default_file_name
+        my_net.default_file_name = os.path.splitext(file_name)[0]
+        if save_path is not None and save_path is not '':
+            my_net.save_path = save_path
 
         return my_net
     #--------------------------------HELP FUNCTIONS-------------------------------------------------

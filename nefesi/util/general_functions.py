@@ -308,7 +308,7 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
 
 
     if not show_activation:
-        img = network_data.dataset._load_image(image_name, as_numpy=True).astype(np.float)
+        img = network_data.dataset._load_image(image_name).astype(np.float)
         img[norm_activation_upsampled < thr] *= 0.25
     else:
         img = norm_activation_upsampled * 255

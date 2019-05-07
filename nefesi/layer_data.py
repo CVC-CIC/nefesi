@@ -763,16 +763,16 @@ def get_each_point_receptive_field(model, layer_name):
     row = int(w // 2)
     col = int(h // 2)
     row_ini, row_fin, col_ini, col_fin = image_points[row, col]
-    height = row_fin - row_ini + 1
-    width = col_fin - col_ini + 1
+    height = row_fin - row_ini
+    width = col_fin - col_ini
     receptive_field_size = (width, height)
 
-    input_locations[..., 0] = (image_points[..., 3] + image_points[..., 2]) / 2
-    input_locations[..., 1] = (image_points[..., 1] + image_points[..., 0]) / 2
+    input_locations[..., 0] = (image_points[..., 2] + image_points[..., 3]) / 2
+    input_locations[..., 1] = (image_points[..., 0] + image_points[..., 1]) / 2
 
     image_points[:, :, [0, 2]] = np.maximum(image_points[:, :, [0, 2]], 0)
-    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_w)
-    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_h)
+    image_points[:, :, 1] = np.minimum(image_points[:, :, 1], current_size_h)
+    image_points[:, :, 3] = np.minimum(image_points[:, :, 3], current_size_w)
 
     return image_points, receptive_field_size, input_locations
 
