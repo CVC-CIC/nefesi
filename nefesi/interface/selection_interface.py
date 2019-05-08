@@ -63,7 +63,7 @@ class SelectionInterface():
 
 
     def _on_click_visualize_analysis_button(self):
-        network_data_file = self.ask_for_file(title="Select Nefesi object (.obj)", initialdir = '/home/eric/Nefesi/Data', initialfile='')
+        network_data_file = self.ask_for_file(title="Select Nefesi object (.obj)", initialdir='/data/114-1/users/nefesi/Data', initialfile='')
         if network_data_file != '':
             name = os.path.splitext(os.path.basename(network_data_file))[0]
             model_file = self.ask_for_file(title="Select Model (.h5)", type="h5", initialfile=name+'.h5')
