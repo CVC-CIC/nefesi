@@ -281,7 +281,7 @@ def get_n_circles_TSNE(similarity_matrix, idx_values, ids, color_map='jet', diam
     return positions
 
 
-def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = False, show_activation = False,
+def get_image_masked(network_data, image_name,layer_name,neuron_idx, show_activation = False,
                      thr_mth = 1, thr = 0.005):
     """
     Returns the image correspondant to image_name with a mask of the place that most response has for the neuron
@@ -314,11 +314,7 @@ def get_image_masked(network_data, image_name,layer_name,neuron_idx, as_numpy = 
         img = norm_activation_upsampled * 255
         img = np.dstack((img, img, img))
 
-    if as_numpy:
-        return img
-    else:
-        return PIL.Image.fromarray(img.astype('uint8'), 'RGB')
-
+    return img
 
 
 def collisionDetect(x1, x2, y1, y2, margin):

@@ -13,7 +13,7 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False
     if layer_data.receptive_field_map is None:
         layer_data.mapping_rf(network_data.model)
 
-    for i, neuron in enumerate(layer_data.neurons_data):
+    for i, neuron in enumerate(layer_data.neurons_data[:100]):
         if neuron.norm_activations is not None:
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron

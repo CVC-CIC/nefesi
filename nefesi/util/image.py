@@ -186,7 +186,7 @@ class ImageDataset():
         img = image.load_img(self.src_dataset + img_name,
                        grayscale=grayscale,
                        target_size=self.target_size)
-        img = np.asarray(img)
+        img = np.array(img)
 
         if self.preprocessing_function is not None and prep_function:
             img = self.preprocessing_function(img)

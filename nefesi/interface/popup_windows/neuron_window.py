@@ -99,7 +99,7 @@ class NeuronWindow(object):
         current_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        current_image = current_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
+        current_image = Image.fromarray(current_image).resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(current_image)
 
         self.panel_image = ttk.Label(master=image_frame, image=img)
@@ -156,7 +156,7 @@ class NeuronWindow(object):
         new_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
-        new_image = new_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)),Image.ANTIALIAS)
+        new_image = Image.fromarray(new_image).resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)),Image.ANTIALIAS)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)
         panel.image = img
@@ -168,10 +168,10 @@ class NeuronWindow(object):
         y0 = max(y0 - 1, 0)
         y1 = min(y1 + 1, np_image.shape[0]-1)
         for i in range(margin):
-            np_image[y0:y1+1,max(x0-i,0),:],\
-            np_image[y0:y1+1,min(x1+i, np_image.shape[1]-1),:],\
-            np_image[max(y0-i,0),x0:x1+1,:],\
-            np_image[min(y1+i, np_image.shape[0]-1),x0:x1+1,:] = red,red,red,red
+            np_image[y0:y1+1,max(x0-i,0),:]                    = red
+            np_image[y0:y1+1,min(x1+i, np_image.shape[1]-1),:] = red
+            np_image[max(y0-i,0),x0:x1+1,:]                    = red
+            np_image[min(y1+i, np_image.shape[0]-1),x0:x1+1,:] = red
         if draw_lines:
             rr, cc, _ = line_aa(y0, x1, 0, np_image.shape[1]-2)
             np_image[rr, cc,:] = red

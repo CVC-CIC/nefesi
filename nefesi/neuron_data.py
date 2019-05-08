@@ -146,7 +146,7 @@ class NeuronData(object):
 
         patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
         size = rf_size
-        size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        # size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
         size = size+(patch.shape[-1],) if len(patch.shape) == 3 else size
 
         patches = np.zeros(shape=(self._max_activations,)+size, dtype=np.float)
@@ -176,7 +176,7 @@ class NeuronData(object):
 
         patch = self._adjust_patch_size(patch, crop_position, rf_size, input_locations)
         size = patch.size[:2]
-        size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        # size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
         return crop_center(patch, size)
 
 
@@ -198,7 +198,7 @@ class NeuronData(object):
             input_locations = [rf_size]*self.xy_locations.shape[0]
 
         size = rf_size
-        size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        # size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
 
         masks = np.ones(shape = (self._max_activations,)+size,dtype=np.bool)
         mask = np.ones(rf_size, dtype=np.bool)
