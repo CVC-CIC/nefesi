@@ -17,7 +17,9 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False
         if neuron.norm_activations is not None:
             norm_activations = neuron.norm_activations
             # get the receptive fields from a neuron
-            patches = neuron.get_patches(network_data, layer_data)
+            max_rf_size = (float('Inf'), float('Inf'))
+            max_rf_size = network_data.model.layers[0].input_shape[1:3]
+            patches = neuron.get_patches(network_data, layer_data, max_rf_size)
             masks = neuron.get_patches_mask(network_data, layer_data)
             channels = 1 if len(patches.shape) < 4 else patches.shape[-1]
             if mode == 1:

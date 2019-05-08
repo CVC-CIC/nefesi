@@ -126,7 +126,7 @@ class NeuronData(object):
     def neuron_feature(self, neuron_feature):
         self._neuron_feature = neuron_feature
 
-    def get_patches(self, network_data, layer_data):
+    def get_patches(self, network_data, layer_data, max_rf_size=None):
         """Returns the patches (receptive fields) from images in
         `images_id` for this neuron.
 
@@ -144,9 +144,11 @@ class NeuronData(object):
             crop_positions = [None]*self.xy_locations.shape[0]
             input_locations = [rf_size]*self.xy_locations.shape[0]
 
+        if max_rf_size is None:
+            max_rf_size = layer_data.neurons_data[0].neuron_feature.size
         patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
         size = rf_size
-        # size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        size = tuple([min(a,b) for a,b in zip(size, max_rf_size)])
         size = size+(patch.shape[-1],) if len(patch.shape) == 3 else size
 
         patches = np.zeros(shape=(self._max_activations,)+size, dtype=np.float)
@@ -165,7 +167,7 @@ class NeuronData(object):
 
         return patches
 
-    def get_patch_by_idx(self, network_data, layer_data, i):
+    def get_patch_by_idx(self, network_data, layer_data, i, max_rf_size=None):
         image_dataset = network_data.dataset
         receptive_field = layer_data.receptive_field_map
         rf_size = layer_data.receptive_field_size
@@ -174,13 +176,15 @@ class NeuronData(object):
         #First iteration of for, maded first in order to set the output array size
         patch = image_dataset.get_patch(self.images_id[i], crop_position)
 
+        if max_rf_size is None:
+            max_rf_size = layer_data.neurons_data[0].neuron_feature.size
         patch = self._adjust_patch_size(patch, crop_position, rf_size, input_locations)
-        size = patch.size[:2]
-        # size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        size = patch.shape[:2]
+        size = tuple([min(a,b) for a,b in zip(size, max_rf_size )])
         return crop_center(patch, size)
 
 
-    def get_patches_mask(self, network_data, layer_data):
+    def get_patches_mask(self, network_data, layer_data, max_rf_size=None):
         """Returns the patches masks (receptive fields) from images in
         `images_id` for this neuron.
 
@@ -198,7 +202,9 @@ class NeuronData(object):
             input_locations = [rf_size]*self.xy_locations.shape[0]
 
         size = rf_size
-        # size = tuple([min(a,b) for a,b in zip(size, network_data.model.layers[0].input_shape[1:3])])
+        if max_rf_size is None:
+            max_rf_size = layer_data.neurons_data[0].neuron_feature.size
+        size = tuple([min(a,b) for a, b in zip(size, max_rf_size)])
 
         masks = np.ones(shape = (self._max_activations,)+size,dtype=np.bool)
         mask = np.ones(rf_size, dtype=np.bool)

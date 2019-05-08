@@ -54,7 +54,10 @@ class GPU:
 
 def assignGPU():
     if  'CUDA_VISIBLE_DEVICES' in os.environ.keys():
-        return int(os.environ['CUDA_VISIBLE_DEVICES'][0])
+        if len(os.environ['CUDA_VISIBLE_DEVICES'])>0:
+            return int(os.environ['CUDA_VISIBLE_DEVICES'][0])
+        else:
+            return False
 
     gpus = getAvailable(order='load')
     if len(gpus)==0:
