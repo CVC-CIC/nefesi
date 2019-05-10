@@ -895,8 +895,10 @@ class NetworkData(object):
             as a HDF5 file.
         """
 
-        save_path = os.path.dirname(file_name)
-        file_name = os.path.basename(file_name )
+        save_path = None
+        if file_name is not None and file_name is not '':
+            save_path = os.path.dirname(file_name)
+            file_name = os.path.basename(file_name )
 
         if file_name is None or file_name is '':
             file_name = self.default_file_name
@@ -941,6 +943,7 @@ class NetworkData(object):
 
         with open(os.path.join(save_path, file_name), 'rb') as f:
             my_net = pickle.load(f)
+
         """
         TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
         obj's with news implementations of network_data that can have more attributes
@@ -955,6 +958,22 @@ class NetworkData(object):
         my_net.default_file_name = os.path.splitext(file_name)[0]
         if save_path is not None and save_path is not '':
             my_net.save_path = save_path
+
+        if not os.path.isdir(my_net.dataset.src_dataset):
+            folder = input("Enter dataset folder:")
+            while not os.path.isdir(folder):
+                folder = input("Not exists. Enter dataset folder:")
+            my_net.dataset.src_dataset = folder
+
+            base_folder = os.path.split(os.path.split(my_net.dataset.src_dataset)[0])
+            if os.path.isdir(os.path.join(base_folder[0], base_folder[1]+"Segmented")):
+                my_net.dataset.src_segmentation_dataset = os.path.join(base_folder[0], base_folder[1] + "Segmented")
+            else:
+                folder = input("Enter segmented dataset folder:")
+                while not os.path.isdir(folder):
+                    folder = input("Not exists. Enter segmented dataset folder:")
+                my_net.dataset.src_segmentation_dataset = folder
+            my_net.save_to_disk(save_model=False)
 
         return my_net
     #--------------------------------HELP FUNCTIONS-------------------------------------------------

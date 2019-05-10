@@ -127,7 +127,7 @@ def getGPUs():
     return GPUs  # (deviceIds, gpuUtil, memUtil)
 
 
-def getAvailable(order = 'first', limit=1, maxLoad=0.5, maxMemory=0.5, includeNan=False, excludeID=[], excludeUUID=[]):
+def getAvailable(order = 'memory', limit=1, maxLoad=0.5, maxMemory=0.5, includeNan=False, excludeID=[], excludeUUID=[]):
     # order = first | last | random | load | memory
     #    first --> select the GPU with the lowest ID (DEFAULT)
     #    last --> select the GPU with the highest ID
@@ -156,6 +156,7 @@ def getAvailable(order = 'first', limit=1, maxLoad=0.5, maxMemory=0.5, includeNa
         GPUs.sort(key=lambda x: np.Inf if np.isnan(x.load) else x.load, reverse=False)
     elif (order == 'memory'):
         GPUs.sort(key=lambda x: np.Inf if np.isnan(x.memoryUtil) else x.memoryUtil, reverse=False)
+        GPUs.sort(key=lambda x: np.Inf if np.isnan(x.memoryUtil) else x.memoryFree, reverse=False)
 
     # Extract the number of desired GPUs, but limited to the total number of available GPUs
     GPUs = GPUs[0:min(limit, len(GPUs))]
@@ -172,9 +173,9 @@ def getAvailable(order = 'first', limit=1, maxLoad=0.5, maxMemory=0.5, includeNa
 #        if (GPUs[i].load < maxLoad or (includeNan and np.isnan(GPUs[i].load))) and (GPUs[i].memoryUtil < maxMemory  or (includeNan and np.isnan(GPUs[i].memoryUtil))):
 #            GPUavailability[i] = 1
 
-def getAvailability(GPUs, maxLoad=0.5, maxMemory=0.5, includeNan=False, excludeID=[], excludeUUID=[]):
+def getAvailability(GPUs, maxLoad=0.5, maxMemory=0.9, includeNan=False, excludeID=[], excludeUUID=[]):
     # Determine, which GPUs are available
-    GPUavailability = [1 if (gpu.load < maxLoad or (includeNan and np.isnan(gpu.load))) and (gpu.memoryUtil < maxMemory  or (includeNan and np.isnan(gpu.memoryUtil))) and ((gpu.id not in excludeID) and (gpu.uuid not in excludeUUID)) else 0 for gpu in GPUs]
+    GPUavailability = [1 if (gpu.load < maxLoad or (includeNan and np.isnan(gpu.load))) and (gpu.memoryFree > maxMemory*gpu.memoryTotal  or (includeNan and np.isnan(gpu.memoryUtil))) and ((gpu.id not in excludeID) and (gpu.uuid not in excludeUUID)) else 0 for gpu in GPUs]
     return GPUavailability
 
 def getFirstAvailable(order = 'first', maxLoad=0.5, maxMemory=0.5, attempts=1, interval=900, verbose=False, includeNan=False, excludeID=[], excludeUUID=[]):

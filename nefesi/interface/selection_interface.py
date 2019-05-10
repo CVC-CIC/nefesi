@@ -63,15 +63,29 @@ class SelectionInterface():
 
 
     def _on_click_visualize_analysis_button(self):
-        network_data_file = self.ask_for_file(title="Select Nefesi object (.obj)", initialdir='/data/114-1/users/nefesi/Data', initialfile='')
+        import pickle
+        cfg_file = os.path.join(os.path.dirname(sys.argv[0]),"init.cfg")
+        if os.path.isfile(cfg_file):
+            # Getting back the objects:
+            with open(cfg_file, 'rb') as f:
+                init_folder, init_network = pickle.load(f)
+        else:
+            init_folder, init_network = ('/data/114-1/users/nefesi/Data', '')
+
+        network_data_file = self.ask_for_file(title="Select Nefesi object (.obj)",
+                                              initialdir=init_folder, initialfile=init_network )
         if network_data_file != '':
             name = os.path.splitext(os.path.basename(network_data_file))[0]
             model_file = self.ask_for_file(title="Select Model (.h5)", type="h5", initialfile=name+'.h5')
             model_file = model_file if model_file != '' else None
             network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
-            # last_dir_pos = network_data_file.rfind(os.path.sep)
-            # network_data.save_path = network_data_file[:last_dir_pos]
-            # network_data.default_file_name = network_data_file[last_dir_pos+1:network_data_file.rfind('.')]
+            init_folder = os.path.dirname(network_data_file)
+            init_network = os.path.basename(network_data_file)
+
+            # Saving the objects:
+            with open(cfg_file, 'wb') as f:
+                pickle.dump([init_folder, init_network ], f)
+
             self.window.destroy()
             Interface(network_data=network_data, window_style = STYLE)
 
