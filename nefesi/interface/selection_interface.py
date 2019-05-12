@@ -1,6 +1,6 @@
 import os
 from os.path import relpath
-
+import dill as pickle
 from ..interface.calc_indexes_interface import CalcIndexesInterface
 
 STATES = ['init']
@@ -18,6 +18,7 @@ except ImportError:
 from ..network_data import NetworkData
 from ..interface.interface import Interface
 from ..interface.make_analysis_interface import MakeAnalysisInterface
+
 STYLE = 'clam'
 class SelectionInterface():
     def __init__(self):
@@ -63,7 +64,6 @@ class SelectionInterface():
 
 
     def _on_click_visualize_analysis_button(self):
-        import pickle
         cfg_file = os.path.join(os.path.dirname(sys.argv[0]),"init.cfg")
         if os.path.isfile(cfg_file):
             # Getting back the objects:
