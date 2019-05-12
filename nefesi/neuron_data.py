@@ -396,6 +396,8 @@ class NeuronData(object):
         """
         key = 'concept'+concept+str(th)
         if key not in self.selectivity_idx:
+            if isinstance(layer_data,str):
+                layer_data = network_data.get_layer_by_name(layer_data)
             self.selectivity_idx[key] = get_concept_selectivity_of_neuron(network_data=network_data,
                                                                           layer_name=layer_data.layer_id,
                                                                           neuron_idx=neuron_idx,

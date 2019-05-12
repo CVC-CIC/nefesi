@@ -484,7 +484,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model='/home/guillem/nefesi/Data/XceptionAdds/xception.h5', return_decreasing = False):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model, return_decreasing = False):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -536,9 +536,8 @@ class NetworkData(object):
             for i in range(intermediate_output.shape[-1]):
                 intermediate_output2 = intermediate_output[..., i]*1 #To copy
                 intermediate_output[..., i] = 0
-                predictionsf = DL_model.predict(intermediate_output)
+                ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
                 intermediate_output[..., i] = intermediate_output2
-                ablated_neurons_predictions = predictionsf[..., neuron]
                 #get the activation on the same point
                 max_activations = ablated_neurons_predictions[range(0,100),xy_locations[:,0], xy_locations[:,1]]
                 relevance_idx.append(np.sum(abs(original_activations - max_activations))/np.sum(original_activations))
@@ -943,7 +942,6 @@ class NetworkData(object):
 
         with open(os.path.join(save_path, file_name), 'rb') as f:
             my_net = pickle.load(f)
-
         """
         TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
         obj's with news implementations of network_data that can have more attributes

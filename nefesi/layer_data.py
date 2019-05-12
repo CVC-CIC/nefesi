@@ -204,7 +204,7 @@ class LayerData(object):
             index['color'] = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
                                                               neuron_idx=neuron_idx, th=thr_pc,
                                                           activations_masks=activations_masks)
-            index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
+            #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
 
         if 'class' in indexes:
             index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
@@ -239,7 +239,6 @@ class LayerData(object):
         :return:
         """
         assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
-        model = network_data.model
         import time
         start_time = time.time()
         dataset = network_data.dataset
@@ -250,14 +249,14 @@ class LayerData(object):
 
         if 'orientation' in indexes:
             orientation = np.zeros(int(math.ceil(360/orientation_degrees)), dtype=np.float)
-            orientation[:-1] = neuron.orientation_selectivity_idx(model, self, dataset,
+            orientation[:-1] = neuron.orientation_selectivity_idx(network_data.model, self, dataset,
                                                              degrees_to_rotate=orientation_degrees)
             orientation[-1] = np.mean(orientation[:-1])
             index['orientation'] = orientation
 
         if 'symmetry' in indexes:
             symmetry = np.zeros(len(SYMMETRY_AXES)+1, dtype=np.float)
-            symmetry[:-1] = neuron.symmetry_selectivity_idx(model, self, dataset)
+            symmetry[:-1] = neuron.symmetry_selectivity_idx(network_data.model, self, dataset)
             symmetry[-1] = np.mean(symmetry[:-1])
             index['symmetry'] = symmetry
         from nefesi.color_index import get_color_selectivity_index
@@ -270,8 +269,8 @@ class LayerData(object):
             #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
 
         if 'class' in indexes:
-            get_class_selectivity_idx(neuron, network_data.default_labels_dict, thr_pc, norm_act=norm_act)
-            index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
+
+            index['class'] = get_class_selectivity_idx(neuron, network_data.default_labels_dict, thr_pc, norm_act=norm_act)
 
         if 'object' in indexes:
             index['object'] = get_concept_selectivity_of_neuron(network_data=network_data,

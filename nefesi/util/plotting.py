@@ -766,12 +766,13 @@ def plot_pc_of_class(network_data, layer_name, entity_name, master = None, entit
     image_axes = np.zeros(len(pcs_of_layer), np.object)
     for k, j in enumerate(pcs_of_layer):
         if len(pc_dict[layer_name][j])>1:
-            x = network_data.get_layer_by_name(layer_name).get_similarity_idx(model = network_data.model,
+            if network_data.get_layer_by_name(layer_name).similarity_index is not None:
+                x = network_data.get_layer_by_name(layer_name).get_similarity_idx(model = network_data.model,
                                                                         neurons_idx=pc_dict[layer_name][j]['idx'],
                                                                               dataset=network_data.dataset)
-            x_result = TSNE(n_components=1, metric='euclidean',
-                            random_state=0).fit_transform(x)
-            pc_dict[layer_name][j] = pc_dict[layer_name][j][np.argsort(x_result[::-1,0])]
+                x_result = TSNE(n_components=1, metric='euclidean',
+                                random_state=0).fit_transform(x)
+                pc_dict[layer_name][j] = pc_dict[layer_name][j][np.argsort(x_result.reshape(-1))]
 
         neurons_num=len(pc_dict[layer_name][j])
 

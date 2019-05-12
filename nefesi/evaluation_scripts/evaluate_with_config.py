@@ -13,7 +13,6 @@ import dill as pickle
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
 BATCH_SIZE = 100
-
 class EvaluationWithConfig:
 	def __init__(self, network_data, model_file, evaluate_index=False, verbose=True):
 		self.network_data = network_data

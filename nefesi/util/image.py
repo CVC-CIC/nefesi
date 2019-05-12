@@ -148,10 +148,11 @@ class ImageDataset():
         outputShape = [len(image_names)]
         outputShape.extend(list(img.shape))
         #Declare the numpy where all images will be saved
-        images = np.ndarray(shape=tuple(outputShape),dtype=img.dtype)
+        images = np.zeros(shape=tuple(outputShape),dtype=img.dtype)
         images[0] = img #assign de first
         for i in range(1,len(image_names)):
             img = self._load_image(image_names[i])
+            images[i] = image.img_to_array(img)
 
         if self.preprocessing_function is not None and prep_function is True:
             images = self.preprocessing_function(images, data_format='channels_last') #np.asarray(images)) #Now are array right since the beginning
