@@ -256,7 +256,7 @@ class NeuronWindow(object):
         for i, (label, idx) in enumerate(indexes.items()):
             if label == 'color':
                 text = self.get_text_for_composed_index(label,idx)
-                text += '[Ivet Color idx: '+ str(round(indexes['ivet_color'],ndigits=3))+']\n'
+                #text += '[Ivet Color idx: '+ str(round(indexes['ivet_color'],ndigits=3))+']\n'
             elif label in ['class', 'object', 'part']:
                 text = self.get_text_for_composed_index(label,idx)
             elif label == 'orientation':

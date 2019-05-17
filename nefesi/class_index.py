@@ -9,7 +9,9 @@ COUNT_POS = 2
 REL_FREQ_POS = 3
 CONCEPT_TRANSLATION_BASE_DIR = '../nefesi/util/segmentation/meta_file/'
 from PIL import Image
-
+MAX_IDS = 336
+NUM_THREADS = 10
+from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
 """
 def get_concept_selectivity_idx(neuron_data, layer_data, network_data,index_by_level=5,
                                 normalize_by_activations = False):
@@ -79,24 +81,16 @@ def concept_selectivity_of_image(activations_mask, segmented_image, type='mean')
     if not (type == 'activation' or type == 'percent'):
         activations_mask = activations_mask.reshape(-1)
     ids, correspondency = np.unique(segmented_image, return_inverse=True)
-    histogram = np.zeros(shape=len(ids), dtype=np.float)
-    if type == 'max':
-        for i in range(len(ids)):
-            histogram[i] = np.max(activations_mask[correspondency == i])
+    if type == 'mean':
+        histogram = np.array([np.mean(activations_mask[correspondency == i]) for i in range(len(ids))])
     elif type == 'sum':
-        for i in range(len(ids)):
-            histogram[i] = np.sum(activations_mask[correspondency == i])
-    elif type == 'mean':
-        for i in range(len(ids)):
-            histogram[i] = np.mean(activations_mask[correspondency == i])
+        histogram = np.array([np.sum(activations_mask[correspondency == i]) for i in range(len(ids))])
+    elif type == 'max':
+        histogram = np.array([np.max(activations_mask[correspondency == i]) for i in range(len(ids))])
     elif type == 'percent':
-        for i in range(len(ids)):
-            histogram[i] = np.sum(correspondency==i) / segmented_image.size
+        histogram = np.array([np.sum(correspondency==i) / segmented_image.size for i in range(len(ids))])
     elif type == 'activation':
-        for i in range(len(ids)):
-            histogram[i] = activations_mask
-    else:
-        raise ValueError('Valid types: max, sum and mean. Type '+str(type)+' is not valid')
+        histogram = np.array([activations_mask for i in range(len(ids))])
     #normalized_hist = histogram/np.sum(histogram)
     return ids, histogram
 
@@ -136,39 +130,47 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     Definition as dictionary and not as numpy for don't have constants with sizes that can be mutables on time or between
     segmentators. Less efficient but more flexible (And the execution time of this for is short)
     """
-    general_hist = {}
+    if concept == 'part':
+        hierarchy_dict = get_concept_labels(concept='object_part')
+        keys = list(hierarchy_dict.keys())
+        keys = {key: index for index, key in enumerate(keys)}
+    else:
+        hierarchy_dict, keys = None, None
+
+
+    general_hist = np.zeros(MAX_IDS, dtype=np.float)#{}
+
     norm_activations = neuron.norm_activations
-    for i, segment in enumerate(segmentation):
-        object_segment = segment['object']
-        if concept == 'part':
-            part_segment = segment['part']
-        #Crop for only use the receptive field
-        ri, rf, ci, cf = receptive_field[neuron.xy_locations[i, 0], neuron.xy_locations[i, 1]]
-        ri, rf, ci, cf = abs(ri), abs(rf), abs(ci), abs(cf)
-        #Resize segmentation if necessary
-        if network_data.dataset.target_size != object_segment.shape:
-            object_segment = np.array(Image.fromarray(object_segment).resize(network_data.dataset.target_size, Image.NEAREST))
-            if concept == 'part':
-                #Resize all part
-                part_segment = np.array(list((map(lambda part: np.array(Image.fromarray(part).
-                                    resize(network_data.dataset.target_size, Image.NEAREST)),list(part_segment)))))
 
-        cropped_segmentation = object_segment[ri:rf, ci:cf]
-        if concept == 'part':
-            cropped_segmentation = create_parts_from_object(cropped_segmentation, part_segment[:, ri:rf, ci:cf])
-        activation = norm_activations[i] if type=='activation' else activations_masks[i][ri:rf, ci:cf]
-        #Make individual hist
-        ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,
-                                                          segmented_image=cropped_segmentation,
-                                                          type=type)
+    threads_to_use = NUM_THREADS if len(segmentation) % NUM_THREADS == 0 else \
+    [i for i in range(1, NUM_THREADS) if len(segmentation) % i == 0][-1]
+    elements_per_thread = len(segmentation) // threads_to_use
+    with ThreadPool(processes=None) as pool:  # use all cpu cores
         if not type == 'activation':
-            personal_hist *= norm_activations[i]
-
-        for id, value in zip(ids, personal_hist):
-            if id in general_hist:
-                general_hist[id] += value
-            else:
-                general_hist[id] = value
+            async_results = [pool.apply_async(get_general_hist, (segmentation[i:i + elements_per_thread],
+                                                                 receptive_field,
+                                                                 neuron.xy_locations[i:i + elements_per_thread],
+                                                                 activations_masks[i:i + elements_per_thread],
+                                                                 norm_activations[i:i + elements_per_thread],
+                                                                 type, concept,
+                                                                 network_data.dataset.target_size,
+                                                                 hierarchy_dict, keys))
+                             for i in range(0, len(segmentation), elements_per_thread)]
+        else:
+            async_results = [pool.apply_async(get_general_hist_of_activation, (segmentation[i:i + elements_per_thread],
+                                                                 receptive_field,
+                                                                 neuron.xy_locations[i:i + elements_per_thread],
+                                                                 activations_masks[i:i + elements_per_thread],
+                                                                 norm_activations[i:i + elements_per_thread],
+                                                                 concept,
+                                                                 network_data.dataset.target_size,
+                                                                 hierarchy_dict, keys))
+                             for i in range(0, len(segmentation), elements_per_thread)]
+        general_hist = np.sum([async_result.get() for async_result in async_results], axis=0)
+        pool.close()  # if don't close pickle not allows to save :( 'with' seems have nothing...-
+        pool.terminate()
+        pool.join()
+    general_hist = {key: value for key, value in enumerate(general_hist) if not np.isclose(value, 0.)}
     #Dict to Structured Numpy
     general_hist = np.array(list(general_hist.items()), dtype = [('label', np.int), ('value',np.float)])
     #Ordering
@@ -185,20 +187,92 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
         general_hist = translate_concept_hist(general_hist, concept)
         return general_hist
 
-def create_parts_from_object(object_segmentation, part_from_object):
+
+def get_general_hist(segmentation, receptive_field, xy_locations, activations_masks, norm_activations, type, concept, target_size,
+                     hierarchy_dict, keys):
+
+    general_hist = np.zeros(MAX_IDS, dtype=np.float)  # {}
+    norm_activations = norm_activations
+    for i, segment in enumerate(segmentation):
+        object_segment = segment['object']
+        if concept == 'part':
+            part_segment = segment['part']
+        # Crop for only use the receptive field
+        ri, rf, ci, cf = np.abs(receptive_field[xy_locations[i, 0], xy_locations[i, 1]])
+
+        # Resize segmentation if necessary
+        if target_size != object_segment.shape:
+            object_segment = np.array(
+                Image.fromarray(object_segment).resize(target_size, Image.NEAREST))
+            if concept == 'part':
+                # Resize all part
+                part_segment = np.array(list((map(lambda part: np.array(Image.fromarray(part).
+                                                                        resize(target_size,
+                                                                               Image.NEAREST)), list(part_segment)))))
+
+        cropped_segmentation = object_segment[ri:rf, ci:cf]
+        if concept == 'part':
+            cropped_segmentation = create_parts_from_object(cropped_segmentation, part_segment[:, ri:rf, ci:cf],
+                                                            hierarchy_dict=hierarchy_dict, keys=keys)
+        activation = activations_masks[i][ri:rf, ci:cf]
+        # Make individual hist
+        ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,
+                                                          segmented_image=cropped_segmentation,
+                                                          type=type)
+        personal_hist *= norm_activations[i]
+
+        general_hist[ids] += personal_hist
+    return general_hist
+
+
+def get_general_hist_of_activation(segmentation, receptive_field, xy_locations, activations_masks, norm_activations, concept,
+                     target_size, hierarchy_dict, keys, type = 'activation'):
+    general_hist = np.zeros(MAX_IDS, dtype=np.float)  # {}
+    norm_activations = norm_activations
+    for i, segment in enumerate(segmentation):
+        object_segment = segment['object']
+        if concept == 'part':
+            part_segment = segment['part']
+        # Crop for only use the receptive field
+        ri, rf, ci, cf = np.abs(receptive_field[xy_locations[i, 0], xy_locations[i, 1]])
+
+        # Resize segmentation if necessary
+        if target_size != object_segment.shape:
+            object_segment = np.array(
+                Image.fromarray(object_segment).resize(target_size, Image.NEAREST))
+            if concept == 'part':
+                # Resize all part
+                part_segment = np.array(list((map(lambda part: np.array(Image.fromarray(part).
+                                                                        resize(target_size,
+                                                                               Image.NEAREST)), list(part_segment)))))
+
+        cropped_segmentation = object_segment[ri:rf, ci:cf]
+        if concept == 'part':
+            cropped_segmentation = create_parts_from_object(cropped_segmentation, part_segment[:, ri:rf, ci:cf],
+                                                            hierarchy_dict=hierarchy_dict, keys=keys)
+        activation = norm_activations[i]
+        # Make individual hist
+        ids, personal_hist = concept_selectivity_of_image(activations_mask=activation,
+                                                          segmented_image=cropped_segmentation,
+                                                          type=type)
+
+        general_hist[ids] += personal_hist
+    return general_hist
+
+def create_parts_from_object(object_segmentation, part_from_object, hierarchy_dict, keys):
     origin_shape = object_segmentation.shape
-    hierarchy_dict = get_concept_labels(concept='object_part')
     object_segmentation = object_segmentation.reshape(-1)
     part_from_object = list(part_from_object.reshape((77, -1)))
     objects = np.unique(object_segmentation)
     parts_segmentation = np.zeros(object_segmentation.shape, dtype=np.int16)
-    keys = list(hierarchy_dict.keys())
     for object in objects:
         if object in hierarchy_dict:
-            part = part_from_object[keys.index(object)]
+            part = part_from_object[keys[object]]
             parts_dict = hierarchy_dict[object]
-            poses = np.where(np.array(object_segmentation) == object)[0]
-            parts_segmentation[poses] = list(map(lambda pos: parts_dict[part[pos]],poses))
+            object_mask = object_segmentation == object
+            for i, part_id in enumerate(parts_dict[1:]): #first is always 0
+                mask = np.logical_and(object_mask, part == (i+1))
+                parts_segmentation[mask] = part_id
 
     return parts_segmentation.reshape(origin_shape)
 

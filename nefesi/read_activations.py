@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 import keras.backend as K
-from multiprocessing.pool import Pool as ThreadPool  # ThreadPool don't have documentation :( But uses threads
+from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
 import PIL
 from scipy.interpolate import RectBivariateSpline
 
