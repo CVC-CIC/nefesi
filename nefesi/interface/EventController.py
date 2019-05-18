@@ -10,6 +10,7 @@ from .popup_windows.neuron_window import IMAGE_BIG_DEFAULT_SIZE, IMAGE_SMALL_DEF
 from ..util.general_functions import clean_widget, mosaic_n_images, destroy_canvas_subplot_if_exist, \
     get_listbox_selection
 from .popup_windows.receptive_field_popup_window import ReceptiveFieldPopupWindow
+
 import numpy as np
 from PIL import ImageTk, Image
 
@@ -191,6 +192,18 @@ class EventController():
         self.interface.update_decomposition_label(activation_label, class_label, image_num_label, norm_activation_label)
         self.interface.update_decomposition_panel(panel=panel)
 
+    def _on_link_decrease_click(self, panel, neuron_label, relevance_label):
+        self.interface.actual_link = (self.interface.actual_link - 1) % len(self.interface.relevance)
+        self.interface.update_decomposition_label(neuron_label, relevance_label)
+        self.interface.update_decomposition_panel(panel=panel)
+
+
+    def _on_link_increase_click(self, panel, neuron_label, relevance_label):
+        self.interface.actual_link = (self.interface.actual_link + 1) % len(self.interface.relevance)
+        self.interface.update_decomposition_label(neuron_label, relevance_label)
+        self.interface.update_decomposition_panel(panel=panel)
+
+
     def _on_image_click(self, event,layer_name, idx_neuron):
         # layer_data = self.interface.network_data.get_layer_by_name(layer=self.interface.layer_to_evaluate)
         layer_data = self.interface.network_data.get_layer_by_name(layer=layer_name)
@@ -221,7 +234,6 @@ class EventController():
                                   x_len=x_len, y_len=y_len,
                                   image_name=image_name, layer_name=layer_name,neuron_idx=idx_neuron,
                                 interface = self.interface,x0=x0,x1=x1,y0=y0,y1=y1, actual_idx = actual_idx)
-
     def _on_nf_changed(self, event, combo):
         selection = combo.get()
         self.interface.set_nf_panel(option=selection)

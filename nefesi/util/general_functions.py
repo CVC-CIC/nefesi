@@ -249,6 +249,9 @@ def get_n_circles_well_distributed(idx_values, color_map='jet', diameter=100):
                     """
 
     return positions
+def ordinal(n):
+    #algorithm proposed by 'Gareth' on 'codegolf'
+    return "%d%s" % (n,"tsnrhtdd"[(math.floor(n/10)%10!=1)*(n%10<4)*n%10::4])
 
 def get_n_circles_TSNE(similarity_matrix, idx_values, ids, color_map='jet', diameter=100):
     from sklearn.manifold import TSNE

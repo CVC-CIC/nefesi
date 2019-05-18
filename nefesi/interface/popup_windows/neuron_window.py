@@ -18,7 +18,9 @@ import math
 
 from ...class_index import get_path_sep,get_hierarchical_population_code_idx
 from ...util.interface_plotting import get_one_neuron_plot, plot_similar_neurons, plot_relevant_neurons
+from ...util.general_functions import ordinal
 from .combobox_popup_window import ComboboxPopupWindow
+from .link_window import LinkWindow
 
 try:
     from tkinter import *
@@ -119,8 +121,8 @@ class NeuronWindow(object):
         activation = self.neuron.activations[self.actual_img_index]
         norm_activation = self.neuron.norm_activations[self.actual_img_index]
         label = self.get_current_image_class()
-        ttk.Label(master=text_frame, text="TopScoring", font='Helvetica 10').pack(side=LEFT)
-        self.image_num_label = ttk.Label(master=text_frame, text=str(self.actual_img_index), font='Helvetica 10 bold')
+        ttk.Label(master=text_frame, text="TopScoring:", font='Helvetica 10').pack(side=LEFT)
+        self.image_num_label = ttk.Label(master=text_frame, text=ordinal(self.actual_img_index), font='Helvetica 10 bold')
         self.image_num_label.pack(side=LEFT)
         ttk.Label(master=text_frame, text="Class:", font='Helvetica 10').pack(side=LEFT)
         self.class_label = ttk.Label(master=text_frame, text=label,
@@ -147,7 +149,7 @@ class NeuronWindow(object):
 
 
     def update_decomposition_label(self, activation_label, class_label, image_num_label, norm_activation_label):
-        image_num_label.configure(text=self.actual_img_index)
+        image_num_label.configure(text=ordinal(self.actual_img_index))
         activation_label.configure(text=str(round(self.neuron.activations[self.actual_img_index], ndigits=2)))
         norm_activation_label.configure(text=str(round(self.neuron.norm_activations[self.actual_img_index], ndigits=2)))
         class_label.configure(text=self.get_current_image_class())
@@ -164,7 +166,7 @@ class NeuronWindow(object):
     def draw_rectangle_on_image(self, np_image, x0, x1, y0, y1,margin=2, draw_lines=True):
         red = [255,0,0]
         x0 = max(x0-1,0)
-        x1 = min(x1 + 1, np_image.shape[1]-1)
+        x1 = min(x1 + 1, np_image.shape[1]-1) 
         y0 = max(y0 - 1, 0)
         y1 = min(y1 + 1, np_image.shape[0]-1)
         for i in range(margin):
@@ -297,10 +299,23 @@ class NeuronWindow(object):
                                    command=lambda: self.event_controller._on_expand_images_checkbox_clicked
                                    (checkbox_img_value, checkbox_advanced_charts_value))
         checkbox.grid(column=0, row=len(indexes.items()) + 1)
-        checkbox = ttk.Checkbutton(master=master, text="Show advanced charts", variable=checkbox_advanced_charts_value,
+        checkbox = ttk.Checkbutton(master=master, text="Show Advanced Charts", variable=checkbox_advanced_charts_value,
                                     command= lambda: self.event_controller._on_checkbox_clicked
                                     (checkbox_advanced_charts_value,checkbox_img_value))
         checkbox.grid(column=0, row=len(indexes.items())+2)
+        relevance_links_button = ttk.Button(master=master, text="View Relevant Neurons",
+                   command=self.show_relevance)
+        relevance_links_button.grid(column=0, row=len(indexes.items())+3)
+
+    def show_relevance(self):
+        ablatable_layers = self.network_data.get_ablatable_layers(actual_layer=self.layer_to_evaluate)
+
+        layer_to_ablate = self.get_value_from_popup_combobox(values=ablatable_layers,
+                                                             text='Select objective layer',
+                                                             default=ablatable_layers[-1])
+        LinkWindow(master=self.window, network_data=self.network_data, original_layer=self.layer_to_evaluate,
+                   ablated_layer=layer_to_ablate, neuron_idx=self.neuron_idx,
+                   image_actual_size=self.image_actual_size)
 
     def get_text_for_composed_index(self, index_name, index):
         pc = 0 if index[0]['label'] == 'None' else len(index)
@@ -377,6 +392,7 @@ class NeuronWindow(object):
             figure = get_one_neuron_plot(network_data=self.network_data,layer=self.layer_to_evaluate,
                                      neuron_idx=self.neuron_idx, chart=selected)
             hidden_annotations = None
+
         elif selected.lower() == 'relevant neurons':
             min, condition1, max, condition2, order, max_neurons = \
                 self.get_params_from_popup(layer_to_evaluate=self.layer_to_evaluate,index='relevance')
