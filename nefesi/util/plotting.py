@@ -880,7 +880,113 @@ def plot_enitity_one_repetition(network_data, layers=None, entity='class'):
     plt.xticks(rotation=45)
     plt.show()
 
+def plot_relevance_tree(network_data, layer_name, neuron_idx, max_branches = 2, num_rows = 4, colormap = plt.cm.cool):
+    layer_names = network_data.get_layer_names_to_analyze()
+    layer_idx = layer_names.index(layer_name)
+    layers_to_compute = layer_names[layer_idx:layer_idx-num_rows:-1]
+    neurons_to_compute = [[neuron_idx]]
+    neurons_relevance = [[layer_name]]
+    colors = [[0.5]]
+    color_range = [[(0.,1.)]]
+    branches_of_node = [[1]]
+    #Generates the list of layers and neurons to plot
+    for i, layer in enumerate(layers_to_compute[:-1]):
+        layer = network_data.get_layer_by_name(layer)
+        neurons_of_this_layer, relevance_of_this_layer, ranges_of_last_layer, colors_of_last_layer,\
+        branches_of_last_layer = [], [], [], [], []
+        neurons_of_last_layer = neurons_to_compute[-1]
+        for j,(father_neuron, father_range) in enumerate(zip(neurons_of_last_layer, color_range[-1])):
+            father_neuron = layer.neurons_data[father_neuron]
+            relevance_idx = father_neuron.get_relevance_idx(network_data = network_data,layer_name=layer.layer_id,
+                                                            neuron_idx=j, layer_to_ablate=layers_to_compute[i+1])
+            relevants = np.argpartition(-relevance_idx, max_branches)[:max_branches]
+            relevance_idx = really_relevants(relevant_idx=relevance_idx[relevants])
+            branches = len(relevance_idx)
+            relevants = relevants[:branches]
+            neurons_of_this_layer.extend(relevants)
+            relevance_of_this_layer.extend(np.round(relevance_idx, decimals=3))
+            branches_of_last_layer.append(branches)
 
+            min, max = father_range
+            part_of_range = (max-min) / branches
+            for k in range(branches):
+                ranges_of_last_layer.append(((part_of_range*k)+min,(part_of_range*(k+1))+min))
+                colors_of_last_layer.append(((max-min)/2)+min)
+
+        color_range.append(ranges_of_last_layer)
+        neurons_to_compute.append(neurons_of_this_layer)
+        neurons_relevance.append(relevance_of_this_layer)
+        colors.append(colors_of_last_layer)
+        branches_of_node.append(branches_of_last_layer)
+    #Sets the positions where colocate pictures in the tree
+    positions = [list(range(len(neurons_to_compute[-1])))]
+    for i in range(len(branches_of_node)-2,-1,-1):
+        j = 0
+        pos = []
+        for l, k in enumerate(branches_of_node[i]):
+            for position in range(k):
+                """
+                if len(positions[-1]) == k:
+                    pos.append(positions[-1][position])
+                elif l<(len(branches_of_node[i])/2):
+                    pos.append(positions[-1][j+(k-1)])
+                else:
+                    pos.append(positions[-1][j])
+                if len(branches_of_node[i]) == 1:
+                    l=1
+                """
+                pos.append(positions[-1][j])
+                j+=k
+        positions.append(pos)
+    positions = positions[::-1]
+
+    num_colums = len(positions[-1])
+    # Generate axes
+    fig, ax = plt.subplots(nrows=num_rows, ncols=num_colums)
+    # nullify plot axes
+    [[axis.axis('off') for axis in sub_axis] for sub_axis in ax]
+
+    for i, layer_name in enumerate(layers_to_compute):
+        layer = network_data.get_layer_by_name(layer_name)
+        for j,(neuron_idx, relevance, color, position) in enumerate(zip(neurons_to_compute[i], neurons_relevance[i], colors[i], positions[i])):
+            neuron = layer.neurons_data[neuron_idx]
+            neuron_feature_borded = add_color_pad(image=neuron.neuron_feature,color=colormap(color))
+            ax[i,position].imshow(neuron_feature_borded)
+            ax[i,position].set_title(str(neuron_idx) + ' - ' + maximum_activation_label(neuron=neuron,
+                                                        network_data=network_data, layer_name=layer_name,
+                                                                                        neuron_idx=neuron_idx) + '\n'
+                                                                              + str(relevance))
+    plt.show()
+
+def really_relevants(relevant_idx, th=0.3):
+    min_relevance = relevant_idx[0]*th
+    return np.array([rel for rel in relevant_idx if rel > min_relevance])
+
+def add_color_pad(image, color, border=0.035):
+    image = np.array(image)
+    h,w, c = image.shape
+    color = (np.array(color[:c])*255).astype(dtype=image.dtype)
+    border_h, border_w = math.ceil(h*border), math.ceil(w*border)
+    new_image = np.zeros((h+border_h*2,w+border_w*2, c), dtype=image.dtype)
+    mask = np.ones((h+border_h*2,w+border_w*2), dtype=np.bool)
+    mask[border_h:-border_h,border_w:-border_w] = False
+    new_image[border_h:-border_h,border_w:-border_w,:] = image
+    new_image[mask] = color
+    return Image.fromarray(new_image)
+
+def maximum_activation_label(neuron, network_data, layer_name, neuron_idx):
+    color = ('colorsin',0.0)#neuron.color_selectivity_idx(network_data, layer_name, neuron_idx)[0]
+    object = neuron.concept_selectivity_idx(layer_data=layer_name, network_data=network_data, neuron_idx=neuron_idx,
+                                            concept='object')[0]
+    part = neuron.concept_selectivity_idx(layer_data=layer_name, network_data=network_data, neuron_idx=neuron_idx,
+                                            concept='part')[0]
+    class_idx = neuron.class_selectivity_idx()[0]
+
+
+    indexes=[color, object, part, class_idx]
+    max_index = np.argmax([x[1] for x in indexes])
+    #return #neuronUp.most_relevant_type[list(neuronUp.most_relevant_type.keys())[0]][neuronIdx]
+    return indexes[max_index][0]
 
 
 def plot_relevant_nf(network_data, layer_name, neuron_idx, layer_to_ablate, master = None, entity='class', th = 0.5):

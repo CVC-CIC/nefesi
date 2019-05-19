@@ -32,7 +32,7 @@ from . import EventController as events
 from ..util.general_functions import clean_widget, destroy_canvas_subplot_if_exist, addapt_widget_for_grid
 from ..network_data import NetworkData
 from ..util.plotting import plot_nf_of_entities_in_pc, plot_coocurrence_graph, plot_entity_representation,\
-    plot_similarity_graph,plot_similarity_tsne
+    plot_similarity_graph,plot_similarity_tsne, plot_relevance_tree
 
 
 class Interface():
@@ -194,8 +194,11 @@ class Interface():
         layer_plots.add_command(label="Neuron Similarity Graph", command=self.similarity_graph)
         layer_plots.add_command(label="Neuron Similarity TSNE", command=self.similarity_TSNE)
 
-        menubar.add_cascade(label="Inspect Network", menu=plot_menu)
+        relevance_plots = Menu(plot_menu)
+        plot_menu.add_cascade(label="Relevance Plots", menu=relevance_plots)
+        relevance_plots.add_command(label="Relevance Tree", command=self.plot_relevance_tree)
 
+        menubar.add_cascade(label="Inspect Network", menu=plot_menu)
 
 
     def plot_specific_neuron(self):
@@ -263,6 +266,11 @@ class Interface():
             if operation != -1:
                 plot_entity_representation(self.network_data, layers=self.current_layers_in_view, interface=self,
                                            entity=entity, operation=operation)
+
+    def plot_relevance_tree(self):
+        layer, neuron_idx = self.get_neuron_params_plot_from_popup()
+        if layer is not None and neuron_idx is not None:
+            plot_relevance_tree(network_data=self.network_data,layer_name=layer, neuron_idx=neuron_idx)
 
     def ask_for_file(self, title="Select file", type='obj'):
         filename = filedialog.askopenfilename(title=title,

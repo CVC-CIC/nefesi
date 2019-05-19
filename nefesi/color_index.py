@@ -88,6 +88,7 @@ def get_general_hist(images, receptive_field, xy_locations, activations_masks, n
         personal_hist *= norm_activations[i]
 
         general_hist[ids] += personal_hist
+        return general_hist
 
 def get_general_hist_of_activation(images, receptive_field, xy_locations, norm_activations, type='activation'):
     general_hist = np.zeros(len(cn.colors))
