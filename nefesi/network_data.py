@@ -249,7 +249,7 @@ class NetworkData(object):
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
         #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-        buffer_size = 4
+        buffer_size = 3
         #Init all neuron_data attributes of all layers
         for i in range(len(self.layers_data)):
             neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
@@ -289,7 +289,7 @@ class NetworkData(object):
             layer.sort_neuron_data()
             # Set the number of maximum activations stored in each neuron
             layer.set_max_activations()
-
+        self.save_to_disk(file_name=self.model.name+'PartialSave100WithoutNF', erase_partials=True)
         if build_nf:
             if verbose:
                 print("Sort ended. Building neuron features")
@@ -297,8 +297,9 @@ class NetworkData(object):
             for layer in self.layers_data:
                 compute_nf(self, layer)
                 self.save_to_disk(file_name=file_name, erase_partials=True)
-        # Save all data
-        self.save_to_disk(file_name=file_name,erase_partials=True)
+        else:
+            # Save all data
+            self.save_to_disk(file_name=file_name,erase_partials=True)
 
     def recalculateNF(self, file_name=None, layers=None):
         if layers is None:
