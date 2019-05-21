@@ -295,7 +295,7 @@ def get_concept_labels(concept='object'):
     return correspondences
 
 
-def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2, norm_act = None):
+def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2, norm_act = None, original_norm_act = None):
     """Returns the class selectivity index value.
 
     :param neuron_data: The `nefesi.neuron_data.NeuronData` instance.
@@ -305,7 +305,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2, 
     :return: A tuple with: label class and class index value.
     """
     num_max_activations = len(neuron_data.activations)
-    rel_freq = relative_freq_class(neuron_data, labels, norm_act=norm_act)
+    rel_freq = relative_freq_class(neuron_data, labels, norm_act=norm_act, original_norm_activations=original_norm_act)
 
     if rel_freq is None:
         return np.array([("None", 0.0)],dtype=[('label','U64'),('value',np.float)])
@@ -335,7 +335,7 @@ def get_class_selectivity_idx(neuron_data, labels = None, threshold=.1, type=2, 
 
 
 
-def relative_freq_class(neuron_data, labels = None, norm_act = None):
+def relative_freq_class(neuron_data, labels = None, norm_act = None, original_norm_activations = None):
     """Calculates the relative frequencies of appearance of each class among
     the TOP scoring images from `neuron_data`.
 
@@ -360,7 +360,9 @@ def relative_freq_class(neuron_data, labels = None, norm_act = None):
     #-----------------------INITS THE PARAMETERS THAT WILL BE USEFUL TO MAKE CALCULS-----------------------------
     if norm_act is None:
         norm_act = neuron_data.norm_activations
-    norm_activation_total = np.sum(norm_act)
+    if original_norm_activations is None:
+        original_norm_activations = neuron_data.norm_activations
+    norm_activation_total = np.sum(original_norm_activations)
     classes, classes_idx, classes_counts =  np.unique(neuron_data.top_labels, return_inverse=True, return_counts=True)
     rel_freq = np.zeros(len(classes),dtype=[('label_name','U64'),('label','U64'),('count',np.int), ('value',np.float)])
 

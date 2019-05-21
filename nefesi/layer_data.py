@@ -226,7 +226,7 @@ class LayerData(object):
         return index
 
     def calculate_all_index_of_a_neuron(self, network_data, neuron_idx, norm_act, orientation_degrees=90, thr_pc=0.1,
-                                  indexes = None, activations_masks = None, type='mean'):
+                                  indexes = None, activations_masks = None, original_norm_act= None, type='mean'):
         """
 
         :param network_data:
@@ -239,8 +239,6 @@ class LayerData(object):
         :return:
         """
         assert(neuron_idx >=0 and neuron_idx<len(self.neurons_data))
-        import time
-        start_time = time.time()
         dataset = network_data.dataset
         neuron = self.neurons_data[neuron_idx]
         index = {}
@@ -270,7 +268,8 @@ class LayerData(object):
 
         if 'class' in indexes:
 
-            index['class'] = get_class_selectivity_idx(neuron, network_data.default_labels_dict, thr_pc, norm_act=norm_act)
+            index['class'] = get_class_selectivity_idx(neuron, network_data.default_labels_dict, thr_pc,
+                                                       norm_act=norm_act, original_norm_act=original_norm_act)
 
         if 'object' in indexes:
             index['object'] = get_concept_selectivity_of_neuron(network_data=network_data,

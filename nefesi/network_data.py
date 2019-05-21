@@ -485,7 +485,7 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model, return_decreasing = False):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model, for_neuron = None, return_decreasing = False):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -530,11 +530,13 @@ class NetworkData(object):
 
             DL_model = Model(inputs=mymodel_layers[0],outputs=mymodel_layers[-1])
             original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+            original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
             relevance_idx = []
             if return_decreasing:
                 max_concept_decreasing, max_type_decreasing = [], []
             pre_ablation_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
-            for i in range(intermediate_output.shape[-1]):
+            range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
+            for i in range_of_neurons:
                 intermediate_output2 = intermediate_output[..., i]*1 #To copy
                 intermediate_output[..., i] = 0
                 ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
@@ -546,7 +548,8 @@ class NetworkData(object):
                     post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
                                                                                           neuron_idx=neuron,
                                                     norm_act=max_activations/original_activations[0],
-                                                    activations_masks = ablated_neurons_predictions, thr_pc=0.0)
+                                                    activations_masks = ablated_neurons_predictions, thr_pc=0.0,
+                                                    original_norm_act=original_norm_activations)
 
                     max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
                                                            post_indexes=post_ablation_indexes)
@@ -557,10 +560,18 @@ class NetworkData(object):
         self.model = load_model(path_model)
         relevance_idx = np.array(relevance_idx)
         if return_decreasing:
-            max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(max_type_decreasing)
-            return (relevance_idx, max_concept_decreasing, max_type_decreasing)
+            if for_neuron is None:
+                max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
+                    max_type_decreasing)
+                return (relevance_idx, max_concept_decreasing, max_type_decreasing)
+            else:
+                return (relevance_idx[0], max_concept, max_type)
         else:
-            return relevance_idx
+            if for_neuron is None:
+                return relevance_idx
+            else:
+                return relevance_idx[0]
+
 
     def most_decreased_index(self, pre_indexes, post_indexes):
         indexes_decreased = self.indexes_decreasing(pre_indexes=pre_indexes, post_indexes=post_indexes)

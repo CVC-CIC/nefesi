@@ -270,8 +270,8 @@ class NeuronWindow(object):
                 continue
             rows+=1
             ttk.Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows)
-
-        if indexes['class']['label'][0] != 'None' and plot_wordnet_tree:
+        offset = 0
+        if ('class' in indexes) and (indexes['class']['label'][0] != 'None') and plot_wordnet_tree:
             try:
                 tree = get_hierarchical_population_code_idx(
                     self.network_data.get_neuron_of_layer(layer=self.layer_to_evaluate,
@@ -289,6 +289,7 @@ class NeuronWindow(object):
                         round(node.freq, 2)) + ')\n'
                 text += '\n'
                 ttk.Label(master=master, text=text, justify=LEFT).grid(column=0, row=rows+1)
+                offset += 1
             except:
                 pass
 
@@ -298,14 +299,14 @@ class NeuronWindow(object):
         checkbox = ttk.Checkbutton(master=master, text="Expand Images", variable=checkbox_img_value,
                                    command=lambda: self.event_controller._on_expand_images_checkbox_clicked
                                    (checkbox_img_value, checkbox_advanced_charts_value))
-        checkbox.grid(column=0, row=len(indexes.items()) + 1)
+        checkbox.grid(column=0, row=len(indexes.items()) + 1+offset)
         checkbox = ttk.Checkbutton(master=master, text="Show Advanced Charts", variable=checkbox_advanced_charts_value,
                                     command= lambda: self.event_controller._on_checkbox_clicked
                                     (checkbox_advanced_charts_value,checkbox_img_value))
-        checkbox.grid(column=0, row=len(indexes.items())+2)
+        checkbox.grid(column=0, row=len(indexes.items())+2+offset)
         relevance_links_button = ttk.Button(master=master, text="View Relevant Neurons",
                    command=self.show_relevance)
-        relevance_links_button.grid(column=0, row=len(indexes.items())+3)
+        relevance_links_button.grid(column=0, row=len(indexes.items())+3+offset)
 
     def show_relevance(self):
         ablatable_layers = self.network_data.get_ablatable_layers(actual_layer=self.layer_to_evaluate)

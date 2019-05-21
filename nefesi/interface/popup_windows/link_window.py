@@ -114,6 +114,9 @@ class LinkWindow(object):
 
     def write_decreasing_on_image(self, img):
         neuron_idx = self.relevance_order[self.actual_link]
+        a = self.original_neuron.get_relevance_idx(network_data=self.network_data, layer_name=self.original_layer,
+                                               neuron_idx = self.neuron_idx, layer_to_ablate=self.ablated_layer,
+                                               for_neuron=neuron_idx, return_decreasing=True)
         concept =  ('Not Ready', 0.0)#self.original_neuron.most_relevant_concept[self.ablated_layer][neuron_idx]
         type = ('Not Ready', 0.0)#self.original_neuron.most_relevant_type[self.ablated_layer][neuron_idx]
         text_image = ImageDraw.Draw(img)
