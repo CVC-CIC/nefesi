@@ -314,9 +314,12 @@ class NeuronWindow(object):
         layer_to_ablate = self.get_value_from_popup_combobox(values=ablatable_layers,
                                                              text='Select objective layer',
                                                              default=ablatable_layers[-1])
+        print_full_decreassing_matrix = self.get_value_from_popup_combobox(values=['No','Yes'],
+                                                             text='Select objective layer',
+                                                             default='No') == 'Yes'
         LinkWindow(master=self.window, network_data=self.network_data, original_layer=self.layer_to_evaluate,
                    ablated_layer=layer_to_ablate, neuron_idx=self.neuron_idx,
-                   image_actual_size=self.image_actual_size)
+                   image_actual_size=self.image_actual_size, print_full_decreasing_matrix=print_full_decreassing_matrix)
 
     def get_text_for_composed_index(self, index_name, index):
         pc = 0 if index[0]['label'] == 'None' else len(index)

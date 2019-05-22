@@ -95,7 +95,8 @@ def concept_selectivity_of_image(activations_mask, segmented_image, type='mean')
     return ids, histogram
 
 
-def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object', th = 0.1, activations_masks = None):
+def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type='mean', concept='object', th = 0.1,
+                                      activations_masks = None, normalize_by = 0., return_non_normalized_sum=False):
     """
     :param network_data:
     :param layer_name:
@@ -176,16 +177,26 @@ def get_concept_selectivity_of_neuron(network_data, layer_name, neuron_idx, type
     #Ordering
     general_hist = np.sort(general_hist, order = 'value')[::-1]
     #Normalized
-    general_hist['value'] /= np.sum(general_hist['value'])
+    non_normaliced_sum = np.sum(general_hist['value'])
+    if normalize_by > 0:
+        general_hist['value'] /= normalize_by
+    else:
+        general_hist['value'] /= non_normaliced_sum
     general_hist = general_hist[general_hist['value'] >= th]
     #Erase the NonConcept label and his value
     general_hist = general_hist[general_hist['label'] != 0]
     if len(general_hist) is 0:
-        return np.array([('None', 0.0)], dtype = [('label', np.object), ('value',np.float)])
+        if return_non_normalized_sum:
+            return (np.array([('None', 0.0)], dtype=[('label', np.object), ('value', np.float)]),non_normaliced_sum)
+        else:
+            return np.array([('None', 0.0)], dtype = [('label', np.object), ('value',np.float)])
     else:
         general_hist['value'] = np.round(general_hist['value'],3)
         general_hist = translate_concept_hist(general_hist, concept)
-        return general_hist
+        if return_non_normalized_sum:
+            return (general_hist, non_normaliced_sum)
+        else:
+            return general_hist
 
 
 def get_general_hist(segmentation, receptive_field, xy_locations, activations_masks, norm_activations, type, concept, target_size,

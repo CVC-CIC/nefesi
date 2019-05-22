@@ -164,7 +164,7 @@ class LayerData(object):
 
         return index_list
     def get_all_index_of_a_neuron(self, network_data, neuron_idx, orientation_degrees=90, thr_pc=0.1,
-                                  indexes = None, activations_masks = None):
+                                  indexes = None, activations_masks = None, return_non_normalized_sum = False):
         """
 
         :param network_data:
@@ -184,6 +184,8 @@ class LayerData(object):
         neuron = self.neurons_data[neuron_idx]
 
         index = {}
+        if return_non_normalized_sum:
+            non_normalized_sum = {}
         if indexes is None:
             indexes = network_data.indexs_accepted
 
@@ -201,32 +203,54 @@ class LayerData(object):
             index['symmetry'] = symmetry
 
         if 'color' in indexes or 'ivet_color' in indexes:
-            index['color'] = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
-                                                              neuron_idx=neuron_idx, th=thr_pc,
-                                                          activations_masks=activations_masks)
+            result = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
+                                                  neuron_idx=neuron_idx, th=thr_pc,
+                                                  activations_masks=activations_masks,
+                                                  return_non_normalized_sum=return_non_normalized_sum)
+            if return_non_normalized_sum:
+                index['color'], non_normalized_sum['color'] = result
+            else:
+                index['color'] = result
             #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
 
         if 'class' in indexes:
             index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
+            #this index don't have it
+            if return_non_normalized_sum:
+                non_normalized_sum['class'] = 0.
 
         if 'object' in indexes:
-            index['object'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
+            result = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
                                                               neuron_idx=neuron_idx, concept='object', th=thr_pc,
-                                                             activations_masks=activations_masks)
+                                                             activations_masks=activations_masks,
+                                                    return_non_normalized_sum=return_non_normalized_sum)
+            if return_non_normalized_sum:
+                index['object'], non_normalized_sum['object'] = result
+            else:
+                index['object'] = result
         if 'part' in indexes:
-            index['part'] = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
+            result = neuron.concept_selectivity_idx(layer_data=self, network_data=network_data,
                                                              neuron_idx=neuron_idx, concept='part', th=thr_pc,
-                                                           activations_masks=activations_masks)
+                                                           activations_masks=activations_masks,
+                                                           return_non_normalized_sum=return_non_normalized_sum)
+            if return_non_normalized_sum:
+                index['part'], non_normalized_sum['part'] = result
+            else:
+                index['part'] = result
 
         if network_data.save_changes:
             end_time = time.time()
             if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
                 # Update only the modelName.obj
                 network_data.save_to_disk(file_name=None, save_model=False)
-        return index
+        if return_non_normalized_sum:
+            return (index, non_normalized_sum)
+        else:
+            return index
 
     def calculate_all_index_of_a_neuron(self, network_data, neuron_idx, norm_act, orientation_degrees=90, thr_pc=0.1,
-                                  indexes = None, activations_masks = None, original_norm_act= None, type='mean'):
+                                  indexes = None, activations_masks = None, original_norm_act= None, normalize_by = 0,
+                                        type='mean'):
         """
 
         :param network_data:
@@ -242,6 +266,8 @@ class LayerData(object):
         dataset = network_data.dataset
         neuron = self.neurons_data[neuron_idx]
         index = {}
+        if normalize_by == 0:
+            normalize_by = {key : 0. for key in indexes.keys()}
         if indexes is None:
             indexes = network_data.indexs_accepted
 
@@ -259,11 +285,11 @@ class LayerData(object):
             index['symmetry'] = symmetry
         from nefesi.color_index import get_color_selectivity_index
         if 'color' in indexes or 'ivet_color' in indexes:
-
             index['color'] = get_color_selectivity_index(network_data=network_data,
                                         layer_name=self.layer_id,
                                         neuron_idx=neuron_idx,
-                                        type=type, th=thr_pc, activations_masks=activations_masks)
+                                        type=type, th=thr_pc, activations_masks=activations_masks,
+                                        normalize_by = normalize_by['color'])
             #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
 
         if 'class' in indexes:
@@ -276,13 +302,15 @@ class LayerData(object):
                                                                           layer_name=self.layer_id,
                                                                           neuron_idx=neuron_idx,
                                                                           type=type, concept='object', th = thr_pc,
-                                                              activations_masks=activations_masks)
+                                                              activations_masks=activations_masks,
+                                                                normalize_by=normalize_by['object'])
         if 'part' in indexes:
             index['part'] = get_concept_selectivity_of_neuron(network_data=network_data,
                                                                           layer_name=self.layer_id,
                                                                           neuron_idx=neuron_idx,
                                                                           type=type, concept='part', th = thr_pc,
-                                                              activations_masks=activations_masks)
+                                                              activations_masks=activations_masks,
+                                                              normalize_by=normalize_by['part'])
 
         return index
 

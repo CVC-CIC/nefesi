@@ -499,7 +499,9 @@ class NetworkData(object):
 
         current_layer = self.get_layer_by_name(layer_analysis)
         if return_decreasing:
-            pre_ablation_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
+            pre_ablation_indexes, pre_ablation_non_normalized_sums = \
+                current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
+                                                                           return_non_normalized_sum=True)
         neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
@@ -555,7 +557,8 @@ class NetworkData(object):
                                                                                           neuron_idx=neuron,
                                                     norm_act=max_activations/original_activations[0],
                                                     activations_masks = ablated_neurons_predictions, thr_pc=0.0,
-                                                    original_norm_act=original_norm_activations)
+                                                    original_norm_act=original_norm_activations,
+                                                    normalize_by=pre_ablation_non_normalized_sums)
                     if print_decreasing_matrix:
                         print('Indexes decreasing for Neuron: '+str(neuron)+' - Layer: '+layer_analysis+'\n'
                               '             On ablate Neuron: '+str(i)+' - Layer: '+layer_to_ablate+':\n')
@@ -611,6 +614,7 @@ class NetworkData(object):
         for concept, decreasing in indexes_decreased.items():
             string += concept.capitalize()+':\t'
             decreasing['value'] = np.round(decreasing['value'],decimals=3)
+            decreasing = np.sort(decreasing,order='value')[::-1]
             for label, value in decreasing:
                 if not np.isclose(value, 0):
                     string+= ' '+label+' - '+str(value)+','
@@ -1068,9 +1072,9 @@ class NetworkData(object):
         if special_value is None:
             if index == 'orientation':
                 special_value = self.default_degrees_orientation_idx
-            elif index == 'population code':
+            else:
                 special_value = self.default_thr_pc
-        key = get_key_of_index(index, special_value)
+        key = get_key_of_index(index, special_value, operation='mean')
         if layers in [str, np.str_]:
             layers = self.get_layers_analyzed_that_match_regEx(layers)
         for layer in layers:

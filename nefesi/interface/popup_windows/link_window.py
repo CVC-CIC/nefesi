@@ -22,13 +22,15 @@ from PIL import ImageTk, Image
 from ..EventController import EventController
 
 class LinkWindow(object):
-    def __init__(self, master, network_data, original_layer, ablated_layer, neuron_idx, image_actual_size=IMAGE_SMALL_DEFAULT_SIZE):
+    def __init__(self, master, network_data, original_layer, ablated_layer, neuron_idx, print_full_decreasing_matrix=False,
+                 image_actual_size=IMAGE_SMALL_DEFAULT_SIZE):
         self.event_controller = EventController(self)
         self.network_data = network_data
         self.original_layer = original_layer
         self.ablated_layer = ablated_layer
         self.neuron_idx = neuron_idx
         self.master = master
+        self.print_full_decreasing_matrix = print_full_decreasing_matrix
         if self.network_data.model is not None:
             network_name = self.network_data.model.name.capitalize()
         else:
@@ -58,7 +60,7 @@ class LinkWindow(object):
         neuron_of_link = self.network_data.get_neuron_of_layer(layer=self.ablated_layer, neuron_idx=neuron_of_link_idx)
         current_image = neuron_of_link._neuron_feature
         current_image = current_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
-        self.write_decreasing_on_image(img = current_image)
+        self.write_decreasing_on_image(img = current_image, print_decreasing_matrix=self.print_full_decreasing_matrix)
         img = ImageTk.PhotoImage(current_image)
         neuron_label, relevance_label = self.set_decomposition_label(master)
         self.panel_image = ttk.Label(master=image_frame, image=img)
@@ -107,21 +109,22 @@ class LinkWindow(object):
                                               neuron_idx=self.relevance_order[self.actual_link])
         new_image = neuron._neuron_feature
         new_image = new_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)),Image.ANTIALIAS)
-        self.write_decreasing_on_image(img=new_image)
+        self.write_decreasing_on_image(img=new_image, print_decreasing_matrix=self.print_full_decreasing_matrix)
         img = ImageTk.PhotoImage(new_image)
         panel.configure(image=img)
         panel.image = img
 
-    def write_decreasing_on_image(self, img, print_decreasing_matrix=True):
+    def write_decreasing_on_image(self, img, print_decreasing_matrix=False):
         neuron_idx = self.relevance_order[self.actual_link]
         _, concept, type = self.original_neuron.get_relevance_idx(network_data=self.network_data,
                                                 layer_name=self.original_layer,
                                                neuron_idx = self.neuron_idx, layer_to_ablate=self.ablated_layer,
                                                for_neuron=neuron_idx, return_decreasing=True,
-                                                                  print_decreasing_matrix=print_decreasing_matrix)
+                                            print_decreasing_matrix=print_decreasing_matrix)
         text_image = ImageDraw.Draw(img)
-        text_image.text((10, 0), "Decreased Type: "+type['label']+ ' -> '+str(type['value']), fill=0)
-        text_image.text((10, 15), "Decreased Concept: " + concept['label'] + ' -> ' + str(concept['value']), fill=0)
+        text_image.text((10, 0), "Decreased Type: "+type['label']+ ' -> '+str(round(type['value'],ndigits=3)), fill=0)
+        text_image.text((10, 15), "Decreased Concept: " + concept['label'] + ' -> ' +
+                        str(round(concept['value'],ndigits=3)), fill=0)
 
     def _on_resize_image(self, event, panel,neuron_feature,top_widget):
         panel.update()

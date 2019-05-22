@@ -50,7 +50,8 @@ class NeuronData(object):
         self.relevance_idx = {}
         self.most_relevant_concept = {}
         self.most_relevant_type = {}
-        self.selectivity_idx = dict()
+        self.selectivity_idx = {}
+        self.selectivity_idx_non_normaliced_sum = {}
         self._neuron_feature = None
         self.top_labels = None
         # index used for ordering activations.
@@ -372,7 +373,7 @@ class NeuronData(object):
         return most_relevant_concept
 
     def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1,
-                              activations_masks=None):
+                              activations_masks=None, return_non_normalized_sum = False):
         """Returns the color selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
@@ -382,16 +383,19 @@ class NeuronData(object):
         :return: Float, value of color selectivity index.
         """
         key = 'color'+type+str(th)
-        if key not in self.selectivity_idx:
-            self.selectivity_idx[key] = get_color_selectivity_index(network_data=network_data,
-                                                                        layer_name=layer_name,
-                                                                        neuron_idx=neuron_idx,
-                                                                        type=type, th = th,
-                                                                    activations_masks=activations_masks)
+        if key not in self.selectivity_idx or \
+        (return_non_normalized_sum and (key not in self.selectivity_idx_non_normaliced_sum)):
+            self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key] = \
+                get_color_selectivity_index(network_data=network_data, layer_name=layer_name,
+                                            neuron_idx=neuron_idx, type=type, th = th,
+                                            activations_masks=activations_masks, return_non_normaliced_sum=True)
             print('Color idx: '+layer_name+' '+str(neuron_idx)+'/'+
                   str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
 
-        return self.selectivity_idx[key]
+        if return_non_normalized_sum:
+            return (self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key])
+        else:
+            return self.selectivity_idx[key]
 
     def color_population_code(self,network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
         color_idx = self.color_selectivity_idx(network_data=network_data, layer_name=layer_name,
@@ -440,7 +444,7 @@ class NeuronData(object):
         return self.selectivity_idx[key]
 
     def concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1,
-                                activations_masks = None):
+                                activations_masks = None, return_non_normalized_sum = False):
         """Returns the class selectivity index for this neuron.
 
         :param labels: Dictionary, key: name class, value: label class.
@@ -453,18 +457,21 @@ class NeuronData(object):
             TypeError: If `labels` is None or not a dictionary.
         """
         key = 'concept'+concept+str(th)
-        if key not in self.selectivity_idx:
+        if key not in self.selectivity_idx or \
+        (return_non_normalized_sum and (key not in self.selectivity_idx_non_normaliced_sum)):
             if isinstance(layer_data,str):
                 layer_data = network_data.get_layer_by_name(layer_data)
-            self.selectivity_idx[key] = get_concept_selectivity_of_neuron(network_data=network_data,
-                                                                          layer_name=layer_data.layer_id,
-                                                                          neuron_idx=neuron_idx,
-                                                                          type=type, concept=concept, th = 0.1,
-                                                                          activations_masks=activations_masks)
+            self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key] = \
+                get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data.layer_id,
+                                                    neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1,
+                                                    activations_masks=activations_masks, return_non_normalized_sum=True)
             print(concept.capitalize()+' idx: ' + layer_data.layer_id + ' ' + str(neuron_idx) + '/' +
                   str(len(layer_data.neurons_data)))
 
-        return self.selectivity_idx[key]
+        if return_non_normalized_sum:
+            return (self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key])
+        else:
+            return self.selectivity_idx[key]
 
     def single_concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1):
         """Returns the class selectivity index for this neuron.
