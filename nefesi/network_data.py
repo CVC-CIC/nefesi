@@ -19,6 +19,7 @@ from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
 from keras.layers import Conv2D, Input
 from keras.models import Sequential, Model, clone_model
+from keras import backend
 from tensorflow import Session
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -485,7 +486,8 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model, for_neuron = None, return_decreasing = False):
+    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate,path_model, for_neuron = None,
+                                  return_decreasing = False, print_decreasing_matrix = False):
         """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
 
             :param self: Nefesi object
@@ -494,7 +496,10 @@ class NetworkData(object):
             :param neuron: Int with the neuron to analyze
             :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
             """
+
         current_layer = self.get_layer_by_name(layer_analysis)
+        if return_decreasing:
+            pre_ablation_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
         neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
         xy_locations = neuron_data.xy_locations
         image_names = neuron_data.images_id
@@ -508,7 +513,9 @@ class NetworkData(object):
             numb_ablated=layer_names.index(layer_to_ablate)
             numb_analysis=layer_names.index(layer_analysis)+1
             intermediate_layer_model = Model(inputs=cloned_model.input, outputs=cloned_model.get_layer(layer_to_ablate).output)
-            intermediate_output = intermediate_layer_model.predict(images)
+            # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
+            backend.learning_phase = lambda: 0
+            intermediate_output = intermediate_layer_model.predict(x=images)
 
             DL_input = Input(cloned_model.layers[numb_ablated+1].input_shape[1:],name=layer_to_ablate)
 
@@ -534,7 +541,6 @@ class NetworkData(object):
             relevance_idx = []
             if return_decreasing:
                 max_concept_decreasing, max_type_decreasing = [], []
-            pre_ablation_indexes = current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron)
             range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
             for i in range_of_neurons:
                 intermediate_output2 = intermediate_output[..., i]*1 #To copy
@@ -550,9 +556,12 @@ class NetworkData(object):
                                                     norm_act=max_activations/original_activations[0],
                                                     activations_masks = ablated_neurons_predictions, thr_pc=0.0,
                                                     original_norm_act=original_norm_activations)
-
+                    if print_decreasing_matrix:
+                        print('Indexes decreasing for Neuron: '+str(neuron)+' - Layer: '+layer_analysis+'\n'
+                              '             On ablate Neuron: '+str(i)+' - Layer: '+layer_to_ablate+':\n')
                     max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
-                                                           post_indexes=post_ablation_indexes)
+                                                           post_indexes=post_ablation_indexes,
+                                                                      print_indexes_decreasing=print_decreasing_matrix)
                     max_concept_decreasing.append(max_concept)
                     max_type_decreasing.append(max_type)
 
@@ -573,7 +582,7 @@ class NetworkData(object):
                 return relevance_idx[0]
 
 
-    def most_decreased_index(self, pre_indexes, post_indexes):
+    def most_decreased_index(self, pre_indexes, post_indexes, print_indexes_decreasing = False):
         indexes_decreased = self.indexes_decreasing(pre_indexes=pre_indexes, post_indexes=post_indexes)
         index_decreasing_by_key = np.array(list(map(lambda key:
                                                     (key, np.sum(indexes_decreased[key]['value'])), indexes_decreased)),
@@ -592,10 +601,22 @@ class NetworkData(object):
         if np.isclose(max_type['value'],0.0):
             max_type['label'] = 'None'
 
+        if print_indexes_decreasing:
+            print(self.indexes_decreasing_matrix_as_string(indexes_decreased))
 
         return (max_concept, max_type)
 
-
+    def indexes_decreasing_matrix_as_string(self, indexes_decreased):
+        string = ''
+        for concept, decreasing in indexes_decreased.items():
+            string += concept.capitalize()+':\t'
+            decreasing['value'] = np.round(decreasing['value'],decimals=3)
+            for label, value in decreasing:
+                if not np.isclose(value, 0):
+                    string+= ' '+label+' - '+str(value)+','
+            string = string[:-1]
+            string += '\n'
+        return string
     def indexes_decreasing(self, pre_indexes, post_indexes):
         indexes_decreased = {}
         for key in post_indexes.keys():

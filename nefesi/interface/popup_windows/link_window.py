@@ -42,7 +42,8 @@ class LinkWindow(object):
         #self.font = ImageFont.truetype(font='sans-serif.ttf', size=16)
         self.original_neuron = self.network_data.get_neuron_of_layer(layer=original_layer, neuron_idx=neuron_idx)
         self.actual_link = 0
-        self.relevance = self.original_neuron.relevance_idx[self.ablated_layer]
+        self.relevance = self.original_neuron.get_relevance_idx(network_data=network_data, layer_name=original_layer,
+                                                                neuron_idx=neuron_idx, layer_to_ablate=ablated_layer)
         self.relevance_order = np.argsort(self.relevance)[::-1]
         self.basic_frame = ttk.Frame(master=self.window)
         self.decomposition_frame = ttk.Frame(self.basic_frame)
@@ -53,14 +54,13 @@ class LinkWindow(object):
 
     def set_decomposition_frame(self, master):
         image_frame = ttk.Frame(master=master)
-        neuron_label, relevance_label = self.set_decomposition_label(master)
         neuron_of_link_idx = self.relevance_order[self.actual_link]
         neuron_of_link = self.network_data.get_neuron_of_layer(layer=self.ablated_layer, neuron_idx=neuron_of_link_idx)
         current_image = neuron_of_link._neuron_feature
         current_image = current_image.resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
         self.write_decreasing_on_image(img = current_image)
         img = ImageTk.PhotoImage(current_image)
-
+        neuron_label, relevance_label = self.set_decomposition_label(master)
         self.panel_image = ttk.Label(master=image_frame, image=img)
         self.panel_image.image = img
         self.panel_image.bind("<Double-Button-1>",lambda event: self._on_link_image_click(event,
@@ -112,16 +112,16 @@ class LinkWindow(object):
         panel.configure(image=img)
         panel.image = img
 
-    def write_decreasing_on_image(self, img):
+    def write_decreasing_on_image(self, img, print_decreasing_matrix=True):
         neuron_idx = self.relevance_order[self.actual_link]
-        a = self.original_neuron.get_relevance_idx(network_data=self.network_data, layer_name=self.original_layer,
+        _, concept, type = self.original_neuron.get_relevance_idx(network_data=self.network_data,
+                                                layer_name=self.original_layer,
                                                neuron_idx = self.neuron_idx, layer_to_ablate=self.ablated_layer,
-                                               for_neuron=neuron_idx, return_decreasing=True)
-        concept =  ('Not Ready', 0.0)#self.original_neuron.most_relevant_concept[self.ablated_layer][neuron_idx]
-        type = ('Not Ready', 0.0)#self.original_neuron.most_relevant_type[self.ablated_layer][neuron_idx]
+                                               for_neuron=neuron_idx, return_decreasing=True,
+                                                                  print_decreasing_matrix=print_decreasing_matrix)
         text_image = ImageDraw.Draw(img)
-        text_image.text((10, 0), "Decreased Type: "+type[0]+ ' -> '+str(type[1]), fill=0)
-        text_image.text((10, 15), "Decreased Concept: " + concept[0] + ' -> ' + str(concept[1]), fill=0)
+        text_image.text((10, 0), "Decreased Type: "+type['label']+ ' -> '+str(type['value']), fill=0)
+        text_image.text((10, 15), "Decreased Concept: " + concept['label'] + ' -> ' + str(concept['value']), fill=0)
 
     def _on_resize_image(self, event, panel,neuron_feature,top_widget):
         panel.update()

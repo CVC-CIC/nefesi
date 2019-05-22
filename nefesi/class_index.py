@@ -259,7 +259,11 @@ def get_general_hist_of_activation(segmentation, receptive_field, xy_locations, 
         general_hist[ids] += personal_hist
     return general_hist
 
-def create_parts_from_object(object_segmentation, part_from_object, hierarchy_dict, keys):
+def create_parts_from_object(object_segmentation, part_from_object, hierarchy_dict=None, keys=None):
+    if hierarchy_dict is None or keys is None:
+        hierarchy_dict = get_concept_labels(concept='object_part')
+        keys = list(hierarchy_dict.keys())
+        keys = {key: index for index, key in enumerate(keys)}
     origin_shape = object_segmentation.shape
     object_segmentation = object_segmentation.reshape(-1)
     part_from_object = list(part_from_object.reshape((77, -1)))
