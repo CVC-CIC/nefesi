@@ -413,8 +413,10 @@ def get_listbox_selection(lstbox, selection = None):
     return layers_selected
 
 def get_key_of_index(key, special_value, operation='mean'):
-    if key in ['object','part', 'color']:
+    if key in ['color']:
         key+=operation
+    elif key in ['object','part']:
+        key = 'concept'+key
     if key == 'orientation':
         key+=str(int(special_value))
     elif key == 'symmetry':

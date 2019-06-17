@@ -62,6 +62,7 @@ class Interface():
         self.general_info_label.pack()
         self.plot_general_index(index=None)
         self.set_menu_bar()
+        #self.network_data.recalculateNF()
         #self.network_data.eval_network()
         #from nefesi.util.plotting import plot_enitity_one_repetition
         #l = self.network_data.get_layers_analyzed_that_match_regEx('.*')

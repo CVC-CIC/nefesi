@@ -895,10 +895,10 @@ def plot_relevance_tree(network_data, layer_name, neuron_idx, max_branches = 2, 
         neurons_of_this_layer, relevance_of_this_layer, ranges_of_last_layer, colors_of_last_layer,\
         branches_of_last_layer = [], [], [], [], []
         neurons_of_last_layer = neurons_to_compute[-1]
-        for j,(father_neuron, father_range) in enumerate(zip(neurons_of_last_layer, color_range[-1])):
-            father_neuron = layer.neurons_data[father_neuron]
+        for j,(father_neuron_idx, father_range) in enumerate(zip(neurons_of_last_layer, color_range[-1])):
+            father_neuron = layer.neurons_data[father_neuron_idx]
             relevance_idx = father_neuron.get_relevance_idx(network_data = network_data,layer_name=layer.layer_id,
-                                                            neuron_idx=j, layer_to_ablate=layers_to_compute[i+1])
+                                                            neuron_idx=father_neuron_idx, layer_to_ablate=layers_to_compute[i+1])
             relevants = np.argpartition(-relevance_idx, max_branches)[:max_branches]
             relevance_idx = really_relevants(relevant_idx=relevance_idx[relevants])
             branches = len(relevance_idx)
@@ -925,7 +925,7 @@ def plot_relevance_tree(network_data, layer_name, neuron_idx, max_branches = 2, 
         pos = []
         for l, k in enumerate(branches_of_node[i]):
             for position in range(k):
-                """
+
                 if len(positions[-1]) == k:
                     pos.append(positions[-1][position])
                 elif l<(len(branches_of_node[i])/2):
@@ -934,8 +934,8 @@ def plot_relevance_tree(network_data, layer_name, neuron_idx, max_branches = 2, 
                     pos.append(positions[-1][j])
                 if len(branches_of_node[i]) == 1:
                     l=1
-                """
-                pos.append(positions[-1][j])
+
+                #pos.append(positions[-1][j])
                 j+=k
         positions.append(pos)
     positions = positions[::-1]
@@ -944,7 +944,10 @@ def plot_relevance_tree(network_data, layer_name, neuron_idx, max_branches = 2, 
     # Generate axes
     fig, ax = plt.subplots(nrows=num_rows, ncols=num_colums)
     # nullify plot axes
-    [[axis.axis('off') for axis in sub_axis] for sub_axis in ax]
+    try:
+        [[axs.axis('off') for axs in sub_axis] for sub_axis in ax]
+    except:
+        [axs.axis('off') for axs in ax]
 
     for i, layer_name in enumerate(layers_to_compute):
         layer = network_data.get_layer_by_name(layer_name)
@@ -958,7 +961,7 @@ def plot_relevance_tree(network_data, layer_name, neuron_idx, max_branches = 2, 
                                                                               + str(relevance))
     plt.show()
 
-def really_relevants(relevant_idx, th=0.3):
+def really_relevants(relevant_idx, th=0.2):
     min_relevance = relevant_idx[0]*th
     return np.array([rel for rel in relevant_idx if rel > min_relevance])
 
@@ -975,7 +978,7 @@ def add_color_pad(image, color, border=0.035):
     return Image.fromarray(new_image)
 
 def maximum_activation_label(neuron, network_data, layer_name, neuron_idx):
-    color = ('colorsin',0.0)#neuron.color_selectivity_idx(network_data, layer_name, neuron_idx)[0]
+    color = neuron.color_selectivity_idx(network_data, layer_name, neuron_idx)[0]
     object = neuron.concept_selectivity_idx(layer_data=layer_name, network_data=network_data, neuron_idx=neuron_idx,
                                             concept='object')[0]
     part = neuron.concept_selectivity_idx(layer_data=layer_name, network_data=network_data, neuron_idx=neuron_idx,

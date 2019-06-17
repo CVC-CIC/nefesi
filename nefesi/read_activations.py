@@ -259,7 +259,10 @@ def get_image_activation(network_data, image_names, layer_name, neuron_idx, comp
     sz_img = network_data.dataset.target_size
     for activation in activations:
         if not complex_type:
-            activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
+            if len(activation.shape) > 0:
+                activations_upsampled = np.array(PIL.Image.fromarray(activation).resize(tuple(sz_img), PIL.Image.BILINEAR))
+            else:
+                activations_upsampled = np.ones(tuple(sz_img), dtype=np.float32) * activation
 
         else:
             pos = np.zeros(list(activation.shape)[::-1]+[2])

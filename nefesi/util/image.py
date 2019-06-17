@@ -155,6 +155,9 @@ class ImageDataset():
             images[i] = image.img_to_array(img)
 
         if self.preprocessing_function is not None and prep_function is True:
+            #dtype = images.dtype
+            #also for problems with the keras backend
+            images = images.astype(np.float32)
             images = self.preprocessing_function(images, data_format='channels_last') #np.asarray(images)) #Now are array right since the beginning
                                                             #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
         return images

@@ -510,7 +510,9 @@ class LayerData(object):
                 _, h, w, _ = model.input_shape
                 self.receptive_field_size = (h, w)
                 self.receptive_field_map = np.zeros((h, w, 4), dtype=np.int32)
+                #self.input_locations = np.zeros((1, 2), dtype=np.float)
                 self.receptive_field_map[:] = [0, h, 0, w]
+                self.input_locations = np.array([[0.5, h-0.5]])
             else:
                 self.receptive_field_map, self.receptive_field_size, self.input_locations = get_each_point_receptive_field(model, self.layer_id)
 

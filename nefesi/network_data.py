@@ -296,8 +296,10 @@ class NetworkData(object):
                 print("Sort ended. Building neuron features")
             # Build the neuron features
             for layer in self.layers_data:
-                compute_nf(self, layer)
+                compute_nf(self, layer, only_if_not_done=True)
+                print("Layer "+layer.layer_id+ "completed... Saving")
                 self.save_to_disk(file_name=file_name, erase_partials=True)
+                print("Saved")
         else:
             # Save all data
             self.save_to_disk(file_name=file_name,erase_partials=True)
@@ -375,27 +377,41 @@ class NetworkData(object):
             regEx = re.compile(layer_name)
             # Select the layerNames that satisfies RegEx
             layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
-
-        for index_name in sel_index:
-            sel_idx_dict[index_name] = []
+        if only_calc:
             for l in layer_name:
                 layer = self.get_layer_by_name(layer=l)
-                if not only_calc:
-                    sel_idx_dict[index_name].append(layer.selectivity_idx(
-                        self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
-                        labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
-                else:
-                    layer.get_all_index_of_all_neurons(self, orientation_degrees=degrees_orientation_idx, thr_pc=thr_pc,
-                                  indexes = None, is_first_time=True)
-
+                for index_name in sel_index:
+                    if not self.is_index_in_layer(l,index_name, special_value=thr_pc):
+                        layer.get_all_index_of_all_neurons(self, orientation_degrees=degrees_orientation_idx,
+                                                           thr_pc=thr_pc,
+                                                           indexes=None, is_first_time=True)
+                        break
                 if self.save_changes:
                     end_time = time.time()
                     if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
                         if verbose:
-                            print("Layer: "+l+" - Index: "+index_name+" saving changes")
+                            print("Layer: " + l + " saving changes")
                         # Update only the modelName.obj
                         self.save_to_disk(file_name=None, save_model=False)
                     start_time = end_time
+        else:
+            for index_name in sel_index:
+                sel_idx_dict[index_name] = []
+                for l in layer_name:
+                    layer = self.get_layer_by_name(layer=l)
+                    sel_idx_dict[index_name].append(layer.selectivity_idx(
+                            self.model, index_name, self.dataset, degrees_orientation_idx=degrees_orientation_idx,
+                            labels=labels, thr_pc=thr_pc,verbose=verbose,network_data=self))
+
+
+                    if self.save_changes:
+                        end_time = time.time()
+                        if end_time - start_time >= MIN_PROCESS_TIME_TO_OVERWRITE:
+                            if verbose:
+                                print("Layer: "+l+" - Index: "+index_name+" saving changes")
+                            # Update only the modelName.obj
+                            self.save_to_disk(file_name=None, save_model=False)
+                        start_time = end_time
 
         return sel_idx_dict
 
@@ -1075,13 +1091,13 @@ class NetworkData(object):
             else:
                 special_value = self.default_thr_pc
         key = get_key_of_index(index, special_value, operation='mean')
-        if layers in [str, np.str_]:
+        if type(layers) in [str, np.str_]:
             layers = self.get_layers_analyzed_that_match_regEx(layers)
         for layer in layers:
             layer_data = self.get_layer_by_name(layer=layer)
             if layer_data.is_not_calculated(key):
                 return False
-            return True
+        return True
     def get_layers_with_index(self, index_selected):
         return [layer.layer_id for layer in self.layers_data if index_selected in layer.get_index_calculated_keys()]
 
