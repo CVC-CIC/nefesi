@@ -357,6 +357,7 @@ class Interface():
             lstbox.insert(END, item)
 
     def set_save_changes_check_box(self,master):
+        self.network_data.save_changes = False
         checkbox_value = tk.BooleanVar(master=master,value=self.network_data.save_changes)
         checkbox = ttk.Checkbutton(master=master, text="Save index on update", variable=checkbox_value,
                                     command= lambda: self._on_checkbox_clicked(checkbox_value))

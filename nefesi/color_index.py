@@ -8,7 +8,7 @@ from nefesi import read_activations
 from nefesi.util.image import rgb2opp, image2max_gray
 
 
-NUM_THREADS = 20
+NUM_THREADS = 10
 
 
 
