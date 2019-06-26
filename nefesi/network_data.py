@@ -566,7 +566,14 @@ class NetworkData(object):
                 ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
                 intermediate_output[..., i] = intermediate_output2
                 #get the activation on the same point
-                max_activations = ablated_neurons_predictions[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+
+
+                #Check if we are dealing with a fc layer
+                if ablated_neurons_predictions.ndim == 1:
+                    max_activations = ablated_neurons_predictions[range(0, 100)]
+                else:
+                    max_activations = ablated_neurons_predictions[range(0,100),xy_locations[:,0], xy_locations[:,1]]
+
                 relevance_idx.append(np.sum(abs(original_activations - max_activations))/np.sum(original_activations))
                 if return_decreasing:
                     post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
