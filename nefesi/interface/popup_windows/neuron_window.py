@@ -101,6 +101,7 @@ class NeuronWindow(object):
         current_image = self.neuron.get_patch_by_idx(self.network_data,
                                                       self.network_data.get_layer_by_name(self.layer_to_evaluate),
                                                       self.actual_img_index)
+        print(len(current_image))
         current_image = Image.fromarray(current_image).resize((int(self.image_actual_size[0]/2),int(self.image_actual_size[1]/2)), Image.ANTIALIAS)  # resize mantaining aspect ratio
         img = ImageTk.PhotoImage(current_image)
 
@@ -252,13 +253,17 @@ class NeuronWindow(object):
             thr_pc = self.network_data.default_thr_pc
 
         indexes = self.get_index_info(orientation_degrees=orientation_degrees, thr_pc=thr_pc)
-
+        print(indexes)
         ttk.Label(master=master, text='Selectivity Indexes: ').grid(column=0, row=0)
         rows = 0
         for i, (label, idx) in enumerate(indexes.items()):
-            if label == 'color':
+            if label == 'color_ivet':
+                text = self.get_text_for_composed_index(label, idx)
+            elif label == 'shape':
+                text = self.get_text_for_composed_index(label, idx)
+            elif label == 'color':
                 text = self.get_text_for_composed_index(label,idx)
-                #text += '[Ivet Color idx: '+ str(round(indexes['ivet_color'],ndigits=3))+']\n'
+
             elif label in ['class', 'object', 'part']:
                 text = self.get_text_for_composed_index(label,idx)
             elif label == 'orientation':
@@ -322,15 +327,21 @@ class NeuronWindow(object):
                    image_actual_size=self.image_actual_size, print_full_decreasing_matrix=print_full_decreassing_matrix)
 
     def get_text_for_composed_index(self, index_name, index):
-        pc = 0 if index[0]['label'] == 'None' else len(index)
-        text = index_name.capitalize()+': idx - '+ str(round(np.sum(index['value']),ndigits=3)) +', pc - '+str(pc)+'\n'
-        if pc > 0:
-            text += '('
-            for i, (label, value) in enumerate(index):
-                if i > 0:
-                    text += ', '
-                text += label + '(' + str(round(value, ndigits=3)) + ')'
-            text += ')\n'
+
+        if type(index)== 'numpy.ndarray':
+
+            pc = 0 if index[0]['label'] == 'None' else len(index)
+            text = index_name.capitalize()+': idx - '+ str(round(np.sum(index['value']),ndigits=3)) +', pc - '+str(pc)+'\n'
+            if pc > 0:
+                text += '('
+                for i, (label, value) in enumerate(index):
+                    if i > 0:
+                        text += ', '
+                    text += label + '(' + str(round(value, ndigits=3)) + ')'
+                text += ')\n'
+
+        else:
+            text = index_name.capitalize() + ': idx - ' + str(index)
         return text
     def get_index_info(self,orientation_degrees=None, thr_pc=None):
         if orientation_degrees is None:
