@@ -187,7 +187,19 @@ def get_one_layer_plot(index, network_data, layer_to_evaluate, special_value=45,
             class_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
                                font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
                                 max_neurons=max_neurons, order=order, network_data=network_data,similarity_idx=similarity_idx)
-    elif index == 'color':
+
+    elif index == 'color':hidden_annotations, neurons_that_pass_filter = \
+            class_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx['value'], subplot=subplot,layer_name=layer_to_evaluate,
+                               font_size=font_size + 2, min=min, max=max, condition1=condition1, condition2=condition2,
+                                max_neurons=max_neurons, order=order, network_data=network_data,similarity_idx=similarity_idx)
+
+    elif index == 'shape':
+        hidden_annotations, neurons_that_pass_filter = \
+            color_neurons_plot(sel_idx, sel_idx_to_calcs=sel_idx, network_data=network_data, subplot=subplot,
+                               layer_name=layer_to_evaluate, font_size=font_size + 2, min=min, max=max,
+                               condition1=condition1, condition2=condition2, max_neurons=max_neurons, order=order,
+                               similarity_idx=similarity_idx)
+    elif index == 'color_ivet':
         hidden_annotations, neurons_that_pass_filter = \
             color_neurons_plot(sel_idx,sel_idx_to_calcs=sel_idx, network_data=network_data, subplot=subplot,
                                layer_name=layer_to_evaluate, font_size=font_size + 2, min=min, max=max,
@@ -631,12 +643,25 @@ def get_plot_net_summary_figure(index, network_data, layersToEvaluate=".*", spec
                                                                   layer_name=layer_name, font_size=font_size + 2)
             x_axis_labels[pos] = layer_name + " \n" \
                                               "μ=" + str(mean) + " σ=" + str(std)
-        elif index == 'color':
+        elif index == 'color_ivet':
             mean, std, hidden_annotations[pos] = color_layer_bars(sel_idx_of_layer, pos, subplot, colors,
                                                                   different_bars,
                                                                   layer_name=layer_name, font_size=font_size + 2)
             x_axis_labels[pos] = layer_name + " \n" \
                                               "μ=" + str(mean) + " σ=" + str(std)
+        elif index == 'color':
+            mean, std, hidden_annotations[pos] = object_layer_bars(sel_idx_of_layer, pos, subplot, colors,
+                                                                  different_bars,
+                                                                  layer_name=layer_name, font_size=font_size + 2)
+            x_axis_labels[pos] = layer_name + " \n" \
+                                              "μ=" + str(mean) + " σ=" + str(std)
+        elif index == 'shape':
+            mean, std, hidden_annotations[pos] = color_layer_bars(sel_idx_of_layer, pos, subplot, colors,
+                                                                  different_bars,
+                                                                  layer_name=layer_name, font_size=font_size + 2)
+            x_axis_labels[pos] = layer_name + " \n" \
+                                              "μ=" + str(mean) + " σ=" + str(std)
+
         elif index == 'orientation':
             mean, std, mean_std_between_rotations,hidden_annotations[pos] = \
                 orientation_layer_bars(sel_idx_of_layer, pos, subplot, colors, different_bars,

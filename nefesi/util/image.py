@@ -158,7 +158,7 @@ class ImageDataset():
             #dtype = images.dtype
             #also for problems with the keras backend
             images = images.astype(np.float32)
-            images = self.preprocessing_function(images, data_format='channels_last') #np.asarray(images)) #Now are array right since the beginning
+            images = self.preprocessing_function(images) #np.asarray(images)) #Now are array right since the beginning
                                                             #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
         return images
 
@@ -406,7 +406,7 @@ def rotate_images(images, degrees, pos, layer_data):
             # apply the rotation function
             img = rotate(new_shape, current_degrees, reshape=False)
             # build back the origin image with the receptive field rotated
-            images_rotated[deg_pos, i, row_ini:row_fin, col_ini:col_fin] = crop_center(img, [h, w])
+            images_rotated[deg_pos, i, row_ini:row_fin, col_ini:col_fin] = crop_center(img, [w, h])
 
     return images_rotated
 
