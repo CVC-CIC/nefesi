@@ -4,7 +4,7 @@ from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
 from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron
-from .color_index import get_ivet_color_selectivity_index, get_color_selectivity_index
+from .color_index import get_ivet_color_selectivity_index, get_color_selectivity_index, get_shape_selectivity_index
 from .orientation_index import get_orientation_index
 from .util.image import crop_center, expand_im
 
@@ -52,6 +52,7 @@ class NeuronData(object):
         self.most_relevant_type = {}
         self.selectivity_idx = {}
         self.selectivity_idx_non_normaliced_sum = {}
+        self.top_index = {}
         self._neuron_feature = None
         self.top_labels = None
         # index used for ordering activations.
@@ -140,6 +141,7 @@ class NeuronData(object):
         rf_size = layer_data.receptive_field_size
         if layer_data.receptive_field_map is not None:
             crop_positions = receptive_field[self.xy_locations[:,0],self.xy_locations[:,1]]
+
             input_locations = layer_data.input_locations[self.xy_locations[:, 0], self.xy_locations[:, 1]]
         else:
             crop_positions = [None]*self.xy_locations.shape[0]
@@ -301,6 +303,23 @@ class NeuronData(object):
                                                      layer_data, dataset)
         return self.selectivity_idx[key]
 
+
+
+    def shape_selectivity_idx(self, model, layer_data, dataset):
+        """Returns the color selectivity index for this neuron.
+
+        :param model: The `keras.models.Model` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
+        :param dataset: The `nefesi.util.image.ImageDataset` instance.
+
+        :return: Float, value of color selectivity index.
+        """
+        key = 'shape'
+        if key not in self.selectivity_idx:
+            self.selectivity_idx[key] = get_shape_selectivity_index(self, model,
+                                                     layer_data, dataset)
+        return self.selectivity_idx[key]
+
     def get_relevance_idx(self,network_data, layer_name, neuron_idx, layer_to_ablate, for_neuron=None,
                           return_decreasing=False, print_decreasing_matrix=False):
 
@@ -396,6 +415,24 @@ class NeuronData(object):
             return (self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key])
         else:
             return self.selectivity_idx[key]
+
+    def max_concept_selectivity_idx(self):
+
+        self.top_index={}
+        for i in range(9):
+            top_concept = 'None'
+            max = 0
+            for key in self.selectivity_idx.keys():
+                if key != 'ivet_color':
+                    suma = sum([x[1] for x in self.selectivity_idx[key] if x[1] > i*0.1])
+
+                    if suma > max:
+                        max = suma
+                        top_concept = key
+
+            self.top_index[(i+1)*0.1]=[top_concept,max]
+
+
 
     def color_population_code(self,network_data, layer_name, neuron_idx,  type='mean', th = 0.1):
         color_idx = self.color_selectivity_idx(network_data=network_data, layer_name=layer_name,

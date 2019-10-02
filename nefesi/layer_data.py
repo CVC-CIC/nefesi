@@ -91,12 +91,20 @@ class LayerData(object):
             "orientation", "symmetry", "class" or "population code".
         """
 
-        if index_name.lower() == 'color':
+        if index_name.lower() == 'color_ivet':
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
             for i in range(len(self.neurons_data)):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].ivet_color_selectivity_idx(model, self, dataset)
+
+
+        elif index_name.lower() == 'shape':
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.float)
+            for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
+                sel_idx[i] = self.neurons_data[i].shape_selectivity_idx(model, self, dataset)
         elif index_name.lower() == 'orientation':
             #Size is (number of neurons, number of rotations with not 0 + mean)
             sel_idx = np.zeros((len(self.neurons_data), int(math.ceil(360/degrees_orientation_idx))), dtype=np.float)
@@ -122,6 +130,16 @@ class LayerData(object):
                 if verbose:
                     print(self.layer_id+": "+str(i)+"/"+str(len(self.neurons_data)))
                 sel_idx[i] = self.neurons_data[i].single_class_selectivity_idx(labels, thr_pc)
+
+        elif index_name.lower() == 'color':
+            # array that contains in each a tuple (HumanReadableLabelName(max 64 characters str), selectivityIndex)
+            sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label', 'U64'), ('value', np.float)]))
+            for i in range(len(self.neurons_data)):
+                if verbose:
+                    print(self.layer_id + ": " + str(i) + "/" + str(len(self.neurons_data)))
+                sel_idx[i] = self.neurons_data[i].single_color_selectivity_idx(model,self,i)
+
+
         elif index_name.lower() in ['object', 'part']:
             sel_idx = np.zeros(len(self.neurons_data), dtype=np.dtype([('label','U64'), ('value',np.float)]))
             for i in range(len(self.neurons_data)):
@@ -202,7 +220,7 @@ class LayerData(object):
             symmetry[-1] = np.mean(symmetry[:-1])
             index['symmetry'] = symmetry
 
-        if 'color' in indexes or 'ivet_color' in indexes:
+        if 'color' in indexes :
             result = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
                                                   neuron_idx=neuron_idx, th=thr_pc,
                                                   activations_masks=activations_masks,
@@ -212,6 +230,12 @@ class LayerData(object):
             else:
                 index['color'] = result
             #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
+
+        if 'color_ivet' in indexes:
+            index['color_ivet']=neuron.ivet_color_selectivity_idx( model, self, dataset)
+
+        if 'shape' in indexes:
+            index['shape']= neuron.shape_selectivity_idx(model, self, dataset)
 
         if 'class' in indexes:
             index['class'] = neuron.class_selectivity_idx(network_data.default_labels_dict, thr_pc)
@@ -505,6 +529,7 @@ class LayerData(object):
         """
 
         if self.receptive_field_map is None:
+            print('entra')
             layer_idx = find_layer_idx(model, self.layer_id)
             if len(model.layers[layer_idx].output_shape) != 4:
                 _, h, w, _ = model.input_shape
@@ -514,6 +539,7 @@ class LayerData(object):
                 self.receptive_field_map[:] = [0, h, 0, w]
                 self.input_locations = np.array([[0.5, h-0.5]])
             else:
+                print('else')
                 self.receptive_field_map, self.receptive_field_size, self.input_locations = get_each_point_receptive_field(model, self.layer_id)
 
     def get_location_from_rf(self, location):
