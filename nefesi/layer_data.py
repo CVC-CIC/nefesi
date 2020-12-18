@@ -353,6 +353,16 @@ class LayerData(object):
                                                              return_decreasing=False))
         return np.array(relevance_matrix)
 
+
+    def get_relevance_matrix2(self,network_data, layer_to_ablate):
+        relevance_matrix = []
+        for i, neuron in enumerate(self.neurons_data):
+            relevance_matrix.append(neuron.get_relevance_idx2(network_data= network_data, layer_name= self.layer_id,
+                                                             neuron_idx=i,layer_to_ablate=layer_to_ablate))
+        return np.array(relevance_matrix)
+
+
+
     def _get_entity_coocurrence_matrix(self,network_data, th=None, entity='class', operation='1/PC'):
         """
 
@@ -509,6 +519,7 @@ class LayerData(object):
             norm_activations_sum= np.zeros(len(self.neurons_data))
             for i in range(len(max_activations)):
                 max_activations[i] = self.neurons_data[i].activations[0]
+
                 norm_activations_sum[i] = sum(self.neurons_data[i].norm_activations)
             for i in idx:
 

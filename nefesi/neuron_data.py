@@ -46,6 +46,8 @@ class NeuronData(object):
         self.activations = np.zeros(shape=self._buffer_size)
         self.images_id = np.zeros(shape=self._buffer_size,dtype='U128')
         self.xy_locations = np.zeros(shape=(self._buffer_size,2), dtype=np.int64)
+        self.xy_locations_all = np.zeros(shape=(self._buffer_size, 2), dtype=np.int64)
+        self.activations_all = np.zeros(shape=self._buffer_size)
         self.norm_activations = None
         self.relevance_idx = {}
         self.most_relevant_concept = {}
@@ -364,6 +366,104 @@ class NeuronData(object):
                 else:
                     self.relevance_idx[layer_to_ablate] = result
 
+    def get_relevance_idx_no_abs(self, network_data, layer_name, neuron_idx, layer_to_ablate, for_neuron=None,
+                          return_decreasing=False, print_decreasing_matrix=False):
+
+        need_to_calculate = print_decreasing_matrix or (layer_to_ablate not in self.relevance_idx) or (
+                    return_decreasing and
+                    (
+                                layer_to_ablate not in self.most_relevant_concept or layer_to_ablate not in self.most_relevant_type))
+        if not need_to_calculate:
+            if for_neuron is None:
+                need_to_calculate = np.sum(np.isclose(self.relevance_idx[layer_to_ablate], -1)) > 0 or (
+                            return_decreasing
+                            and ((np.sum(self.most_relevant_concept[layer_to_ablate]['label'] == '') > 0) or
+                                 (np.sum(self.most_relevant_type[layer_to_ablate]['label'] == '') > 0)))
+            else:
+                need_to_calculate = np.isclose(self.relevance_idx[layer_to_ablate][for_neuron], -1) or (
+                            return_decreasing
+                            and ((self.most_relevant_concept[layer_to_ablate][for_neuron]['label'] == '') or
+                                 (self.most_relevant_type[layer_to_ablate][for_neuron]['label'] == '')))
+        if need_to_calculate:
+            default_path_of_model = os.path.join(network_data.save_path, network_data.model.name + '.h5')
+            if for_neuron is None:
+                result = network_data.get_relevance_by_ablation_no_abs(layer_analysis=layer_name, neuron=neuron_idx,
+                                                                layer_to_ablate=layer_to_ablate,
+                                                                path_model=default_path_of_model,
+                                                                return_decreasing=return_decreasing,
+                                                                print_decreasing_matrix=print_decreasing_matrix)
+                if return_decreasing:
+                    self.relevance_idx[layer_to_ablate], self.most_relevant_concept[layer_to_ablate], \
+                    self.most_relevant_type[layer_to_ablate] = result
+                else:
+                    self.relevance_idx[layer_to_ablate] = result
+            else:
+                # creation if needed
+                if layer_to_ablate not in self.relevance_idx:
+                    self.relevance_idx[layer_to_ablate] = -np.ones(
+                        shape=len(network_data.get_layer_by_name(layer_to_ablate).neurons_data), dtype=np.float)
+                if layer_to_ablate not in self.most_relevant_concept:
+                    self.most_relevant_concept[layer_to_ablate] = np.zeros(
+                        shape=len(network_data.get_layer_by_name(layer_to_ablate).neurons_data),
+                        dtype=[('label', 'U64'), ('value', np.float)])
+                if layer_to_ablate not in self.most_relevant_type:
+                    self.most_relevant_type[layer_to_ablate] = np.zeros(
+                        shape=len(network_data.get_layer_by_name(layer_to_ablate).neurons_data),
+                        dtype=[('label', 'U64'), ('value', np.float)])
+                result = network_data.get_relevance_by_ablation(layer_analysis=layer_name, neuron=neuron_idx,
+                                                                layer_to_ablate=layer_to_ablate,
+                                                                path_model=default_path_of_model, for_neuron=for_neuron,
+                                                                return_decreasing=return_decreasing,
+                                                                print_decreasing_matrix=print_decreasing_matrix)
+                if return_decreasing:
+                    self.relevance_idx[layer_to_ablate][for_neuron], self.most_relevant_concept[layer_to_ablate][
+                        for_neuron], \
+                    self.most_relevant_type[layer_to_ablate][for_neuron] = result
+                else:
+                    self.relevance_idx[layer_to_ablate] = result
+
+    def get_relevance_idx2(self,network_data, layer_name, neuron_idx, layer_to_ablate, for_neuron=None,
+                          return_decreasing=False, print_decreasing_matrix=False):
+
+        need_to_calculate = print_decreasing_matrix or (layer_to_ablate not in self.relevance_idx ) or (return_decreasing and
+                            (layer_to_ablate not in self.most_relevant_concept or layer_to_ablate not in self.most_relevant_type))
+        if not need_to_calculate:
+            if for_neuron is None:
+                need_to_calculate = np.sum(np.isclose(self.relevance_idx[layer_to_ablate], -1)) > 0 or (return_decreasing
+                                and ((np.sum(self.most_relevant_concept[layer_to_ablate]['label'] == '') > 0) or
+                                     (np.sum(self.most_relevant_type[layer_to_ablate]['label'] == '') > 0)))
+            else:
+                need_to_calculate = np.isclose(self.relevance_idx[layer_to_ablate][for_neuron], -1) or (return_decreasing
+                            and ((self.most_relevant_concept[layer_to_ablate][for_neuron]['label'] == '') or
+                                 (self.most_relevant_type[layer_to_ablate][for_neuron]['label'] == '')))
+        if need_to_calculate:
+            default_path_of_model = os.path.join(network_data.save_path,network_data.model.name+'.h5')
+            if for_neuron is None:
+                result = network_data.get_relevance_by_ablation2(layer_analysis=layer_name, neuron=neuron_idx,
+                                                        layer_to_ablate=layer_to_ablate, path_model=default_path_of_model,
+                                                      )
+                if return_decreasing:
+                    self.relevance_idx[layer_to_ablate], self.most_relevant_concept[layer_to_ablate], \
+                    self.most_relevant_type[layer_to_ablate] = result
+                else:
+                    self.relevance_idx[layer_to_ablate] = result
+            else:
+                #creation if needed
+                if layer_to_ablate not in self.relevance_idx:
+                    self.relevance_idx[layer_to_ablate] = -np.ones(shape=len(network_data.get_layer_by_name(layer_to_ablate).neurons_data), dtype=np.float)
+                if layer_to_ablate not in self.most_relevant_concept:
+                    self.most_relevant_concept[layer_to_ablate] = np.zeros(shape=len(network_data.get_layer_by_name(layer_to_ablate).neurons_data), dtype = [('label', 'U64'), ('value', np.float)])
+                if layer_to_ablate not in self.most_relevant_type:
+                    self.most_relevant_type[layer_to_ablate] = np.zeros(shape=len(network_data.get_layer_by_name(layer_to_ablate).neurons_data), dtype = [('label', 'U64'), ('value', np.float)])
+                result = network_data.get_relevance_by_ablation2(layer_analysis=layer_name, neuron=neuron_idx,
+                                                               layer_to_ablate=layer_to_ablate,
+                                                               path_model=default_path_of_model)
+                if return_decreasing:
+                    self.relevance_idx[layer_to_ablate][for_neuron], self.most_relevant_concept[layer_to_ablate][for_neuron], \
+                    self.most_relevant_type[layer_to_ablate][for_neuron] = result
+                else:
+                    self.relevance_idx[layer_to_ablate] = result
+
 
 
             print('Relevance: '+layer_name+' '+str(neuron_idx)+'/'+str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
@@ -377,6 +477,14 @@ class NeuronData(object):
                 return self.relevance_idx[layer_to_ablate], self.most_relevant_concept[layer_to_ablate], self.most_relevant_type[layer_to_ablate]
             else:
                 return self.relevance_idx[layer_to_ablate][for_neuron], self.most_relevant_concept[layer_to_ablate][for_neuron], self.most_relevant_type[layer_to_ablate][for_neuron]
+
+
+
+
+
+
+
+
 
     def get_most_relevant_type(self, network_data, layer_name, neuron_idx, layer_to_ablate, for_neuron=None):
         _,_, most_relevant_type = self.get_relevance_idx(network_data=network_data, layer_name=layer_name, neuron_idx=neuron_idx,
