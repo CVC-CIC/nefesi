@@ -1,6 +1,5 @@
 import numpy as np
 import os
-from keras.preprocessing import image
 from .symmetry_index import SYMMETRY_AXES
 from . import symmetry_index as sym
 from .class_index import get_class_selectivity_idx, get_population_code_idx, get_concept_selectivity_of_neuron

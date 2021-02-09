@@ -6,13 +6,17 @@ import re #Regular Expresions
 import numpy as np
 import warnings
 
+# from keras.preprocessing.image import ImageDataGenerator
+from .interface_DeepFramework.DeepFramework import data_batch_generator
+
 from keras.applications.vgg16 import preprocess_input as preproces_vgg
-from keras.preprocessing.image import ImageDataGenerator
+
 from keras.models import load_model
 from keras.backend import clear_session
 from .neuron_data import NeuronData
 from keras.preprocessing import image
-from .read_activations import get_argmax_and_max2
+# from .read_activations import get_argmax_and_max2
+from .read_activations import get_argmax_and_max as get_argmax_and_max2
 from .util.general_functions import get_key_of_index
 from .layer_data import LayerData
 from .neuron_feature import compute_nf
@@ -239,16 +243,17 @@ class NetworkData(object):
         if preprocessing_function is not None:
             self.dataset.preprocessing_function = preprocessing_function
         #if layer.layer_id in layer_names: #if is not, exception was raised
-        datagen = ImageDataGenerator(preprocessing_function=self.dataset.preprocessing_function)
-        data_batch = datagen.flow_from_directory(
-            self.dataset.src_dataset,
-            target_size=self.dataset.target_size,
-            batch_size=batch_size,
-            shuffle=True,
-            color_mode=self.dataset.color_mode
-        )
+
+        data_batch = data_batch_generator(
+                             self.dataset.preprocessing_function,
+                             self.dataset.src_dataset,
+                             self.dataset.target_size,
+                             batch_size,
+                             self.dataset.color_mode
+                             )
 
         num_images = data_batch.samples
+        num_images = 500  # debug
         idx_start = data_batch.batch_index
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
@@ -263,7 +268,7 @@ class NetworkData(object):
 
         file_names = np.array(data_batch.filenames)
         start = time.time()
-        for n_batches, imgs in enumerate(data_batch):
+        for n_batches, imgs in enumerate(data_batch.iterator):
             images = imgs[0]
             # Apply the preprocessing function to the inputs
             actual_file_names = file_names[data_batch.index_array[idx_start: idx_end]]

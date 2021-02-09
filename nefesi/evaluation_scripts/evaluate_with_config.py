@@ -3,8 +3,7 @@ This file contains a toy examples to have a first contact with Nefesi, and Keras
 This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2.0, and python 3.6 (with anaconda3 interpreter)
 """
 
-#from keras.applications.vgg16 import preprocess_input
-from keras.models import load_model
+from ..interface_DeepFramework.DeepFramework import load_model, preprocess_function
 from .calculate_indexes import run_calculs
 import warnings
 import os
@@ -30,19 +29,8 @@ class EvaluationWithConfig:
 			run_calculs(network_data=self.network_data,verbose=self.verbose)
 
 	def set_preprocess_function(self):
-		if self.network_data.model.name.lower() == 'vgg16':
-			from keras.applications.vgg16 import preprocess_input
-		elif self.network_data.model.name.lower() == 'resnet50':
-			from keras.applications.resnet50 import preprocess_input
-		elif self.network_data.model.name.lower() == 'vgg19':
-			from keras.applications.vgg19 import preprocess_input
-		elif self.network_data.model.name.lower() == 'xception':
-			from keras.applications.xception import preprocess_input
-		elif self.network_data.model.name.lower() == 'mobilenetv2_1.00_224':
-			from keras.applications.mobilenetv2 import preprocess_input
-
-		else:
-			preprocess_input = None
+		preprocess_input = preprocess_function(self.network_data.model.name)
+		if preprocess_input is None:
 			warnings.warn("Preprocess function is "+str(self.network_data.dataset.preprocessing_function)+". Please be sure "
 							"that you don't need a specific preprocess_input function for this network")
 		self.network_data.dataset.preprocessing_function = preprocess_input

@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-import keras.backend as K
+from .interface_DeepFramework.DeepFramework import create_intermediate_funcs
 from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
 import PIL
 from scipy.interpolate import RectBivariateSpline
@@ -32,8 +32,7 @@ def get_activations(model, model_inputs, layers_name, only_max_and_argmax = True
     # K.learning_phase flag = 1 (train mode)
     #funcs = K.function(inp+ [K.learning_phase()], outputs) #modifies learning parameters
     #layer_outputs = funcs([model_inputs, 1])
-    K.learning_phase = 0
-    funcs = K.function(inp, outputs)
+    funcs = create_intermediate_funcs(inp, outputs)
     layer_outputs = funcs([model_inputs])
     if not only_max_and_argmax:
         return layer_outputs
@@ -107,8 +106,7 @@ def get_one_neuron_activations(model, model_inputs, idx_neuron, layer_name=None)
                layer.name == layer_name or layer_name is None]
 
     # evaluation functions
-    K.learning_phase = 0
-    funcs = K.function(inp, outputs)
+    funcs = create_intermediate_funcs(inp, outputs)
     layer_outputs = funcs([model_inputs])
     if len(layer_outputs) > 1:
         warnings.warn("Layer outputs is a list of more than one element? REVIEW THIS CODE SECTION!",RuntimeWarning)
