@@ -1,6 +1,7 @@
 import numpy as np
 import os
-from keras.preprocessing import image
+# from keras.preprocessing import image
+from PIL import Image
 from scipy.ndimage.interpolation import rotate
 import warnings
 
@@ -187,9 +188,14 @@ class ImageDataset():
         """
         grayscale = self.color_mode == 'grayscale'
 
-        img = image.load_img(self.src_dataset + img_name,
-                       grayscale=grayscale,
-                       target_size=self.target_size)
+        # img = image.load_img(self.src_dataset + img_name,
+        #                grayscale=grayscale,
+        #                target_size=self.target_size)
+        img = Image.open(img_name).convert('RGB')
+        if grayscale:
+            img = img.convert('L')
+        img = img.resize(self.target_size, Image.ANTIALIAS)
+
         img = np.array(img)
 
         if self.preprocessing_function is not None and prep_function:

@@ -3,7 +3,7 @@ This file contains a toy examples to have a first contact with Nefesi, and Keras
 This file has been created with tensorflow (and tensorflow-gpu) 1.8.0, keras 2.2.0, and python 3.6 (with anaconda3 interpreter)
 """
 
-from ..interface_DeepFramework.DeepFramework import load_model, preprocess_function
+from ..interface_DeepFramework.DeepFramework import deep_model, preprocess_function
 from .calculate_indexes import run_calculs
 import warnings
 import os
@@ -20,7 +20,7 @@ class EvaluationWithConfig:
 		self.verbose = verbose
 
 	def run_evaluation(self):
-		self.network_data.model = load_model(self.model_file)
+		self.network_data.model = deep_model(self.model_file)
 		self.network_data.save_changes = True
 		# Change it for use a new preprocessing function
 		self.set_preprocess_function()

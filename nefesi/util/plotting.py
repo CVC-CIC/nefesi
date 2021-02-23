@@ -13,7 +13,7 @@ from .ColorNaming import colors as color_names
 import networkx as nx
 from ..interface.popup_windows.combobox_popup_window import ComboboxPopupWindow
 from ..interface.popup_windows.special_value_popup_window import SpecialValuePopupWindow
-from keras.preprocessing import image
+# from keras.preprocessing import image
 
 LIST_OF_BUTTONS_TO_NO_DETACH = []
 NODES_CROPPED_IN_SUMMARY = 2

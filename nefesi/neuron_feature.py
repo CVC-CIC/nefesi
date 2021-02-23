@@ -1,6 +1,6 @@
 import numpy as np
 
-from keras.preprocessing import image
+# from keras.preprocessing import image
 
 def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False, mode = 1,threshold_to_noncount = 0.1, only_if_not_done=False):
     """This function build the neuron features (NF) for all neurons

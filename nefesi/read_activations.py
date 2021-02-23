@@ -1,6 +1,5 @@
 import numpy as np
 import warnings
-from .interface_DeepFramework.DeepFramework import create_intermediate_funcs
 from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
 import PIL
 from scipy.interpolate import RectBivariateSpline
@@ -18,22 +17,8 @@ def get_activations(model, model_inputs, layers_name, only_max_and_argmax = True
     :return: List of activations, one output for each given layer.
             xy_locations, activations = get_activations(.....)
     """
-    inp = model.input
-    if type(inp) is not list:
-        inp = [inp]
-    if isinstance(layers_name, str):
-        layers_name = [layers_name]
+    layer_outputs = model.calculate_activations(layers_name, model_inputs)
 
-    # uses .get_output_at() instead of .output. In case a layer is
-    # connected to multiple inputs. Assumes the input at node index=0
-    # is the input where the model inputs come from.
-    outputs = [model.get_layer(layer).output for layer in layers_name]
-    # evaluation functions
-    # K.learning_phase flag = 1 (train mode)
-    #funcs = K.function(inp+ [K.learning_phase()], outputs) #modifies learning parameters
-    #layer_outputs = funcs([model_inputs, 1])
-    funcs = create_intermediate_funcs(inp, outputs)
-    layer_outputs = funcs([model_inputs])
     if not only_max_and_argmax:
         return layer_outputs
     else:

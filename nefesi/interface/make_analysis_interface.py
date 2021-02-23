@@ -23,7 +23,7 @@ except ImportError:
     from Tkinter import *
     from Tkinter import ttk
 
-from keras.models import load_model
+from ..interface_DeepFramework.DeepFramework import deep_model, model_file_extension
 import dill as pickle
 import warnings
 class MakeAnalysisInterface():
@@ -261,10 +261,10 @@ class MakeAnalysisInterface():
         return dir_name
 
     def _on_click_set_model(self, label_selection):
-        model_file = self.ask_for_file(title="Select model (.h5 file)",type='h5')
+        model_file = self.ask_for_file(title="Select model (.h5 or .pkl file)",type=model_file_extension)
         if model_file != '':
             self.model_file = model_file
-            self.model = load_model(model_file)
+            self.model = deep_model(model_file)
             label_selection.configure(text = self.model.name)
             self.update_layers_to_evaluate(model=self.model)
         self.update_ok_button_state()

@@ -9,12 +9,12 @@ import warnings
 # from keras.preprocessing.image import ImageDataGenerator
 from .interface_DeepFramework.DeepFramework import data_batch_generator
 
-from keras.applications.vgg16 import preprocess_input as preproces_vgg
-
-from keras.models import load_model
-from keras.backend import clear_session
+# from keras.applications.vgg16 import preprocess_input as preproces_vgg
+#
+# from keras.models import load_model
+# from keras.backend import clear_session
 from .neuron_data import NeuronData
-from keras.preprocessing import image
+# from keras.preprocessing import image
 # from .read_activations import get_argmax_and_max2
 from .read_activations import get_argmax_and_max as get_argmax_and_max2
 from .util.general_functions import get_key_of_index
@@ -24,9 +24,9 @@ from .util.image import ImageDataset
 from .read_activations import fill_all_layers_data_batch
 from .class_index import get_concept_labels
 from .util.ColorNaming import colors as color_names
-from keras.layers import Conv2D, Input
-from keras.models import Sequential, Model, clone_model
-from keras import backend
+# from keras.layers import Conv2D, Input
+# from keras.models import Sequential, Model, clone_model
+# from keras import backend
 from tensorflow import Session
 import nefesi.util.GPUtil as gpu
 gpu.assignGPU()
@@ -254,24 +254,23 @@ class NetworkData(object):
 
         num_images = data_batch.samples
         num_images = 500  # debug
-        idx_start = data_batch.batch_index
+        idx_start = 0
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
         #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
         buffer_size = 3
         #Init all neuron_data attributes of all layers
         for i in range(len(self.layers_data)):
-            neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
+            # neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
+            neurons_of_layer = self.model.neurons_of_layer(self.layers_data[i].layer_id)
             self.layers_data[i].neurons_data = np.zeros(neurons_of_layer, dtype=np.object)
             for j in range(neurons_of_layer):
                 self.layers_data[i].neurons_data[j] = NeuronData(num_max_activations, batch_size, buffered_iterations=buffer_size)
 
-        file_names = np.array(data_batch.filenames)
         start = time.time()
         for n_batches, imgs in enumerate(data_batch.iterator):
             images = imgs[0]
-            # Apply the preprocessing function to the inputs
-            actual_file_names = file_names[data_batch.index_array[idx_start: idx_end]]
+            actual_file_names = imgs[2]
             # Search the maximum activations
             fill_all_layers_data_batch(actual_file_names, images, self.model, self.layers_data)
 

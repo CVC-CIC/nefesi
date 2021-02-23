@@ -11,7 +11,7 @@ setup(
     description='CNN analysis',
     install_requires=[
         'tensorflow >= 1.1.0',
-        'keras >= 2.0.6',
+        # 'keras >= 2.0.6',
         'numpy >= 1.13.1',
         'scipy >= 0.19.1'],
 )
