@@ -872,6 +872,9 @@ def recursive_receptive_field_per_location(model, current_layer, image_points):
         if padding == 'same':
             # padding = same, means input shape = output shape
             padding = (kernel_size - 1) // 2
+        # add when introducing pytorch
+        elif isinstance(padding, tuple):
+            padding = np.array(padding)
         else:
             padding = np.zeros(shape=2, dtype=np.int)
 
@@ -889,7 +892,7 @@ def recursive_receptive_field_per_location(model, current_layer, image_points):
     # input_layers, _ = get_layer_inputs(model, current_layer)
     # pytorch
     _, current_index = model.get_layer(current_layer.name, get_index=True)
-    input_layers = model.layers[:current_index-1]
+    input_layers = model.layers[:current_index]
 
     im_points = np.copy(image_points)
     if len(input_layers) > 0:

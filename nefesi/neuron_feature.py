@@ -1,6 +1,7 @@
 import numpy as np
 
 # from keras.preprocessing import image
+from PIL import Image
 
 def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False, mode = 1,threshold_to_noncount = 0.1, only_if_not_done=False):
     """This function build the neuron features (NF) for all neurons
@@ -60,7 +61,8 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False
                         nf /= (max_v - min_v)
                 """
                 #save as PIL image
-                neuron.neuron_feature = image.array_to_img(nf)
+                # neuron.neuron_feature = image.array_to_img(nf)
+                neuron.neuron_feature = Image.fromarray(nf, mode='RGB')
                 if verbose and i%50==0:
                     print("NF - "+layer_data.layer_id+". Neurons completed: "+str(i)+"/"+str(len(layer_data.neurons_data)))
             else:

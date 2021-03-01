@@ -4,7 +4,8 @@ from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentati
 import PIL
 from scipy.interpolate import RectBivariateSpline
 
-ACTIVATIONS_BATCH_SIZE = 200
+# ACTIVATIONS_BATCH_SIZE = 200
+ACTIVATIONS_BATCH_SIZE = 100
 
 def get_activations(model, model_inputs, layers_name, only_max_and_argmax = True):
     """Returns the output (activations) from the model.
@@ -80,22 +81,25 @@ def get_one_neuron_activations(model, model_inputs, idx_neuron, layer_name=None)
 
     :return: List of activations, one output for each given layer.
     """
-    inp = model.input
-    if type(inp) is not list:
-        inp = [inp]
+    # inp = model.input
+    # if type(inp) is not list:
+    #     inp = [inp]
+    #
+    # # uses .get_output_at() instead of .output. In case a layer is
+    # # connected to multiple inputs. Assumes the input at node index=0
+    # # is the input where the model inputs come from.
+    # outputs = [layer.output[...,idx_neuron] for layer in model.layers if
+    #            layer.name == layer_name or layer_name is None]
+    #
+    # # evaluation functions
+    # funcs = create_intermediate_funcs(inp, outputs)
+    # layer_outputs = funcs([model_inputs])
 
-    # uses .get_output_at() instead of .output. In case a layer is
-    # connected to multiple inputs. Assumes the input at node index=0
-    # is the input where the model inputs come from.
-    outputs = [layer.output[...,idx_neuron] for layer in model.layers if
-               layer.name == layer_name or layer_name is None]
+    layer_outputs = model.calculate_activations([layer_name], model_inputs)
 
-    # evaluation functions
-    funcs = create_intermediate_funcs(inp, outputs)
-    layer_outputs = funcs([model_inputs])
     if len(layer_outputs) > 1:
         warnings.warn("Layer outputs is a list of more than one element? REVIEW THIS CODE SECTION!",RuntimeWarning)
-    return layer_outputs[0]
+    return layer_outputs[0][...,idx_neuron]
 
 def fill_all_layers_data_batch(file_names, images, model, layers_data):
     """Returns the neurons with their maximum activations as the
@@ -195,7 +199,8 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
     if idx_neuron is None:
         for layer in model.layers:
             if layer.name == layer_name:
-                neurons_of_layer = layer.output.shape[-1]
+                # neurons_of_layer = layer.output.shape[-1]
+                neurons_of_layer = model.neurons_of_layer(layer.name)
                 break
         else:
             raise ValueError('Layer '+layer_name+"don't exist in the model "+model.name)

@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 import os.path
 import numpy as np
 import types
+from PIL import Image
 
 # pytorch model has no input shape. Attention: pytorch is channel first, keras is channel last.
 input_shape = (None, 224, 224, 3)
@@ -37,7 +38,7 @@ class DeepModel():
         for name, layer in self.pytorchmodel.named_modules():
             if not isinstance(layer, torch.nn.Sequential) and name != '':
                 # add new attributes
-                layer.name = '{}({})'.format(name, layer._get_name())
+                layer.name = '{}_{}'.format(name, layer._get_name())
                 layer.get_config = types.MethodType(get_config, layer)
                 self.all_layers.append(layer)
                 layers_setting_hook.append(LayerAttributes(layer))
@@ -92,14 +93,23 @@ class DeepModel():
         pass
 
     def calculate_activations(self, layers_name, model_inputs):
+        if not isinstance(layers_name, list):
+            layers_name = [layers_name]
+        # in case that the inputs are numpy array instead of tensors.
+        if not torch.is_tensor(model_inputs):
+            if model_inputs.shape[3] == 3:
+                model_inputs = np.transpose(model_inputs, (0, 3, 1, 2))
+            else:
+                raise Exception("Unforeseen numpy array")
+            model_inputs = torch.from_numpy(model_inputs)
         model_inputs = model_inputs.to(self.device)
         outputs = [LayerActivations(self.get_layer(layer)) for layer in layers_name]
         self.pytorchmodel.forward(model_inputs)
         layer_outputs = [output.features for output in outputs]
-        # for index, name in enumerate(layers_name):
-        #     layer = self.get_layer(name)
-        #     if not hasattr(layer, "output_shape"):
-        #         layer.output_shape = layer_outputs[index].shape
+
+        # remove the hooks.
+        for hook in outputs:
+            hook.remove()
         return layer_outputs
 
 
@@ -109,6 +119,7 @@ class LayerActivations:
 
     def hook_fn(self, module, input, output):
         feature_np = output.cpu().detach().numpy()
+        # channel first to channel last.
         self.features = np.transpose(feature_np, (0, 2, 3, 1))
 
     def remove(self):
@@ -156,8 +167,10 @@ class ImageFolderWithPaths(ImageFolder):
         original_tuple = super(ImageFolderWithPaths, self).__getitem__(index)
         # the image file path
         path = self.imgs[index][0]
+        path_split = path.split('/')
+        filename = "{}/{}".format(path_split[-2], path_split[-1])
         # make a new tuple that includes original and the path
-        tuple_with_path = (original_tuple + (path,))
+        tuple_with_path = (original_tuple + (filename,))
         return tuple_with_path
 
 
@@ -168,7 +181,8 @@ class DataBatchGenerator():
             preprocessing_function.transforms.append(
                     transforms.Grayscale(num_output_channels=1))
         dataset = ImageFolderWithPaths(src_dataset, transform=preprocessing_function)
-        self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+        shuffle = False
+        self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=0)
         pass
 
     # the attributes that are called
@@ -196,19 +210,32 @@ class DataBatchGenerator():
     def filenames(self):
         return self.dataloader.dataset.samples
 
-    @property
-    def index_array(self):
-        pass
-
 
 def get_preprocess_function(model_name):
-    preprocess = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-    return preprocess
+    # preprocess = transforms.Compose([
+    #     transforms.Resize(256),
+    #     transforms.CenterCrop(224),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    # ])
+    # return preprocess
+
+    return __like_keras_preprocess
+
+
+def __like_keras_preprocess(img):
+    # resize
+    img = img.resize((224, 224), 0)
+    img = transforms.ToTensor()(img)
+    img *= 255.0
+    # 'RGB'->'BGR'
+    img = img[[2, 1, 0], :, :]
+    # normalize
+    mean = [103.939, 116.779, 123.68]
+    img[0, :, :] -= mean[0]
+    img[1, :, :] -= mean[1]
+    img[2, :, :] -= mean[2]
+    return img
 
 
 def get_config(self):
@@ -219,6 +246,61 @@ def get_config(self):
         if hasattr(self, attr):
             config[target_attr_list[index]] = getattr(self, attr)
     return config
+
+
+def _load_multiple_images(src_dataset, img_list, color_mode, target_size, preprocessing_function=None,
+                          prep_function=True):
+    """Returns a list of images after applying the
+     corresponding transformations.
+    :param image_names: List of strings, name of the images.
+    :param prep_function: Boolean.
+    :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
+    """
+    grayscale = color_mode == 'grayscale'
+
+    imgs = []
+    for img_name in img_list:
+        img = Image.open(src_dataset + img_name).convert('RGB')
+        if grayscale:
+            img = img.convert('L')
+        img = img.resize(target_size, Image.ANTIALIAS)
+        if preprocessing_function is not None and prep_function is True:
+            img = preprocessing_function(img)
+        else:
+            img = transforms.ToTensor()(img)
+        imgs.append(img)
+    # concatenate directly into a
+    # shared memory tensor to avoid an extra copy
+    elem = imgs[0]
+    numel = sum([x.numel() for x in imgs])
+    storage = elem.storage()._new_shared(numel)
+    out = elem.new(storage)
+    imgs_batch = torch.stack(imgs, 0, out=out)
+
+    # transform to numpy
+    imgs_batch = imgs_batch.numpy()
+    imgs_batch = np.transpose(imgs_batch, (0, 2, 3, 1))
+
+    return imgs_batch
+
+
+def _load_single_image(src_dataset, img_name, color_mode, target_size, preprocessing_function=None,
+                       prep_function=False):
+    """Loads an image into PIL format.
+    :param img_name: String, name of the image.
+    :return: PIL image instance
+    """
+    grayscale = color_mode == 'grayscale'
+
+    img = Image.open(src_dataset + img_name).convert('RGB')
+    if grayscale:
+        img = img.convert('L')
+    img = img.resize(target_size, Image.ANTIALIAS)
+
+    if preprocessing_function is not None and prep_function:
+        img = preprocessing_function(img)
+    img = np.array(img)
+    return img
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 import numpy as np
 import os
-# from keras.preprocessing import image
-from PIL import Image
+from ..interface_DeepFramework.DeepFramework import load_single_image, load_multiple_images
 from scipy.ndimage.interpolation import rotate
 import warnings
 
@@ -143,25 +142,9 @@ class ImageDataset():
 
         :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
         """
-        #Have the first to generalize channel shapes (in order to don't need to recode if new color_modes will be accepted)
-        img = self._load_image(image_names[0])
-        #Gets the output shape in order to assing a shape to images matrix
-        outputShape = [len(image_names)]
-        outputShape.extend(list(img.shape))
-        #Declare the numpy where all images will be saved
-        images = np.zeros(shape=tuple(outputShape),dtype=img.dtype)
-        images[0] = img #assign de first
-        for i in range(1,len(image_names)):
-            img = self._load_image(image_names[i])
-            images[i] = image.img_to_array(img)
-
-        if self.preprocessing_function is not None and prep_function is True:
-            #dtype = images.dtype
-            #also for problems with the keras backend
-            images = images.astype(np.float32)
-            images = self.preprocessing_function(images) #np.asarray(images)) #Now are array right since the beginning
-                                                            #NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
-        return images
+        return load_multiple_images(self.src_dataset, image_names, self.color_mode, self.target_size,
+                                    preprocessing_function=self.preprocessing_function,
+                                    prep_function=prep_function)
 
     def get_patch(self, img_name, crop_pos=None):
         """Returns a region patch from an image.
@@ -186,21 +169,9 @@ class ImageDataset():
 
         :return: PIL image instance
         """
-        grayscale = self.color_mode == 'grayscale'
-
-        # img = image.load_img(self.src_dataset + img_name,
-        #                grayscale=grayscale,
-        #                target_size=self.target_size)
-        img = Image.open(img_name).convert('RGB')
-        if grayscale:
-            img = img.convert('L')
-        img = img.resize(self.target_size, Image.ANTIALIAS)
-
-        img = np.array(img)
-
-        if self.preprocessing_function is not None and prep_function:
-            img = self.preprocessing_function(img)
-        return img
+        return load_single_image(self.src_dataset, img_name, self.color_mode, self.target_size,
+                                 preprocessing_function=self.preprocessing_function,
+                                 prep_function=prep_function)
 
 
     def get_concepts_of_region(self, image_name, crop_pos,  normalized = True, dataset_name='ADE20K',

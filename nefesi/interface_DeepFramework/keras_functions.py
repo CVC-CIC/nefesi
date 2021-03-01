@@ -1,6 +1,7 @@
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 import keras.backend as K
+from keras.preprocessing import image
 import numpy as np
 
 
@@ -146,3 +147,54 @@ def get_preprocess_function(model_name):
     else:
         preprocess_input = None
     return preprocess_input
+
+
+def _load_multiple_images(src_dataset, img_list, color_mode, target_size, preprocessing_function=None,
+                          prep_function=True):
+    """Returns a list of images after applying the
+     corresponding transformations.
+
+    :param image_names: List of strings, name of the images.
+    :param prep_function: Boolean.
+
+    :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
+    """
+    # Have the first to generalize channel shapes (in order to don't need to recode if new color_modes will be accepted)
+    img = _load_single_image(src_dataset, img_list[0], color_mode, target_size)
+    # Gets the output shape in order to assing a shape to images matrix
+    outputShape = [len(img_list)]
+    outputShape.extend(list(img.shape))
+    # Declare the numpy where all images will be saved
+    images = np.zeros(shape=tuple(outputShape), dtype=img.dtype)
+    images[0] = img  # assign de first
+    for i in range(1, len(img_list)):
+        img = _load_single_image(src_dataset, img_list[i], color_mode, target_size)
+        images[i] = image.img_to_array(img)
+
+    if preprocessing_function is not None and prep_function is True:
+        # dtype = images.dtype
+        # also for problems with the keras backend
+        images = images.astype(np.float32)
+        images = preprocessing_function(images)  # np.asarray(images)) #Now are array right since the beginning
+        # NEEDS TO BE TESTED IF REALLY CONTINUE WORKING FINE
+    return images
+
+
+def _load_single_image(src_dataset, img_name, color_mode, target_size, preprocessing_function=None,
+                       prep_function=False):
+    """Loads an image into PIL format.
+
+    :param img_name: String, name of the image.
+
+    :return: PIL image instance
+    """
+    grayscale = color_mode == 'grayscale'
+
+    img = image.load_img(src_dataset + img_name,
+                         grayscale=grayscale,
+                         target_size=target_size)
+    img = np.array(img)
+
+    if preprocessing_function is not None and prep_function:
+        img = preprocessing_function(img)
+    return img

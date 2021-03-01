@@ -7,7 +7,7 @@ import numpy as np
 import warnings
 
 # from keras.preprocessing.image import ImageDataGenerator
-from .interface_DeepFramework.DeepFramework import data_batch_generator
+from .interface_DeepFramework.DeepFramework import data_batch_generator, deep_model
 
 # from keras.applications.vgg16 import preprocess_input as preproces_vgg
 #
@@ -253,7 +253,6 @@ class NetworkData(object):
                              )
 
         num_images = data_batch.samples
-        num_images = 500  # debug
         idx_start = 0
         idx_end = idx_start + data_batch.batch_size
         #the min between full size and 0,5MB by array (and 64MB for the img_name)
@@ -1369,7 +1368,7 @@ class NetworkData(object):
         obj's with news implementations of network_data that can have more attributes
         """
         if model_file is not None:
-            my_net.model = load_model(model_file)
+            my_net.model = deep_model(model_file)
         if my_net.model is None:
             warnings.warn("The model was *not* loaded. Load it manually.")
 
@@ -1461,6 +1460,8 @@ class NetworkData(object):
                 special_value = self.default_thr_pc
         key = get_key_of_index(index, special_value, operation='mean')
         if type(layers) in [str, np.str_]:
+            # # for pytorch
+            # layers = layers.split('(')[0]
             layers = self.get_layers_analyzed_that_match_regEx(layers)
         for layer in layers:
             layer_data = self.get_layer_by_name(layer=layer)
