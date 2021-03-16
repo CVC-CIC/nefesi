@@ -19,6 +19,8 @@ from ..network_data import NetworkData
 from ..interface.interface import Interface
 from ..interface.make_analysis_interface import MakeAnalysisInterface
 
+from ..interface_DeepFramework.DeepFramework import model_file_extension
+
 STYLE = 'clam'
 class SelectionInterface():
     def __init__(self):
@@ -76,7 +78,8 @@ class SelectionInterface():
                                               initialdir=init_folder, initialfile=init_network )
         if network_data_file != '':
             name = os.path.splitext(os.path.basename(network_data_file))[0]
-            model_file = self.ask_for_file(title="Select Model (.h5)", type="h5", initialfile=name+'.h5')
+            model_file = self.ask_for_file(title="Select model (.h5 or .pkl file)", type=model_file_extension,
+                                           initialfile=name+model_file_extension)
             model_file = model_file if model_file != '' else None
             network_data = NetworkData.load_from_disk(file_name=network_data_file, model_file=model_file)
             init_folder = os.path.dirname(network_data_file)

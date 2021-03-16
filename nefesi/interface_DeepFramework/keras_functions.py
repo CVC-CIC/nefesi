@@ -1,5 +1,5 @@
 from keras.models import load_model
-from keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator, DirectoryIterator
 import keras.backend as K
 from keras.preprocessing import image
 import numpy as np
@@ -32,12 +32,19 @@ class DeepModel():
     def _network_nodes(self):
         return self.kerasmodel._network_nodes
 
-    def get_layer(self, layer_name):
+    def get_layer(self, layer_name, get_index=False):
         """
         Retrieves a layer based on either its name (unique) or index.
         :return:
         """
-        return self.kerasmodel.get_layer(layer_name)
+        for index, layer in enumerate(self.layers):
+            if layer.name == layer_name:
+                if get_index:
+                    return layer, index
+                else:
+                    return layer
+
+        raise ValueError('No such layer: ' + layer_name)
 
     def neurons_of_layer(self, layer_name):
         return self.kerasmodel.get_layer(layer_name).output_shape[-1]
@@ -74,8 +81,8 @@ class DeepModel():
 class ImageWithNames(DirectoryIterator):
     def __init__(self, *args, **kwargs):
         super(ImageWithNames, self).__init__(*args, **kwargs)
-        # self.filenames_np = np.array(self.filenames)
-        self.filenames_np = np.array(self.filepaths)
+        self.filenames_np = np.array(self.filenames)
+        # self.filenames_np = np.array(self.filepaths)
 
     def _get_batches_of_transformed_samples(self, index_array):
         original_tuple = super(ImageWithNames, self)._get_batches_of_transformed_samples(index_array)
@@ -95,12 +102,13 @@ class DataBatchGenerator():
         #     shuffle=True,
         #     color_mode=color_mode
         # )
+        shuffle = False
         self.keras_data_batch = ImageWithNames(
             src_dataset,
             datagen,
             target_size=target_size,
             batch_size=batch_size,
-            shuffle=True,
+            shuffle=shuffle,
             color_mode=color_mode
         )
 

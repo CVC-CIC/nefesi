@@ -888,9 +888,9 @@ def recursive_receptive_field_per_location(model, current_layer, image_points):
     # apply the padding on the receptive field window.
     image_points -= padding[[0, 0, 1, 1]]
 
-    # keras
+    # Original version for keras
     # input_layers, _ = get_layer_inputs(model, current_layer)
-    # pytorch
+    # For compatibility with pytorch
     _, current_index = model.get_layer(current_layer.name, get_index=True)
     input_layers = model.layers[:current_index]
 

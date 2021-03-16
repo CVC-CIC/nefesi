@@ -66,6 +66,10 @@ class DeepModel():
         return input_shape
 
     def get_layer(self, layer_name, get_index=False):
+        """
+        Retrieves a layer based on either its name (unique) or index.
+        :return:
+        """
         for index, layer in enumerate(self.layers):
             if layer.name == layer_name:
                 if get_index:
@@ -225,7 +229,7 @@ def get_preprocess_function(model_name):
 
 def __like_keras_preprocess(img):
     # resize
-    img = img.resize((224, 224), 0)
+    img = img.resize((224, 224), Image.NEAREST)
     img = transforms.ToTensor()(img)
     img *= 255.0
     # 'RGB'->'BGR'
@@ -244,8 +248,67 @@ def get_config(self):
     target_attr_list = ["kernel_size", "strides", "padding"]
     for index, attr in enumerate(attr_list):
         if hasattr(self, attr):
-            config[target_attr_list[index]] = getattr(self, attr)
+            value = getattr(self, attr)
+            if isinstance(value, int):
+            # maxpooling layer will return int value.
+                value = (value, value)
+            config[target_attr_list[index]] = value
     return config
+
+
+# def _load_multiple_images(src_dataset, img_list, color_mode, target_size, preprocessing_function=None,
+#                           prep_function=True):
+#     """Returns a list of images after applying the
+#      corresponding transformations.
+#     :param image_names: List of strings, name of the images.
+#     :param prep_function: Boolean.
+#     :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
+#     """
+#     grayscale = color_mode == 'grayscale'
+#
+#     imgs = []
+#     for img_name in img_list:
+#         img = Image.open(src_dataset + img_name).convert('RGB')
+#         if grayscale:
+#             img = img.convert('L')
+#         img = img.resize(target_size, Image.NEAREST)
+#         if preprocessing_function is not None and prep_function is True:
+#             img = preprocessing_function(img)
+#         else:
+#             img = transforms.ToTensor()(img)
+#         imgs.append(img)
+#     # concatenate directly into a
+#     # shared memory tensor to avoid an extra copy
+#     elem = imgs[0]
+#     numel = sum([x.numel() for x in imgs])
+#     storage = elem.storage()._new_shared(numel)
+#     out = elem.new(storage)
+#     imgs_batch = torch.stack(imgs, 0, out=out)
+#
+#     # transform to numpy
+#     imgs_batch = imgs_batch.numpy()
+#     imgs_batch = np.transpose(imgs_batch, (0, 2, 3, 1))
+#
+#     return imgs_batch
+#
+#
+# def _load_single_image(src_dataset, img_name, color_mode, target_size, preprocessing_function=None,
+#                        prep_function=False):
+#     """Loads an image into PIL format.
+#     :param img_name: String, name of the image.
+#     :return: PIL image instance
+#     """
+#     grayscale = color_mode == 'grayscale'
+#
+#     img = Image.open(src_dataset + img_name).convert('RGB')
+#     if grayscale:
+#         img = img.convert('L')
+#     img = img.resize(target_size, Image.NEAREST)
+#
+#     if preprocessing_function is not None and prep_function:
+#         img = preprocessing_function(img)
+#     img = np.array(img)
+#     return img
 
 
 def _load_multiple_images(src_dataset, img_list, color_mode, target_size, preprocessing_function=None,
@@ -256,30 +319,14 @@ def _load_multiple_images(src_dataset, img_list, color_mode, target_size, prepro
     :param prep_function: Boolean.
     :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
     """
-    grayscale = color_mode == 'grayscale'
-
     imgs = []
     for img_name in img_list:
-        img = Image.open(src_dataset + img_name).convert('RGB')
-        if grayscale:
-            img = img.convert('L')
-        img = img.resize(target_size, Image.ANTIALIAS)
-        if preprocessing_function is not None and prep_function is True:
-            img = preprocessing_function(img)
-        else:
-            img = transforms.ToTensor()(img)
+        img = _load_single_image(src_dataset, img_name, color_mode, target_size,
+                                 preprocessing_function=preprocessing_function,
+                                 prep_function=prep_function)
         imgs.append(img)
-    # concatenate directly into a
-    # shared memory tensor to avoid an extra copy
-    elem = imgs[0]
-    numel = sum([x.numel() for x in imgs])
-    storage = elem.storage()._new_shared(numel)
-    out = elem.new(storage)
-    imgs_batch = torch.stack(imgs, 0, out=out)
-
-    # transform to numpy
-    imgs_batch = imgs_batch.numpy()
-    imgs_batch = np.transpose(imgs_batch, (0, 2, 3, 1))
+    # concatenate
+    imgs_batch = np.array(imgs)
 
     return imgs_batch
 
@@ -295,11 +342,15 @@ def _load_single_image(src_dataset, img_name, color_mode, target_size, preproces
     img = Image.open(src_dataset + img_name).convert('RGB')
     if grayscale:
         img = img.convert('L')
-    img = img.resize(target_size, Image.ANTIALIAS)
+    img = img.resize(target_size, Image.NEAREST)
 
     if preprocessing_function is not None and prep_function:
         img = preprocessing_function(img)
-    img = np.array(img)
+        # transform to numpy
+        img = img.numpy()
+        img = np.transpose(img, (1, 2, 0))
+    else:
+        img = np.array(img)
     return img
 
 
