@@ -62,7 +62,7 @@ def compute_nf(network_data, layer_data, verbose=True, maximize_contrast = False
                 """
                 #save as PIL image
                 # neuron.neuron_feature = image.array_to_img(nf)
-                neuron.neuron_feature = Image.fromarray(nf, mode='RGB')
+                neuron.neuron_feature = Image.fromarray(nf.astype('uint8'), mode='RGB')
                 if verbose and i%50==0:
                     print("NF - "+layer_data.layer_id+". Neurons completed: "+str(i)+"/"+str(len(layer_data.neurons_data)))
             else:

@@ -7,7 +7,7 @@ import numpy as np
 import warnings
 
 # from keras.preprocessing.image import ImageDataGenerator
-from .interface_DeepFramework.DeepFramework import data_batch_generator, deep_model
+from .interface_DeepFramework.DeepFramework import data_batch_generator, deep_model, model_file_extension
 
 # from keras.applications.vgg16 import preprocess_input as preproces_vgg
 #
@@ -1335,7 +1335,7 @@ class NetworkData(object):
         os.makedirs(name=self.save_path, exist_ok=True)
         model = self.model
         if save_model:
-            self.model.save(model_name + '.h5')
+            self.model.save(model_name + '.' + model_file_extension)
         #Save the object without model info
         self.model = None
         if erase_partials:

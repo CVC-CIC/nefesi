@@ -26,7 +26,9 @@ class DeepModel():
         self.pytorchmodel.to(self.device)
         self.pytorchmodel.eval()
         self.name = os.path.basename(model_name).split(".")[0]
-        self.flag_set_layer = False   # Whether attribute "layers" is ready
+
+        # Some new attributes are added for the compatibility of the keras code.
+        self.set_layers()
 
     def set_layers(self):
         """
@@ -55,10 +57,6 @@ class DeepModel():
         i.e.: layer.name,
         :return:
         """
-        if not self.flag_set_layer:
-            self.set_layers()
-            self.flag_set_layer = True
-
         return self.all_layers
 
     @property
@@ -80,21 +78,10 @@ class DeepModel():
         raise ValueError('No such layer: ' + layer_name)
 
     def neurons_of_layer(self, layer_name):
-        # Pytorch has the separate RELU layer, we need to return the channels of the last layer.
-        last_layer = None
-        current_layer = None
-        for layer in self.layers:
-            if layer.name == layer_name:
-                current_layer = layer
-                break
-            last_layer = layer
-        if hasattr(current_layer, 'out_channels'):
-            return current_layer.out_channels
-        else:
-            return last_layer.out_channels
+        return self.get_layer(layer_name).output_shape[-1]
 
     def save(self, model_name):
-        pass
+        torch.save(self.pytorchmodel, model_name)
 
     def calculate_activations(self, layers_name, model_inputs):
         if not isinstance(layers_name, list):
@@ -123,8 +110,14 @@ class LayerActivations:
 
     def hook_fn(self, module, input, output):
         feature_np = output.cpu().detach().numpy()
-        # channel first to channel last.
-        self.features = np.transpose(feature_np, (0, 2, 3, 1))
+        if len(feature_np.shape) == 4:
+            # channel first to channel last.
+            self.features = np.transpose(feature_np, (0, 2, 3, 1))
+        elif len(feature_np.shape) == 2:
+            # for dense layer
+            self.features = feature_np
+        else:
+            raise Exception("Unexpected shape.")
 
     def remove(self):
         self.hook.remove()
@@ -187,7 +180,6 @@ class DataBatchGenerator():
         dataset = ImageFolderWithPaths(src_dataset, transform=preprocessing_function)
         shuffle = False
         self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=0)
-        pass
 
     # the attributes that are called
     @property
