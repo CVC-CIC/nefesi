@@ -220,6 +220,16 @@ def get_preprocess_function(model_name):
 
 
 def __like_keras_preprocess(img):
+    if type(img) is np.ndarray:
+        # color_ivet index will call this after load the images.
+        # 'RGB'->'BGR'
+        img = img[..., ::-1]
+        img = img.astype('float32', copy=False)
+        mean = [103.939, 116.779, 123.68]
+        img[..., 0] -= mean[0]
+        img[..., 1] -= mean[1]
+        img[..., 2] -= mean[2]
+        return img
     # resize
     img = img.resize((224, 224), Image.NEAREST)
     img = transforms.ToTensor()(img)

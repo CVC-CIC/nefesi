@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from ..interface_DeepFramework.DeepFramework import load_single_image, load_multiple_images
+from ..interface_DeepFramework.image_processing import array_to_img
 from scipy.ndimage.interpolation import rotate
 import warnings
 
@@ -323,7 +324,7 @@ def image2max_gray(img):
     res = np.tile(res, (1, 1, 3))
     res = np.reshape(res, img.shape)
 
-    res = image.array_to_img(res, scale=True)
+    res = array_to_img(res, scale=True)
     return res
 
 

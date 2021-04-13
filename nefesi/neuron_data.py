@@ -515,7 +515,7 @@ class NeuronData(object):
                 get_color_selectivity_index(network_data=network_data, layer_name=layer_name,
                                             neuron_idx=neuron_idx, type=type, th = th,
                                             activations_masks=activations_masks, return_non_normaliced_sum=True)
-            print('Color idx: '+layer_name+' '+str(neuron_idx)+'/'+
+            print('Color_label idx: '+layer_name+' '+str(neuron_idx)+'/'+
                   str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
 
         if return_non_normalized_sum:

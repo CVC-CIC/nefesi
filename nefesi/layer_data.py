@@ -220,19 +220,21 @@ class LayerData(object):
             symmetry[-1] = np.mean(symmetry[:-1])
             index['symmetry'] = symmetry
 
-        if 'color' in indexes :
+        if 'color_label' in indexes:
             result = neuron.color_selectivity_idx(layer_name=self.layer_id, network_data=network_data,
                                                   neuron_idx=neuron_idx, th=thr_pc,
                                                   activations_masks=activations_masks,
                                                   return_non_normalized_sum=return_non_normalized_sum)
             if return_non_normalized_sum:
-                index['color'], non_normalized_sum['color'] = result
+                index['color_label'], non_normalized_sum['color_label'] = result
             else:
-                index['color'] = result
+                index['color_label'] = result
             #index['ivet_color'] = neuron.ivet_color_selectivity_idx(model, self, dataset)
 
         if 'color_ivet' in indexes:
             index['color_ivet']=neuron.ivet_color_selectivity_idx( model, self, dataset)
+            print('Color_ivet idx: ' + self.layer_id + ' ' + str(neuron_idx) + '/' +
+                  str(len(network_data.get_layer_by_name(self.layer_id).neurons_data)))
 
         if 'shape' in indexes:
             index['shape']= neuron.shape_selectivity_idx(model, self, dataset)
