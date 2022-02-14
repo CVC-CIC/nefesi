@@ -1,4 +1,4 @@
-from . import read_activations
+from functions import read_activations
 from .util.image import rotate_images
 import numpy as np
 

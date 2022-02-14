@@ -1,12 +1,11 @@
 import numpy as np
 import os
-from .symmetry_index import SYMMETRY_AXES
-from . import symmetry_index as sym
-from .class_index import get_class_selectivity_idx, get_concept_selectivity_of_neuron
-from functions.color_index import get_ivet_color_selectivity_index, get_color_selectivity_index, get_shape_selectivity_index
-from .orientation_index import get_orientation_index
-from .util.image import crop_center, expand_im
 
+
+from functions.color_index import  get_shape_selectivity_index,get_color_selectivity_index_new
+
+from functions.image import crop_center, expand_im
+from PIL import Image
 class NeuronData(object):
     """This class contains all the results related with a neuron (filter) already
     evaluated, including:
@@ -84,7 +83,7 @@ class NeuronData(object):
 
 
     def sortResults(self, reduce_data = False):
-        idx = np.argpartition(-self.activations[:self._index], range(self._max_activations))[:self._max_activations]
+        idx = np.argpartition(-(self.activations[:self._index]), range(self._max_activations))[:self._max_activations]
         self._index = self._max_activations
         if reduce_data:
             self.activations = self.activations[idx]
@@ -113,7 +112,7 @@ class NeuronData(object):
         max_activation = np.max(self.activations)
         if max_activation == 0:
             return -1
-        self.norm_activations = self.activations / abs(max_activation)
+        self.norm_activations = self.activations / max_activation
 
     def set_max_activations(self):
         self.activations = self.activations[:self._max_activations]
@@ -129,7 +128,7 @@ class NeuronData(object):
     def neuron_feature(self, neuron_feature):
         self._neuron_feature = neuron_feature
 
-    def get_patches(self, network_data, layer_data, max_rf_size=None):
+    def get_patches(self, network_data, layer_data):
         """Returns the patches (receptive fields) from images in
         `images_id` for this neuron.
 
@@ -138,38 +137,61 @@ class NeuronData(object):
         :return: Images as numpy .
         """
         image_dataset = network_data.dataset
-        receptive_field = layer_data.receptive_field_map
-        rf_size = layer_data.receptive_field_size
-        if layer_data.receptive_field_map is not None:
-            crop_positions = receptive_field[self.xy_locations[:,0],self.xy_locations[:,1]]
 
-            input_locations = layer_data.input_locations[self.xy_locations[:, 0], self.xy_locations[:, 1]]
-        else:
-            crop_positions = [None]*self.xy_locations.shape[0]
-            input_locations = [rf_size]*self.xy_locations.shape[0]
-
-        if max_rf_size is None:
-            max_rf_size = layer_data.neurons_data[0].neuron_feature.size
-        patch = image_dataset.get_patch(self.images_id[0], crop_positions[0])
-        size = rf_size
-        size = tuple([min(a,b) for a,b in zip(size, max_rf_size)])
-        size = size+(patch.shape[-1],) if len(patch.shape) == 3 else size
-
-        patches = np.zeros(shape=(self._max_activations,)+size, dtype=np.float)
+        K=layer_data.receptive_field_Kernel
+        S=layer_data.receptive_field_Stride
+        P=layer_data.receptive_field_Padding
+        patches = np.zeros(shape=[self._max_activations,K,K,3], dtype=np.float)
 
         for i in range(self._max_activations):
-            crop_pos = crop_positions[i]
-            # crop the origin image with previous location
-            patch = image_dataset.get_patch(self.images_id[i], crop_pos)
-            cc = patch.shape
-            # add a black padding to a patch that not match with the receptive
-            # field size.
-            # This is due that some receptive fields has padding
-            # that come of the network architecture.
-            patch = self._adjust_patch_size(patch, crop_pos, rf_size, input_locations[i])
-            patches[i] = crop_center(patch, size)
+            if K < image_dataset.target_size[0]:
+                patches[i] = image_dataset.get_patch(self.images_id[i], self.xy_locations[i], K, P, S,mode='reflect')
+            else:
+                patches[i] = image_dataset._load_image(self.images_id[i])
 
         return patches
+
+
+    def get_patches_out(self, network_data, layer_data,model):
+        """Returns the patches (receptive fields) from images in
+        `images_id` for this neuron.
+
+        :param network_data: The `nefesi.network_data.NetworkData` instance.
+        :param layer_data: The `nefesi.layer_data.LayerData` instance.
+        :return: Images as numpy .
+        """
+        image_dataset = network_data.dataset
+
+        K=layer_data.receptive_field_Kernel
+        S=layer_data.receptive_field_Stride
+        P=layer_data.receptive_field_Padding
+        patches = np.zeros(shape=[self._max_activations,K,K,3], dtype=np.float)
+
+        for i in range(self._max_activations):
+
+            patches[i] = image_dataset.get_patch_out(self.images_id[i], self.xy_locations[i], K, P, S,model,mode='reflect')
+
+        return patches
+
+
+
+    def get_mosaic(self, network_data, layer_data):
+        patches = self.get_patches( network_data, layer_data)
+        K=layer_data.receptive_field_Kernel
+
+        newImage = np.zeros((K*10,K*10,3))
+
+        for n, img in enumerate(patches):
+
+            newImage[K * (n // 10):K * (n // 10)+K,K * (n % 10):K * (n % 10)+K,:]=img
+
+
+        return newImage
+
+
+
+
+
 
     def get_patch_by_idx(self, network_data, layer_data, i, max_rf_size=None):
         image_dataset = network_data.dataset
@@ -289,7 +311,7 @@ class NeuronData(object):
         """
         self.selectivity_idx.pop(idx,None)
 
-    def ivet_color_selectivity_idx(self, model, layer_data, dataset):
+    def color_selectivity_idx_new(self, model, layer_data, dataset):
         """Returns the color selectivity index for this neuron.
 
         :param model: The `keras.models.Model` instance.
@@ -298,9 +320,9 @@ class NeuronData(object):
 
         :return: Float, value of color selectivity index.
         """
-        key = 'ivet_color'
+        key = 'color'
         if key not in self.selectivity_idx:
-            self.selectivity_idx[key] = get_ivet_color_selectivity_index(self, model,
+            self.selectivity_idx[key] = get_color_selectivity_index_new(self, model,
                                                      layer_data, dataset)
         return self.selectivity_idx[key]
 
@@ -498,30 +520,7 @@ class NeuronData(object):
                                                              return_decreasing=True)
         return most_relevant_concept
 
-    def color_selectivity_idx(self, network_data, layer_name, neuron_idx,  type='mean', th = 0.1,
-                              activations_masks=None, return_non_normalized_sum = False):
-        """Returns the color selectivity index for this neuron.
 
-        :param model: The `keras.models.Model` instance.
-        :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
-
-        :return: Float, value of color selectivity index.
-        """
-        key = 'color'+type+str(th)
-        if key not in self.selectivity_idx or \
-        (return_non_normalized_sum and (key not in self.selectivity_idx_non_normaliced_sum)):
-            self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key] = \
-                get_color_selectivity_index(network_data=network_data, layer_name=layer_name,
-                                            neuron_idx=neuron_idx, type=type, th = th,
-                                            activations_masks=activations_masks, return_non_normaliced_sum=True)
-            print('Color_label idx: '+layer_name+' '+str(neuron_idx)+'/'+
-                  str(len(network_data.get_layer_by_name(layer_name).neurons_data)))
-
-        if return_non_normalized_sum:
-            return (self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key])
-        else:
-            return self.selectivity_idx[key]
 
     def max_concept_selectivity_idx(self):
 
@@ -556,66 +555,11 @@ class NeuronData(object):
         return (color_idx[0]['label'], round(np.sum(color_idx['value']),3))
 
 
-    def orientation_selectivity_idx(self, model, layer_data, dataset, degrees_to_rotate = 15):
-        """Returns the orientation selectivity index for this neuron.
 
-        :param model: The `keras.models.Model` instance.
-        :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
-        :param degrees_to_rotate: degrees of each rotation step
 
-        :return: List of floats, values of orientation selectivity index.
-        """
-        key = 'orientation'+str(int(degrees_to_rotate))
-        if key not in self.selectivity_idx:
-            self.selectivity_idx[key] = get_orientation_index(self, model,
-                                                layer_data, dataset,degrees_to_rotate = degrees_to_rotate)
-        return self.selectivity_idx[key]
 
-    def symmetry_selectivity_idx(self, model, layer_data, dataset):
-        """Returns the symmetry selectivity index for this neuron.
 
-        :param model: The `keras.models.Model` instance.
-        :param layer_data: The `nefesi.layer_data.LayerData` instance.
-        :param dataset: The `nefesi.util.image.ImageDataset` instance.
 
-        :return: List of floats, values of symmetry selectivity index.
-        """
-        key= 'symmetry'+str(SYMMETRY_AXES)
-        if key not in self.selectivity_idx:
-            self.selectivity_idx[key] = sym.get_symmetry_index(self, model, layer_data, dataset)
-
-        return self.selectivity_idx[key]
-
-    def concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1,
-                                activations_masks = None, return_non_normalized_sum = False):
-        """Returns the class selectivity index for this neuron.
-
-        :param labels: Dictionary, key: name class, value: label class.
-            This argument is needed for calculate the class index.
-        :param threshold: Float, required for calculate the class index.
-
-        :return: Float, between 0.1 and 1.0.
-
-        :raise:
-            TypeError: If `labels` is None or not a dictionary.
-        """
-        key = 'concept'+concept+str(th)
-        if key not in self.selectivity_idx or \
-        (return_non_normalized_sum and (key not in self.selectivity_idx_non_normaliced_sum)):
-            if isinstance(layer_data,str):
-                layer_data = network_data.get_layer_by_name(layer_data)
-            self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key] = \
-                get_concept_selectivity_of_neuron(network_data=network_data, layer_name=layer_data.layer_id,
-                                                    neuron_idx=neuron_idx, type=type, concept=concept, th = 0.1,
-                                                    activations_masks=activations_masks, return_non_normalized_sum=True)
-            print(concept.capitalize()+' idx: ' + layer_data.layer_id + ' ' + str(neuron_idx) + '/' +
-                  str(len(layer_data.neurons_data)))
-
-        if return_non_normalized_sum:
-            return (self.selectivity_idx[key], self.selectivity_idx_non_normaliced_sum[key])
-        else:
-            return self.selectivity_idx[key]
 
     def single_concept_selectivity_idx(self,layer_data, network_data, neuron_idx, type='mean', concept='object', th = 0.1):
         """Returns the class selectivity index for this neuron.
@@ -651,32 +595,13 @@ class NeuronData(object):
         concept_idx = self.concept_selectivity_idx(layer_data=layer_data, network_data=network_data,
                                                    neuron_idx=neuron_idx,
                                                    type=type, concept=concept, th=th)
-        if concept_idx[0]['label'] is 'None':
+        if concept_idx[0]['label'] == 'None':
             return 0
         else:
             return len(concept_idx)
 
 
-    def class_selectivity_idx(self, labels=None, threshold=.1):
-        """Returns the class selectivity index for this neuron.
 
-        :param labels: Dictionary, key: name class, value: label class.
-            This argument is needed for calculate the class index.
-        :param threshold: Float, required for calculate the class index.
-
-        :return: Float, between 0.1 and 1.0.
-
-        :raise:
-            TypeError: If `labels` is None or not a dictionary.
-        """
-        key = 'class'+str(threshold)
-        if key not in self.selectivity_idx:
-            #Labels always must to be a dictionary
-            if type(labels) is not dict and labels is not None:
-                raise TypeError("The 'labels' argument should be a dictionary if is specified")
-            self.selectivity_idx[key] = get_class_selectivity_idx(self, labels, threshold)
-
-        return self.selectivity_idx[key]
 
     def single_class_selectivity_idx(self,labels=None, threshold=.1):
         class_idx = self.class_selectivity_idx(labels=labels, threshold=threshold)

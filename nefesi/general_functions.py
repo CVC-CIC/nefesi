@@ -4,76 +4,19 @@ import matplotlib.pyplot as plt
 import math
 import os
 import shutil
-from anytree import Node
+import PIL
+from anytree import Node, RenderTree
 import xml.etree.ElementTree as ET
-from ..symmetry_index import SYMMETRY_AXES
-from functions.read_activations import get_image_activation
 
-try:
-    from tkinter import *
-    from tkinter import ttk
-    from tkinter import filedialog
-except ImportError:
-    from Tkinter import *
-    from Tkinter import ttk
+from functions.read_activations import get_one_neuron_activations, get_image_activation
 
 
-def have_all_imagenet_segmentation(dataset_path):
-    from itertools import combinations
-    import dill as pickle
-    from .segmentation.Broden_analize import Segment_images
-    labels = np.array(os.listdir(dataset_path))
-    pairs = {'object':{}, 'material':{}, 'part':{}, 'scene':np.zeros(365,np.int)}
-    for i, label in enumerate(labels):
-        class_path = dataset_path + label+'/'
-        images_of_class = os.listdir(class_path)
-        image_paths = [class_path + im_name for im_name in images_of_class]
-        for segment_idx in range(0,len(image_paths),400):
-            segmented = Segment_images(np.array(image_paths)[segment_idx:segment_idx+400])
-            for segment in segmented:
-                for concept in ['object', 'material', 'part']:
-                    uniques = np.unique(segment[concept])
-                    pos_of_0 = np.where(uniques == 0)[0]
-                    if len(pos_of_0):
-                        uniques = np.delete(uniques,pos_of_0[0])
-                    uniques.sort()
-                    for combination in combinations(uniques,r=2):
-                        if combination in pairs[concept]:
-                            pairs[concept][combination] += 1
-                        else:
-                            pairs[concept][combination] = 1
-                scene = np.argmax(segment['scene'])
-                pairs['scene'][scene]+=1
-        pickle.dump(pairs, open('segment_combinations.dict', 'wb'))
-
-    return labels
+from tkinter import *
 
 
-def save_dataset_segmentation(dataset_path, save_path = '/datatmp/datasets/Broden+FlattedSegmented'):
-    """
-    Save an identical structure of the dataset_path in 'save_path'. The files saved are a compressed numpys that saves
-    the same structure of the Segment_Images output. Can be opened with the same sintax than a dictionary.
-    For example: np.load('n2522224/image_00215p.JPEG.npz)['object'] for get the segmentation on object level
-    :param dataset_path:
-    :return:
-    """
-    from .segmentation.Broden_analize import Segment_images
-    labels = np.array(os.listdir(dataset_path))
-    for i, label in enumerate(labels):
-        class_path_save = os.path.join(save_path, label)
-        class_path_orig = os.path.join(dataset_path, label)
-        if not os.path.isdir(class_path_save):
-            os.makedirs(class_path_save)
-        images_of_class = os.listdir(class_path_orig)
-        image_paths_orig = [os.path.join(class_path_orig, im_name) for im_name in images_of_class]
-        image_paths_save = [os.path.join(class_path_save, im_name) for im_name in images_of_class]
-        for segment_idx in range(0,len(image_paths_orig),400):
-            segmented = Segment_images(np.array(image_paths_orig)[segment_idx:segment_idx+400])
-            for j, segment in enumerate(segmented):
-                np.savez_compressed(image_paths_save[segment_idx+j], object=segment['object'].astype(np.short),
-                                    material=segment['material'].astype(np.short),
-                                    part=np.array(tuple(segment['part']), dtype=np.short),
-                                    scene=segment['scene'])
+
+
+
 
 
 def save_dataset_object_ocurrence(segmented_dataset_path = '/datatmp/datasets/ImageNetFusedSegmented'):
@@ -418,8 +361,6 @@ def get_key_of_index(key, special_value, operation='mean'):
         key = 'concept'+key
     if key == 'orientation':
         key+=str(int(special_value))
-    elif key == 'symmetry':
-        key+=str(SYMMETRY_AXES)
     else:
         key+=str(special_value)
     return key

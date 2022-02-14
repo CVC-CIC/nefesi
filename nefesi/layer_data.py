@@ -1,9 +1,8 @@
 import numpy as np
 
 import math
-from .read_activations import get_sorted_activations, get_activations, get_one_neuron_activations
-from .neuron_feature import compute_nf
-from .similarity_index import get_row_of_similarity_index
+from functions.read_activations import get_sorted_activations, get_activations, get_one_neuron_activations
+from functions.similarity_index import get_row_of_similarity_index
 from .symmetry_index import SYMMETRY_AXES
 from .class_index import get_concept_labels, get_class_selectivity_idx, get_concept_selectivity_of_neuron
 from .util.ColorNaming import colors as color_names
@@ -309,7 +308,7 @@ class LayerData(object):
             symmetry[:-1] = neuron.symmetry_selectivity_idx(network_data.model, self, dataset)
             symmetry[-1] = np.mean(symmetry[:-1])
             index['symmetry'] = symmetry
-        from nefesi.color_index import get_color_selectivity_index
+        from functions.color_index import get_color_selectivity_index
         if 'color' in indexes or 'ivet_color' in indexes:
             index['color'] = get_color_selectivity_index(network_data=network_data,
                                         layer_name=self.layer_id,

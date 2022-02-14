@@ -6,30 +6,18 @@ import re #Regular Expresions
 import numpy as np
 import warnings
 
-# from keras.preprocessing.image import ImageDataGenerator
-from .interface_DeepFramework.DeepFramework import data_batch_generator, deep_model, model_file_extension
+from interface_DeepFramework.DeepFramework import data_batch_generator, deep_model
 
-# from keras.applications.vgg16 import preprocess_input as preproces_vgg
-#
-# from keras.models import load_model
-# from keras.backend import clear_session
-from .neuron_data import NeuronData
-# from keras.preprocessing import image
-# from .read_activations import get_argmax_and_max2
-from functions.read_activations import get_argmax_and_max as get_argmax_and_max2
-from .util.general_functions import get_key_of_index
-from .layer_data import LayerData
-from .neuron_feature import compute_nf
-from .util.image import ImageDataset
+from functions.neuron_data2 import NeuronData
+
+from functions.general_functions import get_key_of_index
+from functions.layer_data2 import LayerData
+from functions.neuron_feature2 import compute_nf, compute_nf_out
+from functions.image import ImageDataset
 from functions.read_activations import fill_all_layers_data_batch
-from .class_index import get_concept_labels
-from .util.ColorNaming import colors as color_names
-# from keras.layers import Conv2D, Input
-# from keras.models import Sequential, Model, clone_model
-# from keras import backend
-from tensorflow import Session
-import nefesi.util.GPUtil as gpu
-gpu.assignGPU()
+
+
+
 
 
 MIN_PROCESS_TIME_TO_OVERWRITE = 10
@@ -56,21 +44,15 @@ class NetworkData(object):
         dataset: The `nefesi.util.image.ImageDataset` instance.
     """
 
-    def __init__(self, model=None, layer_data = '.*', save_path = None, dataset = None, save_changes = False,
-                 default_labels_dict = None, default_degrees_orientation_idx = 15,default_thr_pc = 0.1,
-                 default_thr_class_idx = .1, default_file_name = None, indexes_accepted = ALL_INDEX_NAMES):
+    def __init__(self, model=None, layer_data = None, save_path = None, dataset = None, save_changes = False,default_file_name = None, input_shape = None ,indexes_accepted = ALL_INDEX_NAMES):
         self.model = model
         self.default_file_name = default_file_name
         self.save_path = save_path
-
+        self.input_shape = input_shape
         self.layers_data = layer_data
         self.dataset = dataset
+        self.num_top_scoring=100
         self.save_changes = save_changes
-        self.default_labels_dict = default_labels_dict
-        self.default_degrees_orientation_idx = default_degrees_orientation_idx
-        self.default_thr_pc = default_thr_pc
-        #self.default_thr_class_idx = default_thr_class_idx
-        self.indexs_accepted = indexes_accepted
         self.MIN_PROCESS_TIME_TO_OVERWRITE = MIN_PROCESS_TIME_TO_OVERWRITE
 
 
@@ -84,66 +66,6 @@ class NetworkData(object):
             default_file_name = self.model.name
         self._default_file_name = default_file_name
 
-    @property
-    def default_labels_dict(self):
-        return self._default_labels_dict
-    @default_labels_dict.setter
-    def default_labels_dict(self, default_labels_dict):
-        if default_labels_dict is not None:
-            if type(default_labels_dict) is str:
-                with open(default_labels_dict, "rb") as f:
-                    default_labels_dict = pickle.load(f)
-            if type(default_labels_dict) is not dict:
-                warnings.warn("Default labels dict expect a str(path) or dict, '"+type(default_labels_dict)+"' is "
-                            "not valid. Default_labels_dict not modified")
-                try:
-                    default_labels_dict = self._default_labels_dict
-                except:
-                    default_labels_dict = None
-        self._default_labels_dict = default_labels_dict
-
-    @property
-    def layers_data(self):
-        return self._layers_data
-
-    @layers_data.setter
-    def layers_data(self, layer_data):
-
-        if layer_data is None:
-            self._layers_data = None
-        #If is a regular expresion
-        elif type(layer_data) is str:
-            #Compile the Regular expresion
-            regEx = re.compile(layer_data)
-            #Select the layerNames that satisfies RegEx
-            okList = list(filter(regEx.match,[layer.name for layer in self.model.layers]))
-            #Put as LayerData objects
-            self._layers_data = [LayerData(layer) for layer in okList]
-            if self._layers_data == []:
-                warnings.warn("No layer was caught from filter: '"+layer_data+"'. For see all layer names of the model"
-                                                                              "calls show_model_layer_names()",RuntimeWarning)
-        #if layer_data is a list
-        elif type(layer_data) is list:
-            #list of strings
-            if all(type(name) is str for name in layer_data):
-                model_layer_names = [layer.name for layer in self.model.layers]
-                for layer_n in layer_data:
-                    if layer_n not in model_layer_names:
-                        raise ValueError("Wrong layer name: '"+layer_n+"'. For see all layer names of the model calls"
-                                                                       " showModelLayerNames()")
-                self._layers_data = [LayerData(layer) for layer in layer_data]
-            #list of layerData
-            elif all(type(name) is LayerData for name in layer_data):
-                model_layer_names = [layer.name for layer in self.model.layers]
-                for layer_n in layer_data:
-                    if layer_n.layer_id not in model_layer_names:
-                        raise ValueError("Wrong layer at LayerData object with id: '"+layer_n.layer_id+"'."
-                                                " For see all layer names of the model calls showModelLayerNames()")
-                self._layers_data = [LayerData(layer) for layer in layer_data]
-            else:
-                raise ValueError("The list types values accepted by 'layer_data' are only String Lists and LayerData Lists")
-        else:
-            raise ValueError("The value of LayerData must be: 'None', 'String List', 'LayerData List', or a Regular Expresion (Regex)")
 
     @property
     def dataset(self):
@@ -151,7 +73,7 @@ class NetworkData(object):
 
     @dataset.setter
     def dataset(self, dataset):
-        if type(dataset) is not ImageDataset and dataset is not None:
+        if type(dataset) != ImageDataset and dataset != None:
             raise TypeError("Dataset must be an nefesi.util.Image.ImageDataset object "
                             "(https://github.com/CVC-CIC/nefesi/blob/master/nefesi/util/image.py)")
 
@@ -163,22 +85,59 @@ class NetworkData(object):
 
     @save_path.setter
     def save_path(self, save_path):
-        if save_path is not None:
-            if type(save_path) is not str:
+        if save_path != None:
+            if type(save_path) != str:
                 raise ValueError("save_path must be a str.")
             #Ensures that path ends with '/' (To save confusions to user)
             elif not save_path.endswith('/'):
                 save_path = save_path + '/'
             #Looks folder exists
             if not os.path.isdir(save_path):
-                warnings.warn(save_path+" not exists or is not a directory. It will be created when needed",RuntimeWarning)
+                warnings.warn(save_path+" not exists or != a directory. It will be created when needed",RuntimeWarning)
         self._save_path = save_path
 
+
+    @property
+    def layers_data(self):
+        return self._layers_data
+
+    @layers_data.setter
+    def layers_data(self, layer_data):
+        self._layers_data = []
+        if layer_data is None:
+            self._layers_data = None
+
+        # If is a regular expresion
+        elif type(layer_data) is str:
+            layer_data = [layer_data]
+        # if layer_data is a list
+        if type(layer_data) is list:
+            for layer_name in layer_data:
+                layer_d=LayerData(layer_name[0],layer_name[1])
+                layer_d.get_receptive_field(self.model,self.input_shape,main_input=0)
+
+                self._layers_data.append(layer_d)
+
+
+
+
+
+    def generate_neuron_data(self):
+
+        for layer in self.layers_data:
+            if type(layer.neurons_data== int):
+                layer.neurons_data = [NeuronData(self.num_top_scoring, self.num_top_scoring, buffered_iterations=3) for x in range(layer.neurons_data)]
+
+
+
+
+
+
     def eval_network(self, layer_names = None,
-                     directory=None,
+                     directory_weights=None,
                      save_path=None,
                      num_max_activations=100,
-                     target_size=(254, 254),
+                     target_size=(64, 64),
                      batch_size=100,
                      preprocessing_function=None,
                      color_mode='rgb',
@@ -191,7 +150,7 @@ class NetworkData(object):
 
         :param layer_names: List of strings, string, or Regular Expressions (name of the layers of the network that will be
             evaluate (in order to see the disponible layers use show_model_layer_names())).
-        :param directory: Path to the directory to read images from.
+        :param directory: Path to load the weights of the model
         :param save_path: Path of directory to write the results. If None the value of self._save_path will be used.
         :param num_max_activations: Integer, number of maximum activations
             will be saved for each neuron.
@@ -214,35 +173,12 @@ class NetworkData(object):
         :param verbose: Verbosity, False=Silent, True=one line per batch
 
         :raises
-            TypeError: If some value in `layer_names` is not a String.
+            TypeError: If some value in `layer_names` != a String.
             ValueError: If some name in `layer_names` doesn't exist in
             the model `self.model`.
         """
-        #Assign layer_names if is specified and control that self.layers_data are setted consistently
-        if layer_names is not None:
-            self.layers_data = layer_names
-        elif type(self.layers_data) is not list:
-            raise ValueError("layers_data attribute not setted. It must be setted on network_data object, before call"
-                             " eval_network(...) or setted as argument (layer_names) in eval_network function")
 
-        #Assign save_path if is specified and control that self.save_path is setted consistently
-        if save_path is not None:
-            self.save_path = save_path
-        elif type(self.save_path) is not str:
-            raise ValueError("Save_path attribute not setted. It must be setted on network_data object, before call"
-                             " eval_network(...) or setted as argument (save_path) in eval_network function")
 
-        #Creates an ImageDataset object if it not exists and control that self.dataset is setted consistenly
-        if directory is not None:
-                self.dataset = ImageDataset(directory, target_size,
-                                        preprocessing_function, color_mode)
-        elif type(self.dataset) is not ImageDataset:
-            raise ValueError("Dataset attribute not setted. It must be setted on network_data object, before call"
-                             " eval_network(...) or setted as argument(s) (directory,[target_size, preprocessing_function,"
-                             " color_mode]) in eval_network function ")
-        if preprocessing_function is not None:
-            self.dataset.preprocessing_function = preprocessing_function
-        #if layer.layer_id in layer_names: #if is not, exception was raised
 
         data_batch = data_batch_generator(
                              self.dataset.preprocessing_function,
@@ -255,21 +191,16 @@ class NetworkData(object):
         num_images = data_batch.samples
         idx_start = 0
         idx_end = idx_start + data_batch.batch_size
-        #the min between full size and 0,5MB by array (and 64MB for the img_name)
-        #buffer_size = min(num_images//batch_size, 524288//(batch_size*np.dtype(np.float).itemsize))
-        buffer_size = 3
-        #Init all neuron_data attributes of all layers
-        for i in range(len(self.layers_data)):
-            # neurons_of_layer = self.model.get_layer(self.layers_data[i].layer_id).output_shape[-1]
-            neurons_of_layer = self.model.neurons_of_layer(self.layers_data[i].layer_id)
-            self.layers_data[i].neurons_data = np.zeros(neurons_of_layer, dtype=np.object)
-            for j in range(neurons_of_layer):
-                self.layers_data[i].neurons_data[j] = NeuronData(num_max_activations, batch_size, buffered_iterations=buffer_size)
+
+
+        # the min between full size and 0,5MB by array (and 64MB for the img_name)
 
         start = time.time()
         for n_batches, imgs in enumerate(data_batch.iterator):
             images = imgs[0]
             actual_file_names = imgs[2]
+
+
             # Search the maximum activations
             fill_all_layers_data_batch(actual_file_names, images, self.model, self.layers_data)
 
@@ -297,31 +228,126 @@ class NetworkData(object):
             # Set the number of maximum activations stored in each neuron
             layer.set_max_activations()
         self.save_to_disk(file_name=self.model.name+'PartialSave100WithoutNF', erase_partials=True)
-        if build_nf:
+
+
+
+    def eval_network_decoder(self, layer_names = None,
+                     directory_weights=None,
+                     save_path=None,
+                     num_max_activations=100,
+                     target_size=(64, 64),
+                     batch_size=100,
+                     preprocessing_function=None,
+                     color_mode='rgb',
+                     save_for_layers=True,
+                     build_nf=True,
+                     file_name=None,
+                     verbose=True):
+        """Evaluates the layers in `layer_names`, searching for the maximum
+        activations for each neuron and build the neuron feature.
+
+        :param layer_names: List of strings, string, or Regular Expressions (name of the layers of the network that will be
+            evaluate (in order to see the disponible layers use show_model_layer_names())).
+        :param directory: Path to load the weights of the model
+        :param save_path: Path of directory to write the results. If None the value of self._save_path will be used.
+        :param num_max_activations: Integer, number of maximum activations
+            will be saved for each neuron.
+        :param target_size: Tuple of integers, dimensions to resize input images to.
+        :param batch_size: Integer, size of a batch.
+        :param preprocessing_function: Function that will be implied on each input.
+            The function will run after the image is resized and augmented.
+            The function should take one argument: batch of images (Numpy tensor with rank 4),
+             and should output a Numpy tensor with the same shape.
+        :param color_mode: One of `"rgb"`, `"grayscale"`. Color mode to read images.
+        :param save_for_layers: Boolean, if its True, the results will be saved
+            for each layer evaluated. The result file will have the name of the layer
+            evaluated and the previous ones.
+        :param build_nf:  Boolean, if its True, the neuron feature for each neuron
+            will be built.
+            If layers in `layer_names` are fully connected layers, `build_nf`
+            has to be False.
+        :param file_name: String, name of the file containing the result data,
+            if its None, the file will be stored with the model name.
+        :param verbose: Verbosity, False=Silent, True=one line per batch
+
+        :raises
+            TypeError: If some value in `layer_names` != a String.
+            ValueError: If some name in `layer_names` doesn't exist in
+            the model `self.model`.
+        """
+
+
+
+        data_batch = data_batch_generator(
+                             self.dataset.preprocessing_function,
+                             self.dataset.src_dataset,
+                             self.dataset.target_size,
+                             batch_size,
+                             self.dataset.color_mode
+                             )
+
+        num_images = data_batch.samples
+        idx_start = 0
+        idx_end = idx_start + data_batch.batch_size
+
+
+        # the min between full size and 0,5MB by array (and 64MB for the img_name)
+
+        start = time.time()
+        self.save_to_disk(file_name=self.model.name + 'hihi', erase_partials=True)
+        for n_batches, imgs in enumerate(data_batch.iterator):
+            images = imgs[0]
+            actual_file_names = imgs[2]
+
+
+            # Search the maximum activations
+            fill_all_layers_data_batch(actual_file_names, images, self.model, self.layers_data)
+
             if verbose:
-                print("Sort ended. Building neuron features")
-            # Build the neuron features
-            for layer in self.layers_data:
-                compute_nf(self, layer, only_if_not_done=True)
-                print("Layer "+layer.layer_id+ "completed... Saving")
-                self.save_to_disk(file_name=file_name, erase_partials=True)
-                print("Saved")
-        else:
-            # Save all data
-            self.save_to_disk(file_name=file_name,erase_partials=True)
+                img_sec = idx_end / (time.time() - start)
+                print("Num batch: {batch},"
+                      " Num images processed: {processed}/{total}. Remaining: {secs}".format(
+                        batch=n_batches,
+                        processed=idx_end,
+                        total=num_images,
+                        secs=str(datetime.timedelta(seconds=(num_images-idx_end)/img_sec))))
 
-    def recalculateNF(self, file_name=None, layers=None):
-        if layers is None:
-            layers = self.layers_data
-        else:
-            layers = [l for l in self.layers_data if l.layer_id in layers]
+            idx_start, idx_end = idx_end, idx_end+data_batch.batch_size
 
-        for layer in layers:
+            # If the idx of the next last image will overpass the total num of images, ends the analysis
+            if idx_end > num_images:
+                break
+            elif n_batches%1000==0 and n_batches!=0:
+                self.save_to_disk(file_name=self.model.name+'PartialSave'+str(int((idx_start/data_batch.samples)*100))+
+                                            'PerCent',erase_partials=True)
+        if verbose:
+            print("Analysis ended. Sorting results")
+        for layer in self.layers_data:
+            layer.sort_neuron_data()
+            # Set the number of maximum activations stored in each neuron
+            layer.set_max_activations()
+        self.save_to_disk(file_name=self.model.name+'PartialSave100WithoutNF', erase_partials=True)
+
+
+    def calculateNF(self):
+
+        for layer in self.layers_data:
             print(layer.layer_id)
-            layer.receptive_field_map = None
             compute_nf(self, layer)
+            print(layer.layer_id+ '   done!')
+            self.save_to_disk(file_name='imagenet64_decoder_'+layer.layer_id)
 
-        self.save_to_disk(file_name=file_name, save_model=False)
+
+    def calculateNF_out(self, model):
+
+        for layer in self.layers_data:
+            print(layer.layer_id)
+            compute_nf_out(self, layer,model)
+            print(layer.layer_id+ '   done!')
+            self.save_to_disk(file_name='imagenet64_'+layer.layer_id)
+
+
+
 
 
     def get_layers_name(self):
@@ -369,16 +395,11 @@ class NetworkData(object):
         """
         start_time = time.time() #in order to update things if something new was be calculated
         sel_idx_dict = {}
-        if labels is None:
-            labels=self.default_labels_dict
-        if thr_pc is None:
-            thr_pc = self.default_thr_pc
-        if degrees_orientation_idx is None:
-            degrees_orientation_idx = self.default_degrees_orientation_idx
 
-        if type(sel_index) is not list:
+
+        if type(sel_index) != list:
             sel_index = [sel_index]
-        if type(layer_name) is not list:
+        if type(layer_name) != list:
             # Compile the Regular expresion
             regEx = re.compile(layer_name)
             # Select the layerNames that satisfies RegEx
@@ -447,7 +468,7 @@ class NetworkData(object):
         """
         sim_idx = []
         start_time = time.time()  # in order to update things if something new was be calculated
-        if type(layer_name) is not list:
+        if type(layer_name) != list:
             # Compile the Regular expresion
             regEx = re.compile(layer_name)
             # Select the layerNames that satisfies RegEx
@@ -460,7 +481,7 @@ class NetworkData(object):
                           and l == layer_data.layer_id), None)
             if layer is None:
                 raise ValueError("The layer_id '{}' `layer_name` "
-                                 "argument, is not valid.".format(l))
+                                 "argument, != valid.".format(l))
             else:
                 sim_idx.append(layer.get_similarity_idx(self.model, self.dataset))
             if self.save_changes:
@@ -474,14 +495,14 @@ class NetworkData(object):
     def get_relevance_idx(self, layer_name = '.*', layer_to_ablate = None, verbose=True):
         relevance_idx = []
         start_time = time.time()  # in order to update things if something new was be calculated
-        if type(layer_name) is not list:
+        if type(layer_name) != list:
             # Compile the Regular expresion
             regEx = re.compile(layer_name)
             # Select the layerNames that satisfies RegEx
             layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
         if layer_name[0] == self.layers_data[0].layer_id:
             layer_name = layer_name[1:]
-        if layer_to_ablate is not None and type(layer_to_ablate) is not list:
+        if layer_to_ablate != None and type(layer_to_ablate) != list:
             layer_to_ablate = [layer_to_ablate]
         for i, l in enumerate(layer_name):
             layer = next((layer_data for layer_data in
@@ -489,7 +510,7 @@ class NetworkData(object):
                           and l == layer_data.layer_id), None)
             if layer is None:
                 raise ValueError("The layer_id '{}' `layer_name` "
-                                 "argument, is not valid.".format(l))
+                                 "argument, != valid.".format(l))
             else:
                 if layer_to_ablate is None:
                     layer_ablated = self.get_ablatable_layers(layer.layer_id)[-1]
@@ -510,14 +531,14 @@ class NetworkData(object):
     def get_relevance_idx2(self, layer_name='.*', layer_to_ablate=None, verbose=True):
         relevance_idx = []
         start_time = time.time()  # in order to update things if something new was be calculated
-        if type(layer_name) is not list:
+        if type(layer_name) != list:
             # Compile the Regular expresion
             regEx = re.compile(layer_name)
             # Select the layerNames that satisfies RegEx
             layer_name = list(filter(regEx.match, [layer for layer in self.get_layers_name()]))
         if layer_name[0] == self.layers_data[0].layer_id:
             layer_name = layer_name[1:]
-        if layer_to_ablate is not None and type(layer_to_ablate) is not list:
+        if layer_to_ablate != None and type(layer_to_ablate) != list:
             layer_to_ablate = [layer_to_ablate]
         for i, l in enumerate(layer_name):
             layer = next((layer_data for layer_data in
@@ -525,7 +546,7 @@ class NetworkData(object):
                           and l == layer_data.layer_id), None)
             if layer is None:
                 raise ValueError("The layer_id '{}' `layer_name` "
-                                 "argument, is not valid.".format(l))
+                                 "argument, != valid.".format(l))
             else:
                 if layer_to_ablate is None:
                     layer_ablated = self.get_ablatable_layers(layer.layer_id)[-1]
@@ -544,430 +565,430 @@ class NetworkData(object):
         return relevance_idx
 
 
-    def get_relevance_by_ablation2(self, layer_analysis, neuron, layer_to_ablate, path_model, img_folder='/data/114-1/datasets/ImageNetFused/n02132136'):
-        """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
-
-            :param self: Nefesi object
-            :param model: Original Keras model
-            :param layer_analysis: String with the layer to analyze
-            :param neuron: Int with the neuron to analyze
-            :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
-            """
-        images = []
-
-        for img in os.listdir(img_folder):
-            img = os.path.join(img_folder, img)
-            img = image.load_img(img, target_size=(224, 224))
-
-            img = image.img_to_array(img)
-            img = preproces_vgg(img)
-            img = np.expand_dims(img, axis=0)
-            images.append(img)
-
-        images = np.vstack(images)
-
-        current_layer = self.get_layer_by_name(layer_analysis)
-
-        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
-
-        clear_session()
-        new_keras_sess = Session()
-        with new_keras_sess.as_default():
-            cloned_model = load_model(path_model)
-
-            layer_names = [x.name for x in cloned_model.layers]
-            numb_ablated = layer_names.index(layer_to_ablate)
-            numb_analysis = layer_names.index(layer_analysis) + 1
-            intermediate_layer_model = Model(inputs=cloned_model.input,
-                                             outputs=cloned_model.get_layer(layer_to_ablate).output)
-            # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
-            backend.learning_phase = lambda: 0
-            intermediate_output = intermediate_layer_model.predict(x=images)
-
-            DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
-
-            mymodel_layers = [DL_input]
-            mymodel_layer_names = [layer_to_ablate]
-            for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
-                if type(layer.input) == list:
-                    list_inputs_names = [x.name.split('/')[0] for x in layer.input]
-                    list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
-                    list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
-                    new_layer = layer(list_input_layers)
-
-                else:
-                    new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
-
-                mymodel_layer_names.append(layer.name)
-                mymodel_layers.append(new_layer)
-
-            DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
-
-            relevance_idx = np.zeros(intermediate_output.shape[-1])
-
-            range_of_neurons = range(intermediate_output.shape[-1])
-
-            # get the points of max activation
-
-            original_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
-
-            xy_locations, original_activations = get_argmax_and_max2(original_neurons_predictions)
-
-            for i in range_of_neurons:
-                print(i)
-
-                intermediate_output2 = intermediate_output[..., i] * 1  # To copy
-                print('copy')
-                intermediate_output[..., i] = 0
-                print('tozero')
-                ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
-                print('ablation calculated')
-                intermediate_output[..., i] = intermediate_output2
-                # get the activation on the same point
-
-                # Check if we are dealing with a fc layer
-                if ablated_neurons_predictions.ndim == 1:
-                    print('enter if')
-                    max_activations = ablated_neurons_predictions[range(ablated_neurons_predictions.shape[0])]
-                else:
-                    print('enter else')
-                    max_activations = ablated_neurons_predictions[range(ablated_neurons_predictions.shape[0]), xy_locations[:, 0], xy_locations[:, 1]]
-                print('eut')
-                relevance_idx[i] = np.sum(abs(original_activations - max_activations)) / np.sum(original_activations)
-
-        relevance_idx = np.array(relevance_idx)
-
-        return relevance_idx
-
-    def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate, path_model, for_neuron=None,
-                                  return_decreasing=False, print_decreasing_matrix=False):
-        """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
-
-            :param self: Nefesi object
-            :param model: Original Keras model
-            :param layer_analysis: String with the layer to analyze
-            :param neuron: Int with the neuron to analyze
-            :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
-            """
-
-        current_layer = self.get_layer_by_name(layer_analysis)
-        if return_decreasing:
-            pre_ablation_indexes, pre_ablation_non_normalized_sums = \
-                current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
-                                                        return_non_normalized_sum=True)
-        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
-        xy_locations = neuron_data.xy_locations
-        image_names = neuron_data.images_id
-        images = self.dataset.load_images(image_names=image_names, prep_function=True)
-        clear_session()
-        new_keras_sess = Session()
-        with new_keras_sess.as_default():
-            cloned_model = load_model(path_model)
-
-            layer_names = [x.name for x in cloned_model.layers]
-            numb_ablated = layer_names.index(layer_to_ablate)
-            numb_analysis = layer_names.index(layer_analysis) + 1
-            intermediate_layer_model = Model(inputs=cloned_model.input,
-                                             outputs=cloned_model.get_layer(layer_to_ablate).output)
-            # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
-            backend.learning_phase = lambda: 0
-            intermediate_output = intermediate_layer_model.predict(x=images)
-
-            DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
-
-            mymodel_layers = [DL_input]
-            mymodel_layer_names = [layer_to_ablate]
-            for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
-                if type(layer.input) == list:
-                    list_inputs_names = [x.name.split('/')[0] for x in layer.input]
-                    list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
-                    list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
-                    new_layer = layer(list_input_layers)
-
-                else:
-                    new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
-
-                mymodel_layer_names.append(layer.name)
-                mymodel_layers.append(new_layer)
-
-            DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
-            original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-            original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
-            relevance_idx = []
-            if return_decreasing:
-                max_concept_decreasing, max_type_decreasing = [], []
-            range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
-            for i in range_of_neurons:
-
-                intermediate_output2 = intermediate_output[..., i] * 1  # To copy
-                intermediate_output[..., i] = 0
-                ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
-                intermediate_output[..., i] = intermediate_output2
-                # get the activation on the same point
-
-                # Check if we are dealing with a fc layer
-                if ablated_neurons_predictions.ndim == 1:
-                    max_activations = ablated_neurons_predictions[range(0, 100)]
-                else:
-                    max_activations = ablated_neurons_predictions[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
-
-                relevance_idx.append(np.sum(abs(original_activations - max_activations)) / np.sum(original_activations))
-                if return_decreasing:
-                    post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
-                                                                                          neuron_idx=neuron,
-                                                                                          norm_act=max_activations /
-                                                                                                   original_activations[
-                                                                                                       0],
-                                                                                          activations_masks=ablated_neurons_predictions,
-                                                                                          thr_pc=0.0,
-                                                                                          original_norm_act=original_norm_activations,
-                                                                                          normalize_by=pre_ablation_non_normalized_sums)
-                    if print_decreasing_matrix:
-                        print('Indexes decreasing for Neuron: ' + str(neuron) + ' - Layer: ' + layer_analysis + '\n'
-                                                                                                                '             On ablate Neuron: ' + str(
-                            i) + ' - Layer: ' + layer_to_ablate + ':\n')
-                    max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
-                                                                      post_indexes=post_ablation_indexes,
-                                                                      print_indexes_decreasing=print_decreasing_matrix)
-                    max_concept_decreasing.append(max_concept)
-                    max_type_decreasing.append(max_type)
-
-            clear_session()
-        self.model = load_model(path_model)
-        relevance_idx = np.array(relevance_idx)
-        if return_decreasing:
-            if for_neuron is None:
-                max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
-                    max_type_decreasing)
-                return (relevance_idx, max_concept_decreasing, max_type_decreasing)
-            else:
-                return (relevance_idx[0], max_concept, max_type)
-        else:
-            if for_neuron is None:
-                return relevance_idx
-            else:
-                return relevance_idx[0]
-
-    def get_relevance_by_ablation_no_abs(self, layer_analysis, neuron, layer_to_ablate, path_model, for_neuron=None,
-                                  return_decreasing=False, print_decreasing_matrix=False):
-        """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
-
-            :param self: Nefesi object
-            :param model: Original Keras model
-            :param layer_analysis: String with the layer to analyze
-            :param neuron: Int with the neuron to analyze
-            :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
-            """
-
-        current_layer = self.get_layer_by_name(layer_analysis)
-        if return_decreasing:
-            pre_ablation_indexes, pre_ablation_non_normalized_sums = \
-                current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
-                                                        return_non_normalized_sum=True)
-        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
-        xy_locations = neuron_data.xy_locations
-        image_names = neuron_data.images_id
-        images = self.dataset.load_images(image_names=image_names, prep_function=True)
-        clear_session()
-        new_keras_sess = Session()
-        with new_keras_sess.as_default():
-            cloned_model = load_model(path_model)
-
-            layer_names = [x.name for x in cloned_model.layers]
-            numb_ablated = layer_names.index(layer_to_ablate)
-            numb_analysis = layer_names.index(layer_analysis) + 1
-            intermediate_layer_model = Model(inputs=cloned_model.input,
-                                             outputs=cloned_model.get_layer(layer_to_ablate).output)
-            # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
-            backend.learning_phase = lambda: 0
-            intermediate_output = intermediate_layer_model.predict(x=images)
-
-            DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
-
-            mymodel_layers = [DL_input]
-            mymodel_layer_names = [layer_to_ablate]
-            for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
-                if type(layer.input) == list:
-                    list_inputs_names = [x.name.split('/')[0] for x in layer.input]
-                    list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
-                    list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
-                    new_layer = layer(list_input_layers)
-
-                else:
-                    new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
-
-                mymodel_layer_names.append(layer.name)
-                mymodel_layers.append(new_layer)
-
-            DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
-            original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-            original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
-            relevance_idx = []
-            if return_decreasing:
-                max_concept_decreasing, max_type_decreasing = [], []
-            range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
-            for i in range_of_neurons:
-
-                intermediate_output2 = intermediate_output[..., i] * 1  # To copy
-                intermediate_output[..., i] = 0
-                ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
-                intermediate_output[..., i] = intermediate_output2
-                # get the activation on the same point
-
-                # Check if we are dealing with a fc layer
-                if ablated_neurons_predictions.ndim == 1:
-                    max_activations = ablated_neurons_predictions[range(0, 100)]
-                else:
-                    max_activations = ablated_neurons_predictions[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
-
-                relevance_idx.append(np.sum(original_activations - max_activations) / (original_activations[0]*100))
-                if return_decreasing:
-                    post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
-                                                                                          neuron_idx=neuron,
-                                                                                          norm_act=max_activations /
-                                                                                                   original_activations[
-                                                                                                       0],
-                                                                                          activations_masks=ablated_neurons_predictions,
-                                                                                          thr_pc=0.0,
-                                                                                          original_norm_act=original_norm_activations,
-                                                                                          normalize_by=pre_ablation_non_normalized_sums)
-                    if print_decreasing_matrix:
-                        print('Indexes decreasing for Neuron: ' + str(neuron) + ' - Layer: ' + layer_analysis + '\n'
-                                                                                                                '             On ablate Neuron: ' + str(
-                            i) + ' - Layer: ' + layer_to_ablate + ':\n')
-                    max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
-                                                                      post_indexes=post_ablation_indexes,
-                                                                      print_indexes_decreasing=print_decreasing_matrix)
-                    max_concept_decreasing.append(max_concept)
-                    max_type_decreasing.append(max_type)
-
-            clear_session()
-        self.model = load_model(path_model)
-        relevance_idx = np.array(relevance_idx)
-        if return_decreasing:
-            if for_neuron is None:
-                max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
-                    max_type_decreasing)
-                return (relevance_idx, max_concept_decreasing, max_type_decreasing)
-            else:
-                return (relevance_idx[0], max_concept, max_type)
-        else:
-            if for_neuron is None:
-                return relevance_idx
-            else:
-                return relevance_idx[0]
-
-    def get_relevance_by_ablation_no_abs2(self, layer_analysis, neuron, layer_to_ablate, path_model, for_neuron=None,
-                                         return_decreasing=False, print_decreasing_matrix=False):
-        """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
-
-            :param self: Nefesi object
-            :param model: Original Keras model
-            :param layer_analysis: String with the layer to analyze
-            :param neuron: Int with the neuron to analyze
-            :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
-            """
-
-        current_layer = self.get_layer_by_name(layer_analysis)
-        if return_decreasing:
-            pre_ablation_indexes, pre_ablation_non_normalized_sums = \
-                current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
-                                                        return_non_normalized_sum=True)
-        neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
-        xy_locations = neuron_data.xy_locations
-        image_names = neuron_data.images_id
-        images = self.dataset.load_images(image_names=image_names, prep_function=True)
-        clear_session()
-        new_keras_sess = Session()
-        with new_keras_sess.as_default():
-            cloned_model = load_model(path_model)
-
-            layer_names = [x.name for x in cloned_model.layers]
-            numb_ablated = layer_names.index(layer_to_ablate)
-            numb_analysis = layer_names.index(layer_analysis) + 1
-            intermediate_layer_model = Model(inputs=cloned_model.input,
-                                             outputs=cloned_model.get_layer(layer_to_ablate).output)
-            # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
-            backend.learning_phase = lambda: 0
-            intermediate_output = intermediate_layer_model.predict(x=images)
-
-            DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
-
-            mymodel_layers = [DL_input]
-            mymodel_layer_names = [layer_to_ablate]
-            for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
-                if type(layer.input) == list:
-                    list_inputs_names = [x.name.split('/')[0] for x in layer.input]
-                    list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
-                    list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
-                    new_layer = layer(list_input_layers)
-
-                else:
-                    new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
-
-                mymodel_layer_names.append(layer.name)
-                mymodel_layers.append(new_layer)
-
-            DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
-            original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
-            original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
-            relevance_idx = []
-            if return_decreasing:
-                max_concept_decreasing, max_type_decreasing = [], []
-            range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
-            total_activations=[]
-            for i in range_of_neurons:
-
-                intermediate_output2 = intermediate_output[..., i] * 1  # To copy
-                intermediate_output[..., i] = 0
-                ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
-                intermediate_output[..., i] = intermediate_output2
-                # get the activation on the same point
-
-                # Check if we are dealing with a fc layer
-                if ablated_neurons_predictions.ndim == 1:
-                    max_activations = ablated_neurons_predictions[range(0, 100)]
-                else:
-                    max_activations = ablated_neurons_predictions[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
-
-                relevance_idx.append(np.sum(original_activations - max_activations) / np.sum(original_activations))
-                total_activations.append(max_activations)
-                if return_decreasing:
-                    post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
-                                                                                          neuron_idx=neuron,
-                                                                                          norm_act=max_activations /
-                                                                                                   original_activations[
-                                                                                                       0],
-                                                                                          activations_masks=ablated_neurons_predictions,
-                                                                                          thr_pc=0.0,
-                                                                                          original_norm_act=original_norm_activations,
-                                                                                          normalize_by=pre_ablation_non_normalized_sums)
-                    if print_decreasing_matrix:
-                        print('Indexes decreasing for Neuron: ' + str(neuron) + ' - Layer: ' + layer_analysis + '\n'
-                                                                                                                '             On ablate Neuron: ' + str(
-                            i) + ' - Layer: ' + layer_to_ablate + ':\n')
-                    max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
-                                                                      post_indexes=post_ablation_indexes,
-                                                                      print_indexes_decreasing=print_decreasing_matrix)
-                    max_concept_decreasing.append(max_concept)
-                    max_type_decreasing.append(max_type)
-
-            clear_session()
-        self.model = load_model(path_model)
-        relevance_idx = np.array(relevance_idx)
-        if return_decreasing:
-            if for_neuron is None:
-                max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
-                    max_type_decreasing)
-                return (relevance_idx, max_concept_decreasing, max_type_decreasing)
-            else:
-                return (relevance_idx[0], max_concept, max_type)
-        else:
-            if for_neuron is None:
-                return relevance_idx,total_activations,original_activations
-            else:
-                return relevance_idx[0]
-
+    # def get_relevance_by_ablation2(self, layer_analysis, neuron, layer_to_ablate, path_model, img_folder='/data/114-1/datasets/ImageNetFused/n02132136'):
+    #     """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
+    #
+    #         :param self: Nefesi object
+    #         :param model: Original Keras model
+    #         :param layer_analysis: String with the layer to analyze
+    #         :param neuron: Int with the neuron to analyze
+    #         :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+    #         """
+    #     images = []
+    #
+    #     for img in os.listdir(img_folder):
+    #         img = os.path.join(img_folder, img)
+    #         img = image.load_img(img, target_size=(224, 224))
+    #
+    #         img = image.img_to_array(img)
+    #         img = preproces_vgg(img)
+    #         img = np.expand_dims(img, axis=0)
+    #         images.append(img)
+    #
+    #     images = np.vstack(images)
+    #
+    #     current_layer = self.get_layer_by_name(layer_analysis)
+    #
+    #     neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
+    #
+    #     clear_session()
+    #     new_keras_sess = Session()
+    #     with new_keras_sess.as_default():
+    #         cloned_model = load_model(path_model)
+    #
+    #         layer_names = [x.name for x in cloned_model.layers]
+    #         numb_ablated = layer_names.index(layer_to_ablate)
+    #         numb_analysis = layer_names.index(layer_analysis) + 1
+    #         intermediate_layer_model = Model(inputs=cloned_model.input,
+    #                                          outputs=cloned_model.get_layer(layer_to_ablate).output)
+    #         # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
+    #         backend.learning_phase = lambda: 0
+    #         intermediate_output = intermediate_layer_model.predict(x=images)
+    #
+    #         DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
+    #
+    #         mymodel_layers = [DL_input]
+    #         mymodel_layer_names = [layer_to_ablate]
+    #         for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
+    #             if type(layer.input) == list:
+    #                 list_inputs_names = [x.name.split('/')[0] for x in layer.input]
+    #                 list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
+    #                 list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
+    #                 new_layer = layer(list_input_layers)
+    #
+    #             else:
+    #                 new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
+    #
+    #             mymodel_layer_names.append(layer.name)
+    #             mymodel_layers.append(new_layer)
+    #
+    #         DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
+    #
+    #         relevance_idx = np.zeros(intermediate_output.shape[-1])
+    #
+    #         range_of_neurons = range(intermediate_output.shape[-1])
+    #
+    #         # get the points of max activation
+    #
+    #         original_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
+    #
+    #         xy_locations, original_activations = get_argmax_and_max2(original_neurons_predictions)
+    #
+    #         for i in range_of_neurons:
+    #             print(i)
+    #
+    #             intermediate_output2 = intermediate_output[..., i] * 1  # To copy
+    #             print('copy')
+    #             intermediate_output[..., i] = 0
+    #             print('tozero')
+    #             ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
+    #             print('ablation calculated')
+    #             intermediate_output[..., i] = intermediate_output2
+    #             # get the activation on the same point
+    #
+    #             # Check if we are dealing with a fc layer
+    #             if ablated_neurons_predictions.ndim == 1:
+    #                 print('enter if')
+    #                 max_activations = ablated_neurons_predictions[range(ablated_neurons_predictions.shape[0])]
+    #             else:
+    #                 print('enter else')
+    #                 max_activations = ablated_neurons_predictions[range(ablated_neurons_predictions.shape[0]), xy_locations[:, 0], xy_locations[:, 1]]
+    #             print('eut')
+    #             relevance_idx[i] = np.sum(abs(original_activations - max_activations)) / np.sum(original_activations)
+    #
+    #     relevance_idx = np.array(relevance_idx)
+    #
+    #     return relevance_idx
+    #
+    # def get_relevance_by_ablation(self, layer_analysis, neuron, layer_to_ablate, path_model, for_neuron=None,
+    #                               return_decreasing=False, print_decreasing_matrix=False):
+    #     """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
+    #
+    #         :param self: Nefesi object
+    #         :param model: Original Keras model
+    #         :param layer_analysis: String with the layer to analyze
+    #         :param neuron: Int with the neuron to analyze
+    #         :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+    #         """
+    #
+    #     current_layer = self.get_layer_by_name(layer_analysis)
+    #     if return_decreasing:
+    #         pre_ablation_indexes, pre_ablation_non_normalized_sums = \
+    #             current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
+    #                                                     return_non_normalized_sum=True)
+    #     neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
+    #     xy_locations = neuron_data.xy_locations
+    #     image_names = neuron_data.images_id
+    #     images = self.dataset.load_images(image_names=image_names, prep_function=True)
+    #     clear_session()
+    #     new_keras_sess = Session()
+    #     with new_keras_sess.as_default():
+    #         cloned_model = load_model(path_model)
+    #
+    #         layer_names = [x.name for x in cloned_model.layers]
+    #         numb_ablated = layer_names.index(layer_to_ablate)
+    #         numb_analysis = layer_names.index(layer_analysis) + 1
+    #         intermediate_layer_model = Model(inputs=cloned_model.input,
+    #                                          outputs=cloned_model.get_layer(layer_to_ablate).output)
+    #         # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
+    #         backend.learning_phase = lambda: 0
+    #         intermediate_output = intermediate_layer_model.predict(x=images)
+    #
+    #         DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
+    #
+    #         mymodel_layers = [DL_input]
+    #         mymodel_layer_names = [layer_to_ablate]
+    #         for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
+    #             if type(layer.input) == list:
+    #                 list_inputs_names = [x.name.split('/')[0] for x in layer.input]
+    #                 list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
+    #                 list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
+    #                 new_layer = layer(list_input_layers)
+    #
+    #             else:
+    #                 new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
+    #
+    #             mymodel_layer_names.append(layer.name)
+    #             mymodel_layers.append(new_layer)
+    #
+    #         DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
+    #         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+    #         original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
+    #         relevance_idx = []
+    #         if return_decreasing:
+    #             max_concept_decreasing, max_type_decreasing = [], []
+    #         range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
+    #         for i in range_of_neurons:
+    #
+    #             intermediate_output2 = intermediate_output[..., i] * 1  # To copy
+    #             intermediate_output[..., i] = 0
+    #             ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
+    #             intermediate_output[..., i] = intermediate_output2
+    #             # get the activation on the same point
+    #
+    #             # Check if we are dealing with a fc layer
+    #             if ablated_neurons_predictions.ndim == 1:
+    #                 max_activations = ablated_neurons_predictions[range(0, 100)]
+    #             else:
+    #                 max_activations = ablated_neurons_predictions[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
+    #
+    #             relevance_idx.append(np.sum(abs(original_activations - max_activations)) / np.sum(original_activations))
+    #             if return_decreasing:
+    #                 post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
+    #                                                                                       neuron_idx=neuron,
+    #                                                                                       norm_act=max_activations /
+    #                                                                                                original_activations[
+    #                                                                                                    0],
+    #                                                                                       activations_masks=ablated_neurons_predictions,
+    #                                                                                       thr_pc=0.0,
+    #                                                                                       original_norm_act=original_norm_activations,
+    #                                                                                       normalize_by=pre_ablation_non_normalized_sums)
+    #                 if print_decreasing_matrix:
+    #                     print('Indexes decreasing for Neuron: ' + str(neuron) + ' - Layer: ' + layer_analysis + '\n'
+    #                                                                                                             '             On ablate Neuron: ' + str(
+    #                         i) + ' - Layer: ' + layer_to_ablate + ':\n')
+    #                 max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
+    #                                                                   post_indexes=post_ablation_indexes,
+    #                                                                   print_indexes_decreasing=print_decreasing_matrix)
+    #                 max_concept_decreasing.append(max_concept)
+    #                 max_type_decreasing.append(max_type)
+    #
+    #         clear_session()
+    #     self.model = load_model(path_model)
+    #     relevance_idx = np.array(relevance_idx)
+    #     if return_decreasing:
+    #         if for_neuron is None:
+    #             max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
+    #                 max_type_decreasing)
+    #             return (relevance_idx, max_concept_decreasing, max_type_decreasing)
+    #         else:
+    #             return (relevance_idx[0], max_concept, max_type)
+    #     else:
+    #         if for_neuron is None:
+    #             return relevance_idx
+    #         else:
+    #             return relevance_idx[0]
+    #
+    # def get_relevance_by_ablation_no_abs(self, layer_analysis, neuron, layer_to_ablate, path_model, for_neuron=None,
+    #                               return_decreasing=False, print_decreasing_matrix=False):
+    #     """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
+    #
+    #         :param self: Nefesi object
+    #         :param model: Original Keras model
+    #         :param layer_analysis: String with the layer to analyze
+    #         :param neuron: Int with the neuron to analyze
+    #         :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+    #         """
+    #
+    #     current_layer = self.get_layer_by_name(layer_analysis)
+    #     if return_decreasing:
+    #         pre_ablation_indexes, pre_ablation_non_normalized_sums = \
+    #             current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
+    #                                                     return_non_normalized_sum=True)
+    #     neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
+    #     xy_locations = neuron_data.xy_locations
+    #     image_names = neuron_data.images_id
+    #     images = self.dataset.load_images(image_names=image_names, prep_function=True)
+    #     clear_session()
+    #     new_keras_sess = Session()
+    #     with new_keras_sess.as_default():
+    #         cloned_model = load_model(path_model)
+    #
+    #         layer_names = [x.name for x in cloned_model.layers]
+    #         numb_ablated = layer_names.index(layer_to_ablate)
+    #         numb_analysis = layer_names.index(layer_analysis) + 1
+    #         intermediate_layer_model = Model(inputs=cloned_model.input,
+    #                                          outputs=cloned_model.get_layer(layer_to_ablate).output)
+    #         # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
+    #         backend.learning_phase = lambda: 0
+    #         intermediate_output = intermediate_layer_model.predict(x=images)
+    #
+    #         DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
+    #
+    #         mymodel_layers = [DL_input]
+    #         mymodel_layer_names = [layer_to_ablate]
+    #         for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
+    #             if type(layer.input) == list:
+    #                 list_inputs_names = [x.name.split('/')[0] for x in layer.input]
+    #                 list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
+    #                 list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
+    #                 new_layer = layer(list_input_layers)
+    #
+    #             else:
+    #                 new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
+    #
+    #             mymodel_layer_names.append(layer.name)
+    #             mymodel_layers.append(new_layer)
+    #
+    #         DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
+    #         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+    #         original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
+    #         relevance_idx = []
+    #         if return_decreasing:
+    #             max_concept_decreasing, max_type_decreasing = [], []
+    #         range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
+    #         for i in range_of_neurons:
+    #
+    #             intermediate_output2 = intermediate_output[..., i] * 1  # To copy
+    #             intermediate_output[..., i] = 0
+    #             ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
+    #             intermediate_output[..., i] = intermediate_output2
+    #             # get the activation on the same point
+    #
+    #             # Check if we are dealing with a fc layer
+    #             if ablated_neurons_predictions.ndim == 1:
+    #                 max_activations = ablated_neurons_predictions[range(0, 100)]
+    #             else:
+    #                 max_activations = ablated_neurons_predictions[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
+    #
+    #             relevance_idx.append(np.sum(original_activations - max_activations) / (original_activations[0]*100))
+    #             if return_decreasing:
+    #                 post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
+    #                                                                                       neuron_idx=neuron,
+    #                                                                                       norm_act=max_activations /
+    #                                                                                                original_activations[
+    #                                                                                                    0],
+    #                                                                                       activations_masks=ablated_neurons_predictions,
+    #                                                                                       thr_pc=0.0,
+    #                                                                                       original_norm_act=original_norm_activations,
+    #                                                                                       normalize_by=pre_ablation_non_normalized_sums)
+    #                 if print_decreasing_matrix:
+    #                     print('Indexes decreasing for Neuron: ' + str(neuron) + ' - Layer: ' + layer_analysis + '\n'
+    #                                                                                                             '             On ablate Neuron: ' + str(
+    #                         i) + ' - Layer: ' + layer_to_ablate + ':\n')
+    #                 max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
+    #                                                                   post_indexes=post_ablation_indexes,
+    #                                                                   print_indexes_decreasing=print_decreasing_matrix)
+    #                 max_concept_decreasing.append(max_concept)
+    #                 max_type_decreasing.append(max_type)
+    #
+    #         clear_session()
+    #     self.model = load_model(path_model)
+    #     relevance_idx = np.array(relevance_idx)
+    #     if return_decreasing:
+    #         if for_neuron is None:
+    #             max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
+    #                 max_type_decreasing)
+    #             return (relevance_idx, max_concept_decreasing, max_type_decreasing)
+    #         else:
+    #             return (relevance_idx[0], max_concept, max_type)
+    #     else:
+    #         if for_neuron is None:
+    #             return relevance_idx
+    #         else:
+    #             return relevance_idx[0]
+    #
+    # def get_relevance_by_ablation_no_abs2(self, layer_analysis, neuron, layer_to_ablate, path_model, for_neuron=None,
+    #                                      return_decreasing=False, print_decreasing_matrix=False):
+    #     """Returns the relevance of each neuron in the previous layer for neuron in layer_analysis
+    #
+    #         :param self: Nefesi object
+    #         :param model: Original Keras model
+    #         :param layer_analysis: String with the layer to analyze
+    #         :param neuron: Int with the neuron to analyze
+    #         :return: A list with: the sum of the difference between the original max activations and the max activations after ablating each previous neuron
+    #         """
+    #
+    #     current_layer = self.get_layer_by_name(layer_analysis)
+    #     if return_decreasing:
+    #         pre_ablation_indexes, pre_ablation_non_normalized_sums = \
+    #             current_layer.get_all_index_of_a_neuron(network_data=self, neuron_idx=neuron,
+    #                                                     return_non_normalized_sum=True)
+    #     neuron_data = self.get_neuron_of_layer(layer_analysis, neuron)
+    #     xy_locations = neuron_data.xy_locations
+    #     image_names = neuron_data.images_id
+    #     images = self.dataset.load_images(image_names=image_names, prep_function=True)
+    #     clear_session()
+    #     new_keras_sess = Session()
+    #     with new_keras_sess.as_default():
+    #         cloned_model = load_model(path_model)
+    #
+    #         layer_names = [x.name for x in cloned_model.layers]
+    #         numb_ablated = layer_names.index(layer_to_ablate)
+    #         numb_analysis = layer_names.index(layer_analysis) + 1
+    #         intermediate_layer_model = Model(inputs=cloned_model.input,
+    #                                          outputs=cloned_model.get_layer(layer_to_ablate).output)
+    #         # I don't know why it was generating a random error, because learning_phase() sometimes was an int, not function
+    #         backend.learning_phase = lambda: 0
+    #         intermediate_output = intermediate_layer_model.predict(x=images)
+    #
+    #         DL_input = Input(cloned_model.layers[numb_ablated + 1].input_shape[1:], name=layer_to_ablate)
+    #
+    #         mymodel_layers = [DL_input]
+    #         mymodel_layer_names = [layer_to_ablate]
+    #         for layer in cloned_model.layers[numb_ablated + 1:numb_analysis]:
+    #             if type(layer.input) == list:
+    #                 list_inputs_names = [x.name.split('/')[0] for x in layer.input]
+    #                 list_inputs_nubers = [mymodel_layer_names.index(x) for x in list_inputs_names]
+    #                 list_input_layers = [mymodel_layers[x] for x in list_inputs_nubers]
+    #                 new_layer = layer(list_input_layers)
+    #
+    #             else:
+    #                 new_layer = layer(mymodel_layers[mymodel_layer_names.index(layer.input.name.split('/')[0])])
+    #
+    #             mymodel_layer_names.append(layer.name)
+    #             mymodel_layers.append(new_layer)
+    #
+    #         DL_model = Model(inputs=mymodel_layers[0], outputs=mymodel_layers[-1])
+    #         original_activations = self.get_neuron_of_layer(layer_analysis, neuron).activations
+    #         original_norm_activations = self.get_neuron_of_layer(layer_analysis, neuron).norm_activations
+    #         relevance_idx = []
+    #         if return_decreasing:
+    #             max_concept_decreasing, max_type_decreasing = [], []
+    #         range_of_neurons = range(intermediate_output.shape[-1]) if for_neuron is None else [for_neuron]
+    #         total_activations=[]
+    #         for i in range_of_neurons:
+    #
+    #             intermediate_output2 = intermediate_output[..., i] * 1  # To copy
+    #             intermediate_output[..., i] = 0
+    #             ablated_neurons_predictions = DL_model.predict(intermediate_output)[..., neuron]
+    #             intermediate_output[..., i] = intermediate_output2
+    #             # get the activation on the same point
+    #
+    #             # Check if we are dealing with a fc layer
+    #             if ablated_neurons_predictions.ndim == 1:
+    #                 max_activations = ablated_neurons_predictions[range(0, 100)]
+    #             else:
+    #                 max_activations = ablated_neurons_predictions[range(0, 100), xy_locations[:, 0], xy_locations[:, 1]]
+    #
+    #             relevance_idx.append(np.sum(original_activations - max_activations) / np.sum(original_activations))
+    #             total_activations.append(max_activations)
+    #             if return_decreasing:
+    #                 post_ablation_indexes = current_layer.calculate_all_index_of_a_neuron(network_data=self,
+    #                                                                                       neuron_idx=neuron,
+    #                                                                                       norm_act=max_activations /
+    #                                                                                                original_activations[
+    #                                                                                                    0],
+    #                                                                                       activations_masks=ablated_neurons_predictions,
+    #                                                                                       thr_pc=0.0,
+    #                                                                                       original_norm_act=original_norm_activations,
+    #                                                                                       normalize_by=pre_ablation_non_normalized_sums)
+    #                 if print_decreasing_matrix:
+    #                     print('Indexes decreasing for Neuron: ' + str(neuron) + ' - Layer: ' + layer_analysis + '\n'
+    #                                                                                                             '             On ablate Neuron: ' + str(
+    #                         i) + ' - Layer: ' + layer_to_ablate + ':\n')
+    #                 max_concept, max_type = self.most_decreased_index(pre_indexes=pre_ablation_indexes,
+    #                                                                   post_indexes=post_ablation_indexes,
+    #                                                                   print_indexes_decreasing=print_decreasing_matrix)
+    #                 max_concept_decreasing.append(max_concept)
+    #                 max_type_decreasing.append(max_type)
+    #
+    #         clear_session()
+    #     self.model = load_model(path_model)
+    #     relevance_idx = np.array(relevance_idx)
+    #     if return_decreasing:
+    #         if for_neuron is None:
+    #             max_concept_decreasing, max_type_decreasing = np.array(max_concept_decreasing), np.array(
+    #                 max_type_decreasing)
+    #             return (relevance_idx, max_concept_decreasing, max_type_decreasing)
+    #         else:
+    #             return (relevance_idx[0], max_concept, max_type)
+    #     else:
+    #         if for_neuron is None:
+    #             return relevance_idx,total_activations,original_activations
+    #         else:
+    #             return relevance_idx[0]
+    #
 
     def most_decreased_index(self, pre_indexes, post_indexes, print_indexes_decreasing = False):
         indexes_decreased = self.indexes_decreasing(pre_indexes=pre_indexes, post_indexes=post_indexes)
@@ -1030,7 +1051,7 @@ class NetworkData(object):
     def get_entinty_co_ocurrence_matrix(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:
             layers = self.get_layer_names_to_analyze()
-        elif type(layers) is not list:
+        elif type(layers) != list:
             layers = self.get_layers_analyzed_that_match_regEx(layers)
 
         if th is None:
@@ -1038,10 +1059,6 @@ class NetworkData(object):
 
         if entity == 'class':
             labels = np.array(list(self.default_labels_dict.values()))
-        elif entity == 'object':
-            labels = get_concept_labels(entity)
-        elif entity == 'color':
-            labels =np.array(color_names)
 
         pairs_matrix = np.zeros((len(layers),len(labels),len(labels)),dtype=np.float)
 
@@ -1055,7 +1072,7 @@ class NetworkData(object):
     def get_entinty_representation_vector(self, layers=None, th=None, entity = 'class', operation='1/PC'):
         if layers is None:
             layers = self.get_layer_names_to_analyze()
-        elif type(layers) is not list:
+        elif type(layers) != list:
             layers = self.get_layers_analyzed_that_match_regEx(layers)
 
         if th is None:
@@ -1063,10 +1080,7 @@ class NetworkData(object):
 
         if entity == 'class':
             labels = np.array(list(self.default_labels_dict.values()))
-        elif entity == 'object':
-            labels = get_concept_labels(entity)
-        elif entity == 'color':
-            labels = np.array(color_names)
+
         representation_vector = np.zeros((len(layers),len(labels)),dtype=np.float)
 
         for l, layer in enumerate(layers):
@@ -1101,10 +1115,10 @@ class NetworkData(object):
                 keys: string, layer name,
                 values: list of tuples with
                 `nefesi.neuron_data.NeuronData` instance, index value, index value,
-                (the second index value, only if `idx2` is not None).
+                (the second index value, only if `idx2` != None).
 
         :raise:
-            TypeError: If `layers_or_neurons` is not a list of layer names,
+            TypeError: If `layers_or_neurons` != a list of layer names,
             a layer name or a dictionary.
         """
         selective_neurons = dict()
@@ -1123,7 +1137,7 @@ class NetworkData(object):
                     else:
                         res_idx1 = index_values
 
-                    if idx2 is not None:
+                    if idx2 != None:
                         res_idx2 = []
                         index_values2 = l.selectivity_idx(self.model, idx2, self.dataset)
                         print(type(index_values2[0]))
@@ -1139,7 +1153,7 @@ class NetworkData(object):
                     neurons = l.neurons_data
                     for i in range(len(neurons)):
                         if inf_thr <= res_idx1[i] <= sup_thr:
-                            if res_idx2 is not None:
+                            if res_idx2 != None:
                                 if inf_thr <= res_idx2[i] <= sup_thr:
                                     tmp = (neurons[i], res_idx1[i], res_idx2[i])
                                     selective_neurons[l.layer_id].append(tmp)
@@ -1175,7 +1189,7 @@ class NetworkData(object):
         else:
             raise TypeError("Parameter 1 should be a list of layers, layer_id or dict")
 
-        if idx2 is not None:
+        if idx2 != None:
             idx1 = (idx1, idx2)
         res = {idx1: selective_neurons}
         return res
@@ -1302,7 +1316,7 @@ class NetworkData(object):
 
         return res_act, res_neurons, res_loc, res_nf
 
-    def save_to_disk(self, file_name=None, save_model=True, erase_partials=False):
+    def save_to_disk(self, file_name=None, erase_partials=True):
         """Save all results. The file saved will contain the
         `nefesi.network_data.NetworkData` object and the rest
          of containing objects.
@@ -1316,32 +1330,31 @@ class NetworkData(object):
         """
 
         save_path = None
-        if file_name is not None and file_name is not '':
+        if file_name != None and file_name != '':
             save_path = os.path.dirname(file_name)
             file_name = os.path.basename(file_name )
 
-        if file_name is None or file_name is '':
+        if file_name == None or file_name == '':
             file_name = self.default_file_name
         if not file_name.endswith('.obj'):
             file_name+='.obj'
-        if save_path is not None and save_path is not '':
+        if save_path != None and save_path != '':
             self.save_path = save_path
 
-        model_name = self.model.name
-        if self.save_path is not None:
+
+        if self.save_path != None:
             file_name = os.path.join(self.save_path, file_name)
-            model_name = os.path.join(self.save_path, self.model.name)
+
         #If directory not exists create it recursively
         os.makedirs(name=self.save_path, exist_ok=True)
         model = self.model
-        if save_model:
-            self.model.save(model_name + '.' + model_file_extension)
-        #Save the object without model info
+
         self.model = None
         if erase_partials:
             for file in os.listdir(self.save_path):
                 if 'PartialSave' in file:
-                    os.remove(self.save_path+file)
+                    print(self.save_path+file)
+                    # os.remove(self.save_path+file)
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)
         self.model = model
@@ -1367,15 +1380,15 @@ class NetworkData(object):
         TODO: make a copy constructor that copy my_net on another network_data object. In order to compatibilice old
         obj's with news implementations of network_data that can have more attributes
         """
-        if model_file is not None:
+        if model_file != None:
             my_net.model = deep_model(model_file)
-        if my_net.model is None:
+        if my_net.model == None:
             warnings.warn("The model was *not* loaded. Load it manually.")
 
-        if file_name is None or file_name is '':
+        if file_name == None or file_name == '':
             file_name = my_net.default_file_name
         my_net.default_file_name = os.path.splitext(file_name)[0]
-        if save_path is not None and save_path is not '':
+        if save_path != None and save_path != '':
             my_net.save_path = save_path
 
         if not os.path.isdir(my_net.dataset.src_dataset):
@@ -1418,10 +1431,10 @@ class NetworkData(object):
             orientation_degrees = self.default_degrees_orientation_idx
         if thr_pc is None:
             thr_pc = self.default_thr_pc
-        if type(layer) is not LayerData:
+        if type(layer) != LayerData:
             layer = next((lay for lay in self.layers_data if lay.layer_id == layer), None)
 
-        if layer is not None:
+        if layer != None:
             return layer.get_all_index_of_a_neuron(network_data=self,neuron_idx=neuron_idx,
                                                                 orientation_degrees=orientation_degrees,
                                                                 thr_pc=thr_pc)

@@ -5,7 +5,7 @@ keras.__version__ = '2.2.4'
 torch.__version__ = '1.6.0'
 """
 
-Type_Framework = "Pytorch"   # "Keras" or "Pytorch"
+Type_Framework = "Pytorch_flexible"   # "Keras" or "Pytorch"
 
 if Type_Framework == "Keras":
     from .keras_functions import DeepModel as ModelType
@@ -19,6 +19,17 @@ elif Type_Framework == "Pytorch":
     from .pytorch_functions import _load_multiple_images, _load_single_image
     model_file_extension = 'pkl'
     channel_type = "channel_first"
+
+elif Type_Framework == "Pytorch_flexible":
+    from .pytorch_flex_functions import DeepModel as ModelType
+    from .pytorch_flex_functions import DataBatchGenerator, get_preprocess_function
+    from .pytorch_flex_functions import _load_multiple_images, _load_single_image
+    model_file_extension = 'pkl'
+    channel_type = "channel_first"
+
+
+
+
 else:
     raise Exception("Type_Framework error. ")
 

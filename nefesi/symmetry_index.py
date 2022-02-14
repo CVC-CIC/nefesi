@@ -1,7 +1,7 @@
 
 SYMMETRY_AXES = [0, 45, 90, 135]
 import numpy as np
-from . import read_activations
+from functions import read_activations
 from .util.image import rotate_images_axis
 
 def get_symmetry_index(neuron_data, model, layer_data, dataset, symm_axes=SYMMETRY_AXES):

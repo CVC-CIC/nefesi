@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from .util import general_functions as gf
-from . import read_activations as read_act
+from functions import read_activations as read_act
 from anytree import Node
 LABEL_NAME_POS = 0
 HUMAN_NAME_POS = 1

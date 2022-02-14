@@ -1,4 +1,4 @@
-from . import read_activations
+from functions import read_activations
 import numpy as np
 
 def get_similarity_index(neuron_a, neuron_b, idx_a, model, layer_name, dataset):

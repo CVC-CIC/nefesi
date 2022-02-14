@@ -2,7 +2,10 @@ import numpy as np
 import warnings
 from multiprocessing.pool import ThreadPool  # ThreadPool don't have documentation :( But uses threads
 import PIL
+import cv2
+from torchvision import transforms
 from scipy.interpolate import RectBivariateSpline
+from imageio import imread
 
 # ACTIVATIONS_BATCH_SIZE = 200
 ACTIVATIONS_BATCH_SIZE = 100
@@ -42,21 +45,79 @@ def get_argmax_and_max(layer):
     num_images = layer.shape[0]
     #The num of neurons in this layer
     num_filters = layer.shape[-1]
+
     #The same layer but with height and width in one vector, to find the max point.
-    layer = layer.reshape(num_images, unravel_shape[0] * unravel_shape[1], num_filters)
+    layer2 = layer.reshape(num_images, unravel_shape[0] * unravel_shape[1], num_filters)
+
+    # negative values also
+    # layer2 = -layer.reshape(num_images, unravel_shape[0] * unravel_shape[1], num_filters)
+
+
+
+
     #find the max point on each vector that represent height and width
-    argmax_idx = layer.argmax(axis=1).reshape(-1)
+    argmax_idx = layer2.argmax(axis=1).reshape(-1)
+
+
     #Unravel this argmax (convert from one dimensional to two dimensional (x,y)
     xy_locations = np.array(np.unravel_index(argmax_idx, unravel_shape)). \
         reshape(2, num_images, num_filters).transpose()
+
+
     #Create a meshgrid for make posible to find the max in one vectorized operation
     filters_idx, images_idx = np.meshgrid(range(num_filters), range(num_images))
     # the list of the num_images max activations for each filter (maxActs[i,j] will be the max activation
     # for the image i on neuron j.
-    max_acts = layer[images_idx.reshape(-1),
+    max_acts = layer2[images_idx.reshape(-1),
                                    argmax_idx,
                                    filters_idx.reshape(-1)].reshape(num_images, num_filters)
+
+
     return (xy_locations, max_acts)
+
+
+
+
+def get_argmax_and_min(layer):
+    if len(layer.shape) == 2: #Is not conv
+        return layer
+    #The height and width of the image
+    unravel_shape = layer.shape[1:-1]
+    #The batch size
+    num_images = layer.shape[0]
+    #The num of neurons in this layer
+    num_filters = layer.shape[-1]
+    #The same layer but with height and width in one vector, to find the max point.
+    layer2 = layer.reshape(num_images, unravel_shape[0] * unravel_shape[1], num_filters)
+
+    #negative values also (introduced by guillem)
+    # layer3 = abs(layer.reshape(num_images, unravel_shape[0] * unravel_shape[1], num_filters))
+
+
+
+
+    #find the max point on each vector that represent height and width
+    argmax_idx = layer2.argmin(axis=1).reshape(-1)
+
+
+    #Unravel this argmax (convert from one dimensional to two dimensional (x,y)
+    xy_locations = np.array(np.unravel_index(argmax_idx, unravel_shape)). \
+        reshape(2, num_images, num_filters).transpose()
+
+
+    #Create a meshgrid for make posible to find the max in one vectorized operation
+    filters_idx, images_idx = np.meshgrid(range(num_filters), range(num_images))
+    # the list of the num_images max activations for each filter (maxActs[i,j] will be the max activation
+    # for the image i on neuron j.
+    max_acts = layer2[images_idx.reshape(-1),
+                                   argmax_idx,
+                                   filters_idx.reshape(-1)].reshape(num_images, num_filters)
+
+
+    return (xy_locations, max_acts)
+
+
+
 """
 def get_maxs_and_argmax(layer, gpu_thr = 10000):
     
@@ -118,6 +179,7 @@ def fill_all_layers_data_batch(file_names, images, model, layers_data):
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
+    file_names = [name.split('\\',1)[1] for name in file_names]
     layer_names = [layer.layer_id for layer in layers_data]
     activations = get_activations(model, images, layer_names)
     for i, layer_activation in enumerate(activations):
@@ -134,6 +196,10 @@ def fill_all_layers_data_batch(file_names, images, model, layers_data):
             xy_locations = np.zeros((num_images, 2), dtype=np.int)
             for idx_filter in range(num_filters):
                 layers_data[i].neurons_data[idx_filter].add_activations(layer_activation[:, idx_filter], file_names, xy_locations)
+
+
+
+
 
 
 def get_sorted_activations(file_names, images, model, layer_name,
@@ -157,16 +223,7 @@ def get_sorted_activations(file_names, images, model, layer_name,
     activations = get_activations(model, images, layers_name=None)#layer_name)
     for layer_activation in activations:
         conv_layer = type(layer_activation) is tuple
-        if neurons_data is None:
-            if conv_layer:
-                num_filters = layer_activation[1].shape[-1]
-            else:
-                num_filters = layer_activation.shape[-1]
-            # if `neurons_data` is None, creates the list and fill it
-            # with the `nefesi.neuron_data.NeuronData` instances
-            neurons_data = np.zeros(num_filters, dtype=np.object)
-            for idx_filter in range(num_filters):
-                neurons_data[idx_filter] = NeuronData(num_max_activations, batch_size, buffered_iterations=batches_to_buffer)
+
         if conv_layer:
             num_filters = layer_activation[1].shape[-1]
             xy_locations, max_acts = layer_activation
@@ -195,7 +252,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
 
     :return: List of floats, activation values for each input in `images`.
     """
-    batches = np.array(np.arange(0,len(images), batch_size).tolist()+[len(images)])
+    batches = np.array(np.arange(0,batch_size, batch_size).tolist()+[batch_size])
     if idx_neuron is None:
         for layer in model.layers:
             if layer.name == layer_name:
@@ -204,7 +261,7 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
                 break
         else:
             raise ValueError('Layer '+layer_name+"don't exist in the model "+model.name)
-        activations = np.zeros(shape=(len(images),neurons_of_layer), dtype=np.float)
+        activations = np.zeros(shape=(batch_size,neurons_of_layer), dtype=np.float)
         #Get the activation of all neuron
         for i in range(1,len(batches)):
             total_activations = get_activations(model, images[batches[i-1]:batches[i]], layers_name=layer_name, only_max_and_argmax=False)[0]
@@ -212,10 +269,10 @@ def get_activation_from_pos(images, model, layer_name, idx_neuron, pos, batch_si
                                                                        pos[batches[i - 1]:batches[i],0],
                                                                        pos[batches[i - 1]:batches[i],1]]
     else:
-        activations = np.zeros(shape=len(images), dtype=np.float)
+        activations = np.zeros(shape=batch_size, dtype=np.float)
         for i in range(1,len(batches)):
-            total_activations = get_one_neuron_activations(model, images[batches[i-1]:batches[i]],idx_neuron=idx_neuron, layer_name=layer_name)
-            activations[batches[i - 1]:batches[i]] = total_activations[range(len(total_activations)), pos[batches[i - 1]:batches[i],0],pos[batches[i - 1]:batches[i],1]]
+            total_activations = get_one_neuron_activations(model.model, images[batches[i-1]:batches[i]],idx_neuron=idx_neuron, layer_name=layer_name)
+            activations= [activ[pos[t][0]][pos[t][1]]  for t,activ in enumerate(total_activations)]
     # for each input in 'images' (range(len(activations))), get the activation value in 'pos'
     return activations
 

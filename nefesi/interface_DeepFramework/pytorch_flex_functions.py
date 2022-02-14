@@ -12,19 +12,19 @@ import types
 from PIL import Image
 
 # pytorch model has no input shape. Attention: pytorch is channel first, keras is channel last.
-input_shape = (None, 224, 224, 3)
+input_shape = [(1, 3, 64, 64),(1, 3, 64, 64)]
 
 class DeepModel():
     """
     """
-    def __init__(self, model_name):
-        self.pytorchmodel = torch.load(model_name)
+    def __init__(self, model):
+        self.pytorchmodel = model
         self.gpu_ids = [0]
         self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device(
             'cpu')  # get device name: CPU or GPU
         self.pytorchmodel.to(self.device)
         self.pytorchmodel.eval()
-        self.name = os.path.basename(model_name).split(".")[0]
+        self.name = model.__class__.__name__
 
         # Some new attributes are added for the compatibility of the keras code.
         self.set_layers()
@@ -37,14 +37,14 @@ class DeepModel():
         self.all_layers = []
         layers_setting_hook = []
         for name, layer in self.pytorchmodel.named_modules():
-            if not isinstance(layer, torch.nn.Sequential) and name != '':
+            if  name != '':
                 # add new attributes
-                layer.name = '{}_{}'.format(name, layer._get_name())
+                layer.name = name
                 layer.get_config = types.MethodType(get_config, layer)
                 self.all_layers.append(layer)
                 layers_setting_hook.append(LayerAttributes(layer))
-        x = torch.rand(100, self.input_shape[3], self.input_shape[1], self.input_shape[2]).to(self.device)
-        y = self.pytorchmodel(x)
+        x = [torch.rand(inp).to(self.device) for inp in self.input_shape]
+        y = self.pytorchmodel(*x)
         for setting_hook in layers_setting_hook:
             setting_hook.remove()
 
@@ -86,15 +86,10 @@ class DeepModel():
         if not isinstance(layers_name, list):
             layers_name = [layers_name]
         # in case that the inputs are numpy array instead of tensors.
-        if not torch.is_tensor(model_inputs):
-            if model_inputs.shape[3] == 3:
-                model_inputs = np.transpose(model_inputs, (0, 3, 1, 2))
-            else:
-                raise Exception("Unforeseen numpy array")
-            model_inputs = torch.from_numpy(model_inputs)
-        model_inputs = model_inputs.to(self.device)
+
+        model_inputs = [model_in.to(self.device,dtype=torch.float) for model_in in model_inputs]
         outputs = [LayerActivations(self.get_layer(layer)) for layer in layers_name]
-        self.pytorchmodel.forward(model_inputs)
+        self.pytorchmodel.forward(*model_inputs)
         layer_outputs = [output.features for output in outputs]
 
         # remove the hooks.
@@ -266,14 +261,18 @@ def _load_multiple_images(src_dataset, img_list, color_mode, target_size, prepro
     :param prep_function: Boolean.
     :return: Numpy array that contains the images (1+N dimension where N is the dimension of an image).
     """
-    imgs = []
-    for img_name in img_list:
+
+
+    inputs = _load_single_image(src_dataset, img_list[0], color_mode, target_size,
+                                 preprocessing_function=preprocessing_function,
+                                 prep_function=prep_function)
+    for i,img_name in enumerate(img_list[1:]):
         img = _load_single_image(src_dataset, img_name, color_mode, target_size,
                                  preprocessing_function=preprocessing_function,
                                  prep_function=prep_function)
-        imgs.append(img)
+        inputs = [torch.cat((inputs[inpt],imag_part),0)  for inpt,imag_part in enumerate(img)]
     # concatenate
-    imgs_batch = np.array(imgs)
+    imgs_batch = np.array(inputs)
 
     return imgs_batch
 
@@ -287,17 +286,23 @@ def _load_single_image(src_dataset, img_name, color_mode, target_size, preproces
     grayscale = color_mode == 'grayscale'
 
     img = Image.open(src_dataset + img_name).convert('RGB')
+
     if grayscale:
-        img = img.convert('L')
+        img = img.convert('L').convert('RGB')
     img = img.resize(target_size, Image.NEAREST)
 
+
     if preprocessing_function is not None and prep_function:
+
         img = preprocessing_function(img)
         # transform to numpy
-        img = img.numpy()
-        img = np.transpose(img, (1, 2, 0))
+        # img = img.numpy()
+        # img = np.transpose(img, (1, 2, 0))
+        img = [torch.unsqueeze(i, 0) for i in img]
     else:
         img = np.array(img)
+
+
     return img
 
 
