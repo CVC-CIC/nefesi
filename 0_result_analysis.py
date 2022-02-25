@@ -65,7 +65,7 @@ def ablation_hook(idx, inputs, output):
 
 
 def main():
-    file_name = 'C:/Users/arias/Desktop/Nefesi2022/Models/VGG16/color_indx.obj'
+    file_name = 'C:/Users/arias/Desktop/Nefesi2022/Nefesi_models/VGG16/color_indx.obj'
 
     # file_name= 'C:/Users/g84194584/Desktop/Code/nefesi/nefesi/hpeu_imagenet_good/Pos_Neg.obj'
     # model_path = "C:/Users/g84194584/Desktop/Code/nefesi/HPEU/mse_net_latest.pth"

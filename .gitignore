@@ -28,3 +28,4 @@ nefesi/util/bg_image2.jpg
 nefesi/util/bg_image.png
 nefesi/util/bg_image.jpg
 *.out
+/Model_generation/Savedmodel/
