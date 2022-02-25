@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 
 def main():
-    folder_dir ="/home/guillem/Nefesi2022"
+    folder_dir ="/home/guillem/Nefesi2022/"
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
 
