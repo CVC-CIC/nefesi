@@ -1,8 +1,0 @@
-site_name: Nefesi Documentation
-theme: readthedocs
-docs_dir: sources
-repo_url: http://github.com/CVC-CIC/nefesi
-site_description: 'Documentation for nefesi.'
-
-pages:
-  - Home: index.md
