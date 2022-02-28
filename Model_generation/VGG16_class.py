@@ -96,7 +96,7 @@ def main():
     classreg_interval = 10
     # Set loss function (categorical Cross Entropy Loss)
     loss_func = nn.CrossEntropyLoss()
-    factor=0.5
+    factor=-0.5
     # Set optimizer (using Adam as default)
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
@@ -110,6 +110,23 @@ def main():
 
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
+        activation = {}
+        handles = []
+        for layer in hooked_layers:
+            output = rgetattr(model, layer)
+            handles.append(output.register_forward_hook(get_activation(layer)))
+
+        with torch.set_grad_enabled(False):
+
+            for local_batch, local_labels in testloader:
+                # Transfer to GPU
+                local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+                test_outputs = model(local_batch)
+
+        class_sel = class_selectivity_ML(activation)
+        #     clear hooks
+        for handle in handles:
+            handle.remove()
 
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -126,23 +143,7 @@ def main():
 
 
             # if i % classreg_interval != classreg_interval-1:
-            activation ={}
-            handles =[]
-            for layer in hooked_layers:
-                output = rgetattr(model, layer)
-                handles.append(output.register_forward_hook(get_activation(layer)))
 
-            with torch.set_grad_enabled(False):
-
-                for local_batch, local_labels in testloader:
-                    # Transfer to GPU
-                    local_batch, local_labels = local_batch.to(device), local_labels.to(device)
-                    test_outputs = model(local_batch)
-
-            class_sel=class_selectivity_ML(activation)
-        #     clear hooks
-            for handle in handles:
-                handle.remove()
 
 
             loss = loss_func(outputs, labels)
