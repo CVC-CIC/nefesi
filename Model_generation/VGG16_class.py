@@ -163,9 +163,9 @@ def main():
     # torch.save(model, 'C:/Users/arias/Desktop/Github/nefesi/Model_generation/Savedmodel/vgg16_normal')
         if epoch % 10 == 9:
 
-            torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_2class_partial'+str(epoch))
+            torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_partial_negative'+str(epoch))
 
-    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_2class')
+    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_negative')
 
 
     print('Finished Training')
