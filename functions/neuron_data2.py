@@ -155,7 +155,7 @@ class NeuronData(object):
             if K < image_dataset.target_size[0]:
                 patch=image_dataset.get_patch(self.images_id[i], self.xy_locations[i], K, P, S, mode='constant')
                 if patch.shape != patches[i].shape:
-                    patch.resize(patches[i].shape)
+                    patch=np.resize(patch,patches[i].shape)
                 patches[i] = patch
             else:
                 patches[i] = image_dataset._load_image(self.images_id[i])
