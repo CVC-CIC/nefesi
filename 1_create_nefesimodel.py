@@ -61,7 +61,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
-    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_2class_negative')
+    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_negative')
 
 
     deepmodel = DeepF.deep_model(model)
