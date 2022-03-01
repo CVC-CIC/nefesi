@@ -107,7 +107,7 @@ def main():
         for n in range(Nefesimodel.get_len_neurons_of_layer(layer)):
             neurona = Nefesimodel.get_neuron_of_layer(layer, n)
             neurona.color_selectivity_idx_new(Nefesimodel, layer_data, dataset)
-    Nefesimodel.save_to_disk('color_indx')
+    Nefesimodel.save_to_disk('Positive_class')
     #
     # # calculate the Similarity Index of each neuron in the same layer
     # for layer in Nefesimodel.get_layers_name():
