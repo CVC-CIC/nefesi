@@ -61,7 +61,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
-    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_negative')
+    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_class')
 
 
     deepmodel = DeepF.deep_model(model)
@@ -107,7 +107,7 @@ def main():
         for n in range(Nefesimodel.get_len_neurons_of_layer(layer)):
             neurona = Nefesimodel.get_neuron_of_layer(layer, n)
             neurona.color_selectivity_idx_new(Nefesimodel, layer_data, dataset)
-    Nefesimodel.save_to_disk('Negative_class')
+    Nefesimodel.save_to_disk('Normal_class')
     #
     # # calculate the Similarity Index of each neuron in the same layer
     # for layer in Nefesimodel.get_layers_name():
