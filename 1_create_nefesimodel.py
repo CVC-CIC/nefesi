@@ -54,22 +54,27 @@ def main():
 
 
     # Load the Model with your weigths first
+
+    # folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
+    folder_dir = "/home/guillem/Nefesi2022/"
+
+
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
-    model = torch.load('Model_generation/Savedmodel/vgg16_normal')
+    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_positive')
 
 
     deepmodel = DeepF.deep_model(model)
 
 
     # Create a list with the layers that you want to analyze and 0 if they are encoding or 1 if they are decoding
-    layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0]]
-    # layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0], ['features.11', 0],
-    #                    ['features.13', 0], ['features.15', 0], ['features.18', 0], ['features.20', 0],
-    #                    ['features.22', 0], ['features.25', 0], ['features.27', 0], ['features.29', 0]]
+    # layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0]]
+    layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0], ['features.11', 0],
+                       ['features.13', 0], ['features.15', 0], ['features.18', 0], ['features.20', 0],
+                       ['features.22', 0], ['features.25', 0], ['features.27', 0], ['features.29', 0]]
 
     # Create the DatasetLoader: select your imagepath and your preprocessing functon (in case you have one)
-    Path_images='C:/Users/arias/Desktop/Dataset/tiny-imagenet-200/val/images'
+    Path_images=folder_dir+'Dataset/tiny-imagenet-200/val/images'
     preproces_function=preproces_imagenet_img
     dataset = ImageDataset(src_dataset=Path_images,target_size=(64,64),preprocessing_function=preproces_function,color_mode='rgb')
 
