@@ -179,7 +179,7 @@ def fill_all_layers_data_batch(file_names, images, model, layers_data):
 
     :return: List of `nefesi.neuron_data.NeuronData` instances.
     """
-    print(file_names)
+
     # file_names = [name.split('\\',1)[1] for name in file_names]
     layer_names = [layer.layer_id for layer in layers_data]
     activations = get_activations(model, images, layer_names)
