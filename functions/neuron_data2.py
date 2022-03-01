@@ -149,10 +149,14 @@ class NeuronData(object):
         S=layer_data.receptive_field_Stride
         P=layer_data.receptive_field_Padding
         patches = np.zeros(shape=[self._max_activations,K,K,3], dtype=np.float)
+        print(patches.shape)
+        print(K)
+        print(S)
+        print(P)
 
         for i in range(self._max_activations):
             if K < image_dataset.target_size[0]:
-                patches[i] = image_dataset.get_patch(self.images_id[i], self.xy_locations[i], K, P, S,mode='reflect')
+                patches[i] = image_dataset.get_patch(self.images_id[i], self.xy_locations[i], K, P, S,mode='constant')
             else:
                 patches[i] = image_dataset._load_image(self.images_id[i])
 
