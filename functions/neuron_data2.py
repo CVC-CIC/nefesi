@@ -3,7 +3,7 @@ import os
 
 
 from functions.color_index import  get_shape_selectivity_index,get_color_selectivity_index_new
-
+from functions.class_index import get_class_selectivity_idx
 from functions.image import crop_center, expand_im
 from PIL import Image
 class NeuronData(object):
@@ -611,6 +611,23 @@ class NeuronData(object):
         else:
             return len(concept_idx)
 
+    def class_selectivity_idx(self, labels=None, threshold=.1):
+        """Returns the class selectivity index for this neuron.
+        :param labels: Dictionary, key: name class, value: label class.
+            This argument is needed for calculate the class index.
+        :param threshold: Float, required for calculate the class index.
+        :return: Float, between 0.1 and 1.0.
+        :raise:
+            TypeError: If `labels` is None or not a dictionary.
+        """
+        key = 'class' + str(threshold)
+        if key not in self.selectivity_idx:
+            # Labels always must to be a dictionary
+            if type(labels) is not dict and labels is not None:
+                raise TypeError("The 'labels' argument should be a dictionary if is specified")
+            self.selectivity_idx[key] = get_class_selectivity_idx(self, labels, threshold)
+
+        return self.selectivity_idx[key]
 
 
 
