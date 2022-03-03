@@ -39,8 +39,8 @@ def main():
 
     # Load the Model with your weigths first
 
-    folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
-    # folder_dir = "/home/guillem/Nefesi2022/"
+    # folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
+    folder_dir = "/home/guillem/Nefesi2022/"
 
 
     # device = torch.device("cuda" if torch.cuda.is_available()
@@ -49,11 +49,22 @@ def main():
 
 
 
-    Nefesimodel= NetworkData.load_from_disk('C:/Users/arias/Desktop/Nefesi2022/Nefesi/Nefesi_models/VGG16/Positive_class')
+    Nefesimodel= NetworkData.load_from_disk(folder_dir+'Nefesi/Nefesi_models/VGG16/Normal_class')
+    Nefesimodel2= NetworkData.load_from_disk(folder_dir+'Nefesi/Nefesi_models/VGG16/Positive_class')
+    Nefesimodel3= NetworkData.load_from_disk(folder_dir+'Nefesi/Nefesi_models/VGG16/Negative_class')
+
 
     for i in range(10):
-        neurona=Nefesimodel.get_neuron_of_layer('features.1',i)
-        plt.imshow(neurona._neuron_feature)
+
+        plt.subplot(3,1,1)
+        neurona = Nefesimodel.get_neuron_of_layer('features.27', i)
+        plt.imshow(neurona._neuron_feature/256)
+        plt.subplot(3, 1, 2)
+        neurona2 = Nefesimodel2.get_neuron_of_layer('features.27', i)
+        plt.imshow(neurona2._neuron_feature / 256)
+        plt.subplot(3, 1, 3)
+        neurona3 = Nefesimodel3.get_neuron_of_layer('features.27', i)
+        plt.imshow(neurona3._neuron_feature / 256)
         plt.show()
 
 

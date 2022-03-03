@@ -59,7 +59,7 @@ def main():
                           else "cpu")
 
 
-    model = models.vgg16(pretrained=True)
+    model = models.vgg16(pretrained=False)
     # for param in model.parameters():
     #     param.requires_grad = False
 
@@ -96,7 +96,7 @@ def main():
     classreg_interval = 10
     # Set loss function (categorical Cross Entropy Loss)
     loss_func = nn.CrossEntropyLoss()
-    factor=0.5
+    factor=1
     # Set optimizer (using Adam as default)
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
@@ -163,9 +163,9 @@ def main():
     # torch.save(model, 'C:/Users/arias/Desktop/Github/nefesi/Model_generation/Savedmodel/vgg16_normal')
         if epoch % 10 == 9:
 
-            torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_partial_positive'+str(epoch))
+            torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_partial'+str(epoch))
 
-    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_3class_positive')
+    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_possitive_nopretrain')
 
 
     print('Finished Training')
