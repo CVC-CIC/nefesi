@@ -54,6 +54,7 @@ def load_multiple_images(src_dataset, img_list, color_mode, target_size, preproc
     This will be used in the calculation of deep framework. The output should be based on the type of
     deep framework.
     """
+
     return _load_multiple_images(src_dataset, img_list, color_mode, target_size,
                                  preprocessing_function=preprocessing_function,
                                  prep_function=prep_function)

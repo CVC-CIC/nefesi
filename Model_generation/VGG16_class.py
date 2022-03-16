@@ -146,15 +146,15 @@ def main():
 
 
 
-            loss = loss_func(outputs, labels)
+            loss1 = loss_func(outputs, labels)
 
 
-            loss = loss + factor*class_sel
+            loss = loss1 + factor*class_sel
             loss.backward()
             optimizer.step()
 
             # print statistics
-            running_loss += loss.item()
+            running_loss += loss1.item()
             if i % log_interval == log_interval-1:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                 running_loss = 0.0
@@ -165,7 +165,7 @@ def main():
 
             torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_partial'+str(epoch))
 
-    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_normal_nopretrain')
+    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_negative_nopretrain')
 
 
     print('Finished Training')

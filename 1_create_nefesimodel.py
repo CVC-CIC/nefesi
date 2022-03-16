@@ -37,9 +37,12 @@ def preproces_imagenet_img( imgs_hr):
 
     img=np.array(imgs_hr)
 
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
 
-    tnsr = [transforms.ToTensor()(img)]
+    tnsr = [transform(img)]
 
 
     return tnsr
@@ -55,13 +58,13 @@ def main():
 
     # Load the Model with your weigths first
 
-    # folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
-    folder_dir = "/home/guillem/Nefesi2022/"
+    folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
+    # folder_dir = "/home/guillem/Nefesi2022/"
 
 
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
-    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_normal_nopretrain')
+    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_possitive_nopretrain')
 
 
     deepmodel = DeepF.deep_model(model)
@@ -74,7 +77,7 @@ def main():
                        ['features.22', 0], ['features.25', 0], ['features.27', 0], ['features.29', 0]]
 
     # Create the DatasetLoader: select your imagepath and your preprocessing functon (in case you have one)
-    Path_images=folder_dir+'Dataset/tiny-imagenet-200/val/images'
+    Path_images=folder_dir+'Dataset/tiny-imagenet-200/train'
     preproces_function=preproces_imagenet_img
     dataset = ImageDataset(src_dataset=Path_images,target_size=(64,64),preprocessing_function=preproces_function,color_mode='rgb')
 
@@ -107,7 +110,7 @@ def main():
         for n in range(Nefesimodel.get_len_neurons_of_layer(layer)):
             neurona = Nefesimodel.get_neuron_of_layer(layer, n)
             neurona.color_selectivity_idx_new(Nefesimodel, layer_data, dataset)
-    Nefesimodel.save_to_disk('Normal_nopretrain')
+    Nefesimodel.save_to_disk('Positive_nopretrain')
     #
     # # calculate the Similarity Index of each neuron in the same layer
     # for layer in Nefesimodel.get_layers_name():

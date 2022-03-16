@@ -179,7 +179,7 @@ class ImageDataset():
 
         :return: PIL image instance.
         """
-        print(crop_pos)
+
         img = self._load_image(img_name)
 
         # Add padding

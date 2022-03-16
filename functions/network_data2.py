@@ -198,7 +198,7 @@ class NetworkData(object):
         start = time.time()
         for n_batches, imgs in enumerate(data_batch.iterator):
             images = imgs[0]
-            actual_file_names = imgs[2]
+            actual_file_names = [x.split("\\",maxsplit=1)[1] for x in imgs[2]]
 
 
             # Search the maximum activations
