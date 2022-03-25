@@ -65,25 +65,45 @@ def ablation_hook(idx, inputs, output):
 
 
 def main():
-    file_name = 'C:/Users/arias/Desktop/Nefesi2022/Nefesi_models/VGG16/Normal_nopretrain.obj'
-
-    # file_name= 'C:/Users/g84194584/Desktop/Code/nefesi/nefesi/hpeu_imagenet_good/Pos_Neg.obj'
-    # model_path = "C:/Users/g84194584/Desktop/Code/nefesi/HPEU/mse_net_latest.pth"
+    file_name = 'C:/Users/arias/Desktop/Nefesi2022/Nefesi/Nefesi_models/VGG16/Normal_class.obj'
 
     Nefesimodel = NetworkData.load_from_disk(file_name, model_file=None)
-    device = torch.device('cuda:{}'.format(0))
 
-    model = torch.load('Model_generation/Savedmodel/vgg16_normal')
+    file_name2 = 'C:/Users/arias/Desktop/Nefesi2022/Nefesi/Nefesi_models/VGG16/Negative_nopretrain.obj'
 
-    Nefesimodel.model = model
+    Nefesimodel2 = NetworkData.load_from_disk(file_name2, model_file=None)
 
-    layers = Nefesimodel.get_layer_names_to_analyze()
+    file_name3 = 'C:/Users/arias/Desktop/Nefesi2022/Nefesi/Nefesi_models/VGG16/Positive_nopretrain.obj'
 
-    for layer in Nefesimodel.layers_data:
-        for neuron in layer.neurons_data:
-            nf=neuron._neuron_feature
-            plt.imshow(nf/265)
-            plt.show()
+    Nefesimodel3 = NetworkData.load_from_disk(file_name3, model_file=None)
+
+    layer= "features.8"
+    layer1=Nefesimodel.layers_data[3]
+    layer2=Nefesimodel2.layers_data[3]
+    layer3=Nefesimodel3.layers_data[3]
+    for n in range(20):
+
+        neuron2=Nefesimodel2.get_neuron_of_layer(layer,n)
+        nf2 = neuron2._neuron_feature
+        mosaic2 = neuron2.get_mosaic(Nefesimodel2, layer2)
+        plt.subplot(221)
+        plt.imshow(nf2 / 265)
+        plt.title("Negative")
+        plt.subplot(222)
+        plt.imshow(mosaic2 / 265)
+
+        neuron3 = Nefesimodel3.get_neuron_of_layer(layer, n)
+        nf3 = neuron3._neuron_feature
+        mosaic3 = neuron3.get_mosaic(Nefesimodel3, layer3)
+        plt.subplot(223)
+        plt.imshow(nf3 / 265)
+        plt.title("Possitive")
+        plt.subplot(224)
+        plt.imshow(mosaic3 / 265)
+
+        plt.show()
+
+        print(neuron2)
 
     #
     # for layer in layers:

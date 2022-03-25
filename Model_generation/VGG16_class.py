@@ -110,27 +110,32 @@ def main():
     class_sel=0
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
-        activation = {}
-        handles = []
-        # for layer in hooked_layers:
-        #     output = rgetattr(model, layer)
-        #     handles.append(output.register_forward_hook(get_activation(layer)))
-        #
-        # with torch.set_grad_enabled(False):
-        #
-        #     for local_batch, local_labels in testloader:
-        #         # Transfer to GPU
-        #         local_batch, local_labels = local_batch.to(device), local_labels.to(device)
-        #         test_outputs = model(local_batch)
-        #
-        # class_sel = class_selectivity_ML(activation)
-        # #     clear hooks
-        # for handle in handles:
-        #     handle.remove()
+
 
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
+
+            activation = {}
+            handles = []
+            for layer in hooked_layers:
+                output = rgetattr(model, layer)
+                handles.append(output.register_forward_hook(get_activation(layer)))
+
+            with torch.set_grad_enabled(False):
+
+                for local_batch, local_labels in testloader:
+                    # Transfer to GPU
+                    local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+                    test_outputs = model(local_batch)
+
+            class_sel = class_selectivity_ML(activation)
+            #     clear hooks
+            for handle in handles:
+                handle.remove()
+
+
+
             inputs, labels = data
             inputs, labels = inputs.cuda(), labels.cuda()
 
@@ -143,7 +148,23 @@ def main():
 
 
             # if i % classreg_interval != classreg_interval-1:
+            activation = {}
+            handles = []
+            for layer in hooked_layers:
+                output = rgetattr(model, layer)
+                handles.append(output.register_forward_hook(get_activation(layer)))
 
+            with torch.set_grad_enabled(False):
+
+                for local_batch, local_labels in testloader:
+                    # Transfer to GPU
+                    local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+                    test_outputs = model(local_batch)
+
+            class_sel = class_selectivity_ML(activation)
+            #     clear hooks
+            for handle in handles:
+                handle.remove()
 
 
             loss1 = loss_func(outputs, labels)
@@ -165,7 +186,7 @@ def main():
 
             torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_partial'+str(epoch))
 
-    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_negative_nopretrain')
+    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/VGG16_NEGATIVE_each_iteration')
 
 
     print('Finished Training')
