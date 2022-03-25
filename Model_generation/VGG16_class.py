@@ -177,7 +177,7 @@ def main():
             # print statistics
             running_loss += loss1.item()
             if i % log_interval == log_interval-1:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f} Possitive')
                 running_loss = 0.0
 
     #     torch.save(model,'C:/Users/arias/Desktop/Github/nefesi/Model_generation/Savedmodel/vgg16_partial' + str(  epoch))
