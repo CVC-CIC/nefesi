@@ -96,7 +96,7 @@ def main():
     classreg_interval = 10
     # Set loss function (categorical Cross Entropy Loss)
     loss_func = nn.CrossEntropyLoss()
-    factor=-1
+    factor=1
     # Set optimizer (using Adam as default)
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
@@ -186,7 +186,7 @@ def main():
 
             torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/vgg16_partial'+str(epoch))
 
-    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/VGG16_NEGATIVE_each_iteration')
+    torch.save(model, folder_dir+'Nefesi/Model_generation/Savedmodel/VGG16_POSITIVE_each_iteration')
 
 
     print('Finished Training')
