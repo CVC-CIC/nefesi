@@ -68,8 +68,8 @@ def main():
     print('Positive in each itteration')
 
     global activation
-    folder_dir ="C:/Users/arias/OneDrive/Escritorio/Nefesi2022/"
-    # folder_dir = "/home/guillem/Nefesi2022/"
+    # folder_dir ="C:/Users/arias/OneDrive/Escritorio/Nefesi2022/"
+    folder_dir = "/home/guillem/Nefesi2022/"
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
 
