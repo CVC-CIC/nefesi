@@ -59,7 +59,7 @@ def data_parallel(module, input, device_ids, output_device=None):
 
 def main():
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
-    print('Positive in each itteration')
+    print('Negative in each itteration')
 
     global activation
     # folder_dir ="C:/Users/arias/OneDrive/Escritorio/Nefesi2022/"
@@ -180,9 +180,9 @@ def main():
     #     torch.save(model,'C:/Users/arias/Desktop/Github/nefesi/Model_generation/Savedmodel/vgg16_partial' + str(  epoch))
     # torch.save(model, 'C:/Users/arias/Desktop/Github/nefesi/Model_generation/Savedmodel/vgg16_normal')
         if epoch % 10 == 9:
-            torch.save(model, folder_dir+'nefesi/Model_generation/Savedmodel/vgg16_partial_pos'+str(epoch))
+            torch.save(model, folder_dir+'nefesi/Model_generation/Savemodel/vgg16_partial_neg'+str(epoch))
 
-    torch.save(model, folder_dir+'nefesi/Model_generation/Savedmodel/VGG16_POSITIVE_each_iteration')
+    torch.save(model, folder_dir+'nefesi/Model_generation/Savebymodel/VGG16_NEGATIVE_each_iteration')
 
 
     print('Finished Training')
