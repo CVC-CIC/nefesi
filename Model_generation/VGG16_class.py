@@ -6,14 +6,14 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import functools
 import numpy as np
-
+import os
 activation = {}
 def get_activation(name):
     def hook(model, input, output):
-        mean_act=torch.mean(output,[0,2,3])
+        mean_act=torch.mean(output)
         if not name in activation:
             activation[name] = []
-        activation[name].append(mean_act)
+        activation[name].append(mean_act.cpu().detach())
     return hook
 
 def rgetattr(obj, attr, *args):
@@ -24,26 +24,19 @@ def rgetattr(obj, attr, *args):
 
 
 def class_selectivity_ML(dictionary):
-    all_layers_SI=[]
+    all_layers_SI=0
+
     for layer in dictionary:
         layer_data= dictionary[layer]
 
-        all_neuron_SI=[]
-        for neuron in range(list(layer_data[0].size())[0]):
-            mean_act=[x[neuron].item() for x in layer_data]
-            maxim=max(mean_act)
-            no_max=mean_act
-            no_max.pop(np.argmax(mean_act))
-            neuron_SI= (maxim - np.mean(no_max))/(maxim + np.mean(no_max)+0.00000001)
-            all_neuron_SI.append(neuron_SI)
-        all_layers_SI.append(np.mean(all_neuron_SI))
-    class_sel=np.mean(all_layers_SI)
 
+        maxim=layer_data.pop(np.argmax(layer_data))
 
+        neuron_SI = (maxim - np.mean(layer_data)) / (maxim + np.mean(layer_data) + 0.00000001)
 
+        all_layers_SI+=neuron_SI
 
-    #         SI calculat per a una sola neurona, ara falta ferho per cada neurona de cada capa (2a formula Moroco)
-
+    class_sel=all_layers_SI/len(dictionary)
 
 
 
@@ -65,6 +58,7 @@ def data_parallel(module, input, device_ids, output_device=None):
 
 
 def main():
+    os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     print('Positive in each itteration')
 
     global activation
@@ -122,7 +116,7 @@ def main():
 
 
 
-    class_sel=0
+
 
     handles = []
     for layer in hooked_layers:
@@ -145,7 +139,7 @@ def main():
 
                 for local_batch, local_labels in testloader:
                     # Transfer to GPU
-                    test_outputs=data_parallel(model,local_batch,[0,1,2,3])
+                    test_outputs=data_parallel(model,local_batch,[0])
 
 
 
@@ -164,7 +158,7 @@ def main():
             # zero the parameter gradients
             optimizer.zero_grad()
 
-            outputs=data_parallel(model, inputs, [0, 1, 2, 3])
+            outputs=data_parallel(model, inputs, [0])
             # inputs, labels = inputs.cuda(), labels.cuda()
             # # forward + backward + optimize
             # outputs = model(inputs)
