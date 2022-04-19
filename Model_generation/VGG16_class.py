@@ -50,13 +50,26 @@ def class_selectivity_ML(dictionary):
     return class_sel
 
 
+def data_parallel(module, input, device_ids, output_device=None):
+    if not device_ids:
+        return module(input)
+
+    if output_device is None:
+        output_device = device_ids[0]
+
+    replicas = nn.parallel.replicate(module, device_ids)
+    inputs = nn.parallel.scatter(input, device_ids)
+    replicas = replicas[:len(inputs)]
+    outputs = nn.parallel.parallel_apply(replicas, inputs)
+    return nn.parallel.gather(outputs, output_device)
+
 
 def main():
     print('Positive in each itteration')
 
     global activation
-    # folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
-    folder_dir = "/home/guillem/Nefesi2022/"
+    folder_dir ="C:/Users/arias/OneDrive/Escritorio/Nefesi2022/"
+    # folder_dir = "/home/guillem/Nefesi2022/"
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")
 
@@ -118,35 +131,6 @@ def main():
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
 
-            activation = {}
-            handles = []
-            for layer in hooked_layers:
-                output = rgetattr(model, layer)
-                handles.append(output.register_forward_hook(get_activation(layer)))
-
-            with torch.set_grad_enabled(False):
-
-                for local_batch, local_labels in testloader:
-                    # Transfer to GPU
-                    local_batch, local_labels = local_batch.to(device), local_labels.to(device)
-                    test_outputs = model(local_batch)
-
-            class_sel = class_selectivity_ML(activation)
-            #     clear hooks
-            for handle in handles:
-                handle.remove()
-
-
-
-            inputs, labels = data
-            inputs, labels = inputs.cuda(), labels.cuda()
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = model(inputs)
-
 
 
             # if i % classreg_interval != classreg_interval-1:
@@ -160,6 +144,10 @@ def main():
 
                 for local_batch, local_labels in testloader:
                     # Transfer to GPU
+                    data_parallel(model,local_batch,[0,1])
+
+
+
                     local_batch, local_labels = local_batch.to(device), local_labels.to(device)
                     test_outputs = model(local_batch)
 
@@ -167,6 +155,15 @@ def main():
             #     clear hooks
             for handle in handles:
                 handle.remove()
+
+            inputs, labels = data
+            inputs, labels = inputs.cuda(), labels.cuda()
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = model(inputs)
 
 
             loss1 = loss_func(outputs, labels)
