@@ -94,14 +94,14 @@ def main():
     train_folder=folder_dir+"Dataset/tiny-imagenet-200/train"
     trainset = datasets.ImageFolder(root=train_folder, transform=transform)
 
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=200,
                                               shuffle=True, num_workers=2)
 
 
     val_folder=folder_dir+"Dataset/tiny-imagenet-200/val/images"
     testset = datasets.ImageFolder(root=val_folder,  transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=100,
-                                             shuffle=True, num_workers=2)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=50,
+                                             shuffle=False, num_workers=2)
 
 
     # Define hyperparameters and settings
