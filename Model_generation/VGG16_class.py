@@ -152,6 +152,7 @@ def main():
                     # local_batch, local_labels = local_batch.to(device), local_labels.to(device)
                     # test_outputs = model(local_batch)
 
+            print("calculating class selectivity")
             class_sel = class_selectivity_ML(activation)
             print(class_sel)
             # #     clear hooks
@@ -168,7 +169,7 @@ def main():
             # # forward + backward + optimize
             # outputs = model(inputs)
 
-            print(class_sel)
+
             loss1 = loss_func(outputs, labels.cuda())
 
 
