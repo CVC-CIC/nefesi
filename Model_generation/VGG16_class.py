@@ -168,7 +168,7 @@ def main():
             # outputs = model(inputs)
 
             print(outputs)
-            loss1 = loss_func(outputs, labels)
+            loss1 = loss_func(outputs, labels.cuda())
 
 
             loss = loss1 + factor*class_sel
