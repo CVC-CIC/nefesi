@@ -100,8 +100,8 @@ def main():
 
     val_folder=folder_dir+"Dataset/tiny-imagenet-200/val/images"
     testset = datasets.ImageFolder(root=val_folder,  transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=50,
-                                             shuffle=False, num_workers=2)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=100,
+                                             shuffle=True, num_workers=2)
 
 
     # Define hyperparameters and settings
@@ -124,6 +124,11 @@ def main():
 
     class_sel=0
 
+    handles = []
+    for layer in hooked_layers:
+        output = rgetattr(model, layer)
+        handles.append(output.register_forward_hook(get_activation(layer)))
+
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
 
@@ -135,10 +140,6 @@ def main():
 
             # if i % classreg_interval != classreg_interval-1:
             activation = {}
-            handles = []
-            for layer in hooked_layers:
-                output = rgetattr(model, layer)
-                handles.append(output.register_forward_hook(get_activation(layer)))
 
             with torch.set_grad_enabled(False):
 
@@ -153,9 +154,9 @@ def main():
 
             class_sel = class_selectivity_ML(activation)
             print(class_sel)
-            #     clear hooks
-            for handle in handles:
-                handle.remove()
+            # #     clear hooks
+            # for handle in handles:
+            #     handle.remove()
 
             inputs, labels = data
 
@@ -167,7 +168,7 @@ def main():
             # # forward + backward + optimize
             # outputs = model(inputs)
 
-            print(outputs)
+            print(class_sel)
             loss1 = loss_func(outputs, labels.cuda())
 
 
