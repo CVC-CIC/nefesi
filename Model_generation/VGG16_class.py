@@ -139,7 +139,7 @@ def main():
 
                 for local_batch, local_labels in testloader:
                     # Transfer to GPU
-                    test_outputs=data_parallel(model,local_batch,[0,1,2,3])
+                    test_outputs=data_parallel(model,local_batch,[0,1])
 
 
 
@@ -158,7 +158,7 @@ def main():
             # zero the parameter gradients
             optimizer.zero_grad()
 
-            outputs=data_parallel(model, inputs, [0,1,2,3])
+            outputs=data_parallel(model, inputs, [0,1])
             # inputs, labels = inputs.cuda(), labels.cuda()
             # # forward + backward + optimize
             # outputs = model(inputs)
