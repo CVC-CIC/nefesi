@@ -139,16 +139,16 @@ def main():
 
                 for local_batch, local_labels in testloader:
                     # Transfer to GPU
-                    test_outputs=data_parallel(model,local_batch,[0])
+                    test_outputs=data_parallel(model,local_batch,[0,1,2,3])
 
 
 
                     # local_batch, local_labels = local_batch.to(device), local_labels.to(device)
                     # test_outputs = model(local_batch)
 
-            print("calculating class selectivity")
+
             class_sel = class_selectivity_ML(activation)
-            print(class_sel)
+
             # #     clear hooks
             # for handle in handles:
             #     handle.remove()
@@ -158,7 +158,7 @@ def main():
             # zero the parameter gradients
             optimizer.zero_grad()
 
-            outputs=data_parallel(model, inputs, [0])
+            outputs=data_parallel(model, inputs, [0,1,2,3])
             # inputs, labels = inputs.cuda(), labels.cuda()
             # # forward + backward + optimize
             # outputs = model(inputs)
@@ -175,6 +175,7 @@ def main():
             running_loss += loss1.item()
             if i % log_interval == log_interval-1:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f} ')
+                print(class_sel)
                 running_loss = 0.0
 
     #     torch.save(model,'C:/Users/arias/Desktop/Github/nefesi/Model_generation/Savedmodel/vgg16_partial' + str(  epoch))
