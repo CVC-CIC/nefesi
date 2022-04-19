@@ -144,28 +144,30 @@ def main():
 
                 for local_batch, local_labels in testloader:
                     # Transfer to GPU
-                    data_parallel(model,local_batch,[0,1])
+                    test_outputs=data_parallel(model,local_batch,[0,1,2,3])
 
 
 
-                    local_batch, local_labels = local_batch.to(device), local_labels.to(device)
-                    test_outputs = model(local_batch)
+                    # local_batch, local_labels = local_batch.to(device), local_labels.to(device)
+                    # test_outputs = model(local_batch)
 
             class_sel = class_selectivity_ML(activation)
+            print(class_sel)
             #     clear hooks
             for handle in handles:
                 handle.remove()
 
             inputs, labels = data
-            inputs, labels = inputs.cuda(), labels.cuda()
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
-            # forward + backward + optimize
-            outputs = model(inputs)
+            outputs=data_parallel(model, inputs, [0, 1, 2, 3])
+            # inputs, labels = inputs.cuda(), labels.cuda()
+            # # forward + backward + optimize
+            # outputs = model(inputs)
 
-
+            print(outputs)
             loss1 = loss_func(outputs, labels)
 
 
