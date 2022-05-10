@@ -58,22 +58,22 @@ def data_parallel(module, input, device_ids, output_device=None):
 
 
 def main():
-    os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
     print('Positive in each itteration')
 
     global activation
-    # folder_dir ="C:/Users/arias/OneDrive/Escritorio/Nefesi2022/"
-    folder_dir = "/home/guillem/Nefesi2022/"
-    device = torch.device("cuda" if torch.cuda.is_available()
-                          else "cpu")
+    folder_dir ="C:/Users/arias/OneDrive/Escritorio/Nefesi2022/"
+    # folder_dir = "/home/guillem/Nefesi2022/"
+    device = torch.device(0)
 
 
     model = models.vgg16(pretrained=False)
-    # for param in model.parameters():
-    #     param.requires_grad = False
 
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        model = nn.DataParallel(model)
     model.classifier[6] = nn.Linear(4096, 200)
-
     model.to(device)
 
 
@@ -88,7 +88,7 @@ def main():
     train_folder=folder_dir+"Dataset/tiny-imagenet-200/train"
     trainset = datasets.ImageFolder(root=train_folder, transform=transform)
 
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=200,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=100,
                                               shuffle=True, num_workers=2)
 
 
