@@ -52,8 +52,10 @@ def main():
     model= UNet()
     model.load_state_dict(torch.load( folder_dir+'nefesi/Model_generation/_final.pt'))
 
+
     for n, m in model.named_modules():
         m.auto_name = n
+        print(n)
 
     # deepmodel = DeepF.deep_model(model)
     #
