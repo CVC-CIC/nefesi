@@ -74,7 +74,7 @@ def main():
 
 
 
-    Nefesimodel= NetworkData(model=deepmodel,layer_data=layers_interest,save_path = save_path, dataset=dataset,default_file_name = 'VGG16_imagenet',input_shape=[(1,3,64,64)])
+    Nefesimodel= NetworkData(model=deepmodel,layer_data=layers_interest,save_path = save_path, dataset=dataset,default_file_name = 'Unet',input_shape=[(1,3,64,64)])
     Nefesimodel.generate_neuron_data()
 
     # calculate the top scoring images

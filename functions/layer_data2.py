@@ -110,7 +110,7 @@ def gradient_rf(model,input_shape,output_layer,main_input=None):
 def decoder_rf(model,input_shape,study_layer,main_input=None):
 
     # Register Hooks
-    output_layer='conv_out'
+    output_layer='outc'
     input = rgetattr(model, study_layer)
     input.register_forward_hook(get_activation('study_layer'))
 
