@@ -62,7 +62,7 @@ def main():
 
     # Create a list with the layers that you want to analyze and 0 if they are encoding or 1 if they are decoding
     # layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0]]
-    layers_interest = [['down1', 0], ['down2', 0], ['down3', 0], ['down4', 0], ['up1', 1], ['up2', 1],['up3', 1],['up4', 1] ]
+    layers_interest = [['down1', 0], ['down2', 0], ['down3', 0], ['down4', 0] ]
 
     # Create the DatasetLoader: select your imagepath and your preprocessing functon (in case you have one)
     Path_images=folder_dir+'Dataset/tiny-imagenet-200/train'
