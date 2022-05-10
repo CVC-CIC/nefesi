@@ -70,7 +70,7 @@ def main():
     dataset = ImageDataset(src_dataset=Path_images,target_size=(64,64),preprocessing_function=preproces_function,color_mode='rgb')
 
     # Path where you will save your results
-    save_path= "Nefesi_models/VGG16"
+    save_path= "Nefesi_models/UNet"
 
 
 
