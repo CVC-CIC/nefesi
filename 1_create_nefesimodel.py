@@ -43,8 +43,8 @@ def main():
 
     # Load the Model with your weigths first
 
-    folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
-    # folder_dir = "/home/guillem/Nefesi2022/"
+    # folder_dir ="C:/Users/arias/Desktop/Nefesi2022/"
+    folder_dir = "/home/guillem/Nefesi2022/"
 
 
     device = torch.device(0)
