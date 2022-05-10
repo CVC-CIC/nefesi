@@ -14,7 +14,7 @@ BATCH_SIZE = 100
 from  functions.image import ImageDataset
 from functions.read_activations import get_activations
 import interface_DeepFramework.DeepFramework as DeepF
-
+from Model_generation.Unet import UNet
 
 
 
@@ -48,7 +48,9 @@ def main():
 
 
     device = torch.device(0)
-    model = torch.load( folder_dir+'nefesi/Model_generation/_final.pt')
+
+    model= UNet()
+    model.load_state_dict(torch.load( folder_dir+'nefesi/Model_generation/_final.pt'))
 
     for n, m in model.named_modules():
         m.auto_name = n
