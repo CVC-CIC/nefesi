@@ -48,7 +48,7 @@ def main():
 
 
     device = torch.device(0)
-    model = torch.load( folder_dir+'Nefesi/Model_generation/Savedmodel/_final.pt')
+    model = torch.load( folder_dir+'nefesi/Model_generation/_final.pt')
 
 
     # deepmodel = DeepF.deep_model(model)
