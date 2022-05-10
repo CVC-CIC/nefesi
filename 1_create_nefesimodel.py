@@ -57,41 +57,39 @@ def main():
         m.auto_name = n
         print(n)
 
-    # deepmodel = DeepF.deep_model(model)
-    #
-    #
-    # # Create a list with the layers that you want to analyze and 0 if they are encoding or 1 if they are decoding
-    # # layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0]]
-    # layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0], ['features.11', 0],
-    #                    ['features.13', 0], ['features.15', 0], ['features.18', 0], ['features.20', 0],
-    #                    ['features.22', 0], ['features.25', 0], ['features.27', 0], ['features.29', 0]]
-    #
-    # # Create the DatasetLoader: select your imagepath and your preprocessing functon (in case you have one)
-    # Path_images=folder_dir+'Dataset/tiny-imagenet-200/train'
-    # preproces_function=preproces_imagenet_img
-    # dataset = ImageDataset(src_dataset=Path_images,target_size=(64,64),preprocessing_function=preproces_function,color_mode='rgb')
-    #
-    # # Path where you will save your results
-    # save_path= "Nefesi_models/VGG16"
-    #
-    #
-    #
-    # Nefesimodel= NetworkData(model=deepmodel,layer_data=layers_interest,save_path = save_path, dataset=dataset,default_file_name = 'VGG16_imagenet',input_shape=[(1,3,64,64)])
-    # Nefesimodel.generate_neuron_data()
-    #
-    # # calculate the top scoring images
-    # Nefesimodel.eval_network()
-    #
-    # print('Activation Calculus done!')
-    # Nefesimodel.save_to_disk('activations')
-    #
-    # # Nefesimodel=NetworkData.load_from_disk("Model_generation\Nefesi_models\VGG16\VGGPartialSave100WithoutNF.obj")
-    #
-    # # calculate the Neuron feature of each neuron (weighted average of top scoring images)
-    # Nefesimodel.calculateNF()
-    # print('NF done!')
-    #
-    #
+    deepmodel = DeepF.deep_model(model)
+
+
+    # Create a list with the layers that you want to analyze and 0 if they are encoding or 1 if they are decoding
+    # layers_interest = [['features.1', 0], ['features.3', 0], ['features.6', 0], ['features.8', 0]]
+    layers_interest = [['down1', 0], ['down2', 0], ['down3', 0], ['down4', 0], ['up1', 1], ['up2', 1],['up3', 1],['up4', 1] ]
+
+    # Create the DatasetLoader: select your imagepath and your preprocessing functon (in case you have one)
+    Path_images=folder_dir+'Dataset/tiny-imagenet-200/train'
+    preproces_function=preproces_imagenet_img
+    dataset = ImageDataset(src_dataset=Path_images,target_size=(64,64),preprocessing_function=preproces_function,color_mode='rgb')
+
+    # Path where you will save your results
+    save_path= "Nefesi_models/VGG16"
+
+
+
+    Nefesimodel= NetworkData(model=deepmodel,layer_data=layers_interest,save_path = save_path, dataset=dataset,default_file_name = 'VGG16_imagenet',input_shape=[(1,3,64,64)])
+    Nefesimodel.generate_neuron_data()
+
+    # calculate the top scoring images
+    Nefesimodel.eval_network()
+
+    print('Activation Calculus done!')
+    Nefesimodel.save_to_disk('activations')
+
+    # Nefesimodel=NetworkData.load_from_disk("Model_generation\Nefesi_models\VGG16\VGGPartialSave100WithoutNF.obj")
+
+    # calculate the Neuron feature of each neuron (weighted average of top scoring images)
+    Nefesimodel.calculateNF()
+    print('NF done!')
+
+
     # # calculate the Color selectivity of each neuron
     # dataset = Nefesimodel.dataset
     # for layer in Nefesimodel.get_layers_name():
