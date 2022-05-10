@@ -65,7 +65,7 @@ def main():
     layers_interest = [['down1', 0], ['down2', 0], ['down3', 0], ['down4', 0] ]
 
     # Create the DatasetLoader: select your imagepath and your preprocessing functon (in case you have one)
-    Path_images=folder_dir+'Dataset/tiny-imagenet-200/train'
+    Path_images='/data/134-1/datasets/ImageNetFused'
     preproces_function=preproces_imagenet_img
     dataset = ImageDataset(src_dataset=Path_images,target_size=(64,64),preprocessing_function=preproces_function,color_mode='rgb')
 
